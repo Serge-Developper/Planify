@@ -101,6 +101,26 @@
         </div>
       </div>
       <div v-else-if="sortBy === 'passe'" class="liste-col-archives">
+        <div class="archive-btns-row" v-if="archives.length > 0" style="flex-direction: column; align-items: center;">
+          <div style="display: flex; justify-content: center; margin-bottom: 10px; margin-top: 20px;">
+            <button class="btn-vider-archive" @click="viderArchive">Vider tout</button>
+          </div>
+          <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 10px;">
+            <button class="btn-vider-archive orange" @click="viderArchiveType('devoir')">Vider les devoirs</button>
+            <button class="btn-vider-archive blue" @click="viderArchiveType('exam')">Vider les examens</button>
+          </div>
+          <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 10px; align-items: center; flex-direction: column;">
+            <select v-model="matiereArchive" class="matiere-select">
+              <option value="">Toutes matières</option>
+              <option v-for="matiere in mmiMatieres" :key="matiere" :value="matiere">{{ matiere }}</option>
+            </select>
+            <button class="btn-vider-archive violet" @click="viderArchiveMatiere(matiereArchive)" :disabled="!matiereArchive">Vider la matière</button>
+          </div>
+          <div style="display: flex; gap: 10px; justify-content: center;">
+            <button class="btn-vider-archive orange" @click="viderArchiveTypeMatiere('devoir', matiereArchive)" :disabled="!matiereArchive">Vider devoirs de la matière</button>
+            <button class="btn-vider-archive blue" @click="viderArchiveTypeMatiere('exam', matiereArchive)" :disabled="!matiereArchive">Vider examens de la matière</button>
+          </div>
+        </div>
         <div v-if="archives.length === 0" class="aucune-tache">Aucune tâche archivée</div>
         <div v-for="event in archives" :key="event.titre + event.date + event.heure" class="devoir-card-liste archive">
           <div class="matiere-label-liste" :style="{ background: stringToColor(event.matiere, event.type) }">{{ event.matiere }}</div>
