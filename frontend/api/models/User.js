@@ -1,5 +1,14 @@
 const mongoose = require('mongoose');
 
+// Connexion MongoDB
+if (process.env.MONGODB_URI) {
+  mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log('✅ Connexion MongoDB réussie'))
+  .catch(err => console.error('❌ Erreur connexion MongoDB:', err));
+} else {
+  console.error('❌ MONGODB_URI non définie dans les variables d\'environnement');
+}
+
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
