@@ -1,0 +1,12 @@
+{
+  "name": "planify-api",
+  "version": "1.0.0",
+  "description": "Planify API functions for Vercel",
+  "main": "health.js",
+  "engines": {
+    "node": "18.x"
+  },
+  "dependencies": {
+    "mongoose": "^8.0.0"
+  }
+}
