@@ -73,7 +73,7 @@ async function handleCheck() {
     } else {
       // Deuxième étape : vérifier les réponses
       const answers = questions.value.map(q => q.answer);
-      const res = await fetch(`${API_URL}/users/forgot-password/verify`, {
+      const res = await fetch(`${API_URL}/forgot-password-verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: username.value, answers })
@@ -113,7 +113,7 @@ async function handleReset() {
       passwordLength: newPassword.value.length
     });
     
-    const res = await fetch(`${API_URL}/users/forgot-password/reset`, {
+    const res = await fetch(`${API_URL}/forgot-password-reset`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username: username.value, newPassword: newPassword.value })
