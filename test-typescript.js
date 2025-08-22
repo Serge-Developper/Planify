@@ -16,3 +16,4 @@ try {
 }
 
 console.log('Test terminé.');
+
