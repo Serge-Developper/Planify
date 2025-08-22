@@ -1,0 +1,132 @@
+{
+  "info": {
+    "name": "Planify API Collection - Updated",
+    "description": "Collection mise à jour pour tester les API de Planify sur Vercel",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Test Variables d'Environnement",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "https://planify-snowy.vercel.app/api/test-env",
+          "protocol": "https",
+          "host": ["planify-snowy", "vercel", "app"],
+          "path": ["api", "test-env"]
+        }
+      }
+    },
+    {
+      "name": "Test API Simple",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "https://planify-snowy.vercel.app/api/test-login",
+          "protocol": "https",
+          "host": ["planify-snowy", "vercel", "app"],
+          "path": ["api", "test-login"]
+        }
+      }
+    },
+    {
+      "name": "Connexion Utilisateur",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"test_user\",\n  \"password\": \"test_password\"\n}"
+        },
+        "url": {
+          "raw": "https://planify-snowy.vercel.app/api/users/login",
+          "protocol": "https",
+          "host": ["planify-snowy", "vercel", "app"],
+          "path": ["api", "users", "login"]
+        }
+      }
+    },
+    {
+      "name": "Vérifier Questions Secrètes",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "https://planify-snowy.vercel.app/api/users/check-secret-questions?userId=USER_ID_HERE",
+          "protocol": "https",
+          "host": ["planify-snowy", "vercel", "app"],
+          "path": ["api", "users", "check-secret-questions"],
+          "query": [
+            {
+              "key": "userId",
+              "value": "USER_ID_HERE",
+              "description": "Remplacez par l'ID de l'utilisateur"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Sauvegarder Questions Secrètes",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"USER_ID_HERE\",\n  \"questions\": [\n    {\n      \"question\": \"Quel est le nom de votre premier animal?\",\n      \"answer\": \"admin\"\n    },\n    {\n      \"question\": \"Quel est le prénom de votre mère?\",\n      \"answer\": \"admin\"\n    },\n    {\n      \"question\": \"Quelle est votre ville de naissance?\",\n      \"answer\": \"admin\"\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "https://planify-snowy.vercel.app/api/users/secret-questions",
+          "protocol": "https",
+          "host": ["planify-snowy", "vercel", "app"],
+          "path": ["api", "users", "secret-questions"]
+        }
+      }
+    },
+    {
+      "name": "Test Health API",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "https://planify-snowy.vercel.app/api/health",
+          "protocol": "https",
+          "host": ["planify-snowy", "vercel", "app"],
+          "path": ["api", "health"]
+        }
+      }
+    }
+  ]
+}
