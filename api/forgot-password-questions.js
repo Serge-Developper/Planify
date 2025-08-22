@@ -1,4 +1,4 @@
-// API simplifiée pour récupérer les questions secrètes
+// API simplifiée pour récupérer les questions secrètes d'un utilisateur
 export default async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGINS || '*');
@@ -12,59 +12,78 @@ export default async function handler(req, res) {
     return;
   }
   
-  // Handle POST request
+  // Handle POST request to get user's secret questions
   if (req.method === 'POST') {
     try {
       console.log('🔍 Début de la requête forgot-password-questions');
       
+      // Import dynamique des modules pour éviter les problèmes Vercel
       const { MongoClient } = await import('mongodb');
       
       const { username } = req.body;
       console.log('📝 Username reçu:', username);
       
+      // Validate input
       if (!username) {
+        console.log('❌ Username manquant');
         return res.status(400).json({
           success: false,
           message: 'Nom d\'utilisateur requis'
         });
       }
       
+      // Check environment variables
       if (!process.env.MONGODB_URI) {
+        console.error('❌ MONGODB_URI manquante');
         throw new Error('MONGODB_URI environment variable is not set');
       }
       
+      console.log('📡 Connexion à MongoDB...');
       const client = new MongoClient(process.env.MONGODB_URI);
       await client.connect();
+      console.log('✅ Connexion MongoDB réussie');
       
       const db = client.db('planifyvrai');
       const usersCollection = db.collection('users');
       
+      // Find user by username
+      console.log('🔍 Recherche utilisateur:', username);
       const user = await usersCollection.findOne(
         { username: username },
-        { projection: { secretQuestions: 1, username: 1 } }
+        { projection: { secretQuestions: 1, hasSecretQuestions: 1, username: 1 } }
       );
       
       await client.close();
+      console.log('📡 Connexion MongoDB fermée');
       
       if (!user) {
+        console.log('❌ Utilisateur non trouvé');
         return res.status(404).json({
           success: false,
           message: 'Utilisateur non trouvé'
         });
       }
       
+      console.log('✅ Utilisateur trouvé:', user.username);
+      
+      // Check if user has secret questions
       const hasSecretQuestions = user.secretQuestions && Array.isArray(user.secretQuestions) && user.secretQuestions.length > 0;
+      console.log('❓ Questions secrètes:', hasSecretQuestions);
       
       if (!hasSecretQuestions) {
+        console.log('❌ Aucune question secrète configurée');
         return res.status(400).json({
           success: false,
-          message: 'Aucune question secrète configurée'
+          message: 'Aucune question secrète configurée pour cet utilisateur'
         });
       }
       
+      // Return only the questions (not the answers)
       const questions = user.secretQuestions.map(q => ({
         question: q.question
       }));
+      
+      console.log('🎉 Questions secrètes récupérées avec succès');
       
       res.status(200).json({
         success: true,
@@ -74,14 +93,15 @@ export default async function handler(req, res) {
       });
       
     } catch (error) {
-      console.error('❌ Erreur:', error);
+      console.error('❌ Erreur forgot-password-questions:', error);
       res.status(500).json({
         success: false,
-        message: 'Erreur serveur',
+        message: 'Erreur lors de la récupération des questions secrètes',
         error: error.message
       });
     }
   } else {
+    console.log('❌ Méthode non autorisée:', req.method);
     res.status(405).json({
       success: false,
       message: 'Méthode non autorisée'
