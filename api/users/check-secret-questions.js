@@ -33,7 +33,7 @@ export default async function handler(req, res) {
       const client = new MongoClient(process.env.MONGODB_URI);
       await client.connect();
       
-      const db = client.db('planify');
+      const db = client.db('planifyvrai');
       const usersCollection = db.collection('users');
       
       // Find user and check if they have secret questions
