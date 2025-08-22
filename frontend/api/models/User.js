@@ -1,39 +1,50 @@
-const mongoose = require('mongoose');
-
-// Connexion MongoDB
-if (process.env.MONGODB_URI) {
-  mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('✅ Connexion MongoDB réussie'))
-  .catch(err => console.error('❌ Erreur connexion MongoDB:', err));
-} else {
-  console.error('❌ MONGODB_URI non définie dans les variables d\'environnement');
-}
+import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  role: { type: String, enum: ['admin', 'prof', 'delegue', 'eleve', 'etudiant'], required: true },
-  groupe: { type: String, enum: ['A', "A'", 'A"', 'B', "B'", 'B"', 'Promo'], default: null },
-  year: { type: String, default: null },
-  avatar: { type: String, default: null }, // Chemin vers l'image de profil
-  coins: { type: Number, default: 0 }, // PlanifyCoins
-  completedTasks: { type: Number, default: 0 }, // Nombre de tâches complétées
-  validations: { type: Number, default: 0 }, // Nombre de validations
-  lastSpinDate: { type: Date, default: null }, // Date du dernier spin
-  purchasedItems: [{
-    itemId: { type: Number, required: true },
-    itemName: { type: String, required: true },
-    purchaseDate: { type: Date, default: Date.now },
-    equipped: { type: Boolean, default: false },
-    adminMessage: { type: String, default: null }, // Message optionnel de l'admin lors de l'attribution
-    adminGiftRead: { type: Boolean, default: false }
-  }],
-  equippedItemId: { type: Number, default: null, required: false }, // ID de l'item actuellement équipé
-  selectedBorderColor: { type: String, default: 'default' }, // Couleur de bordure choisie (toujours active)
-  secretQuestions: [{
-    question: { type: String, required: true },
-    answer: { type: String, required: true }
-  }]
+  username: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+    minlength: 3
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+    lowercase: true
+  },
+  password: {
+    type: String,
+    required: true,
+    minlength: 6
+  },
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user'
+  },
+  coins: {
+    type: Number,
+    default: 100
+  },
+  level: {
+    type: Number,
+    default: 1
+  },
+  experience: {
+    type: Number,
+    default: 0
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  lastLogin: {
+    type: Date,
+    default: Date.now
+  }
 });
 
-module.exports = mongoose.model('User', userSchema); 
+export default mongoose.models.User || mongoose.model('User', userSchema); 
