@@ -7,7 +7,7 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 
-import '@fortawesome/fontawesome-free/css/all.min.css';
+
 
 // Désactiver console.log en production (garde console.error, warn, etc.)
 if (import.meta.env && (import.meta.env.PROD || import.meta.env.MODE === 'production')) {
