@@ -31,6 +31,8 @@
    - `VITE_API_URL` : `/api`
    - `NODE_ENV` : `production`
    - `ALLOWED_ORIGINS` : L'URL de votre app Vercel
+   - `EMAIL_USER` : Votre adresse Gmail (ex: planifymmi@gmail.com)
+   - `EMAIL_PASS` : Votre mot de passe d'application Google (16 caractères)
 
 4. **Déployer :**
    - Cliquez sur "Deploy"

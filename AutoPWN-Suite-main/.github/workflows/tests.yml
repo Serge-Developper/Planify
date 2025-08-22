@@ -1,0 +1,43 @@
+name: Tests
+
+on:
+  push:
+    branches: [ "main", "dev" ]
+  pull_request:
+    branches: [ "main", "dev" ]
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  Tests:
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+    - name: OS specific run
+      uses: KnicKnic/os-specific-run@v1.0.4
+      with:
+        linux: |
+          sudo apt-get update
+          sudo apt-get install nmap -y
+        macos: |
+          bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          brew install nmap
+    - name: Import test
+      run: python -c "import autopwn; import api"
+    - name: Automatic test
+      run: python autopwn.py -y -t 127.0.0.1 --no-color

@@ -11,7 +11,7 @@ const itemsRoutes = require('./routes/items');
 
 const app = express();
 
-// Middleware CORS pour Vercel
+// Middleware CORS pour Vercel - Updated for deployment
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', 'https://planify-snowy.vercel.app');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -58,4 +58,12 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Erreur interne du serveur' });
 });
 
-module.exports = app; 
+// Handler Vercel - Export par défaut pour les fonctions serverless
+module.exports = (req, res) => {
+  // Supprimer le préfixe /api pour les routes internes
+  if (req.url.startsWith('/api/')) {
+    req.url = req.url.replace('/api', '');
+  }
+  
+  return app(req, res);
+}; 
