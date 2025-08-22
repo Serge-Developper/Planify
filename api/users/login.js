@@ -1,7 +1,4 @@
-import { MongoClient } from 'mongodb';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-
+// API de connexion compatible Vercel serverless
 export default async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGINS || '*');
@@ -19,6 +16,11 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     try {
       console.log('🔍 Début de la requête de connexion');
+      
+      // Import dynamique des modules pour éviter les problèmes Vercel
+      const { MongoClient } = await import('mongodb');
+      const bcrypt = await import('bcryptjs');
+      const jwt = await import('jsonwebtoken');
       
       const { username, password } = req.body;
       console.log('📝 Données reçues:', { username, password: password ? '***' : 'undefined' });
@@ -70,7 +72,7 @@ export default async function handler(req, res) {
       
       // Verify password
       console.log('🔐 Vérification du mot de passe...');
-      const isPasswordValid = await bcrypt.compare(password, user.password);
+      const isPasswordValid = await bcrypt.default.compare(password, user.password);
       
       if (!isPasswordValid) {
         console.log('❌ Mot de passe incorrect');
@@ -84,7 +86,7 @@ export default async function handler(req, res) {
       
       // Generate JWT token
       console.log('🎫 Génération du token JWT...');
-      const token = jwt.sign(
+      const token = jwt.default.sign(
         { 
           userId: user._id.toString(),
           username: user.username,
