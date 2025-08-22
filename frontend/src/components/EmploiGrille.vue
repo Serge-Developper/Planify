@@ -10,7 +10,7 @@
 // Tu peux recevoir des props ici si besoin
 </script>
 
-<style scoped>
+<style>
 .emploi-grille {
   background: #fff;
   border-radius: 16px;

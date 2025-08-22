@@ -7,8 +7,13 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 
-axios.defaults.baseURL = 'https://150c-88-166-249-67.ngrok-free.app'
-axios.defaults.headers.common['ngrok-skip-browser-warning'] = 'true'
+import '@fortawesome/fontawesome-free/css/all.min.css';
+
+// Désactiver console.log en production (garde console.error, warn, etc.)
+if (import.meta.env && (import.meta.env.PROD || import.meta.env.MODE === 'production')) {
+  // eslint-disable-next-line no-console
+  console.log = () => {};
+}
 
 // Intercepteur pour ajouter le token JWT à chaque requête
 axios.interceptors.request.use(config => {

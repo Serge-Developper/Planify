@@ -7,6 +7,8 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: './',
+  assetsInclude: ['**/*.docx'],
   plugins: [
     vue(),
     vueJsx(),
@@ -21,22 +23,40 @@ export default defineConfig({
     host: true,
     port: 5173,
     strictPort: true,
-    allowedHosts: [
-      '7c57-91-169-88-35.ngrok-free.app',
-      'a332-88-166-249-67.ngrok-free.app'
-    ],
-    proxy: {
+    // Proxy uniquement en développement
+    proxy: process.env.NODE_ENV === 'development' ? {
       '/api': {
         target: 'http://localhost:3000',
         changeOrigin: true,
         secure: false
       }
-    },
+    } : undefined,
+    allowedHosts: [
+      '524f1ea48590.ngrok-free.app'
+    ],
     cors: {
-      origin: '*',
+      origin: ['http://localhost:5173', 'https://planify.tovmassian.but24.mmi-nancy.fr'],
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'Accept-Language'],
       credentials: true
+    }
+  },
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    sourcemap: false,
+    minify: 'esbuild',
+    rollupOptions: {
+      output: {
+        assetFileNames: (assetInfo) => {
+          const info = (assetInfo.name || '').split('.');
+          const ext = info[info.length - 1];
+          if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(ext)) {
+            return `assets/[name]-[hash][extname]`;
+          }
+          return `assets/[name]-[hash][extname]`;
+        }
+      }
     }
   }
 })

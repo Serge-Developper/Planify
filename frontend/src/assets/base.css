@@ -1,3 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
 /* color palette from <https://github.com/vuejs/theme> */
 :root {
   --vt-c-white: #ffffff;
@@ -67,36 +70,217 @@ body, #app {
     color 0.5s,
     background-color 0.5s;
   line-height: 1.6;
-  font-family: 'Cobe Heavy', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   font-size: 15px;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-@font-face {
-  font-family: 'Cobe Heavy';
-  src: url('/fonts/Cobe-Heavy.woff2') format('woff2'),
-       url('/fonts/Cobe-Heavy.woff') format('woff');
-  font-weight: 900;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Cobe Heavy';
-  src: url('/fonts/Cobe-HeavyItalic.woff2') format('woff2'),
-       url('/fonts/Cobe-HeavyItalic.woff') format('woff');
-  font-weight: 900;
-  font-style: italic;
-  font-display: swap;
-}
-
 h1, h2, h3, h4, h5, h6, .odoo-banner-title, .odoo-section-title, .liste-title, .title {
-  font-family: 'Cobe Heavy', Inter, sans-serif;
-  font-weight: 900;
+  font-family: 'Cobe Heavy', 'Inter', sans-serif;
 }
 
 em, i, .italic {
-  font-family: 'Cobe Heavy', Inter, sans-serif;
+  font-family: 'Cobe Heavy', 'Inter', sans-serif;
   font-style: italic;
 }
+
+.bg-accueil {
+  background: none !important;
+  background-image: none !important;
+}
+
+@font-face {
+  font-family: 'Cobe Heavy';
+  src: url('/fonts/Cobe-Heavy.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+:root {
+  --blue: #007bff;
+  --indigo: #6610f2;
+  --purple: #6f42c1;
+  --pink: #e83e8c;
+  --red: #dc3545;
+  --orange: #fd7e14;
+  --yellow: #ffc107;
+  --green: #28a745;
+  --teal: #20c997;
+  --cyan: #17a2b8;
+  --gray: #6C757D;
+  --gray-dark: #343A40;
+  --o-cc5-btn-secondary: #6EFFE3;
+  --o-cc5-btn-primary: #FFFFFF;
+  --o-cc5-headings: #FFFFFF;
+  --o-cc5-text: #f0f5f4;
+  --o-cc5-bg: #6EFF78;
+  --o-cc4-btn-secondary: #6EFFE3;
+  --o-cc4-btn-primary: #FFFFFF;
+  --o-cc4-text: #f0f5f4;
+  --o-cc4-bg: #6EFF78;
+  --o-cc3-btn-secondary: #f0f5f4;
+  --o-cc3-bg: #6EFFE3;
+  --o-cc2-headings: #6EFF78;
+  --o-cc2-bg: #f0f5f4;
+  --o-cc1-bg: #FFFFFF;
+  --copyright-custom: ;
+  --copyright: ;
+  --footer-custom: ;
+  --header-sales_four-custom: ;
+  --header-sales_three-custom: ;
+  --header-sales_two-custom: ;
+  --header-sales_one-custom: ;
+  --menu-border-color: ;
+  --menu-custom: ;
+  --input: ;
+  --body: white;
+  --o-color-5: #6EFF78;
+  --o-color-4: #FFFFFF;
+  --o-color-3: #f0f5f4;
+  --o-color-2: #6EFFE3;
+  --o-color-1: #6EFF78;
+  --gray-100: #F8F9FA;
+  --gray-200: #E9ECEF;
+  --gray-300: #DEE2E6;
+  --gray-400: #CED4DA;
+  --gray-500: #ADB5BD;
+  --gray-600: #6C757D;
+  --gray-700: #495057;
+  --gray-800: #343A40;
+  --gray-900: #212529;
+  --gray-white-85: rgba(255, 255, 255, 0.85);
+  --gray-white-75: rgba(255, 255, 255, 0.75);
+  --gray-white-50: rgba(255, 255, 255, 0.5);
+  --gray-white-25: rgba(255, 255, 255, 0.25);
+  --gray-black-75: rgba(0, 0, 0, 0.75);
+  --gray-black-50: rgba(0, 0, 0, 0.5);
+  --gray-black-25: rgba(0, 0, 0, 0.25);
+  --gray-black-15: rgba(0, 0, 0, 0.15);
+  --gray-black: #000000;
+  --gray-white: #FFFFFF;
+  --primary: #6EFF78;
+  --secondary: #6EFFE3;
+  --success: #28a745;
+  --info: #17a2b8;
+  --warning: #ffc107;
+  --danger: #dc3545;
+  --light: #f0f5f4;
+  --dark: #6EFF78;
+  --primary-rgb: 110, 255, 120;
+  --secondary-rgb: 110, 255, 227;
+  --success-rgb: 40, 167, 69;
+  --info-rgb: 23, 162, 184;
+  --warning-rgb: 255, 193, 7;
+  --danger-rgb: 220, 53, 69;
+  --light-rgb: 240, 245, 243.52071006;
+  --dark-rgb: 110, 255, 120;
+  --primary-text-emphasis: #00f811;
+  --secondary-text-emphasis: #2c665b;
+  --success-text-emphasis: #10431c;
+  --info-text-emphasis: #09414a;
+  --warning-text-emphasis: #664d03;
+  --danger-text-emphasis: #58151c;
+  --light-text-emphasis: #495057;
+  --dark-text-emphasis: #495057;
+  --primary-bg-subtle: #e2ffe4;
+  --secondary-bg-subtle: #e2fff9;
+  --success-bg-subtle: #d4edda;
+  --info-bg-subtle: #d1ecf1;
+  --warning-bg-subtle: #fff3cd;
+  --danger-bg-subtle: #f8d7da;
+  --light-bg-subtle: #fcfcfd;
+  --dark-bg-subtle: #CED4DA;
+  --primary-border-subtle: #c5ffc9;
+  --secondary-border-subtle: #c5fff4;
+  --success-border-subtle: #a9dcb5;
+  --info-border-subtle: #a2dae3;
+  --warning-border-subtle: #ffe69c;
+  --danger-border-subtle: #f1aeb5;
+  --light-border-subtle: #E9ECEF;
+  --dark-border-subtle: #ADB5BD;
+  --white-rgb: 255, 255, 255;
+  --black-rgb: 0, 0, 0;
+  --font-sans-serif: "Cobe-Heavy", "Odoo Unicode Support Noto", sans-serif;
+  --font-monospace: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0));
+  --body-font-family: var(--font-sans-serif);
+  --body-font-size: 1rem;
+  --body-font-weight: 400;
+  --body-color: #212529;
+  --body-color-rgb: 33, 37, 41;
+  --body-bg: #FFFFFF;
+  --body-bg-rgb: 255, 255, 255;
+  --emphasis-color: #000;
+  --emphasis-color-rgb: 0, 0, 0;
+  --secondary-color: rgba(33, 37, 41, 0.75);
+  --secondary-color-rgb: 33, 37, 41;
+  --secondary-bg: #E9ECEF;
+  --secondary-bg-rgb: 233, 236, 239;
+  --tertiary-color: rgba(33, 37, 41, 0.5);
+  --tertiary-color-rgb: 33, 37, 41;
+  --tertiary-bg: #e9e9ea;
+  --tertiary-bg-rgb: 233, 233, 234;
+  --heading-color: inherit;
+  --link-color: #00f811;
+  --link-color-rgb: 0, 247.7, 17.08275862;
+  --link-decoration: none;
+  --link-hover-color: #00ab0c;
+  --link-hover-color-rgb: 0, 171.2, 11.80689655;
+  --link-hover-decoration: underline;
+  --code-color: #e83e8c;
+  --highlight-color: #212529;
+  --highlight-bg: #fff3cd;
+  --border-width: 1px;
+  --border-style: solid;
+  --border-color: var(--o-border-color);
+  --border-color-translucent: rgba(0, 0, 0, 0.175);
+  --border-radius: 0.375rem;
+  --border-radius-sm: 0.25rem;
+  --border-radius-lg: 0.5rem;
+  --border-radius-xl: 1rem;
+  --border-radius-xxl: 2rem;
+  --border-radius-2xl: var(--border-radius-xxl);
+  --border-radius-pill: 50rem;
+  --box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.12);
+  --box-shadow-sm: 0px 1px 3px rgba(0, 0, 0, 0.1);
+  --box-shadow-lg: 0px 12px 32px rgba(0, 0, 0, 0.175);
+  --box-shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.075);
+  --focus-ring-width: 0.25rem;
+  --focus-ring-opacity: 0.25;
+  --focus-ring-color: rgba(110, 255, 120, 0.25);
+  --form-valid-color: #28a745;
+  --form-valid-border-color: #28a745;
+  --form-invalid-color: #dc3545;
+  --form-invalid-border-color: #dc3545;
+  --breakpoint-xs: 0;
+  --breakpoint-sm: 576px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 992px;
+  --breakpoint-xl: 1200px;
+  --breakpoint-xxl: 1400px;
+  --100: #F8F9FA;
+  --200: #E9ECEF;
+  --300: #DEE2E6;
+  --400: #CED4DA;
+  --500: #ADB5BD;
+  --600: #6C757D;
+  --700: #495057;
+  --800: #343A40;
+  --900: #212529;
+  --white-85: rgba(255, 255, 255, 0.85);
+  --white-75: rgba(255, 255, 255, 0.75);
+  --white-50: rgba(255, 255, 255, 0.5);
+  --white-25: rgba(255, 255, 255, 0.25);
+  --black-75: rgba(0, 0, 0, 0.75);
+  --black-50: rgba(0, 0, 0, 0.5);
+  --black-25: rgba(0, 0, 0, 0.25);
+  --black-15: rgba(0, 0, 0, 0.15);
+  --black: #000000;
+  --white: #FFFFFF;
+}
+
+/* Supprimé: ancien thème visuel des boutons de fermeture (bordure verte) */
+
+/* Supprimé: ancien override du close de la roue (conflit avec style local) */

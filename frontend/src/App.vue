@@ -1,35 +1,110 @@
 <script setup lang="ts">
 import { RouterView, useRoute } from 'vue-router'
+import { ref, onMounted, watch } from 'vue'
 import Navbar from './components/Navbar.vue'
+import Footer from './components/Footer.vue'
+import ItemReceivedPopup from './components/ItemReceivedPopup.vue'
+import { useCoinsStore } from './stores/coins'
+import { useAuthStore } from './stores/auth'
+import { secureApiCall } from './api'
+
 const route = useRoute();
+const coinsStore = useCoinsStore();
+const authStore = useAuthStore();
+
+// État pour la popup de notification d'items reçus
+const showItemReceivedPopup = ref(false);
+const currentItems = ref<any[]>([]);
+const currentAdminMessage = ref('');
 
 function getBgClass() {
   if (route.path === '/') return 'bg-accueil';
-  if (route.path.startsWith('/emploi') || route.path.startsWith('/liste')) return 'bg-gris';
+  if (route.path.startsWith('/devoir') || route.path.startsWith('/liste')) return 'bg-gris';
   return 'bg-accueil'; // fallback
 }
+
+// Fonction pour vérifier les nouveaux items (avec ou sans message)
+async function checkForNewItemsWithMessages() {
+  if (!authStore.user) return;
+  // Ne garder que les items offerts par un admin et non encore lus
+  const unread = (coinsStore.purchasedItems || []).filter((pi: any) => pi && pi.adminGiftRead === false && Number(pi.itemId) !== 0)
+  if (!unread.length) return
+
+  // Normaliser vers { id, name }
+  let list: any[] = unread.map((it: any) => ({ id: Number(it.itemId), name: it.itemName }))
+
+  // Enrichir avec les items dynamiques (créés via Admin Editor)
+  try {
+    const res: any = await secureApiCall('/items')
+    if (res && res.success && Array.isArray(res.items)) {
+      const byId = new Map<number, any>()
+      for (const it of res.items) {
+        if (typeof it.legacyId !== 'undefined') byId.set(Number(it.legacyId), it)
+      }
+      list = list.map((lite) => {
+        const dyn = byId.get(Number(lite.id))
+        if (dyn) {
+          return {
+            id: Number(dyn.legacyId),
+            name: dyn.name,
+            isDynamic: true,
+            assets: Array.isArray(dyn.assets) ? dyn.assets : [],
+            backgrounds: dyn.backgrounds || {}
+          }
+        }
+        return lite
+      })
+    }
+  } catch {}
+
+  currentItems.value = list
+
+  // Message: s'il y en a un, prendre celui du premier item qui en possède
+  const withMsg = unread.find((it: any) => Number(it.itemId) !== 0 && typeof it.adminMessage === 'string' && it.adminMessage.trim().length > 0)
+  currentAdminMessage.value = withMsg && typeof withMsg.adminMessage === 'string' ? withMsg.adminMessage : ''
+
+  showItemReceivedPopup.value = true
+}
+
+// Note: Pas de watch sur purchasedItems pour éviter d'ouvrir la pop-up
+// lors d'actions locales (équiper/déséquiper/achat). La vérification
+// s'effectue au chargement initial uniquement.
+
+// Fermer la popup
+async function closeItemReceivedPopup() {
+  showItemReceivedPopup.value = false;
+  // Acquitter tous les items affichés
+  try {
+    const list = Array.isArray(currentItems.value) ? currentItems.value : []
+    for (const it of list) {
+      await secureApiCall(`/users/ack-gift/${it.id}`, { method: 'POST' })
+    }
+  } catch {}
+  currentItems.value = [];
+  currentAdminMessage.value = '';
+}
+
+onMounted(() => {
+  // Vérifier les nouveaux items après le chargement initial
+  setTimeout(async () => {
+    await checkForNewItemsWithMessages();
+  }, 1000);
+});
 </script>
 
 <template>
   <div :class="['app-bg', getBgClass()]">
     <Navbar />
     <RouterView />
-    <footer class="footer-bar-liste">
-      <div class="footer-content-liste">
-        <div class="footer-links-liste">
-          <a href="#">Accueil</a> ·
-          <a href="#">À propos de nous</a> ·
-          <a href="#">Contactez-nous</a>
-        </div>
-        <div class="footer-contact-liste">
-          <span>PLANIFYMMI@GMAIL.COM</span>
-        </div>
-        <div class="footer-legal-liste">
-          VILLERS-LES-NANCY (54578) · MEURTHE-ET-MOSELLE (54) · LORRAINE · GRAND EST · FRANCE<br />
-          COPYRIGHT © PLANIFY (2025 PLANIFY ALL RIGHTS)
-        </div>
-      </div>
-    </footer>
+    <Footer />
+    
+    <!-- Popup de notification d'item reçu -->
+    <ItemReceivedPopup
+      :show="showItemReceivedPopup"
+      :items="currentItems"
+      :admin-message="currentAdminMessage"
+      @close="closeItemReceivedPopup"
+    />
   </div>
 </template>
 

@@ -14,6 +14,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
+import { API_URL } from '@/api';
 
 const username = ref('');
 const password = ref('');
@@ -22,7 +23,7 @@ const router = useRouter();
 
 async function login() {
   try {
-    const res = await axios.post('/api/users/login', {
+    const res = await axios.post(`${API_URL}/users/login`, {
       username: username.value,
       password: password.value
     });
@@ -59,6 +60,7 @@ async function login() {
 .login-form h2 {
   text-align: center;
   margin-bottom: 8px;
+  color: #111;
 }
 .login-form input {
   padding: 10px 16px;
