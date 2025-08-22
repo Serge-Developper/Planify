@@ -45,12 +45,10 @@ export default async function handler(req, res) {
       await client.connect();
       console.log('✅ Connexion MongoDB réussie');
       
-      // Lister toutes les bases de données pour debug
-      const adminDb = client.db('admin');
-      const databases = await adminDb.admin().listDatabases();
-      console.log('📋 Bases de données disponibles:', databases.databases.map(db => db.name));
+      // Utiliser la base de données par défaut de l'URI
+      const db = client.db();
+      console.log('📋 Base de données utilisée:', db.databaseName);
       
-      const db = client.db('planifyvrai');
       const usersCollection = db.collection('users');
       
       // Compter tous les utilisateurs pour debug
@@ -79,7 +77,8 @@ export default async function handler(req, res) {
           debug: {
             searchedUsername: username,
             totalUsers: totalUsers,
-            sampleUsers: sampleUsers.map(u => u.username)
+            sampleUsers: sampleUsers.map(u => u.username),
+            databaseName: db.databaseName
           }
         });
       }
