@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 // Connexion MongoDB
 if (process.env.MONGODB_URI) {
@@ -36,7 +36,7 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -58,4 +58,4 @@ module.exports = async (req, res) => {
     console.error('Erreur API users:', error);
     res.status(500).json({ error: 'Erreur interne du serveur' });
   }
-};
+}
