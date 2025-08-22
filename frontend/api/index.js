@@ -1,40 +1,61 @@
-const express = require('express');
-const cors = require('cors');
 require('dotenv').config();
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+
+const userRoutes = require('./routes/users');
+const eventRoutes = require('./routes/events');
+const contactRoutes = require('./routes/contact');
+const coinsRoutes = require('./routes/coins-simple');
+const itemsRoutes = require('./routes/items');
 
 const app = express();
 
-// Configuration CORS pour Vercel
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://planify-snowy.vercel.app', 'https://planify.vercel.app']
-    : ['http://localhost:5173', 'http://localhost:3000'],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept-Language']
-}));
+// Middleware CORS pour Vercel
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', 'https://planify-snowy.vercel.app');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+  
+  next();
+});
 
-// Middleware pour parser le JSON
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '35mb' }));
+app.use(express.urlencoded({ limit: '35mb', extended: true }));
 
-// Routes
-app.use('/api/users', require('./routes/users'));
-app.use('/api/items', require('./routes/items'));
-app.use('/api/events', require('./routes/events'));
-app.use('/api/coins', require('./routes/coins-simple'));
-app.use('/api/contact', require('./routes/contact'));
+// Connexion MongoDB
+if (process.env.MONGODB_URI) {
+  mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log('✅ Connecté à MongoDB'))
+  .catch((err) => console.error('❌ Erreur MongoDB :', err));
+}
 
 // Route de test
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'API Planify fonctionne correctement' });
+  res.json({ 
+    status: 'OK', 
+    message: 'API Planify fonctionne correctement',
+    timestamp: new Date().toISOString()
+  });
 });
 
-// Gestion des erreurs
+// Routes
+app.use('/api/users', userRoutes);
+app.use('/api/events', eventRoutes);
+app.use('/api/contact', contactRoutes);
+app.use('/api/coins', coinsRoutes);
+app.use('/api/items', itemsRoutes);
+
+// Middleware de gestion d'erreurs
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ error: 'Erreur interne du serveur' });
+  res.status(500).json({ message: 'Erreur interne du serveur' });
 });
 
-// Export pour Vercel
 module.exports = app; 
