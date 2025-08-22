@@ -1,7 +1,3 @@
-import { MongoClient } from 'mongodb';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-
 export default async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGINS || '*');
@@ -20,6 +16,11 @@ export default async function handler(req, res) {
     try {
       const { username, password } = req.body;
       
+      // Debug: Log les variables d'environnement
+      console.log('🔍 Debug - Variables d\'environnement:');
+      console.log('MONGODB_URI exists:', !!process.env.MONGODB_URI);
+      console.log('JWT_SECRET exists:', !!process.env.JWT_SECRET);
+      
       // Validate input
       if (!username || !password) {
         return res.status(400).json({
@@ -28,75 +29,24 @@ export default async function handler(req, res) {
         });
       }
       
-      // Connect to MongoDB
-      if (!process.env.MONGODB_URI) {
-        throw new Error('MONGODB_URI environment variable is not set');
-      }
-      const client = new MongoClient(process.env.MONGODB_URI);
-      await client.connect();
-      
-      const db = client.db('planifyvrai'); // Utilisez le bon nom de base de données
-      const usersCollection = db.collection('users');
-      
-      // Find user by username
-      const user = await usersCollection.findOne({ username: username });
-      
-      await client.close();
-      
-      if (!user) {
-        return res.status(401).json({
-          success: false,
-          message: 'Nom d\'utilisateur ou mot de passe incorrect'
-        });
-      }
-      
-      // Verify password
-      const isPasswordValid = await bcrypt.compare(password, user.password);
-      
-      if (!isPasswordValid) {
-        return res.status(401).json({
-          success: false,
-          message: 'Nom d\'utilisateur ou mot de passe incorrect'
-        });
-      }
-      
-      // Generate JWT token
-      if (!process.env.JWT_SECRET) {
-        throw new Error('JWT_SECRET environment variable is not set');
-      }
-      
-      const token = jwt.sign(
-        { 
-          userId: user._id.toString(),
-          username: user.username,
-          role: user.role 
-        },
-        process.env.JWT_SECRET,
-        { expiresIn: '24h' }
-      );
-      
-      // Check if user has secret questions
-      const hasSecretQuestions = user.secretQuestions && Array.isArray(user.secretQuestions) && user.secretQuestions.length > 0;
-      
+      // Test simple sans MongoDB pour l'instant
       res.status(200).json({
         success: true,
-        message: 'Connexion réussie',
+        message: 'Debug: API fonctionne',
         user: {
-          id: user._id.toString(),
-          username: user.username,
-          role: user.role,
-          groupe: user.groupe,
-          coins: user.coins || 0,
-          hasSecretQuestions: hasSecretQuestions
+          username: username,
+          role: 'debug',
+          hasSecretQuestions: false
         },
-        token: token
+        token: 'debug-token'
       });
       
     } catch (error) {
       console.error('Erreur connexion:', error);
       res.status(500).json({
         success: false,
-        message: 'Erreur lors de la connexion'
+        message: 'Erreur lors de la connexion',
+        error: error.message
       });
     }
   } else {
