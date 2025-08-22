@@ -39,12 +39,27 @@ export default async function handler(req, res) {
       }
       
       console.log('📡 Connexion à MongoDB...');
+      console.log('🔗 URI:', process.env.MONGODB_URI.substring(0, 50) + '...');
+      
       const client = new MongoClient(process.env.MONGODB_URI);
       await client.connect();
       console.log('✅ Connexion MongoDB réussie');
       
+      // Lister toutes les bases de données pour debug
+      const adminDb = client.db('admin');
+      const databases = await adminDb.admin().listDatabases();
+      console.log('📋 Bases de données disponibles:', databases.databases.map(db => db.name));
+      
       const db = client.db('planifyvrai');
       const usersCollection = db.collection('users');
+      
+      // Compter tous les utilisateurs pour debug
+      const totalUsers = await usersCollection.countDocuments();
+      console.log(`👥 Nombre total d'utilisateurs: ${totalUsers}`);
+      
+      // Lister quelques utilisateurs pour debug
+      const sampleUsers = await usersCollection.find({}).limit(3).toArray();
+      console.log('📋 Exemples d\'utilisateurs:', sampleUsers.map(u => u.username));
       
       // Find user by username
       console.log('🔍 Recherche utilisateur:', username);
@@ -60,7 +75,12 @@ export default async function handler(req, res) {
         console.log('❌ Utilisateur non trouvé');
         return res.status(404).json({
           success: false,
-          message: 'Utilisateur non trouvé'
+          message: 'Utilisateur non trouvé',
+          debug: {
+            searchedUsername: username,
+            totalUsers: totalUsers,
+            sampleUsers: sampleUsers.map(u => u.username)
+          }
         });
       }
       
