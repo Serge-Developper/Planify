@@ -1,0 +1,103 @@
+{
+  "info": {
+    "name": "Planify API Collection",
+    "description": "Collection pour tester les API de Planify sur Vercel",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Test Variables d'Environnement",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "https://planify-snowy.vercel.app/api/test-env",
+          "protocol": "https",
+          "host": ["planify-snowy", "vercel", "app"],
+          "path": ["api", "test-env"]
+        }
+      }
+    },
+    {
+      "name": "Test API Simple",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "https://planify-snowy.vercel.app/api/test-login",
+          "protocol": "https",
+          "host": ["planify-snowy", "vercel", "app"],
+          "path": ["api", "test-login"]
+        }
+      }
+    },
+    {
+      "name": "Connexion Utilisateur",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"test_user\",\n  \"password\": \"test_password\"\n}"
+        },
+        "url": {
+          "raw": "https://planify-snowy.vercel.app/api/users/login",
+          "protocol": "https",
+          "host": ["planify-snowy", "vercel", "app"],
+          "path": ["api", "users", "login"]
+        }
+      }
+    },
+    {
+      "name": "Test Health API",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "https://planify-snowy.vercel.app/api/health",
+          "protocol": "https",
+          "host": ["planify-snowy", "vercel", "app"],
+          "path": ["api", "health"]
+        }
+      }
+    },
+    {
+      "name": "Test Hello API",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "https://planify-snowy.vercel.app/api/hello",
+          "protocol": "https",
+          "host": ["planify-snowy", "vercel", "app"],
+          "path": ["api", "hello"]
+        }
+      }
+    }
+  ]
+}
