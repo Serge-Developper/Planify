@@ -55,7 +55,7 @@ async function handleCheck() {
   try {
     if (!questions.value.length) {
       // Première étape : récupérer les questions
-      const res = await fetch(`${API_URL}/users/forgot-password/questions`, {
+      const res = await fetch(`${API_URL}/forgot-password-questions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: username.value })
