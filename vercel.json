@@ -2,17 +2,6 @@
   "version": 2,
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "functions": {
-    "api/users/login.js": {
-      "runtime": "nodejs22.x"
-    },
-    "api/users/secret-questions.js": {
-      "runtime": "nodejs22.x"
-    },
-    "api/users/check-secret-questions.js": {
-      "runtime": "nodejs22.x"
-    }
-  },
   "routes": [
     {
       "src": "/api/(.*)",
