@@ -33,3 +33,4 @@ Seuls ces fichiers API existent maintenant :
 ### 5. Les dépendances sont installées
 Les modules `mongodb` et `jsonwebtoken` sont maintenant installés dans `frontend/node_modules/`.
 
+

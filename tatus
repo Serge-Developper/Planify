@@ -1,0 +1,5 @@
+[33m73364bc[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Fix: Configuration Vercel pour modules Node.js
+[33m90df789[m Fix: Configuration Vercel pour modules Node.js
+[33mbc0f57c[m Fix: Vraie connexion MongoDB Atlas avec import dynamique
+[33m05085e0[m Fix: Ajout de tous les utilisateurs de la base de données avec simulation
+[33m98dd1f3[m Fix: Restauration de la vraie connexion MongoDB pour tous les utilisateurs

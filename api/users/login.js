@@ -1,5 +1,6 @@
-// Import dynamique pour éviter les problèmes avec Vercel
-let MongoClient, bcrypt, jwt;
+import { MongoClient } from 'mongodb';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 export default async function handler(req, res) {
   // Set CORS headers
@@ -17,70 +18,72 @@ export default async function handler(req, res) {
   // Handle POST login request
   if (req.method === 'POST') {
     try {
+      console.log('🔍 Début de la requête de connexion');
+      
       const { username, password } = req.body;
+      console.log('📝 Données reçues:', { username, password: password ? '***' : 'undefined' });
       
       // Validate input
       if (!username || !password) {
+        console.log('❌ Données manquantes');
         return res.status(400).json({
           success: false,
           message: 'Nom d\'utilisateur et mot de passe requis'
         });
       }
       
-      // Import dynamique des modules
-      if (!MongoClient) {
-        const mongodb = await import('mongodb');
-        MongoClient = mongodb.MongoClient;
-      }
-      
-      if (!bcrypt) {
-        const bcryptModule = await import('bcryptjs');
-        bcrypt = bcryptModule.default;
-      }
-      
-      if (!jwt) {
-        const jwtModule = await import('jsonwebtoken');
-        jwt = jwtModule.default;
-      }
-      
-      // Connect to MongoDB
+      // Check environment variables
       if (!process.env.MONGODB_URI) {
+        console.error('❌ MONGODB_URI manquante');
         throw new Error('MONGODB_URI environment variable is not set');
       }
       
+      if (!process.env.JWT_SECRET) {
+        console.error('❌ JWT_SECRET manquant');
+        throw new Error('JWT_SECRET environment variable is not set');
+      }
+      
+      console.log('📡 Connexion à MongoDB...');
       const client = new MongoClient(process.env.MONGODB_URI);
       await client.connect();
+      console.log('✅ Connexion MongoDB réussie');
       
       const db = client.db('planifyvrai');
       const usersCollection = db.collection('users');
       
       // Find user by username
+      console.log('🔍 Recherche utilisateur:', username);
       const user = await usersCollection.findOne({ username: username });
       
       await client.close();
+      console.log('📡 Connexion MongoDB fermée');
       
       if (!user) {
+        console.log('❌ Utilisateur non trouvé');
         return res.status(401).json({
           success: false,
           message: 'Nom d\'utilisateur ou mot de passe incorrect'
         });
       }
       
+      console.log('✅ Utilisateur trouvé:', user.username);
+      
       // Verify password
+      console.log('🔐 Vérification du mot de passe...');
       const isPasswordValid = await bcrypt.compare(password, user.password);
       
       if (!isPasswordValid) {
+        console.log('❌ Mot de passe incorrect');
         return res.status(401).json({
           success: false,
           message: 'Nom d\'utilisateur ou mot de passe incorrect'
         });
       }
       
-      // Generate JWT token
-      if (!process.env.JWT_SECRET) {
-        throw new Error('JWT_SECRET environment variable is not set');
-      }
+      console.log('✅ Mot de passe correct');
       
+      // Generate JWT token
+      console.log('🎫 Génération du token JWT...');
       const token = jwt.sign(
         { 
           userId: user._id.toString(),
@@ -93,6 +96,9 @@ export default async function handler(req, res) {
       
       // Check if user has secret questions
       const hasSecretQuestions = user.secretQuestions && Array.isArray(user.secretQuestions) && user.secretQuestions.length > 0;
+      console.log('❓ Questions secrètes:', hasSecretQuestions);
+      
+      console.log('🎉 Connexion réussie pour:', user.username);
       
       res.status(200).json({
         success: true,
@@ -109,7 +115,7 @@ export default async function handler(req, res) {
       });
       
     } catch (error) {
-      console.error('Erreur connexion:', error);
+      console.error('❌ Erreur lors de la connexion:', error);
       res.status(500).json({
         success: false,
         message: 'Erreur lors de la connexion',
@@ -117,6 +123,7 @@ export default async function handler(req, res) {
       });
     }
   } else {
+    console.log('❌ Méthode non autorisée:', req.method);
     res.status(405).json({
       success: false,
       message: 'Méthode non autorisée'
