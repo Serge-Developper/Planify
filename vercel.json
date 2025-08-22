@@ -1,11 +1,26 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "framework": "vite",
-  "rewrites": [
+  "version": 2,
+  "functions": {
+    "api/users/login.js": {
+      "runtime": "nodejs22.x"
+    },
+    "api/users/secret-questions.js": {
+      "runtime": "nodejs22.x"
+    },
+    "api/users/check-secret-questions.js": {
+      "runtime": "nodejs22.x"
+    }
+  },
+  "builds": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
+      "src": "api/**/*.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
     }
   ]
 }
