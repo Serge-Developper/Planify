@@ -1494,14 +1494,21 @@ async function handleAvatarUpload(event) {
   }
 
   try {
-    const formData = new FormData();
-    formData.append('avatar', file);
+    // Convertir le fichier en base64
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
 
     console.log('🚀 Upload avatar en cours...');
-    const response = await axios.post(`${API_URL}/users/upload-avatar`, formData, {
+    const response = await axios.post(`${API_URL}/upload-avatar`, {
+      file: base64
+    }, {
       headers: {
         'Authorization': `Bearer ${user.value.token}`,
-        'Content-Type': 'multipart/form-data'
+        'Content-Type': 'application/json'
       }
     });
 
