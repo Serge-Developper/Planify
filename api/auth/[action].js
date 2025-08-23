@@ -92,11 +92,17 @@ module.exports = async (req, res) => {
       );
 
       const { password: _, ...userWithoutPassword } = user.toObject();
+      
+      // Vérifier si l'utilisateur a des questions secrètes configurées
+      const hasSecretQuestions = user.secretQuestions && 
+                                user.secretQuestions.length > 0 && 
+                                user.secretQuestions.every(q => q.question && q.answer);
 
       return res.status(200).json({
         success: true,
         user: userWithoutPassword,
-        token: token
+        token: token,
+        hasSecretQuestions: hasSecretQuestions
       });
     }
 
