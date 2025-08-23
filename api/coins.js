@@ -21,7 +21,7 @@ const connectDB = async () => {
   }
 };
 
-// User Schema
+// User Schema (complete version for all endpoints)
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
@@ -31,8 +31,19 @@ const userSchema = new mongoose.Schema({
   role: { type: String, enum: ['admin', 'prof', 'delegue', 'eleve', 'etudiant'], required: true },
   year: { type: String, enum: ['BUT1', 'BUT2', 'BUT3'], default: null },
   groupe: { type: String, enum: ['A', "A'", 'A2', 'B', "B'", 'B2', 'Promo'], default: null },
-  purchasedItems: [{ type: Number }],
+  secretQuestions: [{
+    question: { type: String, required: true },
+    answer: { type: String, required: true }
+  }],
+  purchasedItems: [{
+    itemId: { type: Number, required: true },
+    itemName: { type: String, required: true },
+    purchaseDate: { type: Date, default: Date.now },
+    equipped: { type: Boolean, default: false },
+    adminMessage: { type: String, default: null }
+  }],
   equippedItemId: { type: Number, default: null },
+  completedTasks: { type: Number, default: 0 },
   lastSpinDate: { type: Date, default: null }
 }, { timestamps: true });
 
@@ -48,24 +59,73 @@ const setCorsHeaders = (res) => {
 // JWT verification
 const verifyToken = (req) => {
   const authHeader = req.headers.authorization;
-  if (!authHeader) {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
     throw new Error('Token manquant');
   }
+  const token = authHeader.substring(7);
+  return jwt.verify(token, process.env.JWT_SECRET, {
+    issuer: 'planify-api',
+    audience: 'planify-frontend'
+  });
+};
 
-  const token = authHeader.split(' ')[1];
-  if (!token) {
-    throw new Error('Token manquant');
-  }
+// Weekly items data and logic
+const getAllWeeklyItems = () => [
+  { id: 1, name: 'Oreilles de chat', price: 50, img: 'oreilleschat' },
+  { id: 2, name: 'Clown', price: 80, img: 'clowncheveux' },
+  { id: 3, name: 'Cash', price: 60, img: 'cash' },
+  { id: 4, name: 'Cible', price: 100, img: 'target' },
+  { id: 6, name: 'Roi', price: 90, img: 'roi' },
+  { id: 7, name: 'Matrix', price: 110, img: 'matrix' },
+  { id: 8, name: 'Ange', price: 120, img: 'angelwings' },
+  { id: 9, name: 'Tomb Raider', price: 130, img: 'laracroft' },
+  { id: 10, name: 'Étoiles', price: 85, img: 'star' },
+  { id: 11, name: 'Cadre royale', price: 95, img: 'cadre' },
+  { id: 12, name: 'Roses', price: 105, img: 'love' },
+  { id: 13, name: 'Gentleman', price: 115, img: 'moustache' },
+  { id: 14, name: 'Vinyle', price: 135, img: 'vinyle' },
+  { id: 15, name: 'Advisory', price: 145, img: 'advisory' },
+  { id: 16, name: 'Espace', price: 155, img: 'spacestars' },
+  { id: 17, name: 'Absolute Cinema', price: 165, img: 'bras' },
+  { id: 18, name: 'Flash', price: 175, img: 'flash' },
+  { id: 19, name: 'Miaou', price: 185, img: 'chat' },
+  { id: 20, name: 'DVD', price: 195, img: 'dvd' },
+  { id: 21, name: 'Lunettes pixel', price: 205, img: 'mlglunette' },
+  { id: 22, name: '2000', price: 215, img: 'nokia' }
+];
 
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET, {
-      issuer: 'planify-api',
-      audience: 'planify-frontend'
-    });
-    return decoded;
-  } catch (error) {
-    throw new Error('Token invalide');
+const getClassicBorderVariants = () => [
+  { id: 'red', name: 'Rouge', color: '#ff0000' },
+  { id: 'blue', name: 'Bleu', color: '#0066ff' },
+  { id: 'green', name: 'Vert', color: '#00cc00' },
+  { id: 'purple', name: 'Violet', color: '#9900cc' },
+  { id: 'orange', name: 'Orange', color: '#ff6600' },
+  { id: 'pink', name: 'Rose', color: '#ff3399' },
+  { id: 'cyan', name: 'Cyan', color: '#00cccc' },
+  { id: 'yellow', name: 'Jaune', color: '#ffcc00' },
+  { id: 'magenta', name: 'Magenta', color: '#cc0099' },
+  { id: 'lime', name: 'Vert citron', color: '#66ff00' }
+];
+
+const getCurrentDaySeed = () => {
+  const now = new Date();
+  return now.toISOString().split('T')[0];
+};
+
+const getRandomItemsFromSeed = (seed, items, count = 3) => {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    const char = seed.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
   }
+  
+  const shuffled = [...items].sort(() => {
+    hash = (hash * 9301 + 49297) % 233280;
+    return (hash / 233280) - 0.5;
+  });
+  
+  return shuffled.slice(0, count);
 };
 
 module.exports = async (req, res) => {
@@ -76,188 +136,280 @@ module.exports = async (req, res) => {
   }
 
   try {
+    // Parse the URL to determine the endpoint
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const pathSegments = url.pathname.split('/').filter(Boolean);
+    
+    // Remove 'api' and 'coins' from path
+    const endpoint = pathSegments.slice(2).join('/') || 'main';
+    
+    console.log('🪙 Coins API called:', { method: req.method, endpoint, url: req.url });
+
+    // Handle different endpoints
+    if (endpoint === 'weekly-items' && req.method === 'GET') {
+      // WEEKLY ITEMS ENDPOINT (public)
+      const allWeeklyItems = getAllWeeklyItems();
+      const daySeed = getCurrentDaySeed();
+      const weeklyItems = getRandomItemsFromSeed(daySeed, allWeeklyItems, 3);
+      
+      // Add test items if any
+      if (global.__WEEKLY_TEST_IDS__ && global.__WEEKLY_TEST_IDS__.size) {
+        const ids = Array.from(global.__WEEKLY_TEST_IDS__);
+        for (const id of ids) {
+          const s = allWeeklyItems.find(x => x.id === id);
+          if (s && !weeklyItems.find(x => x.id === id)) weeklyItems.push(s);
+        }
+      }
+
+      const classicBorderVariants = getClassicBorderVariants();
+      const weeklyColors = getRandomItemsFromSeed(daySeed + '-colors', classicBorderVariants, 3);
+
+      const now = new Date();
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(1, 0, 0, 0);
+      const timeLeft = tomorrow.getTime() - now.getTime();
+      const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+      const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+      const timeUntilReset = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+      return res.status(200).json({
+        success: true,
+        weeklyItems,
+        weeklyColors,
+        timeUntilReset,
+        daySeed,
+        nextReset: tomorrow.toISOString()
+      });
+    }
+
+    // For all other endpoints, require authentication
+    const user = verifyToken(req);
+    const userIdString = user.id || user._id;
+    
+    if (!userIdString || !mongoose.Types.ObjectId.isValid(userIdString)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'UserId invalide' 
+      });
+    }
+
     await connectDB();
-
-    // GET /api/coins - Get user coins and inventory
-    if (req.method === 'GET') {
-      try {
-        const user = verifyToken(req);
-        const userId = user.id || user._id;
-        
-        const userData = await User.findById(userId);
-        if (!userData) {
-          return res.status(404).json({ error: 'Utilisateur non trouvé' });
-        }
-        
-        return res.status(200).json({
-          coins: userData.coins || 0,
-          purchasedItems: userData.purchasedItems || [],
-          equippedItemId: userData.equippedItemId
+    const userDoc = await User.findById(userIdString);
+    
+    if (endpoint === 'user-coins' && req.method === 'GET') {
+      // USER COINS ENDPOINT
+      return res.json({ 
+        success: true, 
+        coins: userDoc ? userDoc.coins || 0 : 0 
+      });
+    }
+    
+    if (endpoint === 'inventory' && req.method === 'GET') {
+      // INVENTORY ENDPOINT
+      return res.json({ 
+        success: true,
+        purchasedItems: userDoc ? userDoc.purchasedItems || [] : [],
+        equippedItemId: userDoc ? userDoc.equippedItemId : null
+      });
+    }
+    
+    if (endpoint === 'spin-status' && req.method === 'GET') {
+      // SPIN STATUS ENDPOINT
+      if (!userDoc) {
+        return res.json({
+          success: true,
+          canSpin: true,
+          lastSpinDate: null
         });
-      } catch (authError) {
-        return res.status(401).json({ error: 'Non autorisé' });
       }
+
+      const now = new Date();
+      const lastSpin = userDoc.lastSpinDate;
+      let canSpin = true;
+      
+      if (lastSpin) {
+        const timeDiff = now.getTime() - lastSpin.getTime();
+        const hoursDiff = timeDiff / (1000 * 60 * 60);
+        
+        if (hoursDiff < 24) {
+          canSpin = false;
+        }
+      }
+      
+      return res.json({
+        success: true,
+        canSpin,
+        lastSpinDate: lastSpin
+      });
+    }
+    
+    if (endpoint === 'purchase' && req.method === 'POST') {
+      // PURCHASE ENDPOINT
+      const { itemId, itemName, price, type } = req.body;
+      
+      if (!itemId || !itemName || !price) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Informations manquantes pour l\'achat' 
+        });
+      }
+      
+      if (!userDoc) {
+        return res.status(404).json({ 
+          success: false, 
+          message: 'Utilisateur non trouvé' 
+        });
+      }
+      
+      // Check if already purchased
+      const alreadyPurchased = userDoc.purchasedItems.some(item => item.itemId === itemId);
+      if (alreadyPurchased) {
+        return res.json({ 
+          success: false, 
+          message: 'Vous avez déjà acheté cet item' 
+        });
+      }
+      
+      // Check if enough coins
+      if (userDoc.coins < price) {
+        return res.json({ 
+          success: false, 
+          message: 'Coins insuffisants pour cet achat' 
+        });
+      }
+      
+      // Deduct coins and add item
+      userDoc.coins -= price;
+      const purchasedItem = {
+        itemId,
+        itemName,
+        purchaseDate: new Date(),
+        equipped: false
+      };
+      userDoc.purchasedItems.push(purchasedItem);
+      
+      await userDoc.save();
+      
+      return res.json({
+        success: true,
+        message: `Achat réussi ! Vous avez acheté ${itemName}`,
+        newCoins: userDoc.coins,
+        purchasedItem
+      });
     }
 
-    // POST /api/coins - Handle coin operations
+    // MAIN ENDPOINT (spin-wheel, etc.) - keeping existing logic
     if (req.method === 'POST') {
-      try {
-        const user = verifyToken(req);
-        const userId = user.id || user._id;
-        const { action, ...data } = req.body;
-
-        const userData = await User.findById(userId);
-        if (!userData) {
-          return res.status(404).json({ error: 'Utilisateur non trouvé' });
+      const { action } = req.body || {};
+      
+      if (action === 'spin-wheel') {
+        if (!userDoc) {
+          return res.json({
+            success: true,
+            coinsWon: 10,
+            newCoins: 10,
+            rewardName: "10 coins",
+            message: "Félicitations ! Vous avez gagné 10 coins !"
+          });
         }
-
-        switch (action) {
-          case 'purchase':
-            const { itemId, price } = data;
-            
-            if (!itemId || !price) {
-              return res.status(400).json({ 
-                success: false, 
-                message: 'ItemId et prix requis' 
-              });
-            }
-
-            // Vérifier si déjà acheté
-            if (userData.purchasedItems.includes(itemId)) {
-              return res.status(400).json({ 
-                success: false, 
-                message: 'Item déjà acheté' 
-              });
-            }
-
-            // Vérifier les coins
-            if (userData.coins < price) {
-              return res.status(400).json({ 
-                success: false, 
-                message: 'Coins insuffisants' 
-              });
-            }
-
-            // Effectuer l'achat
-            userData.coins -= price;
-            userData.purchasedItems.push(itemId);
-            await userData.save();
-
-            return res.status(200).json({
-              success: true,
-              message: 'Achat effectué',
-              coins: userData.coins,
-              purchasedItems: userData.purchasedItems
+        
+        // Check if user can spin (once per day)
+        const now = new Date();
+        const lastSpin = userDoc.lastSpinDate;
+        
+        if (lastSpin) {
+          const timeDiff = now.getTime() - lastSpin.getTime();
+          const hoursDiff = timeDiff / (1000 * 60 * 60);
+          
+          if (hoursDiff < 24) {
+            return res.json({ 
+              message: "Vous avez déjà tourné la roue aujourd'hui. Revenez demain !",
+              canSpin: false
             });
-
-          case 'equip':
-            const { itemId: equipItemId } = data;
-            
-            if (!userData.purchasedItems.includes(equipItemId)) {
-              return res.status(400).json({ 
-                success: false, 
-                message: 'Item non possédé' 
-              });
-            }
-
-            userData.equippedItemId = equipItemId;
-            await userData.save();
-
-            return res.status(200).json({
-              success: true,
-              message: 'Item équipé',
-              equippedItemId: userData.equippedItemId
-            });
-
-          case 'spin-wheel':
-            // Vérifier si l'utilisateur peut tourner la roue (une fois par jour)
-            const now = new Date();
-            const lastSpin = userData.lastSpinDate;
-            
-            if (lastSpin) {
-              const timeDiff = now.getTime() - lastSpin.getTime();
-              const hoursDiff = timeDiff / (1000 * 60 * 60);
-              
-              if (hoursDiff < 24) {
-                return res.status(200).json({ 
-                  success: false,
-                  message: "Vous avez déjà tourné la roue aujourd'hui. Revenez demain !",
-                  canSpin: false
-                });
-              }
-            }
-
-            // Segments de la roue (récompenses possibles)
-            const segments = [
-              { name: "10 coins", coins: 10, weight: 20 },
-              { name: "20 coins", coins: 20, weight: 15 },
-              { name: "50 coins", coins: 50, weight: 10 },
-              { name: "Perdu", coins: 0, weight: 30 },
-              { name: "5 coins", coins: 5, weight: 25 }
-            ];
-
-            // Sélection aléatoire basée sur les poids
-            const totalWeight = segments.reduce((sum, seg) => sum + seg.weight, 0);
-            let random = Math.random() * totalWeight;
-            let selectedReward = segments[0];
-
-            for (const segment of segments) {
-              if (random < segment.weight) {
-                selectedReward = segment;
-                break;
-              }
-              random -= segment.weight;
-            }
-
-            // Vérifier si c'est le weekend pour le bonus x2
-            const dayOfWeek = now.getDay();
-            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // Dimanche (0) ou Samedi (6)
-            
-            let finalCoins = selectedReward.coins;
-            let isWeekendBonus = false;
-            
-            if (isWeekend && selectedReward.coins > 0) {
-              finalCoins = selectedReward.coins * 2;
-              isWeekendBonus = true;
-            }
-            
-            // Ajouter les coins et mettre à jour la date du dernier spin
-            userData.coins = (userData.coins || 0) + finalCoins;
-            userData.lastSpinDate = now;
-            await userData.save();
-            
-            // Message personnalisé selon le weekend ou non
-            let message;
-            if (selectedReward.coins === 0) {
-              message = "Pas de chance cette fois ! Revenez demain.";
-            } else if (isWeekendBonus) {
-              message = `Félicitations ! Vous avez gagné ${selectedReward.coins} coins (x2 weekend = ${finalCoins} coins) !`;
-            } else {
-              message = `Félicitations ! Vous avez gagné ${finalCoins} coins !`;
-            }
-
-            return res.status(200).json({
-              success: true,
-              coinsWon: finalCoins,
-              newCoins: userData.coins,
-              rewardName: selectedReward.name,
-              isWeekendBonus: isWeekendBonus,
-              originalCoins: selectedReward.coins,
-              message: message
-            });
-
-          default:
-            return res.status(400).json({ error: 'Action non supportée' });
+          }
         }
-      } catch (authError) {
-        return res.status(401).json({ error: 'Non autorisé' });
+        
+        // Possible rewards
+        const rewards = [
+          { coins: 10, probability: 0.15, name: "10 coins" },
+          { coins: 20, probability: 0.15, name: "20 coins" },
+          { coins: 30, probability: 0.15, name: "30 coins" },
+          { coins: 50, probability: 0.15, name: "50 coins" },
+          { coins: 70, probability: 0.15, name: "70 coins" },
+          { coins: 100, probability: 0.15, name: "100 coins" },
+          { coins: 0, probability: 0.10, name: "Perdu" }
+        ];
+        
+        // Random selection
+        const rand = Math.random();
+        let cumulative = 0;
+        let reward = rewards[0];
+        
+        for (const r of rewards) {
+          cumulative += r.probability;
+          if (rand <= cumulative) {
+            reward = r;
+            break;
+          }
+        }
+        
+        // Weekend bonus
+        const dayOfWeek = now.getDay();
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+        
+        let finalCoins = reward.coins;
+        let isWeekendBonus = false;
+        
+        if (isWeekend && reward.coins > 0) {
+          finalCoins = reward.coins * 2;
+          isWeekendBonus = true;
+        }
+        
+        // Add coins and update last spin date
+        userDoc.coins = (userDoc.coins || 0) + finalCoins;
+        userDoc.lastSpinDate = now;
+        await userDoc.save();
+        
+        let message;
+        if (isWeekend && reward.coins > 0) {
+          message = `🎉 WEEKEND BONUS x2 ! Vous avez gagné ${finalCoins} coins (${reward.coins} x 2) !`;
+        } else if (reward.coins > 0) {
+          message = `Félicitations ! Vous avez gagné ${finalCoins} coins !`;
+        } else {
+          message = `😔 Dommage, vous n'avez rien gagné cette fois-ci !`;
+        }
+        
+        return res.json({
+          success: true,
+          coinsWon: finalCoins,
+          newCoins: userDoc.coins,
+          rewardName: reward.name,
+          isWeekendBonus: isWeekendBonus,
+          originalCoins: reward.coins,
+          message: message
+        });
       }
     }
-
-    return res.status(405).json({ error: 'Méthode non autorisée' });
-
+    
+    return res.status(405).json({ 
+      success: false, 
+      message: 'Méthode ou endpoint non supporté' 
+    });
+    
+  } catch (authError) {
+    console.error('❌ Erreur auth coins:', authError.message);
+    return res.status(401).json({ 
+      success: false, 
+      message: 'Non autorisé' 
+    });
   } catch (error) {
-    console.error('Erreur API coins:', error);
-    res.status(500).json({ error: 'Erreur serveur interne' });
+    console.error('❌ Erreur coins:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Erreur serveur',
+      error: error.message 
+    });
   }
 };
