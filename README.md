@@ -77,3 +77,5 @@
 
 *Migration réalisée avec succès le 23 Août 2025 🎉*  
 *Développé par Serge TOVMASSIAN - BUT MMI Nancy*
+
+<!-- Test de modification pour vérifier le push Git ✨ -->
