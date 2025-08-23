@@ -1,47 +1,86 @@
-import { MongoClient } from 'mongodb';
+// @ts-nocheck
+import express from 'express';
+import nodemailer from 'nodemailer';
 
-export default async function handler(req, res) {
-  // Gestion CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
+const router = express.Router();
+
+// Middleware CORS pour Vercel
+const corsMiddleware = (req, res, next) => {
+  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['https://planify-snowy.vercel.app'];
+  const origin = req.headers.origin;
+  
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  
   if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+    res.status(200).end();
+    return;
   }
+  
+  next();
+};
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Méthode non autorisée' });
-  }
+// Appliquer CORS à toutes les routes
+router.use(corsMiddleware);
 
+// Route pour envoyer un message de contact
+router.post('/', async (req, res) => {
   try {
-    const { name, email, message } = req.body;
-
-    if (!name || !email || !message) {
-      return res.status(400).json({ error: 'Tous les champs sont requis' });
+    const { name, email, subject, message } = req.body;
+    
+    if (!name || !email || !subject || !message) {
+      return res.status(400).json({
+        success: false,
+        message: 'Tous les champs sont requis'
+      });
     }
-
-    const mongoUri = process.env.MONGODB_URI;
-    if (!mongoUri) {
-      return res.status(500).json({ error: 'MONGODB_URI non configuré' });
-    }
-
-    const client = await MongoClient.connect(mongoUri);
-    const db = client.db();
-
-    const contactData = {
-      name,
-      email,
-      message,
-      createdAt: new Date()
+    
+    // Configuration du transporteur email
+    const transporter = nodemailer.createTransporter({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+    
+    // Configuration de l'email
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: process.env.EMAIL_USER, // Envoyer à l'admin
+      subject: `Contact Planify - ${subject}`,
+      html: `
+        <h2>Nouveau message de contact</h2>
+        <p><strong>Nom:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Sujet:</strong> ${subject}</p>
+        <p><strong>Message:</strong></p>
+        <p>${message}</p>
+        <hr>
+        <p><em>Message envoyé depuis le formulaire de contact de Planify</em></p>
+      `
     };
-
-    await db.collection('contacts').insertOne(contactData);
-    await client.close();
-
-    res.status(200).json({ success: true, message: 'Message envoyé avec succès' });
+    
+    // Envoyer l'email
+    await transporter.sendMail(mailOptions);
+    
+    res.json({
+      success: true,
+      message: 'Message envoyé avec succès'
+    });
+    
   } catch (error) {
-    console.error('Erreur contact:', error);
-    res.status(500).json({ error: 'Erreur lors de l\'envoi du message' });
+    console.error('Erreur envoi email:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de l\'envoi du message'
+    });
   }
-}
+});
+
+export default router;
