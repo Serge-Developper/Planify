@@ -57,10 +57,9 @@ export default async function handler(req, res) {
       console.log('🔍 Recherche utilisateur:', username);
       const user = await usersCollection.findOne({ username: username });
       
-      await client.close();
-      console.log('📡 Connexion MongoDB fermée');
-      
       if (!user) {
+        await client.close();
+        console.log('📡 Connexion MongoDB fermée');
         console.log('❌ Utilisateur non trouvé');
         return res.status(401).json({
           success: false,
@@ -75,6 +74,8 @@ export default async function handler(req, res) {
       const isPasswordValid = await bcrypt.default.compare(password, user.password);
       
       if (!isPasswordValid) {
+        await client.close();
+        console.log('📡 Connexion MongoDB fermée');
         console.log('❌ Mot de passe incorrect');
         return res.status(401).json({
           success: false,
@@ -83,6 +84,29 @@ export default async function handler(req, res) {
       }
       
       console.log('✅ Mot de passe correct');
+      
+      // Check if user has secret questions (calculé automatiquement)
+      const hasSecretQuestions = user.secretQuestions && Array.isArray(user.secretQuestions) && user.secretQuestions.length > 0;
+      console.log('❓ Questions secrètes:', hasSecretQuestions);
+      console.log('📋 Détails questions secrètes:', {
+        secretQuestions: user.secretQuestions ? user.secretQuestions.length : 0,
+        hasSecretQuestions: user.hasSecretQuestions,
+        calculatedHasSecretQuestions: hasSecretQuestions
+      });
+      
+      // Si l'utilisateur a des questions secrètes mais pas le flag, on le met à jour
+      if (hasSecretQuestions && !user.hasSecretQuestions) {
+        console.log('🔄 Mise à jour du flag hasSecretQuestions...');
+        try {
+          const updateResult = await usersCollection.updateOne(
+            { _id: user._id },
+            { $set: { hasSecretQuestions: true } }
+          );
+          console.log('✅ Flag hasSecretQuestions mis à jour:', updateResult.modifiedCount > 0);
+        } catch (updateError) {
+          console.log('⚠️ Erreur lors de la mise à jour du flag:', updateError.message);
+        }
+      }
       
       // Generate JWT token
       console.log('🎫 Génération du token JWT...');
@@ -96,14 +120,8 @@ export default async function handler(req, res) {
         { expiresIn: '24h' }
       );
       
-      // Check if user has secret questions
-      const hasSecretQuestions = user.secretQuestions && Array.isArray(user.secretQuestions) && user.secretQuestions.length > 0;
-      console.log('❓ Questions secrètes:', hasSecretQuestions);
-      console.log('📋 Détails questions secrètes:', {
-        secretQuestions: user.secretQuestions ? user.secretQuestions.length : 0,
-        hasSecretQuestions: user.hasSecretQuestions,
-        calculatedHasSecretQuestions: hasSecretQuestions
-      });
+      await client.close();
+      console.log('📡 Connexion MongoDB fermée');
       
       console.log('🎉 Connexion réussie pour:', user.username);
       
