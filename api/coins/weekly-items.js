@@ -1,5 +1,3 @@
-const mongoose = require('mongoose');
-
 // CORS headers
 const setCorsHeaders = (res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -8,18 +6,22 @@ const setCorsHeaders = (res) => {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
 };
 
-// JWT verification
-const jwt = require('jsonwebtoken');
+// JWT verification (optionnel pour cette API)
 function verifyToken(req) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    throw new Error('Token manquant');
+  try {
+    const jwt = require('jsonwebtoken');
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new Error('Token manquant');
+    }
+    const token = authHeader.substring(7);
+    return jwt.verify(token, process.env.JWT_SECRET, {
+      issuer: 'planify-api',
+      audience: 'planify-frontend'
+    });
+  } catch (error) {
+    throw new Error('Token invalide');
   }
-  const token = authHeader.substring(7);
-  return jwt.verify(token, process.env.JWT_SECRET, {
-    issuer: 'planify-api',
-    audience: 'planify-frontend'
-  });
 }
 
 module.exports = async (req, res) => {
@@ -30,12 +32,6 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Vérifier le token seulement pour les actions POST (test-add)
-    let user = null;
-    if (req.method === 'POST') {
-      user = verifyToken(req);
-    }
-    
     if (req.method === 'GET') {
       // Tous les items disponibles pour la boutique hebdomadaire
       const allWeeklyItems = [
@@ -158,8 +154,9 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Endpoint de test: ajouter un item par legacyId aux items du jour
+    // Endpoint de test: ajouter un item par legacyId aux items du jour (nécessite auth)
     if (req.method === 'POST' && req.body && req.body.action === 'test-add') {
+      const user = verifyToken(req); // Authentification requise pour POST
       if (!user || user.role !== 'admin') {
         return res.status(403).json({ success: false, message: 'Forbidden' });
       }
@@ -173,14 +170,12 @@ module.exports = async (req, res) => {
     }
     
     return res.status(405).json({ error: 'Méthode non autorisée' });
-  } catch (authError) {
-    console.error('❌ Erreur auth weekly-items:', authError.message);
-    return res.status(401).json({ error: 'Non autorisé' });
   } catch (error) {
-    console.error('Erreur weekly-items:', error);
+    console.error('❌ Erreur weekly-items:', error);
     return res.status(500).json({ 
       success: false, 
       message: 'Erreur lors de la récupération des items hebdomadaires',
+      error: error.message,
       weeklyItems: [],
       timeUntilReset: '00:00:00'
     });
