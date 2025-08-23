@@ -37,8 +37,15 @@ export default async function handler(req, res) {
     return handleSecretQuestions(req, res);
   }
   
-  // Handle GET request (profil utilisateur)
+  // Handle GET request (leaderboard ou profil utilisateur)
   if (req.method === 'GET' && !path) {
+    // Si pas de token, retourner le leaderboard public
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return handleLeaderboard(req, res);
+    }
+    
+    // Si token présent, retourner le profil utilisateur
     try {
       console.log('🔍 Début de la requête pour récupérer les infos utilisateur');
       
@@ -474,5 +481,67 @@ async function handleLogin(req, res) {
     console.error('=== ERREUR CONNEXION ===');
     console.error('Erreur lors de la connexion:', error);
     res.status(500).json({ message: 'Erreur interne du serveur' });
+  }
+}
+
+// Fonction pour gérer le leaderboard
+async function handleLeaderboard(req, res) {
+  try {
+    console.log('🏆 Chargement du leaderboard...');
+    
+    const mongoUri = process.env.MONGODB_URI;
+    if (!mongoUri) {
+      return res.status(500).json({ error: 'MONGODB_URI non configuré' });
+    }
+    
+    const client = await MongoClient.connect(mongoUri);
+    const db = client.db();
+    
+    // Récupérer tous les utilisateurs avec leurs stats
+    const users = await db.collection('users').find({}, {
+      projection: {
+        username: 1,
+        role: 1,
+        groupe: 1,
+        year: 1,
+        coins: 1,
+        avatar: 1,
+        completedTasks: 1,
+        validations: 1,
+        equippedItemId: 1,
+        selectedBorderColor: 1,
+        purchasedItems: 1
+      }
+    }).toArray();
+    
+    await client.close();
+    
+    // Formater les données pour le frontend
+    const formattedUsers = users.map(user => ({
+      username: user.username,
+      role: user.role || 'Non défini',
+      groupe: user.groupe || 'Non défini',
+      year: user.year || 'Non définie',
+      coins: user.coins || 0,
+      avatar: user.avatar || null,
+      completedTasks: user.completedTasks || 0,
+      validations: user.validations || 0,
+      equippedItemId: user.equippedItemId || null,
+      selectedBorderColor: user.selectedBorderColor || 'default',
+      purchasedItems: user.purchasedItems || []
+    }));
+    
+    console.log('✅ Leaderboard chargé:', formattedUsers.length, 'utilisateurs');
+    
+    res.json({
+      success: true,
+      users: formattedUsers
+    });
+  } catch (error) {
+    console.error('❌ Erreur lors du chargement du leaderboard:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Erreur interne du serveur' 
+    });
   }
 }
