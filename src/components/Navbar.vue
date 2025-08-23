@@ -1524,29 +1524,19 @@ function handleAdminMobile() {
 
 function afficherRole(role) {
   const roleMap = {
-    'student': 'Étudiant',
-    'etudiant': 'Étudiant', 
-    'eleve': 'Étudiant',
-    'professor': 'Professeur',
-    'prof': 'Professeur',
-    'delegate': 'Délégué',
-    'delegue': 'Délégué',
     'admin': 'Administrateur',
-    'user': 'Utilisateur'
+    'prof': 'Professeur',
+    'delegue': 'Délégué',
+    'eleve': 'Élève',
+    'etudiant': 'Étudiant'
   };
   return roleMap[role] || role;
 }
 function afficherAnnee(year) {
   const yearMap = {
-    '1ere': '1ère année',
-    '2eme': '2ème année', 
-    '3eme': '3ème année',
-    'BUT1': '1ère année',
-    'BUT2': '2ème année',
-    'BUT3': '3ème année',
-    'licence': 'Licence',
-    'master': 'Master',
-    'doctorat': 'Doctorat'
+    'BUT1': '1ère année BUT',
+    'BUT2': '2ème année BUT',
+    'BUT3': '3ème année BUT'
   };
   return yearMap[year] || year;
 }
