@@ -1,8 +1,7 @@
 {
   "version": 2,
-  "buildCommand": "cd frontend-clean/frontend && npm ci && npm run build",
+  "buildCommand": "bash build.sh",
   "outputDirectory": "frontend-clean/frontend/dist",
-  "installCommand": "echo 'Using npm ci in buildCommand'",
   "functions": {
     "api/**/*.js": {
       "maxDuration": 30
