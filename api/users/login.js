@@ -101,6 +101,12 @@ export default async function handler(req, res) {
       }
     );
 
+    // Debug des questions secrètes
+    console.log('🔍 Debug questions secrètes:');
+    console.log('- user.secretQuestions:', user.secretQuestions);
+    console.log('- user.hasSecretQuestions:', user.hasSecretQuestions);
+    console.log('- Nombre de questions:', user.secretQuestions ? user.secretQuestions.length : 0);
+
     // S'assurer que hasSecretQuestions est à true si l'utilisateur a des questions secrètes
     if (user.secretQuestions && user.secretQuestions.length > 0 && !user.hasSecretQuestions) {
       await db.collection('users').updateOne(
@@ -108,12 +114,17 @@ export default async function handler(req, res) {
         { $set: { hasSecretQuestions: true } }
       );
       user.hasSecretQuestions = true;
+      console.log('✅ hasSecretQuestions mis à jour à true');
     }
 
     await client.close();
     
     console.log('Token JWT créé avec succès');
     console.log('=== FIN CONNEXION RÉUSSIE ===');
+
+    // Vérifier si l'utilisateur a des questions secrètes (au moins 1 question)
+    const hasSecretQuestions = Boolean(user.secretQuestions && user.secretQuestions.length > 0);
+    console.log('🔍 hasSecretQuestions final:', hasSecretQuestions);
 
     res.json({
       _id: user._id,
@@ -123,7 +134,7 @@ export default async function handler(req, res) {
       year: user.year,
       avatar: user.avatar,
       token: token,
-      hasSecretQuestions: Boolean(user.secretQuestions && user.secretQuestions.length === 3)
+      hasSecretQuestions: hasSecretQuestions
     });
   } catch (error) {
     console.error('=== ERREUR CONNEXION ===');
