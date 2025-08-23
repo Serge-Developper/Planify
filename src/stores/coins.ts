@@ -171,6 +171,20 @@ export const useCoinsStore = defineStore('coins', {
     // Getter pour les couleurs de bordure débloquées
     unlockedBorderColors: (state) => {
       return state.borderColors.filter(color => color.unlocked);
+    },
+
+    // Getter pour obtenir l'index de variante dynamique d'un item
+    getDynamicItemVariant: (state) => (itemId: number) => {
+      // Pour Discord (itemId 23), retourner l'index de variante stocké
+      if (itemId === 23) {
+        return state.discordVariantIndex || 0;
+      }
+      // Pour Jojo (itemId 24), retourner l'index de variante stocké
+      if (itemId === 24) {
+        return state.jojoVariantIndex || 0;
+      }
+      // Pour les autres items, retourner 0 par défaut (première variante)
+      return 0;
     }
   },
 
