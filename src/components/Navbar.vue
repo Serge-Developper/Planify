@@ -753,9 +753,9 @@
         <h2>Profil</h2>
         <div class="profile-info">
           <div><strong>Nom d'utilisateur :</strong> {{ user?.username || user?.name || 'Utilisateur' }}</div>
-          <div><strong>Rôle :</strong> {{ user?.role ? afficherRole(user.role) : 'Non défini' }}</div>
-          <div><strong>Année :</strong> {{ user?.year ? afficherAnnee(user.year) : 'Non définie' }}</div>
-          <div><strong>Groupe :</strong> {{ user?.groupe || 'Non défini' }}</div>
+          <div><strong>Rôle :</strong> {{ user?.role ? afficherRole(user.role) : 'Utilisateur' }}</div>
+          <div v-if="user?.year"><strong>Année :</strong> {{ afficherAnnee(user.year) }}</div>
+          <div v-if="user?.groupe"><strong>Groupe :</strong> {{ user.groupe }}</div>
           <div class="coins-profile-row">
             <strong>PlanifyCoins :</strong>
             <span class="coins-value">{{ formattedBalance }}</span>
