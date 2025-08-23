@@ -1,6 +1,6 @@
 [build]
   # Commande de build pour Vue.js
-  command = "npm install && npm run build"
+  command = "npm run build"
   # Répertoire où sont les fichiers buildés
   publish = "dist"
   # Répertoire des fonctions Netlify (équivalent du dossier /api de Vercel)
@@ -11,6 +11,8 @@
   NODE_VERSION = "20"
   # Force clean install
   NPM_FLAGS = "--legacy-peer-deps"
+  # Disable cache pour forcer installation complète
+  NETLIFY_SKIP_CACHE = "true"
 
 # Redirections pour les API endpoints (DOIT être en premier)
 [[redirects]]
