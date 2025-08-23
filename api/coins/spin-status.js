@@ -3,9 +3,8 @@ import { MongoClient } from 'mongodb';
 export default async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGINS || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
@@ -13,30 +12,12 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Extraire l'action depuis l'URL
-  const url = new URL(req.url, `http://${req.headers.host}`);
-  const path = url.pathname.replace('/api/coins/', '');
-  
-  console.log('💰 Coins API - Path:', path, 'Method:', req.method);
-
-  // Route principale pour les coins
-  if (req.method === 'GET' && !path) {
-    return handleGetCoins(req, res);
+  // Only allow GET requests
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Méthode non autorisée' });
   }
-  
-  // Si on arrive ici, c'est une route non reconnue
-  console.log('❌ Route non reconnue:', path, 'Method:', req.method);
-  res.status(405).json({
-    success: false,
-    message: 'Méthode non autorisée'
-  });
-}
 
-// Fonction principale pour gérer les coins
-async function handleGetCoins(req, res) {
   try {
-    console.log('💰 Chargement des coins...');
-    
     // Vérifier l'authentification
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -71,13 +52,12 @@ async function handleGetCoins(req, res) {
     if (!mongoUri) {
       return res.status(500).json({ error: 'MONGODB_URI non configuré' });
     }
-    
     const client = await MongoClient.connect(mongoUri);
     const db = client.db();
     
     const user = await db.collection('users').findOne(
       { username: decoded.username },
-      { projection: { coins: 1, _id: 0 } }
+      { projection: { lastSpinDate: 1, _id: 0 } }
     );
     
     await client.close();
@@ -86,17 +66,25 @@ async function handleGetCoins(req, res) {
       return res.status(404).json({ error: 'Utilisateur non trouvé' });
     }
 
-    console.log('✅ Coins chargés:', user.coins || 0);
+    const now = new Date();
+    const lastSpin = user.lastSpinDate ? new Date(user.lastSpinDate) : null;
     
+    // Vérifier si l'utilisateur peut tourner aujourd'hui
+    let canSpin = true;
+    if (lastSpin) {
+      const lastSpinDate = new Date(lastSpin);
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const lastSpinDay = new Date(lastSpinDate.getFullYear(), lastSpinDate.getMonth(), lastSpinDate.getDate());
+      
+      canSpin = lastSpinDay.getTime() !== today.getTime();
+    }
+
     res.json({
-      success: true,
-      coins: user.coins || 0
+      canSpin: canSpin,
+      lastSpinDate: lastSpin
     });
   } catch (error) {
-    console.error('❌ Erreur lors du chargement des coins:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Erreur interne du serveur' 
-    });
+    console.error('Erreur lors de la récupération du statut de spin:', error);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
   }
 }
