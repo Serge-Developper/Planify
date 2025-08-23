@@ -468,10 +468,16 @@ async function toggleCheck(event) {
   if (!user.value) return alert('Non connecté');
   try {
     if (!event.checked) {
-      await axios.post(`${API_URL}/events/${event._id}/check`, {}, { headers: { Authorization: `Bearer ${user.value.token}` } });
+      await axios.post(`${API_URL}/events-check`, {
+        eventId: event._id,
+        action: 'check'
+      }, { headers: { Authorization: `Bearer ${user.value.token}` } });
       playSound(cocherSound)
     } else {
-      await axios.post(`${API_URL}/events/${event._id}/uncheck`, {}, { headers: { Authorization: `Bearer ${user.value.token}` } });
+      await axios.post(`${API_URL}/events-check`, {
+        eventId: event._id,
+        action: 'uncheck'
+      }, { headers: { Authorization: `Bearer ${user.value.token}` } });
       playSound(annulerSound)
     }
     await nextTick();
@@ -687,7 +693,10 @@ async function archiverTout() {
   const eventsToArchive = doneEvents.value.filter(e => !e.archived);
   try {
     for (const event of eventsToArchive) {
-      await axios.post(`${API_URL}/events/${event._id}/archive`, {}, { headers: { Authorization: `Bearer ${user.value.token}` } });
+      await axios.post(`${API_URL}/events-check`, {
+        eventId: event._id,
+        action: 'archive'
+      }, { headers: { Authorization: `Bearer ${user.value.token}` } });
     }
     emit('refresh-events');
     playSound(archiverSound)
@@ -711,10 +720,16 @@ async function viderArchive() {
   try {
     for (const event of archivesFiltered.value.slice()) {
       // 1) Retirer des archives
-      await axios.post(`${API_URL}/events/${event._id}/unarchive`, {}, { headers: { Authorization: `Bearer ${user.value.token}` } });
+      await axios.post(`${API_URL}/events-check`, {
+        eventId: event._id,
+        action: 'unarchive'
+      }, { headers: { Authorization: `Bearer ${user.value.token}` } });
       // 2) Retirer l'état "complété" pour ne pas réapparaître dans la liste "Tâches complétées"
       try {
-        await axios.post(`${API_URL}/events/${event._id}/uncheck`, {}, { headers: { Authorization: `Bearer ${user.value.token}` } });
+        await axios.post(`${API_URL}/events-check`, {
+          eventId: event._id,
+          action: 'uncheck'
+        }, { headers: { Authorization: `Bearer ${user.value.token}` } });
       } catch (e) { /* tolérant si déjà décoché */ }
       // 3) Tenter la suppression définitive (réussit si autorisé côté backend)
       try {
@@ -734,8 +749,16 @@ async function viderArchiveType(type) {
   if (!confirm(`Voulez-vous vraiment désarchiver tous les ${type === 'devoir' ? 'devoirs' : 'examens'} archivés ?`)) return;
   try {
     for (const event of archivesFiltered.value.filter(e => e.type === type).slice()) {
-      await axios.post(`${API_URL}/events/${event._id}/unarchive`, {}, { headers: { Authorization: `Bearer ${user.value.token}` } });
-      try { await axios.post(`${API_URL}/events/${event._id}/uncheck`, {}, { headers: { Authorization: `Bearer ${user.value.token}` } }); } catch {}
+      await axios.post(`${API_URL}/events-check`, {
+        eventId: event._id,
+        action: 'unarchive'
+      }, { headers: { Authorization: `Bearer ${user.value.token}` } });
+      try { 
+        await axios.post(`${API_URL}/events-check`, {
+          eventId: event._id,
+          action: 'uncheck'
+        }, { headers: { Authorization: `Bearer ${user.value.token}` } }); 
+      } catch {}
       try { await axios.delete(`${API_URL}/events/${event._id}`, { headers: { Authorization: `Bearer ${user.value.token}` } }); } catch {}
     }
     emit('refresh-events');
@@ -751,8 +774,16 @@ async function viderArchiveMatiere(matiere) {
   if (!confirm(`Voulez-vous vraiment désarchiver toutes les tâches archivées de la matière "${matiere}" ?`)) return;
   try {
     for (const event of archivesFiltered.value.filter(e => e.matiere === matiere).slice()) {
-      await axios.post(`${API_URL}/events/${event._id}/unarchive`, {}, { headers: { Authorization: `Bearer ${user.value.token}` } });
-      try { await axios.post(`${API_URL}/events/${event._id}/uncheck`, {}, { headers: { Authorization: `Bearer ${user.value.token}` } }); } catch {}
+      await axios.post(`${API_URL}/events-check`, {
+        eventId: event._id,
+        action: 'unarchive'
+      }, { headers: { Authorization: `Bearer ${user.value.token}` } });
+      try { 
+        await axios.post(`${API_URL}/events-check`, {
+          eventId: event._id,
+          action: 'uncheck'
+        }, { headers: { Authorization: `Bearer ${user.value.token}` } }); 
+      } catch {}
       try { await axios.delete(`${API_URL}/events/${event._id}`, { headers: { Authorization: `Bearer ${user.value.token}` } }); } catch {}
     }
     emit('refresh-events');
@@ -768,8 +799,16 @@ async function viderArchiveTypeMatiere(type, matiere) {
   if (!confirm(`Voulez-vous vraiment désarchiver tous les ${type === 'devoir' ? 'devoirs' : 'examens'} archivés de la matière "${matiere}" ?`)) return;
   try {
     for (const event of archivesFiltered.value.filter(e => e.type === type && e.matiere === matiere).slice()) {
-      await axios.post(`${API_URL}/events/${event._id}/unarchive`, {}, { headers: { Authorization: `Bearer ${user.value.token}` } });
-      try { await axios.post(`${API_URL}/events/${event._id}/uncheck`, {}, { headers: { Authorization: `Bearer ${user.value.token}` } }); } catch {}
+      await axios.post(`${API_URL}/events-check`, {
+        eventId: event._id,
+        action: 'unarchive'
+      }, { headers: { Authorization: `Bearer ${user.value.token}` } });
+      try { 
+        await axios.post(`${API_URL}/events-check`, {
+          eventId: event._id,
+          action: 'uncheck'
+        }, { headers: { Authorization: `Bearer ${user.value.token}` } }); 
+      } catch {}
       try { await axios.delete(`${API_URL}/events/${event._id}`, { headers: { Authorization: `Bearer ${user.value.token}` } }); } catch {}
     }
     emit('refresh-events');

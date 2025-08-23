@@ -38,6 +38,27 @@ const eventSchema = new mongoose.Schema({
 
 const Event = mongoose.models.Event || mongoose.model('Event', eventSchema);
 
+// User Schema (for completedTasks)
+const userSchema = new mongoose.Schema({
+  username: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  coins: { type: Number, default: 0 },
+  avatar: { type: String, default: null },
+  role: { type: String, enum: ['admin', 'prof', 'delegue', 'eleve', 'etudiant'], required: true },
+  year: { type: String, enum: ['BUT1', 'BUT2', 'BUT3'], default: null },
+  groupe: { type: String, enum: ['A', "A'", 'A2', 'B', "B'", 'B2', 'Promo'], default: null },
+  secretQuestions: [{
+    question: { type: String, required: true },
+    answer: { type: String, required: true }
+  }],
+  purchasedItems: [{ type: Number }],
+  equippedItemId: { type: Number, default: null },
+  completedTasks: { type: Number, default: 0 }
+}, { timestamps: true });
+
+const User = mongoose.models.User || mongoose.model('User', userSchema);
+
 // CORS headers
 const setCorsHeaders = (res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -100,14 +121,42 @@ module.exports = async (req, res) => {
     switch (action) {
       case 'check':
         if (!event.checkedBy.includes(userId)) {
+          // Vérifier si la tâche est en retard
+          const [h, m] = (event.heure || '').split(':');
+          const target = new Date(event.date);
+          target.setHours(Number(h), Number(m || 0), 0, 0);
+          const now = new Date();
+          const isLate = now > target;
+
+          // Ajouter l'utilisateur à la liste des utilisateurs qui ont validé cette tâche
           event.checkedBy.push(userId);
           await event.save();
+          
+          // Incrémenter le compteur de tâches complétées seulement si la tâche n'est PAS en retard
+          if (!isLate) {
+            await User.findByIdAndUpdate(userId, { $inc: { completedTasks: 1 } });
+          }
         }
         break;
         
       case 'uncheck':
-        event.checkedBy = event.checkedBy.filter(id => !id.equals(userId));
-        await event.save();
+        if (event.checkedBy.some(id => id.equals(userId))) {
+          // Vérifier si la tâche était en retard au moment de la validation
+          const [h, m] = (event.heure || '').split(':');
+          const target = new Date(event.date);
+          target.setHours(Number(h), Number(m || 0), 0, 0);
+          const now = new Date();
+          const isLate = now > target;
+
+          // Retirer l'utilisateur de la liste des utilisateurs qui ont validé cette tâche
+          event.checkedBy = event.checkedBy.filter(id => !id.equals(userId));
+          await event.save();
+          
+          // Décrémenter le compteur de tâches complétées seulement si la tâche n'était PAS en retard
+          if (!isLate) {
+            await User.findByIdAndUpdate(userId, { $inc: { completedTasks: -1 } });
+          }
+        }
         break;
         
       case 'archive':
