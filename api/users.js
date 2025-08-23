@@ -1,4 +1,6 @@
-// API pour récupérer les informations de l'utilisateur connecté
+import { MongoClient } from 'mongodb';
+
+// API pour les fonctionnalités utilisateur (profil, mot de passe oublié, etc.)
 export default async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGINS || '*');
@@ -11,9 +13,29 @@ export default async function handler(req, res) {
     res.status(200).end();
     return;
   }
+
+  // Extraire l'action depuis l'URL
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  const path = url.pathname.replace('/api/users/', '');
   
-  // Handle GET request
-  if (req.method === 'GET') {
+  console.log('📂 Users API - Path:', path, 'Method:', req.method);
+
+  // Routes qui ne nécessitent pas d'authentification
+  if (path === 'forgot-password/questions' && req.method === 'POST') {
+    return handleForgotPasswordQuestions(req, res);
+  }
+  if (path === 'forgot-password/verify' && req.method === 'POST') {
+    return handleForgotPasswordVerify(req, res);
+  }
+  if (path === 'forgot-password/reset' && req.method === 'POST') {
+    return handleForgotPasswordReset(req, res);
+  }
+  if (path === 'secret-questions' && req.method === 'POST') {
+    return handleSecretQuestions(req, res);
+  }
+  
+  // Handle GET request (profil utilisateur)
+  if (req.method === 'GET' && !path) {
     try {
       console.log('🔍 Début de la requête pour récupérer les infos utilisateur');
       
@@ -121,5 +143,213 @@ export default async function handler(req, res) {
       success: false,
       message: 'Méthode non autorisée'
     });
+  }
+}
+
+// Fonction pour récupérer les questions secrètes d'un utilisateur
+async function handleForgotPasswordQuestions(req, res) {
+  try {
+    const { username } = req.body;
+    
+    if (!username) {
+      return res.status(400).json({ error: 'Nom d\'utilisateur requis' });
+    }
+
+    const mongoUri = process.env.MONGODB_URI;
+    if (!mongoUri) {
+      return res.status(500).json({ error: 'MONGODB_URI non configuré' });
+    }
+
+    const client = await MongoClient.connect(mongoUri);
+    const db = client.db();
+    
+    const user = await db.collection('users').findOne(
+      { username: username },
+      { projection: { secretQuestions: 1, hasSecretQuestions: 1, _id: 0 } }
+    );
+    
+    await client.close();
+    
+    if (!user) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+    
+    if (!user.hasSecretQuestions || !user.secretQuestions) {
+      return res.status(400).json({ error: 'Cet utilisateur n\'a pas configuré de questions secrètes' });
+    }
+    
+    res.json({ 
+      questions: user.secretQuestions.map(q => q.question),
+      hasSecretQuestions: true
+    });
+  } catch (error) {
+    console.error('Erreur récupération questions:', error);
+    res.status(500).json({ error: 'Erreur serveur interne' });
+  }
+}
+
+// Fonction pour vérifier les réponses aux questions secrètes
+async function handleForgotPasswordVerify(req, res) {
+  try {
+    const { username, answers } = req.body;
+    
+    if (!username || !answers || !Array.isArray(answers)) {
+      return res.status(400).json({ error: 'Nom d\'utilisateur et réponses requis' });
+    }
+
+    const mongoUri = process.env.MONGODB_URI;
+    if (!mongoUri) {
+      return res.status(500).json({ error: 'MONGODB_URI non configuré' });
+    }
+
+    const client = await MongoClient.connect(mongoUri);
+    const db = client.db();
+    
+    const user = await db.collection('users').findOne(
+      { username: username },
+      { projection: { secretQuestions: 1, _id: 0 } }
+    );
+    
+    await client.close();
+    
+    if (!user || !user.secretQuestions) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé ou questions non configurées' });
+    }
+    
+    // Vérifier les réponses
+    const correctAnswers = user.secretQuestions.every((q, index) => 
+      q.answer.toLowerCase() === answers[index].toLowerCase()
+    );
+    
+    if (!correctAnswers) {
+      return res.status(400).json({ error: 'Réponses incorrectes' });
+    }
+    
+    // Générer un token temporaire pour la réinitialisation
+    const jwt = await import('jsonwebtoken');
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      return res.status(500).json({ error: 'JWT_SECRET non configuré' });
+    }
+    const resetToken = jwt.default.sign(
+      { username, type: 'password-reset' },
+      jwtSecret,
+      { expiresIn: '15m' }
+    );
+    
+    res.json({ 
+      success: true, 
+      message: 'Réponses correctes',
+      resetToken 
+    });
+  } catch (error) {
+    console.error('Erreur vérification réponses:', error);
+    res.status(500).json({ error: 'Erreur serveur interne' });
+  }
+}
+
+// Fonction pour réinitialiser le mot de passe
+async function handleForgotPasswordReset(req, res) {
+  try {
+    const { resetToken, newPassword } = req.body;
+    
+    if (!resetToken || !newPassword) {
+      return res.status(400).json({ error: 'Token et nouveau mot de passe requis' });
+    }
+
+    // Vérifier le token
+    const jwt = await import('jsonwebtoken');
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      return res.status(500).json({ error: 'JWT_SECRET non configuré' });
+    }
+    let decoded;
+    try {
+      decoded = jwt.default.verify(resetToken, jwtSecret);
+      if (typeof decoded === 'string' || decoded.type !== 'password-reset') {
+        throw new Error('Token invalide');
+      }
+    } catch (error) {
+      return res.status(401).json({ error: 'Token invalide ou expiré' });
+    }
+
+    // Hasher le nouveau mot de passe
+    const bcrypt = await import('bcryptjs');
+    const hashedPassword = await bcrypt.default.hash(newPassword, 10);
+
+    const mongoUri = process.env.MONGODB_URI;
+    if (!mongoUri) {
+      return res.status(500).json({ error: 'MONGODB_URI non configuré' });
+    }
+
+    const client = await MongoClient.connect(mongoUri);
+    const db = client.db();
+    
+    const result = await db.collection('users').updateOne(
+      { username: typeof decoded === 'string' ? '' : decoded.username },
+      { $set: { password: hashedPassword } }
+    );
+    
+    await client.close();
+    
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+    
+    res.json({ 
+      success: true, 
+      message: 'Mot de passe réinitialisé avec succès' 
+    });
+  } catch (error) {
+    console.error('Erreur réinitialisation mot de passe:', error);
+    res.status(500).json({ error: 'Erreur serveur interne' });
+  }
+}
+
+// Fonction pour sauvegarder les questions secrètes
+async function handleSecretQuestions(req, res) {
+  try {
+    const { username, questions, answers } = req.body;
+    
+    if (!username || !questions || !answers || !Array.isArray(questions) || !Array.isArray(answers)) {
+      return res.status(400).json({ error: 'Données invalides' });
+    }
+
+    const mongoUri = process.env.MONGODB_URI;
+    if (!mongoUri) {
+      return res.status(500).json({ error: 'MONGODB_URI non configuré' });
+    }
+
+    const client = await MongoClient.connect(mongoUri);
+    const db = client.db();
+    
+    const secretQuestions = questions.map((question, index) => ({
+      question,
+      answer: answers[index]
+    }));
+    
+    const result = await db.collection('users').updateOne(
+      { username: username },
+      { 
+        $set: { 
+          secretQuestions: secretQuestions,
+          hasSecretQuestions: true
+        } 
+      }
+    );
+    
+    await client.close();
+    
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+    
+    res.json({ 
+      success: true, 
+      message: 'Questions secrètes sauvegardées avec succès' 
+    });
+  } catch (error) {
+    console.error('Erreur sauvegarde questions secrètes:', error);
+    res.status(500).json({ error: 'Erreur serveur interne' });
   }
 }

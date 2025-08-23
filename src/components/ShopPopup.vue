@@ -2346,7 +2346,7 @@ const getAvatarBorderStyle = (user) => {
  const loadWeeklyItems = async () => {
    try {
      console.log('🔄 Chargement des items hebdomadaires...')
-             const response = await secureApiCall('/coins-unified?action=weekly-items')
+             const response = await secureApiCall('/coins/weekly-items')
      console.log('📦 Réponse API:', response)
      
      if (response.success) {

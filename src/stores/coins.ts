@@ -203,27 +203,27 @@ export const useCoinsStore = defineStore('coins', {
       }
       this.selectedBorderColor = base
     },
-    // Charger le solde de coins
-    async loadBalance() {
-      try {
-        this.loading = true;
-        // Délai pour éviter les erreurs 429
-        await new Promise(resolve => setTimeout(resolve, 100));
-        const response = await secureApiCall('/coins-unified?action=user-coins');
-        this.balance = response.coins || 0;
-      } catch (error) {
-        console.error('Erreur chargement solde:', error);
-        this.balance = 0;
-      } finally {
-        this.loading = false;
-      }
-    },
+      // Charger le solde de coins
+  async loadBalance() {
+    try {
+      this.loading = true;
+      // Délai pour éviter les erreurs 429
+      await new Promise(resolve => setTimeout(resolve, 100));
+      const response = await secureApiCall('/coins/user-coins');
+      this.balance = response.coins || 0;
+    } catch (error) {
+      console.error('Erreur chargement solde:', error);
+      this.balance = 0;
+    } finally {
+      this.loading = false;
+    }
+  },
 
     // Charger l'état du spin depuis la base de données
     async loadSpinStatus() {
       try {
         this.loading = true;
-        const response = await secureApiCall('/coins-unified?action=spin-status');
+        const response = await secureApiCall('/coins/spin-status');
         
         if (response.canSpin !== undefined) {
           this.canSpinToday = response.canSpin;
@@ -248,7 +248,7 @@ export const useCoinsStore = defineStore('coins', {
         this.loading = true;
         // Délai pour éviter les erreurs 429
         await new Promise(resolve => setTimeout(resolve, 200));
-        const response = await secureApiCall('/coins-unified?action=inventory');
+        const response = await secureApiCall('/coins/inventory');
         this.purchasedItems = response.inventory || [];
         // S'assurer que l'item Bordure Classique est présent côté front
         if (!this.purchasedItems.some(it => it.itemId === 0)) {
