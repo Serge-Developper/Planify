@@ -470,5 +470,15 @@ app.post('/forgot-password-verify', async (req, res) => {
   }
 });
 
+// Test route for debugging
+app.get('/test-route', (req, res) => {
+  res.json({ message: 'Test route works!', timestamp: Date.now() });
+});
+
+// Test POST route
+app.post('/test-forgot', async (req, res) => {
+  res.json({ message: 'Test forgot route works!', body: req.body });
+});
+
 export default app;
 // Force redeploy
