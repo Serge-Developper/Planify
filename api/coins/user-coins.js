@@ -57,7 +57,10 @@ function verifyToken(req) {
   
   const token = authHeader.substring(7);
   try {
-    return jwt.verify(token, process.env.JWT_SECRET);
+    return jwt.verify(token, process.env.JWT_SECRET, {
+      issuer: 'planify-api',
+      audience: 'planify-frontend'
+    });
   } catch (error) {
     throw new Error('Token invalide');
   }

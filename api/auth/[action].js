@@ -88,9 +88,19 @@ module.exports = async (req, res) => {
       }
 
       const token = jwt.sign(
-        { id: user._id, username: user.username, role: user.role },
+        { 
+          id: user._id, 
+          username: user.username, 
+          role: user.role,
+          year: user.year,
+          groupe: user.groupe
+        },
         process.env.JWT_SECRET,
-        { expiresIn: '24h' }
+        { 
+          expiresIn: '24h',
+          issuer: 'planify-api',
+          audience: 'planify-frontend'
+        }
       );
 
       const { password: _, ...userWithoutPassword } = user.toObject();

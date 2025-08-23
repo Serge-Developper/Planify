@@ -58,7 +58,10 @@ const verifyToken = (req) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, {
+      issuer: 'planify-api',
+      audience: 'planify-frontend'
+    });
     return decoded;
   } catch (error) {
     throw new Error('Token invalide');

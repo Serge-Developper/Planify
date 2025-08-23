@@ -67,7 +67,10 @@ const verifyToken = (req, requireAdmin = false) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, {
+      issuer: 'planify-api',
+      audience: 'planify-frontend'
+    });
     console.log('🔍 Token décodé:', { username: decoded.username, role: decoded.role, requireAdmin });
     
     if (requireAdmin && decoded.role !== 'admin') {
