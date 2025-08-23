@@ -1,6 +1,6 @@
 [build]
   # Commande de build pour Vue.js
-  command = "npm install --legacy-peer-deps && npm run build"
+  command = "npm ci && npx vite build"
   # Répertoire où sont les fichiers buildés
   publish = "dist"
   # Répertoire des fonctions Netlify (équivalent du dossier /api de Vercel)
