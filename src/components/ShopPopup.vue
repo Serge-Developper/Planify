@@ -2436,9 +2436,29 @@ const getAvatarBorderStyle = (user) => {
           
           return { ...it, img: fixedImg }
         })
-        weeklyItems.value = patched
+
+        // Traiter les couleurs de bordures classiques et les ajouter aux items
+        const borderItems = []
+        if (response.weeklyColors && Array.isArray(response.weeklyColors)) {
+          response.weeklyColors.forEach((color, index) => {
+            borderItems.push({
+              id: `border-color-${color.id}`, // ID unique pour les bordures
+              name: `Bordure ${color.name}`,
+              price: 25, // Prix fixe pour les bordures
+              type: 'border-color',
+              colorId: color.id,
+              colorName: color.name,
+              colorValue: color.color,
+              borderStyle: `3px solid ${color.color}`
+            })
+          })
+        }
+
+        // Combiner items spéciaux et bordures
+        weeklyItems.value = [...patched, ...borderItems]
         timeUntilReset.value = response.timeUntilReset || ''
-        console.log('✅ Items hebdomadaires chargés:', weeklyItems.value.length, 'items')
+        console.log('✅ Items hebdomadaires chargés:', weeklyItems.value.length, 'items (' + patched.length + ' spéciaux + ' + borderItems.length + ' bordures)')
+        console.log('🎨 Couleurs bordures:', response.weeklyColors)
      } else {
         console.error('❌ Erreur API:', response.message)
      }

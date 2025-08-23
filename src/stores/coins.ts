@@ -173,6 +173,14 @@ export const useCoinsStore = defineStore('coins', {
       return state.borderColors.filter(color => color.unlocked);
     },
 
+    // Getter pour extraire l'ID de couleur de bordure depuis un item weekly
+    getBorderColorIdFromItem: (state) => (item: any) => {
+      if (item && item.type === 'border-color' && item.colorId) {
+        return item.colorId;
+      }
+      return null;
+    },
+
     // Getter pour obtenir l'index de variante dynamique d'un item
     getDynamicItemVariant: (state) => (itemId: number) => {
       // Pour Discord (itemId 23), retourner l'index de variante stocké
