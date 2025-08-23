@@ -433,7 +433,15 @@ function getStyleFor(asset) {
 
 function resolveSrc(src) {
   if (!src) return ''
-  if (String(src).startsWith('/uploads/')) return baseUrl + src
+  if (String(src).startsWith('/uploads/')) {
+    // Utiliser les nouvelles APIs pour servir les images depuis la base de données
+    if (src.startsWith('/uploads/avatars/')) {
+      return baseUrl + '/api/uploads/avatars/' + src.split('/').pop()
+    } else if (src.startsWith('/uploads/items/')) {
+      return baseUrl + '/api/uploads/items/' + src.split('/').pop()
+    }
+    return baseUrl + src
+  }
   return src
 }
 function activeAssets() {

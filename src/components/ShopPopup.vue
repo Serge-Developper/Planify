@@ -1356,7 +1356,15 @@ const getDynVariantBgStyleReactive = (item) => {
 
 function resolveAssetSrc(path) {
   if (!path) return ''
-  if (String(path).startsWith('/uploads/')) return getApiOrigin() + path
+  if (String(path).startsWith('/uploads/')) {
+    // Utiliser les nouvelles APIs pour servir les images depuis la base de données
+    if (path.startsWith('/uploads/avatars/')) {
+      return getApiOrigin() + '/api/uploads/avatars/' + path.split('/').pop()
+    } else if (path.startsWith('/uploads/items/')) {
+      return getApiOrigin() + '/api/uploads/items/' + path.split('/').pop()
+    }
+    return getApiOrigin() + path
+  }
   return path
 }
 
@@ -2243,14 +2251,19 @@ const getUserEquippedItemData = (user) => {
  }
 
  const getUserAvatar = (user) => {
-   if (user.avatar && user.avatar.startsWith('/uploads/')) {
-     // Construire l'URL correcte pour les avatars (comme dans la Navbar)
-     const avatarUrl = `${baseUrl}${user.avatar}`
-     console.log('🖼️ URL avatar:', avatarUrl)
-     return avatarUrl
-   }
-   return accountIcon
- }
+  if (user.avatar && user.avatar.startsWith('/uploads/')) {
+    // Utiliser les nouvelles APIs pour servir les images depuis la base de données
+    if (user.avatar.startsWith('/uploads/avatars/')) {
+      const avatarUrl = `${baseUrl}/api/uploads/avatars/${user.avatar.split('/').pop()}`
+      console.log('🖼️ URL avatar:', avatarUrl)
+      return avatarUrl
+    }
+    const avatarUrl = `${baseUrl}${user.avatar}`
+    console.log('🖼️ URL avatar:', avatarUrl)
+    return avatarUrl
+  }
+  return accountIcon
+}
 
  const handleAvatarError = (event) => {
    event.target.src = accountIcon

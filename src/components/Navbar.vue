@@ -1028,6 +1028,16 @@ const getDynVariantAssetsForNavbar = (item) => {
 function resolveDynSrc(src) {
   try {
     if (typeof src === 'string' && src.startsWith('/uploads/')) {
+      // Utiliser les nouvelles APIs pour servir les images depuis la base de données
+      if (src.startsWith('/uploads/avatars/')) {
+        const orig = API_URL || ''
+        const base = orig.endsWith('/api') ? orig.slice(0, -4) : orig.replace('/api','')
+        return base + '/api/uploads/avatars/' + src.split('/').pop()
+      } else if (src.startsWith('/uploads/items/')) {
+        const orig = API_URL || ''
+        const base = orig.endsWith('/api') ? orig.slice(0, -4) : orig.replace('/api','')
+        return base + '/api/uploads/items/' + src.split('/').pop()
+      }
       const orig = API_URL || ''
       const base = orig.endsWith('/api') ? orig.slice(0, -4) : orig.replace('/api','')
       return base + src
