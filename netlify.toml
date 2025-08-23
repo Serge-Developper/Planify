@@ -1,0 +1,27 @@
+[build]
+  # Commande de build pour Vue.js
+  command = "npm run build"
+  # Répertoire où sont les fichiers buildés
+  publish = "dist"
+  # Répertoire des fonctions Netlify (équivalent du dossier /api de Vercel)
+  functions = "netlify/functions"
+
+[build.environment]
+  # Version Node.js
+  NODE_VERSION = "18"
+
+# Redirection pour les routes Vue.js (SPA)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  conditions = {Role = ["frontend"]}
+
+# Redirections pour les API endpoints
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# Variables d'environnement (à configurer via l'interface Netlify)
+# MONGODB_URI, JWT_SECRET, JWT_ISSUER, JWT_AUDIENCE

@@ -1,0 +1,11 @@
+{
+  "name": "planify-netlify-functions",
+  "version": "1.0.0",
+  "description": "Fonctions Netlify pour Planify",
+  "main": "index.js",
+  "dependencies": {
+    "mongoose": "^8.0.0",
+    "jsonwebtoken": "^9.0.0",
+    "bcryptjs": "^2.4.3"
+  }
+}
