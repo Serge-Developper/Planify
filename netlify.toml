@@ -1,6 +1,6 @@
 [build]
-  # Commande de build pour Vue.js
-  command = "npm run build"
+  # Commande de build pour Vue.js (avec installation des dépendances)
+  command = "npm ci && npm run build"
   # Répertoire où sont les fichiers buildés
   publish = "dist"
   # Répertoire des fonctions Netlify (équivalent du dossier /api de Vercel)
