@@ -31,9 +31,11 @@ const eventSchema = new mongoose.Schema({
   type: { type: String, required: true },
   matiere: { type: String, required: true },
   year: { type: String, required: true },
-  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  archivedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   checkedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  archivedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+  description: { type: String, default: '' },
+  createdBy: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 
 const Event = mongoose.models.Event || mongoose.model('Event', eventSchema);
