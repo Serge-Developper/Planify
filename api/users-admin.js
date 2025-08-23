@@ -68,11 +68,15 @@ const verifyToken = (req, requireAdmin = false) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log('🔍 Token décodé:', { username: decoded.username, role: decoded.role, requireAdmin });
+    
     if (requireAdmin && decoded.role !== 'admin') {
+      console.log('❌ Accès refusé: rôle', decoded.role, 'mais admin requis');
       throw new Error('Accès admin requis');
     }
     return decoded;
   } catch (error) {
+    console.log('❌ Erreur token:', error.message);
     throw new Error('Token invalide ou accès insuffisant');
   }
 };
@@ -124,8 +128,32 @@ module.exports = async (req, res) => {
     // POST /api/users-admin - Admin operations on users
     if (req.method === 'POST') {
       try {
-        const user = verifyToken(req, true); // Require admin
         const { action, userId, ...data } = req.body;
+        
+        // Special case: promote-to-admin doesn't require admin rights (bootstrap)
+        if (action === 'promote-to-admin') {
+          const user = verifyToken(req, false); // No admin required for this
+          console.log('🔄 Promotion admin demandée par:', user.username);
+          
+          const targetUser = await User.findById(userId || user.id);
+          if (!targetUser) {
+            return res.status(404).json({ error: 'Utilisateur non trouvé' });
+          }
+          
+          targetUser.role = 'admin';
+          await targetUser.save();
+          
+          console.log('✅ Utilisateur', targetUser.username, 'promu admin');
+          
+          return res.status(200).json({
+            success: true,
+            message: 'Utilisateur promu administrateur',
+            user: { ...targetUser.toObject(), password: undefined }
+          });
+        }
+        
+        const user = verifyToken(req, true); // Require admin for other actions
+        const { action: _, userId: _userId, ...data } = req.body;
 
         if (!action || !userId) {
           return res.status(400).json({ error: 'Action et userId requis' });
@@ -189,8 +217,8 @@ module.exports = async (req, res) => {
 
           case 'update-role':
             const { role } = data;
-            if (!role || !['user', 'admin'].includes(role)) {
-              return res.status(400).json({ error: 'Rôle valide requis (user/admin)' });
+            if (!role || !['admin', 'prof', 'delegue', 'eleve', 'etudiant'].includes(role)) {
+              return res.status(400).json({ error: 'Rôle valide requis (admin/prof/delegue/eleve/etudiant)' });
             }
 
             targetUser.role = role;
