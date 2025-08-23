@@ -39,16 +39,7 @@
             }" :style="getAccountBorderStyle()" @click="handleDropdown">
               <div class="avatar-image-container" :class="{ 'jojo-sepia': equippedItem && equippedItem.displayType === 'jojo' }" :key="'aic-'+coinsStore.jojoVariantIndex">
                 <!-- Items dynamiques: "below" à l'intérieur (sous l'avatar) -->
-                <template v-if="equippedDynItem && Array.isArray(equippedDynItem.variants) && equippedDynItem.variants.length > 0">
-                  <img
-                    v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
-                    v-if="a && a.meta && a.meta.navbarPlacement === 'below'"
-                    :key="'dyn-nb-below-'+ai+'-'+dynamicVariantsState"
-                    :src="resolveDynSrc(a.src)"
-                    :style="getDynNavbarAssetStyle(a)"
-                  />
-                </template>
-                <template v-else-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
+                <template v-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
                   <img
                     v-for="(a, ai) in equippedDynItem.assets"
                     v-if="a && a.meta && a.meta.navbarPlacement === 'below'"
@@ -68,16 +59,7 @@
                   @load="handleImageLoad"
                 />
                 <!-- Items dynamiques: "inside" à l'intérieur (au-dessus de l'avatar) -->
-                <template v-if="equippedDynItem && Array.isArray(equippedDynItem.variants) && equippedDynItem.variants.length > 0">
-                  <img
-                    v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
-                    v-if="a && a.meta && a.meta.navbarPlacement === 'inside'"
-                    :key="'dyn-nb-inside-'+ai+'-'+dynamicVariantsState"
-                    :src="resolveDynSrc(a.src)"
-                    :style="getDynNavbarAssetStyle(a)"
-                  />
-                </template>
-                <template v-else-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
+                <template v-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
                   <img
                     v-for="(a, ai) in equippedDynItem.assets"
                     v-if="a && a.meta && a.meta.navbarPlacement === 'inside'"
@@ -147,16 +129,7 @@
               </div>
             </button>
             <!-- Items dynamiques: "above" au-dessus du bouton account -->
-            <template v-if="equippedDynItem && Array.isArray(equippedDynItem.variants) && equippedDynItem.variants.length > 0">
-              <img
-                v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
-                v-if="!a || !a.meta || a.meta.navbarPlacement === 'above'"
-                :key="'dyn-nb-above-'+ai+'-'+dynamicVariantsState"
-                :src="resolveDynSrc(a.src)"
-                :style="getDynNavbarOverlayStyle(a)"
-              />
-            </template>
-            <template v-else-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
+            <template v-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
               <img
                 v-for="(a, ai) in equippedDynItem.assets"
                 v-if="!a || !a.meta || a.meta.navbarPlacement === 'above'"
@@ -405,16 +378,7 @@
               <button class="account-btn" :class="{ 'stars-equipped': equippedItem && equippedItem.name === 'Étoiles', 'rainbow-equipped': equippedItem && equippedItem.name === 'Roses', 'discord-equipped': equippedItem && equippedItem.displayType === 'discord', 'galaxie-equipped': equippedItem && equippedItem.name === 'Galaxie', 'alpha-equipped': equippedItem && (equippedItem.name === 'Alpha' || equippedItem.displayType === 'alpha') }" :style="getAccountBorderStyle()" @click="handleDropdown">
                 <div class="avatar-image-container-mobile" :class="{ 'jojo-sepia': equippedItem && equippedItem.displayType === 'jojo' }" :key="'aicm-'+coinsStore.jojoVariantIndex">
                   <!-- Dyn (mobile): below -->
-                  <template v-if="equippedDynItem && Array.isArray(equippedDynItem.variants) && equippedDynItem.variants.length > 0">
-                    <img
-                      v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
-                      v-if="a && a.meta && a.meta.navbarPlacement === 'below'"
-                      :key="'dyn-m-below-'+ai+'-'+dynamicVariantsState"
-                      :src="resolveDynSrc(a.src)"
-                      :style="getDynNavbarAssetStyle(a)"
-                    />
-                  </template>
-                  <template v-else-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
+                  <template v-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
                     <img
                       v-for="(a, ai) in equippedDynItem.assets"
                       v-if="a && a.meta && a.meta.navbarPlacement === 'below'"
@@ -434,16 +398,7 @@
                     @load="handleImageLoad"
                   />
                   <!-- Dyn (mobile): inside -->
-                  <template v-if="equippedDynItem && Array.isArray(equippedDynItem.variants) && equippedDynItem.variants.length > 0">
-                    <img
-                      v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
-                      v-if="a && a.meta && a.meta.navbarPlacement === 'inside'"
-                      :key="'dyn-m-inside-'+ai+'-'+dynamicVariantsState"
-                      :src="resolveDynSrc(a.src)"
-                      :style="getDynNavbarAssetStyle(a)"
-                    />
-                  </template>
-                  <template v-else-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
+                  <template v-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
                     <img
                       v-for="(a, ai) in equippedDynItem.assets"
                       v-if="a && a.meta && a.meta.navbarPlacement === 'inside'"
@@ -527,16 +482,7 @@
               </div>
             </button>
             <!-- Dyn (mobile): above -->
-            <template v-if="equippedDynItem && Array.isArray(equippedDynItem.variants) && equippedDynItem.variants.length > 0">
-              <img
-                v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
-                v-if="!a || !a.meta || a.meta.navbarPlacement === 'above'"
-                :key="'dyn-m-above-'+ai+'-'+dynamicVariantsState"
-                :src="resolveDynSrc(a.src)"
-                :style="getDynNavbarOverlayStyle(a)"
-              />
-            </template>
-            <template v-else-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
+            <template v-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
               <img
                 v-for="(a, ai) in equippedDynItem.assets"
                 v-if="!a || !a.meta || a.meta.navbarPlacement === 'above'"
@@ -956,88 +902,15 @@ onUnmounted(() => document.removeEventListener('click', handleGlobalClick, true)
 const equippedItem = computed(() => coinsStore.equippedItem)
 const equippedDynItem = computed(() => {
   const it = coinsStore.equippedItem
-  if (it && it.isDynamic) {
-    console.log('🔍 equippedDynItem: item dynamique trouvé directement:', it.id, it.name)
-    return it
-  }
+  if (it && it.isDynamic) return it
   const id = coinsStore.equippedItemId || it?.id
-  if (!id) {
-    console.log('🔍 equippedDynItem: pas d\'item équipé')
-    return null
-  }
-  const dynItem = dynamicInfoById.value.get(Number(id))
-  console.log('🔍 equippedDynItem: recherche dans dynamicInfoById pour id', id, 'trouvé:', !!dynItem, dynItem?.name)
-  return dynItem || null
+  if (!id) return null
+  return dynamicInfoById.value.get(Number(id)) || null
 })
-
-// Clé réactive pour forcer la mise à jour de la navbar quand les variantes changent
-const navbarVariantUpdateKey = ref(0)
-
-// Computed property réactive qui dépend du store pour forcer les mises à jour
-const dynamicVariantsState = computed(() => {
-  // Cette computed property se met à jour quand le store change
-  return coinsStore.dynamicItemVariants.size
-})
-
-// Fonction pour obtenir les assets de la variante sélectionnée pour un item dynamique
-const getDynVariantAssetsForNavbar = (item) => {
-  try {
-    if (!item || !item.variants || !Array.isArray(item.variants)) {
-      return []
-    }
-    
-    // Utiliser legacyId si disponible, sinon id
-    const itemId = item.legacyId !== undefined ? item.legacyId : item.id
-    const variantIndex = coinsStore.getDynamicItemVariant(itemId)
-    
-    const variant = item.variants[variantIndex]
-    if (!variant) {
-      return []
-    }
-    
-    // Si c'est un style texte uniquement, retourner les assets de la base avec les styles de la variante
-    if (variant.textOnly) {
-      const baseAssets = Array.isArray(item.assets) ? item.assets : []
-      // Appliquer les styles de la variante aux assets de la base
-      return baseAssets.map(asset => ({
-        ...asset,
-        // Utiliser les styles de la variante s'ils existent, sinon garder les styles de l'asset
-        style: variant.assets && variant.assets[0] && variant.assets[0].style ? variant.assets[0].style : asset.style,
-        collectionStyle: variant.assets && variant.assets[0] && variant.assets[0].collectionStyle ? variant.assets[0].collectionStyle : asset.collectionStyle,
-        collectionStyleMobile: variant.assets && variant.assets[0] && variant.assets[0].collectionStyleMobile ? variant.assets[0].collectionStyleMobile : asset.collectionStyleMobile,
-        leaderboardStyle: variant.assets && variant.assets[0] && variant.assets[0].leaderboardStyle ? variant.assets[0].leaderboardStyle : asset.leaderboardStyle,
-        leaderboardStyleMobile: variant.assets && variant.assets[0] && variant.assets[0].leaderboardStyleMobile ? variant.assets[0].leaderboardStyleMobile : asset.leaderboardStyleMobile,
-        avatarStyle: variant.assets && variant.assets[0] && variant.assets[0].avatarStyle ? variant.assets[0].avatarStyle : asset.avatarStyle,
-        avatarStyleMobile: variant.assets && variant.assets[0] && variant.assets[0].avatarStyleMobile ? variant.assets[0].avatarStyleMobile : asset.avatarStyleMobile,
-        navbarStyle: variant.assets && variant.assets[0] && variant.assets[0].navbarStyle ? variant.assets[0].navbarStyle : asset.navbarStyle,
-        navbarStyleMobile: variant.assets && variant.assets[0] && variant.assets[0].navbarStyleMobile ? variant.assets[0].navbarStyleMobile : asset.navbarStyleMobile,
-        popupStyleStyle: variant.assets && variant.assets[0] && variant.assets[0].popupStyleStyle ? variant.assets[0].popupStyleStyle : asset.popupStyleStyle
-      }))
-    }
-    
-    if (!Array.isArray(variant.assets)) {
-      return []
-    }
-    return variant.assets
-  } catch (e) {
-    console.error('❌ Erreur dans getDynVariantAssetsForNavbar:', e)
-    return []
-  }
-}
 
 function resolveDynSrc(src) {
   try {
     if (typeof src === 'string' && src.startsWith('/uploads/')) {
-      // Utiliser les nouvelles APIs pour servir les images depuis la base de données
-      if (src.startsWith('/uploads/avatars/')) {
-        const orig = API_URL || ''
-        const base = orig.endsWith('/api') ? orig.slice(0, -4) : orig.replace('/api','')
-        return base + '/api/uploads/avatars/' + src.split('/').pop()
-      } else if (src.startsWith('/uploads/items/')) {
-        const orig = API_URL || ''
-        const base = orig.endsWith('/api') ? orig.slice(0, -4) : orig.replace('/api','')
-        return base + '/api/uploads/items/' + src.split('/').pop()
-      }
       const orig = API_URL || ''
       const base = orig.endsWith('/api') ? orig.slice(0, -4) : orig.replace('/api','')
       return base + src
@@ -1048,7 +921,7 @@ function resolveDynSrc(src) {
 
 function getDynNavbarAssetStyle(asset) {
   const s = (asset && asset.navbarStyle) || asset?.style || {}
-  const style = { position: 'absolute', objectFit: s.objectFit || 'contain', zIndex: typeof s.zIndex === 'number' ? s.zIndex : 1, pointerEvents: 'none' }
+  const style = { position: 'absolute', objectFit: s.objectFit || 'contain', zIndex: typeof s.zIndex === 'number' ? s.zIndex : 1 }
   if (typeof s.top === 'number') style.top = s.top + 'px'
   if (typeof s.left === 'number') style.left = s.left + 'px'
   if (typeof s.width === 'number') style.width = s.width + 'px'
@@ -1087,19 +960,8 @@ async function loadDynamicItems() {
 onMounted(() => {
   loadDynamicItems()
   try { window.addEventListener('items-changed', loadDynamicItems) } catch {}
-  // Écouter les changements de variantes pour forcer la mise à jour de la navbar
-  try { 
-    window.addEventListener('dynamic-variant-changed', (event) => { 
-      console.log('📡 Navbar: Événement dynamic-variant-changed reçu:', event.detail)
-      navbarVariantUpdateKey.value++
-      console.log('🔄 Navbar: Clé de mise à jour incrémentée:', navbarVariantUpdateKey.value)
-    }) 
-  } catch {}
 })
-onUnmounted(() => { 
-  try { window.removeEventListener('items-changed', loadDynamicItems) } catch {}
-  try { window.removeEventListener('dynamic-variant-changed', () => { navbarVariantUpdateKey.value++ }) } catch {}
-})
+onUnmounted(() => { try { window.removeEventListener('items-changed', loadDynamicItems) } catch {} })
 
 console.log('🔧 API_URL:', API_URL)
 console.log('🔧 baseUrl:', baseUrl)
@@ -1494,21 +1356,14 @@ async function handleAvatarUpload(event) {
   }
 
   try {
-    // Convertir le fichier en base64
-    const base64 = await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
+    const formData = new FormData();
+    formData.append('avatar', file);
 
     console.log('🚀 Upload avatar en cours...');
-    const response = await axios.post(`${API_URL}/upload-avatar`, {
-      file: base64
-    }, {
+    const response = await axios.post(`${API_URL}/users/upload-avatar`, formData, {
       headers: {
         'Authorization': `Bearer ${user.value.token}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'multipart/form-data'
       }
     });
 

@@ -1,7 +1,5 @@
 {
   "version": 2,
-  "buildCommand": "bash build.sh",
-  "outputDirectory": "frontend-clean/frontend/dist",
   "functions": {
     "api/**/*.js": {
       "maxDuration": 30

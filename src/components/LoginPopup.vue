@@ -59,7 +59,7 @@ async function handleLogin() {
   loading.value = true;
   error.value = '';
   try {
-    const res = await fetch(`${API_URL}/users/login`, {
+    const res = await fetch(`${API_URL}/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username: username.value, password: password.value })
@@ -76,13 +76,7 @@ async function handleLogin() {
     
     if (res.ok && data) {
       userData = data; // Stocke temporairement les données
-      
-      // Vérifier hasSecretQuestions directement dans data
-      const hasSecretQuestions = data.hasSecretQuestions;
-      console.log('🔍 Frontend - hasSecretQuestions:', hasSecretQuestions);
-      console.log('📋 Frontend - data structure:', data);
-      
-      if (!hasSecretQuestions) {
+      if (!data.hasSecretQuestions) {
         showSecretQuestionsSetup.value = true;
         // NE PAS stocker dans localStorage ici - attendre que les questions soient définies
       } else {

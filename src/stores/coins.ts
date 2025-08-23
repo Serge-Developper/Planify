@@ -96,9 +96,7 @@ export const useCoinsStore = defineStore('coins', {
     jojoVariantIndex: 0 as number,
     // Positionnement/tailles pour l'aperçu Jojo dans l'onglet Collection
     jojoImgPos: { top: 50, left: 87, width: 90 } as { top: number; left: number; width: number },
-    jojoTextPos: { top: -5, left: 10, width: 72 } as { top: number; left: number; width: number },
-    // Variantes sélectionnées pour les items dynamiques (itemId -> variantIndex)
-    dynamicItemVariants: new Map<number, number>()
+    jojoTextPos: { top: -5, left: 10, width: 72 } as { top: number; left: number; width: number }
   }),
 
   getters: {
@@ -203,21 +201,21 @@ export const useCoinsStore = defineStore('coins', {
       }
       this.selectedBorderColor = base
     },
-      // Charger le solde de coins
-  async loadBalance() {
-    try {
-      this.loading = true;
-      // Délai pour éviter les erreurs 429
-      await new Promise(resolve => setTimeout(resolve, 100));
-      const response = await secureApiCall('/coins/user-coins');
-      this.balance = response.coins || 0;
-    } catch (error) {
-      console.error('Erreur chargement solde:', error);
-      this.balance = 0;
-    } finally {
-      this.loading = false;
-    }
-  },
+    // Charger le solde de coins
+    async loadBalance() {
+      try {
+        this.loading = true;
+        // Délai pour éviter les erreurs 429
+        await new Promise(resolve => setTimeout(resolve, 100));
+        const response = await secureApiCall('/coins/user-coins');
+        this.balance = response.coins || 0;
+      } catch (error) {
+        console.error('Erreur chargement solde:', error);
+        this.balance = 0;
+      } finally {
+        this.loading = false;
+      }
+    },
 
     // Charger l'état du spin depuis la base de données
     async loadSpinStatus() {
@@ -225,7 +223,7 @@ export const useCoinsStore = defineStore('coins', {
         this.loading = true;
         const response = await secureApiCall('/coins/spin-status');
         
-        if (response.canSpin !== undefined) {
+        if (response.success) {
           this.canSpinToday = response.canSpin;
           this.lastSpinDate = response.lastSpinDate ? new Date(response.lastSpinDate) : null;
         } else {
@@ -249,7 +247,7 @@ export const useCoinsStore = defineStore('coins', {
         // Délai pour éviter les erreurs 429
         await new Promise(resolve => setTimeout(resolve, 200));
         const response = await secureApiCall('/coins/inventory');
-        this.purchasedItems = response.inventory || [];
+        this.purchasedItems = response.purchasedItems || [];
         // S'assurer que l'item Bordure Classique est présent côté front
         if (!this.purchasedItems.some(it => it.itemId === 0)) {
           this.purchasedItems.push({ itemId: 0, itemName: 'Bordure Classique', purchaseDate: new Date(), equipped: false });
@@ -279,15 +277,18 @@ export const useCoinsStore = defineStore('coins', {
     async purchaseItem(item: { id: number; name: string; price: number; type?: string }) {
       try {
         this.loading = true;
-        const response = await secureApiCall('/coins-unified?action=purchase', {
+        const response = await secureApiCall('/coins/purchase', {
           method: 'POST',
           body: JSON.stringify({
-            itemName: item.name
+            itemId: item.id,
+            itemName: item.name,
+            price: item.price,
+            type: item.type
           })
         });
 
         if (response.success) {
-          this.balance = response.newBalance;
+          this.balance = response.newCoins;
           
           // Si c'est une couleur de bordure, la débloquer
           if (item.type === 'border-color' || item.type === 'border-gradient') {
@@ -302,7 +303,7 @@ export const useCoinsStore = defineStore('coins', {
             }
           } else {
             // Sinon, ajouter l'item normalement
-            this.purchasedItems.push({ itemId: item.id, itemName: item.name, purchaseDate: new Date(), equipped: false } as any);
+            this.purchasedItems.push(response.purchasedItem);
           }
           
           return { success: true, message: response.message };
@@ -403,9 +404,8 @@ export const useCoinsStore = defineStore('coins', {
         // Si l'item est déjà équipé, le déséquiper
         if (this.equippedItemId === itemId) {
           console.log('🔧 Déséquipement de l\'item:', itemId);
-          const response = await secureApiCall('/coins-unified?action=unequip', {
-            method: 'POST',
-            body: JSON.stringify({ itemName: itemId })
+          const response = await secureApiCall('/coins/unequip', {
+            method: 'POST'
           });
 
           console.log('🔧 Réponse déséquipement:', response);
@@ -426,9 +426,9 @@ export const useCoinsStore = defineStore('coins', {
         } else {
           // Sinon, équiper l'item
           console.log('🔧 Équipement de l\'item:', itemId);
-          const response = await secureApiCall('/coins-unified?action=equip', {
+          const response = await secureApiCall('/coins/equip', {
             method: 'POST',
-            body: JSON.stringify({ itemName: itemId })
+            body: JSON.stringify({ itemId })
           });
 
           console.log('🔧 Réponse équipement:', response);
@@ -459,9 +459,8 @@ export const useCoinsStore = defineStore('coins', {
     async unequipItem() {
       try {
         this.loading = true;
-        const response = await secureApiCall('/coins-unified?action=unequip', {
-          method: 'POST',
-          body: JSON.stringify({ itemName: this.equippedItemId })
+        const response = await secureApiCall('/coins/unequip', {
+          method: 'POST'
         });
 
         if (response.success) {
@@ -486,17 +485,17 @@ export const useCoinsStore = defineStore('coins', {
     async spinWheel() {
       try {
         this.loading = true;
-        const response = await secureApiCall('/coins-unified?action=spin-wheel', {
+        const response = await secureApiCall('/coins/spin-wheel', {
           method: 'POST'
         });
 
         if (response.success) {
-          this.balance = response.newBalance;
+          this.balance = response.newCoins;
           // Recharger le statut depuis le serveur pour avoir les bonnes informations
           await this.loadSpinStatus();
           return { 
             success: true, 
-            coinsWon: response.reward,
+            coinsWon: response.coinsWon,
             message: response.message,
             rewardName: response.rewardName
           };
@@ -517,7 +516,7 @@ export const useCoinsStore = defineStore('coins', {
     async spinWheelWithoutUpdate() {
       try {
         this.loading = true;
-        const response = await secureApiCall('/coins-unified?action=spin-wheel', {
+        const response = await secureApiCall('/coins/spin-wheel', {
           method: 'POST'
         });
 
@@ -526,7 +525,7 @@ export const useCoinsStore = defineStore('coins', {
           await this.loadSpinStatus();
           return { 
             success: true, 
-            coinsWon: response.reward,
+            coinsWon: response.coinsWon,
             message: response.message,
             rewardName: response.rewardName
           };
@@ -547,7 +546,6 @@ export const useCoinsStore = defineStore('coins', {
     async initialize() {
       // Charger séquentiellement pour éviter les erreurs 429
       this.initializeBorderColors();
-      this.loadDynamicItemVariants(); // Charger les variantes dynamiques depuis localStorage
       await this.loadBalance();
       await this.loadSpinStatus();
       await this.loadInventory();
@@ -738,38 +736,6 @@ export const useCoinsStore = defineStore('coins', {
     },
     setJojoTextPos(pos: { top?: number; left?: number; width?: number }) {
       this.jojoTextPos = { ...this.jojoTextPos, ...pos }
-    },
-
-    // Définir la variante d'un item dynamique
-    setDynamicItemVariant(itemId: number, variantIndex: number) {
-      if (typeof itemId === 'number' && typeof variantIndex === 'number') {
-        this.dynamicItemVariants.set(itemId, variantIndex)
-        // Persister dans localStorage
-        try {
-          const variants = Object.fromEntries(this.dynamicItemVariants)
-          localStorage.setItem('dynamicItemVariants', JSON.stringify(variants))
-        } catch (e) {
-          console.warn('Impossible de sauvegarder les variantes dynamiques:', e)
-        }
-      }
-    },
-
-    // Obtenir la variante d'un item dynamique
-    getDynamicItemVariant(itemId: number): number {
-      return this.dynamicItemVariants.get(itemId) || 0
-    },
-
-    // Charger les variantes depuis localStorage
-    loadDynamicItemVariants() {
-      try {
-        const stored = localStorage.getItem('dynamicItemVariants')
-        if (stored) {
-          const variants = JSON.parse(stored)
-          this.dynamicItemVariants = new Map(Object.entries(variants).map(([k, v]) => [Number(k), Number(v)]))
-        }
-      } catch (e) {
-        console.warn('Impossible de charger les variantes dynamiques:', e)
-      }
     }
   }
 }); 

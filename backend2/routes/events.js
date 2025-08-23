@@ -89,18 +89,17 @@ router.post('/seed', async (req, res) => {
     // Supprimer les données existantes
     await Event.deleteMany({});
     
-    // Créer des événements de test pour toutes les années
+    // Créer des événements de test qui correspondent aux utilisateurs existants
     const eventsData = [
-      // BUT2 (événements existants)
       {
         titre: 'Examen Développement Web',
-        date: '2024-12-15',
+        date: '2024-12-15', // Date plus récente
         heure: '09h00',
         groupe: 'A',
         groupes: ['A'],
         type: 'exam',
         matiere: 'Développement web',
-        year: 'BUT2'
+        year: 'BUT2' // Format texte pour correspondre aux utilisateurs
       },
       {
         titre: 'Devoir Anglais',
@@ -141,48 +140,6 @@ router.post('/seed', async (req, res) => {
         type: 'devoir',
         matiere: 'Intégration',
         year: 'BUT2'
-      },
-      // BUT1 (nouveaux événements)
-      {
-        titre: 'Devoir BUT1 - Introduction',
-        date: '2024-12-20',
-        heure: '10h00',
-        groupe: 'A',
-        groupes: ['A'],
-        type: 'devoir',
-        matiere: 'Introduction',
-        year: 'BUT1'
-      },
-      {
-        titre: 'Examen BUT1 - Bases',
-        date: '2024-12-22',
-        heure: '14h00',
-        groupe: 'Promo',
-        groupes: ['Promo'],
-        type: 'exam',
-        matiere: 'Bases',
-        year: 'BUT1'
-      },
-      // BUT3 (nouveaux événements)
-      {
-        titre: 'Examen BUT3 - Projet Final',
-        date: '2024-12-21',
-        heure: '14h00',
-        groupe: 'Promo',
-        groupes: ['Promo'],
-        type: 'exam',
-        matiere: 'Projet Final',
-        year: 'BUT3'
-      },
-      {
-        titre: 'Devoir BUT3 - Spécialisation',
-        date: '2024-12-23',
-        heure: '16h00',
-        groupe: 'A',
-        groupes: ['A'],
-        type: 'devoir',
-        matiere: 'Spécialisation',
-        year: 'BUT3'
       }
     ];
 
@@ -191,63 +148,6 @@ router.post('/seed', async (req, res) => {
   } catch (error) {
     console.error('Erreur lors de la création des données de test:', error);
     res.status(500).json({ message: 'Erreur lors de la création des données de test', error: error.message });
-  }
-});
-
-// Route pour ajouter des événements de test sans supprimer les existants
-router.post('/add-test-events', async (req, res) => {
-  try {
-    // Créer des événements de test pour toutes les années
-    const eventsData = [
-      // BUT1
-      {
-        titre: 'Devoir BUT1 - Introduction',
-        date: '2024-12-20',
-        heure: '10h00',
-        groupe: 'A',
-        groupes: ['A'],
-        type: 'devoir',
-        matiere: 'Introduction',
-        year: 'BUT1'
-      },
-      {
-        titre: 'Examen BUT1 - Bases',
-        date: '2024-12-22',
-        heure: '14h00',
-        groupe: 'Promo',
-        groupes: ['Promo'],
-        type: 'exam',
-        matiere: 'Bases',
-        year: 'BUT1'
-      },
-      // BUT3
-      {
-        titre: 'Examen BUT3 - Projet Final',
-        date: '2024-12-21',
-        heure: '14h00',
-        groupe: 'Promo',
-        groupes: ['Promo'],
-        type: 'exam',
-        matiere: 'Projet Final',
-        year: 'BUT3'
-      },
-      {
-        titre: 'Devoir BUT3 - Spécialisation',
-        date: '2024-12-23',
-        heure: '16h00',
-        groupe: 'A',
-        groupes: ['A'],
-        type: 'devoir',
-        matiere: 'Spécialisation',
-        year: 'BUT3'
-      }
-    ];
-
-    const events = await Event.insertMany(eventsData);
-    res.json({ message: `${events.length} événements ajoutés avec succès`, events });
-  } catch (error) {
-    console.error('Erreur lors de l\'ajout des événements de test:', error);
-    res.status(500).json({ message: 'Erreur lors de l\'ajout des événements de test', error: error.message });
   }
 });
 
@@ -271,15 +171,12 @@ function normalizeGroupe(groupe) {
 router.get('/', verifyToken, async (req, res) => {
   try {
     const { id: userId, role, year, groupe } = req.user;
-    console.log(`=== RÉCUPÉRATION ÉVÉNEMENTS ===`);
-    console.log(`Utilisateur: ${req.user.username}, Rôle: ${role}, Année: ${year}, Groupe: ${groupe}`);
-    fs.appendFileSync('debug.log', `User: ${req.user.username}, Role: ${role}, Year: ${year}, Groupe: ${groupe}\\n`);
+    fs.appendFileSync('debug.log', 'User year: ' + year + '\\n');
     const normalizedYear = normalizeYear(year);
     const normalizedGroupe = (groupe || '').toUpperCase();
 
     let query = {};
-    if (role !== 'admin' && role !== 'prof') {
-      // Logique pour les étudiants et délégués (pas les profs ni les admins)
+    if (role !== 'admin') {
       const possibleYears = [normalizedYear];
       if (normalizedYear === '1') possibleYears.push('BUT1', 'BUT 1', 1);
       if (normalizedYear === '2') possibleYears.push('BUT2', 'BUT 2', 2);
@@ -298,21 +195,8 @@ router.get('/', verifyToken, async (req, res) => {
         ]
       };
     }
-    // Pour les profs et admins : pas de filtre (voient tous les événements)
-    if (role === 'prof' || role === 'admin') {
-      console.log(`${role === 'prof' ? 'Professeur' : 'Admin'} - Affichage de tous les événements`);
-      fs.appendFileSync('debug.log', `${role === 'prof' ? 'Professeur' : 'Admin'} - Affichage de tous les événements\\n`);
-    }
     fs.appendFileSync('debug.log', 'Query utilisée: ' + JSON.stringify(query) + '\\n');
-    // Exclure les événements "supprimés" individuellement par cet utilisateur
-    const events = await Event.find({
-      ...query,
-      $or: [
-        { deletedBy: { $exists: false } },
-        { deletedBy: { $size: 0 } },
-        { deletedBy: { $nin: [req.user.id] } }
-      ]
-    });
+    const events = await Event.find(query);
     console.log(`${events.length} événements trouvés pour l'utilisateur ${req.user.username}`);
     
     const eventsWithStatus = events.map(event => {
@@ -348,34 +232,41 @@ router.post('/', verifyToken, requireRole(['admin', 'prof', 'delegue']), async (
   res.json(event);
 });
 
-// Vider pour SOI (POST): marque l'événement comme supprimé pour l'utilisateur courant
-router.post('/:id/delete', verifyToken, async (req, res) => {
-  try {
-    await Event.updateOne({ _id: req.params.id }, { $addToSet: { deletedBy: req.user.id } });
-    return res.json({ message: 'Événement masqué pour cet utilisateur' });
-  } catch (e) {
-    console.error('Erreur masquage (POST):', e);
-    return res.status(500).json({ message: 'Erreur masquage' });
-  }
-});
-
-// Vider pour SOI (DELETE): marque l'événement comme supprimé pour l'utilisateur courant
-router.delete('/:id', verifyToken, async (req, res) => {
-  try {
-    const event = await Event.findById(req.params.id);
-    if (!event) return res.status(404).json({ message: 'Événement non trouvé' });
-    await Event.updateOne({ _id: req.params.id }, { $addToSet: { deletedBy: req.user.id } });
-    return res.json({ message: 'Événement masqué pour cet utilisateur' });
-  } catch (error) {
-    console.error('Erreur lors du masquage:', error);
-    return res.status(500).json({ message: 'Erreur lors du masquage pour cet utilisateur' });
-  }
+// Supprimer un événement (POST pour compatibilité IONOS/Plesk)
+router.post('/:id/delete', verifyToken, requireRole(['admin', 'delegue']), async (req, res) => {
+  await Event.findByIdAndDelete(req.params.id);
+  res.json({ message: 'Événement supprimé' });
 });
 
 // Modifier un événement
 router.put('/:id', verifyToken, requireRole(['admin']), async (req, res) => {
   const event = await Event.findByIdAndUpdate(req.params.id, req.body, { new: true });
   res.json(event);
+});
+
+// Supprimer un événement (DELETE pour compatibilité frontend)
+router.delete('/:id', verifyToken, async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.id);
+    if (!event) {
+      return res.status(404).json({ message: 'Événement non trouvé' });
+    }
+
+    // Autoriser la suppression si :
+    // - l'utilisateur est admin ou délégué
+    // - OU l'utilisateur a archivé la tâche (son ID est dans archivedBy)
+    const isAdminOrDelegue = req.user.role === 'admin' || req.user.role === 'delegue';
+    const isArchivedByUser = event.archivedBy && event.archivedBy.map(id => id.toString()).includes(req.user.id);
+    if (!isAdminOrDelegue && !isArchivedByUser) {
+      return res.status(403).json({ message: 'Vous n\'êtes pas autorisé à supprimer cet événement (il faut être admin/délégué ou l\'avoir archivé).' });
+    }
+
+    await Event.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Événement supprimé avec succès' });
+  } catch (error) {
+    console.error('Erreur lors de la suppression:', error);
+    res.status(500).json({ message: 'Erreur lors de la suppression de l\'événement' });
+  }
 });
 
 // Archiver un événement

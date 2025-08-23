@@ -9,6 +9,10 @@ function verifyToken(req, res, next) {
   }
 
   const secret = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
+  if (!secret) {
+    console.error('JWT_SECRET non configuré');
+    return res.status(500).json({ message: 'Erreur de configuration serveur' });
+  }
 
   try {
     const decoded = jwt.verify(token, secret, {
@@ -16,10 +20,12 @@ function verifyToken(req, res, next) {
       audience: 'planify-frontend'
     });
     
+    // Vérifier que decoded est un objet et qu'il a une propriété exp
     if (typeof decoded === 'string') {
       return res.status(401).json({ message: 'Token invalide' });
     }
     
+    // Vérifier que le token n'est pas expiré
     if (decoded.exp && Date.now() >= decoded.exp * 1000) {
       return res.status(401).json({ message: 'Token expiré' });
     }
@@ -27,6 +33,7 @@ function verifyToken(req, res, next) {
     req.user = decoded;
     next();
   } catch (err) {
+    console.error('Erreur de vérification JWT:', err.message);
     if (err.name === 'TokenExpiredError') {
       return res.status(401).json({ message: 'Token expiré' });
     } else if (err.name === 'JsonWebTokenError') {
@@ -40,11 +47,11 @@ function verifyToken(req, res, next) {
 // Middleware pour vérifier les rôles
 function requireRole(roles) {
   return (req, res, next) => {
-    if (!req.user || !req.user.role) {
+    if (!req.user) {
       return res.status(401).json({ message: 'Authentification requise' });
     }
 
-    if (!Array.isArray(roles) || !roles.includes(req.user.role)) {
+    if (!roles.includes(req.user.role)) {
       return res.status(403).json({ message: 'Permissions insuffisantes' });
     }
 

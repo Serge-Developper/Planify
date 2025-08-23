@@ -233,16 +233,6 @@ function isDynamic(item) {
 function resolveAssetSrc(path) {
   try {
     if (typeof path === 'string' && path.startsWith('/uploads/')) {
-      // Utiliser les nouvelles APIs pour servir les images depuis la base de données
-      if (path.startsWith('/uploads/avatars/')) {
-        const api = import.meta.env && import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : '/api'
-        const base = api.endsWith('/api') ? api.slice(0, -4) : api.replace('/api','')
-        return base + '/api/uploads/avatars/' + path.split('/').pop()
-      } else if (path.startsWith('/uploads/items/')) {
-        const api = import.meta.env && import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : '/api'
-        const base = api.endsWith('/api') ? api.slice(0, -4) : api.replace('/api','')
-        return base + '/api/uploads/items/' + path.split('/').pop()
-      }
       const api = import.meta.env && import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : '/api'
       const base = api.endsWith('/api') ? api.slice(0, -4) : api.replace('/api','')
       return base + path
