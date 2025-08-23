@@ -217,6 +217,19 @@ module.exports = async (req, res) => {
               message: 'Mot de passe réinitialisé'
             });
 
+          case 'clear-all-items':
+            // Clear all items and reset border color
+            targetUser.purchasedItems = [];
+            targetUser.equippedItemId = null;
+            // Reset any border color related fields if they exist
+            await targetUser.save();
+
+            return res.status(200).json({
+              success: true,
+              message: 'Tous les items supprimés et couleur de bordure réinitialisée',
+              user: { ...targetUser.toObject(), password: undefined }
+            });
+
           default:
             return res.status(400).json({ error: 'Action non supportée' });
         }
@@ -229,7 +242,12 @@ module.exports = async (req, res) => {
     if (req.method === 'PUT') {
       try {
         const user = verifyToken(req, true); // Require admin
-        const { userId, username, email, coins, role } = req.body;
+        
+        // Get userId from query params or body
+        const url = new URL(req.url, 'http://localhost');
+        const userIdFromQuery = url.searchParams.get('userId');
+        const { userId: userIdFromBody, username, email, coins, role } = req.body;
+        const userId = userIdFromQuery || userIdFromBody;
 
         if (!userId) {
           return res.status(400).json({ error: 'UserId requis' });
@@ -262,7 +280,10 @@ module.exports = async (req, res) => {
     if (req.method === 'DELETE') {
       try {
         const user = verifyToken(req, true); // Require admin
-        const { userId } = req.body;
+        
+        // Get userId from query params or body
+        const url = new URL(req.url, 'http://localhost');
+        const userId = url.searchParams.get('userId') || req.body?.userId;
 
         if (!userId) {
           return res.status(400).json({ error: 'UserId requis' });

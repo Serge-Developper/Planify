@@ -1039,11 +1039,13 @@ async function giveItemToUser() {
     // Récupérer le nom de l'item depuis le catalogue (inclut dynamiques)
     const nameById = Object.fromEntries(itemsCatalog.value.map(i => [i.id, i.name]))
     
-    const response = await fetch(`${API_URL}/users/${viewingUserItems.value._id}/give-item`, {
+    const response = await fetch(`${API_URL}/users-admin`, {
       method: 'POST',
       headers: headers,
       credentials: 'include',
       body: JSON.stringify({
+        action: 'give-item',
+        userId: viewingUserItems.value._id,
         itemId: parseInt(itemToGive.value),
         itemName: nameById[itemToGive.value] || String(itemToGive.value),
         adminMessage: (adminMessage.value || '').trim() || null
@@ -1093,10 +1095,14 @@ async function removeAllItemsAndBorderColor(userId) {
       'X-Requested-With': 'XMLHttpRequest',
       'Authorization': `Bearer ${token}`
     }
-    const response = await fetch(`${API_URL}/users/${userId}/items`, {
-      method: 'DELETE',
+    const response = await fetch(`${API_URL}/users-admin`, {
+      method: 'POST',
       headers,
-      credentials: 'include'
+      credentials: 'include',
+      body: JSON.stringify({
+        action: 'clear-all-items',
+        userId: userId
+      })
     })
     if (!response.ok) {
       const errorText = await response.text();
@@ -1168,11 +1174,13 @@ async function giveSelectedItemsToUser() {
     let failedCount = 0
     for (const id of idsToGive) {
       try {
-        const response = await fetch(`${API_URL}/users/${viewingUserItems.value._id}/give-item`, {
+        const response = await fetch(`${API_URL}/users-admin`, {
           method: 'POST',
           headers,
           credentials: 'include',
           body: JSON.stringify({ 
+            action: 'give-item',
+            userId: viewingUserItems.value._id,
             itemId: id, 
             itemName: nameById[id],
             adminMessage: adminMessage.value.trim() || null
@@ -1242,11 +1250,15 @@ async function removeItemFromUser(userId, itemId) {
       'Authorization': `Bearer ${token}`
     }
     
-    const response = await fetch(`${API_URL}/users/${userId}/remove-item`, {
+    const response = await fetch(`${API_URL}/users-admin`, {
       method: 'POST',
       headers: headers,
       credentials: 'include',
-      body: JSON.stringify({ itemId: itemId })
+      body: JSON.stringify({ 
+        action: 'remove-item',
+        userId: userId,
+        itemId: itemId 
+      })
     })
     
     if (!response.ok) {
