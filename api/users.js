@@ -53,8 +53,6 @@ export default async function handler(req, res) {
     return handleAckGift(req, res, path.replace('ack-gift/', ''));
   }
   
-
-  
   // Si on arrive ici, c'est une route non reconnue
   console.log('❌ Route non reconnue:', path, 'Method:', req.method);
   res.status(405).json({

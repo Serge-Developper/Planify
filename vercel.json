@@ -10,6 +10,10 @@
     {
       "src": "/uploads/(.*)",
       "dest": "/public/uploads/$1"
+    },
+    {
+      "src": "/users/(.*)",
+      "dest": "/api/users-direct/$1"
     }
   ]
 }
