@@ -77,8 +77,8 @@ async function handleLogin() {
     if (res.ok && data) {
       userData = data; // Stocke temporairement les données
       
-      // Vérifier hasSecretQuestions dans data.user.hasSecretQuestions
-      const hasSecretQuestions = data.user && data.user.hasSecretQuestions;
+      // Vérifier hasSecretQuestions directement dans data
+      const hasSecretQuestions = data.hasSecretQuestions;
       console.log('🔍 Frontend - hasSecretQuestions:', hasSecretQuestions);
       console.log('📋 Frontend - data structure:', data);
       
