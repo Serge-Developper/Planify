@@ -571,7 +571,7 @@ function formatDate(dateStr) {
 
 async function deleteEvent(event, idx) {
   try {
-    await axios.post(`${API_URL}/events/${event._id}/delete`);
+    await axios.delete(`${API_URL}/events`, { data: { eventId: event._id } });
     // Trouver l'index réel dans events.value
     const realIndex = events.value.findIndex(e => e._id === event._id);
     if (realIndex !== -1) {
@@ -607,7 +607,7 @@ async function addEvent() {
       const eventToUpdate = events.value[editingIndex.value];
       const updatedEvent = { ...eventToUpdate, ...eventForm.value };
       delete updatedEvent.archived;
-      const res = await axios.put(`${API_URL}/events/${eventToUpdate._id}`, updatedEvent);
+      const res = await axios.put(`${API_URL}/events`, { eventId: eventToUpdate._id, ...updatedEvent });
       events.value[editingIndex.value] = res.data;
       editingIndex.value = null;
     } else {
@@ -645,7 +645,7 @@ async function fetchUsers() {
       'Authorization': `Bearer ${token}`
     }
     
-         const response = await fetch(`${API_URL}/users/admin`, {
+         const response = await fetch(`${API_URL}/users-admin`, {
       method: 'GET',
       headers: headers,
       credentials: 'include'
@@ -783,10 +783,13 @@ async function updateUser() {
   editFormMessage.value = '';
   editFormLoading.value = true;
   try {
-    const updateData = { ...editForm.value };
-    if (!updateData.password) {
-      delete updateData.password; // Ne pas envoyer le mot de passe s'il est vide
-    }
+      const updateData = { 
+    userId: editingUser.value._id,
+    ...editForm.value 
+  };
+  if (!updateData.password) {
+    delete updateData.password; // Ne pas envoyer le mot de passe s'il est vide
+  }
     
     // Récupérer le token d'authentification
     let token = auth.token || auth.user?.token
@@ -805,7 +808,7 @@ async function updateUser() {
       'Authorization': `Bearer ${token}`
     }
     
-    const response = await fetch(`${API_URL}/users/${editingUser.value._id}`, {
+    const response = await fetch(`${API_URL}/users-admin`, {
       method: 'PUT',
       headers: headers,
       credentials: 'include',
@@ -854,10 +857,11 @@ async function deleteUser(userId) {
       'Authorization': `Bearer ${token}`
     }
     
-    const response = await fetch(`${API_URL}/users/${userId}`, {
+    const response = await fetch(`${API_URL}/users-admin`, {
       method: 'DELETE',
       headers: headers,
-      credentials: 'include'
+      credentials: 'include',
+      body: JSON.stringify({ userId: userId })
     })
     
     if (!response.ok) {
@@ -1039,11 +1043,13 @@ async function giveItemToUser() {
     // Récupérer le nom de l'item depuis le catalogue (inclut dynamiques)
     const nameById = Object.fromEntries(itemsCatalog.value.map(i => [i.id, i.name]))
     
-    const response = await fetch(`${API_URL}/users/${viewingUserItems.value._id}/give-item`, {
+    const response = await fetch(`${API_URL}/users-admin`, {
       method: 'POST',
       headers: headers,
       credentials: 'include',
       body: JSON.stringify({
+        action: 'give-item',
+        userId: viewingUserItems.value._id,
         itemId: parseInt(itemToGive.value),
         itemName: nameById[itemToGive.value] || String(itemToGive.value),
         adminMessage: (adminMessage.value || '').trim() || null
@@ -1093,8 +1099,8 @@ async function removeAllItemsAndBorderColor(userId) {
       'X-Requested-With': 'XMLHttpRequest',
       'Authorization': `Bearer ${token}`
     }
-    const response = await fetch(`${API_URL}/users/${userId}/items`, {
-      method: 'DELETE',
+    const response = await fetch(`${API_URL}/users-admin?userId=${userId}`, {
+      method: 'GET',
       headers,
       credentials: 'include'
     })
@@ -1168,11 +1174,13 @@ async function giveSelectedItemsToUser() {
     let failedCount = 0
     for (const id of idsToGive) {
       try {
-        const response = await fetch(`${API_URL}/users/${viewingUserItems.value._id}/give-item`, {
+        const response = await fetch(`${API_URL}/users-admin`, {
           method: 'POST',
           headers,
           credentials: 'include',
           body: JSON.stringify({ 
+            action: 'give-item',
+            userId: viewingUserItems.value._id,
             itemId: id, 
             itemName: nameById[id],
             adminMessage: adminMessage.value.trim() || null
@@ -1242,11 +1250,15 @@ async function removeItemFromUser(userId, itemId) {
       'Authorization': `Bearer ${token}`
     }
     
-    const response = await fetch(`${API_URL}/users/${userId}/remove-item`, {
+    const response = await fetch(`${API_URL}/users-admin`, {
       method: 'POST',
       headers: headers,
       credentials: 'include',
-      body: JSON.stringify({ itemId: itemId })
+      body: JSON.stringify({ 
+        action: 'remove-item',
+        userId: userId,
+        itemId: itemId 
+      })
     })
     
     if (!response.ok) {

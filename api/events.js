@@ -111,22 +111,19 @@ module.exports = async (req, res) => {
       }
     }
 
-    // PUT /api/events - Update event (for dynamic paths like /events/:id)
+    // PUT /api/events - Update event
     if (req.method === 'PUT') {
       try {
         const user = verifyToken(req);
-        // Extract event ID from URL path or body
-        const url = new URL(req.url, 'http://localhost');
-        const pathParts = url.pathname.split('/');
-        const eventId = pathParts[pathParts.length - 1];
+        const { eventId, ...updateData } = req.body;
         
-        if (!eventId || eventId === 'events') {
-          return res.status(400).json({ error: 'ID événement manquant' });
+        if (!eventId) {
+          return res.status(400).json({ error: 'ID événement requis dans le body' });
         }
 
         const updatedEvent = await Event.findByIdAndUpdate(
           eventId, 
-          req.body, 
+          updateData, 
           { new: true }
         );
         
@@ -134,7 +131,10 @@ module.exports = async (req, res) => {
           return res.status(404).json({ error: 'Événement non trouvé' });
         }
 
-        return res.status(200).json(updatedEvent);
+        return res.status(200).json({
+          success: true,
+          event: updatedEvent
+        });
       } catch (authError) {
         return res.status(401).json({ error: 'Non autorisé' });
       }
@@ -144,13 +144,10 @@ module.exports = async (req, res) => {
     if (req.method === 'DELETE') {
       try {
         const user = verifyToken(req);
-        // Extract event ID from URL path
-        const url = new URL(req.url, 'http://localhost');
-        const pathParts = url.pathname.split('/');
-        const eventId = pathParts[pathParts.length - 1];
+        const { eventId } = req.body;
         
-        if (!eventId || eventId === 'events') {
-          return res.status(400).json({ error: 'ID événement manquant' });
+        if (!eventId) {
+          return res.status(400).json({ error: 'ID événement requis dans le body' });
         }
 
         const deletedEvent = await Event.findByIdAndDelete(eventId);
@@ -159,7 +156,10 @@ module.exports = async (req, res) => {
           return res.status(404).json({ error: 'Événement non trouvé' });
         }
 
-        return res.status(200).json({ message: 'Événement supprimé' });
+        return res.status(200).json({ 
+          success: true,
+          message: 'Événement supprimé' 
+        });
       } catch (authError) {
         return res.status(401).json({ error: 'Non autorisé' });
       }

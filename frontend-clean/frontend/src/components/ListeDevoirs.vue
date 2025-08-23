@@ -718,7 +718,7 @@ async function viderArchive() {
       } catch (e) { /* tolérant si déjà décoché */ }
       // 3) Tenter la suppression définitive (réussit si autorisé côté backend)
       try {
-        await axios.delete(`${API_URL}/events/${event._id}`, { headers: { Authorization: `Bearer ${user.value.token}` } });
+        await axios.delete(`${API_URL}/events`, { data: { eventId: event._id }, headers: { Authorization: `Bearer ${user.value.token}` } });
       } catch (e) { /* si non autorisé, on ignore et laisse la tâche désarchivée et décochée */ }
     }
     emit('refresh-events');
@@ -736,7 +736,7 @@ async function viderArchiveType(type) {
     for (const event of archivesFiltered.value.filter(e => e.type === type).slice()) {
       await axios.post(`${API_URL}/events-check`, { eventId: event._id, action: 'unarchive' }, { headers: { Authorization: `Bearer ${user.value.token}` } });
       try { await axios.post(`${API_URL}/events-check`, { eventId: event._id, action: 'uncheck' }, { headers: { Authorization: `Bearer ${user.value.token}` } }); } catch {}
-      try { await axios.delete(`${API_URL}/events/${event._id}`, { headers: { Authorization: `Bearer ${user.value.token}` } }); } catch {}
+      try { await axios.delete(`${API_URL}/events`, { data: { eventId: event._id }, headers: { Authorization: `Bearer ${user.value.token}` } }); } catch {}
     }
     emit('refresh-events');
     playSound(supprimerArchiveSound)
@@ -753,7 +753,7 @@ async function viderArchiveMatiere(matiere) {
     for (const event of archivesFiltered.value.filter(e => e.matiere === matiere).slice()) {
       await axios.post(`${API_URL}/events-check`, { eventId: event._id, action: 'unarchive' }, { headers: { Authorization: `Bearer ${user.value.token}` } });
       try { await axios.post(`${API_URL}/events-check`, { eventId: event._id, action: 'uncheck' }, { headers: { Authorization: `Bearer ${user.value.token}` } }); } catch {}
-      try { await axios.delete(`${API_URL}/events/${event._id}`, { headers: { Authorization: `Bearer ${user.value.token}` } }); } catch {}
+      try { await axios.delete(`${API_URL}/events`, { data: { eventId: event._id }, headers: { Authorization: `Bearer ${user.value.token}` } }); } catch {}
     }
     emit('refresh-events');
     playSound(supprimerArchiveSound)
@@ -770,7 +770,7 @@ async function viderArchiveTypeMatiere(type, matiere) {
     for (const event of archivesFiltered.value.filter(e => e.type === type && e.matiere === matiere).slice()) {
       await axios.post(`${API_URL}/events-check`, { eventId: event._id, action: 'unarchive' }, { headers: { Authorization: `Bearer ${user.value.token}` } });
       try { await axios.post(`${API_URL}/events-check`, { eventId: event._id, action: 'uncheck' }, { headers: { Authorization: `Bearer ${user.value.token}` } }); } catch {}
-      try { await axios.delete(`${API_URL}/events/${event._id}`, { headers: { Authorization: `Bearer ${user.value.token}` } }); } catch {}
+      try { await axios.delete(`${API_URL}/events`, { data: { eventId: event._id }, headers: { Authorization: `Bearer ${user.value.token}` } }); } catch {}
     }
     emit('refresh-events');
     playSound(supprimerArchiveSound)
@@ -999,7 +999,7 @@ async function deleteTaskConfirmed() {
   
   try {
     const token = user.value.token;
-    await axios.delete(`${API_URL}/events/${taskToDelete.value._id}`, {
+    await axios.delete(`${API_URL}/events`, { data: { eventId: taskToDelete.value._id },
       headers: { Authorization: `Bearer ${token}` }
     });
     emit('refresh-events');
