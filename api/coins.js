@@ -44,7 +44,8 @@ const userSchema = new mongoose.Schema({
   }],
   equippedItemId: { type: Number, default: null },
   completedTasks: { type: Number, default: 0 },
-  lastSpinDate: { type: Date, default: null }
+  lastSpinDate: { type: Date, default: null },
+  selectedBorderColor: { type: String, default: 'default' }
 }, { timestamps: true });
 
 const User = mongoose.models.User || mongoose.model('User', userSchema);
@@ -391,6 +392,104 @@ module.exports = async (req, res) => {
           message: message
         });
       }
+    }
+
+    // EQUIP ENDPOINT
+    if (endpoint === 'equip' && req.method === 'POST') {
+      const { itemId } = req.body;
+      
+      if (!itemId) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'ID de l\'item manquant' 
+        });
+      }
+      
+      if (!userDoc) {
+        return res.status(404).json({ 
+          success: false, 
+          message: 'Utilisateur non trouvé' 
+        });
+      }
+      
+      // Check if user owns this item
+      const item = userDoc.purchasedItems.find(item => item.itemId === itemId);
+      if (!item) {
+        return res.json({ 
+          success: false, 
+          message: 'Vous ne possédez pas cet item' 
+        });
+      }
+      
+      // Unequip all items
+      userDoc.purchasedItems.forEach(item => {
+        item.equipped = false;
+      });
+      
+      // Equip selected item
+      item.equipped = true;
+      userDoc.equippedItemId = itemId;
+      
+      await userDoc.save();
+      
+      return res.json({
+        success: true,
+        message: `Item ${item.itemName} équipé avec succès`,
+        equippedItemId: itemId
+      });
+    }
+
+    // UNEQUIP ENDPOINT
+    if (endpoint === 'unequip' && req.method === 'POST') {
+      if (!userDoc) {
+        return res.status(404).json({ 
+          success: false, 
+          message: 'Utilisateur non trouvé' 
+        });
+      }
+      
+      // Unequip all items
+      userDoc.purchasedItems.forEach(item => {
+        item.equipped = false;
+      });
+      userDoc.equippedItemId = null;
+      
+      await userDoc.save();
+      
+      return res.json({
+        success: true,
+        message: 'Item déséquipé avec succès',
+        equippedItemId: null
+      });
+    }
+
+    // BORDER COLOR ENDPOINT (for border selection and Discord variants)
+    if (endpoint === 'border-color' && req.method === 'POST') {
+      const { colorId } = req.body;
+      
+      if (!colorId) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'ColorId manquant' 
+        });
+      }
+      
+      if (!userDoc) {
+        return res.status(404).json({ 
+          success: false, 
+          message: 'Utilisateur non trouvé' 
+        });
+      }
+      
+      // Update user's selected border color (this also handles Discord variants)
+      userDoc.selectedBorderColor = colorId;
+      await userDoc.save();
+      
+      return res.json({
+        success: true,
+        message: 'Couleur de bordure mise à jour',
+        selectedBorderColor: colorId
+      });
     }
     
     return res.status(405).json({ 
