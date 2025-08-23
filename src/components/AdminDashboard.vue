@@ -645,7 +645,7 @@ async function fetchUsers() {
       'Authorization': `Bearer ${token}`
     }
     
-         const response = await fetch(`${API_URL}/users/admin`, {
+         const response = await fetch(`${API_URL}/users-admin`, {
       method: 'GET',
       headers: headers,
       credentials: 'include'
@@ -805,7 +805,7 @@ async function updateUser() {
       'Authorization': `Bearer ${token}`
     }
     
-    const response = await fetch(`${API_URL}/users/${editingUser.value._id}`, {
+    const response = await fetch(`${API_URL}/users-admin?userId=${editingUser.value._id}`, {
       method: 'PUT',
       headers: headers,
       credentials: 'include',
@@ -854,7 +854,7 @@ async function deleteUser(userId) {
       'Authorization': `Bearer ${token}`
     }
     
-    const response = await fetch(`${API_URL}/users/${userId}`, {
+    const response = await fetch(`${API_URL}/users-admin?userId=${userId}`, {
       method: 'DELETE',
       headers: headers,
       credentials: 'include'
@@ -919,7 +919,7 @@ async function openUserSecrets(user) {
       'X-Requested-With': 'XMLHttpRequest',
       ...(token ? { 'Authorization': `Bearer ${token}` } : {})
     };
-    const res = await fetch(`${API_URL}/users/${user._id}`, { method: 'GET', headers, credentials: token ? 'include' : 'same-origin' });
+    const res = await fetch(`${API_URL}/users-admin?userId=${user._id}`, { method: 'GET', headers, credentials: token ? 'include' : 'same-origin' });
     if (!res.ok) throw new Error('Erreur de récupération utilisateur');
     const fullUser = await res.json();
     // Mettre à jour le nom si on ne l'avait pas
@@ -990,7 +990,7 @@ async function saveUserSecrets() {
       'Authorization': `Bearer ${token}`
     };
     // Utiliser la route de mise à jour utilisateur avec payload libre
-    const res = await fetch(`${API_URL}/users/${secretsUser.value._id}`, {
+    const res = await fetch(`${API_URL}/users-admin?userId=${secretsUser.value._id}`, {
       method: 'PUT',
       headers,
       credentials: 'include',
