@@ -103,8 +103,19 @@ module.exports = async (req, res) => {
   try {
     await connectDB();
     
+    console.log('🔍 Events-check start:', { method: req.method, body: req.body });
+    
     const user = verifyToken(req);
     const userIdString = user.id || user._id;
+    
+    console.log('🔍 User from token:', { userIdString, userObj: user });
+    
+    // Validation de l'ObjectId avant conversion
+    if (!userIdString || !mongoose.Types.ObjectId.isValid(userIdString)) {
+      console.error('❌ Invalid userId:', userIdString);
+      return res.status(400).json({ error: 'UserId invalide' });
+    }
+    
     const userId = new mongoose.Types.ObjectId(userIdString);
     
     console.log('🔍 Events-check debug:', { userIdString, userId, action: req.body.action, eventId: req.body.eventId });
@@ -112,10 +123,19 @@ module.exports = async (req, res) => {
     const { eventId, action } = req.body;
     
     if (!eventId || !action) {
+      console.error('❌ Missing eventId or action:', { eventId, action });
       return res.status(400).json({ error: 'eventId et action requis' });
     }
 
+    // Validation de l'eventId
+    if (!mongoose.Types.ObjectId.isValid(eventId)) {
+      console.error('❌ Invalid eventId:', eventId);
+      return res.status(400).json({ error: 'EventId invalide' });
+    }
+
+    console.log('🔍 Searching for event:', eventId);
     const event = await Event.findById(eventId);
+    console.log('🔍 Event found:', event ? 'Yes' : 'No', event ? { title: event.titre, checkedBy: event.checkedBy.length } : null);
     
     if (!event) {
       return res.status(404).json({ error: 'Événement non trouvé' });
