@@ -101,8 +101,11 @@ module.exports = async (req, res) => {
                                 user.secretQuestions.every(q => q.question && q.answer);
 
       return res.status(200).json({
-        success: true,
-        user: userWithoutPassword,
+        _id: user._id,
+        username: user.username,
+        role: user.role,
+        groupe: user.groupe,
+        year: user.year,
         token: token,
         hasSecretQuestions: hasSecretQuestions
       });
