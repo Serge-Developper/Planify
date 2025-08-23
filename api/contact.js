@@ -1,4 +1,4 @@
-const nodemailer = require('nodemailer');
+import nodemailer from 'nodemailer';
 
 // CORS headers
 const setCorsHeaders = (res) => {
@@ -7,7 +7,7 @@ const setCorsHeaders = (res) => {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 };
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   setCorsHeaders(res);
   
   if (req.method === 'OPTIONS') {
@@ -69,4 +69,4 @@ module.exports = async (req, res) => {
       message: "Erreur lors de l'envoi de l'e-mail." 
     });
   }
-};
+}
