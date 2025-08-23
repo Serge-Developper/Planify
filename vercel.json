@@ -1,32 +1,7 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "api/**/*.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "frontend (7)/frontend/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "frontend (7)/frontend/dist"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    },
-    {
-      "src": "/uploads/(.*)",
-      "dest": "/api/uploads/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/frontend (7)/frontend/dist/$1"
-    }
-  ],
+  "buildCommand": "cd 'frontend (7)/frontend' && npm run build",
+  "outputDirectory": "frontend (7)/frontend/dist",
   "functions": {
     "api/**/*.js": {
       "maxDuration": 30
