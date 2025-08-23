@@ -4,5 +4,27 @@
     "api/**/*.js": {
       "maxDuration": 30
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/api/coins/weekly-items",
+      "destination": "/api/coins"
+    },
+    {
+      "source": "/api/coins/purchase", 
+      "destination": "/api/coins"
+    },
+    {
+      "source": "/api/coins/inventory",
+      "destination": "/api/coins"
+    },
+    {
+      "source": "/api/coins/spin-status",
+      "destination": "/api/coins"
+    },
+    {
+      "source": "/api/coins/user-coins",
+      "destination": "/api/coins"
+    }
+  ]
 }
