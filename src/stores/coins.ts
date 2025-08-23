@@ -558,6 +558,8 @@ export const useCoinsStore = defineStore('coins', {
 
     // Initialiser le store
     async initialize() {
+      // Réinitialiser le store avant de charger les nouvelles données
+      this.reset();
       // Charger séquentiellement pour éviter les erreurs 429
       this.initializeBorderColors();
       await this.loadBalance();
