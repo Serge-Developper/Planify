@@ -32,7 +32,8 @@ const userSchema = new mongoose.Schema({
   year: { type: String, enum: ['BUT1', 'BUT2', 'BUT3'], default: null },
   groupe: { type: String, enum: ['A', "A'", 'A2', 'B', "B'", 'B2', 'Promo'], default: null },
   purchasedItems: [{ type: Number }],
-  equippedItemId: { type: Number, default: null }
+  equippedItemId: { type: Number, default: null },
+  lastSpinDate: { type: Date, default: null }
 }, { timestamps: true });
 
 const User = mongoose.models.User || mongoose.model('User', userSchema);
@@ -166,6 +167,83 @@ module.exports = async (req, res) => {
               success: true,
               message: 'Item équipé',
               equippedItemId: userData.equippedItemId
+            });
+
+          case 'spin-wheel':
+            // Vérifier si l'utilisateur peut tourner la roue (une fois par jour)
+            const now = new Date();
+            const lastSpin = userData.lastSpinDate;
+            
+            if (lastSpin) {
+              const timeDiff = now.getTime() - lastSpin.getTime();
+              const hoursDiff = timeDiff / (1000 * 60 * 60);
+              
+              if (hoursDiff < 24) {
+                return res.status(200).json({ 
+                  success: false,
+                  message: "Vous avez déjà tourné la roue aujourd'hui. Revenez demain !",
+                  canSpin: false
+                });
+              }
+            }
+
+            // Segments de la roue (récompenses possibles)
+            const segments = [
+              { name: "10 coins", coins: 10, weight: 20 },
+              { name: "20 coins", coins: 20, weight: 15 },
+              { name: "50 coins", coins: 50, weight: 10 },
+              { name: "Perdu", coins: 0, weight: 30 },
+              { name: "5 coins", coins: 5, weight: 25 }
+            ];
+
+            // Sélection aléatoire basée sur les poids
+            const totalWeight = segments.reduce((sum, seg) => sum + seg.weight, 0);
+            let random = Math.random() * totalWeight;
+            let selectedReward = segments[0];
+
+            for (const segment of segments) {
+              if (random < segment.weight) {
+                selectedReward = segment;
+                break;
+              }
+              random -= segment.weight;
+            }
+
+            // Vérifier si c'est le weekend pour le bonus x2
+            const dayOfWeek = now.getDay();
+            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // Dimanche (0) ou Samedi (6)
+            
+            let finalCoins = selectedReward.coins;
+            let isWeekendBonus = false;
+            
+            if (isWeekend && selectedReward.coins > 0) {
+              finalCoins = selectedReward.coins * 2;
+              isWeekendBonus = true;
+            }
+            
+            // Ajouter les coins et mettre à jour la date du dernier spin
+            userData.coins = (userData.coins || 0) + finalCoins;
+            userData.lastSpinDate = now;
+            await userData.save();
+            
+            // Message personnalisé selon le weekend ou non
+            let message;
+            if (selectedReward.coins === 0) {
+              message = "Pas de chance cette fois ! Revenez demain.";
+            } else if (isWeekendBonus) {
+              message = `Félicitations ! Vous avez gagné ${selectedReward.coins} coins (x2 weekend = ${finalCoins} coins) !`;
+            } else {
+              message = `Félicitations ! Vous avez gagné ${finalCoins} coins !`;
+            }
+
+            return res.status(200).json({
+              success: true,
+              coinsWon: finalCoins,
+              newCoins: userData.coins,
+              rewardName: selectedReward.name,
+              isWeekendBonus: isWeekendBonus,
+              originalCoins: selectedReward.coins,
+              message: message
             });
 
           default:

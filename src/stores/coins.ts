@@ -499,8 +499,11 @@ export const useCoinsStore = defineStore('coins', {
     async spinWheel() {
       try {
         this.loading = true;
-        const response = await secureApiCall('/coins/spin-wheel', {
-          method: 'POST'
+        const response = await secureApiCall('/coins', {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'spin-wheel'
+          })
         });
 
         if (response.success) {
@@ -530,8 +533,11 @@ export const useCoinsStore = defineStore('coins', {
     async spinWheelWithoutUpdate() {
       try {
         this.loading = true;
-        const response = await secureApiCall('/coins/spin-wheel', {
-          method: 'POST'
+        const response = await secureApiCall('/coins', {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'spin-wheel'
+          })
         });
 
         if (response.success) {
