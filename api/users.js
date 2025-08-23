@@ -128,4 +128,48 @@ app.get('/leaderboard', async (req, res) => {
   }
 });
 
+// Also respond on root (mounted function) with leaderboard data
+app.get('/', async (req, res) => {
+  try {
+    await connectDB();
+    const users = await User.find({}, 'username coins avatar')
+      .sort({ coins: -1 })
+      .limit(10);
+    res.json({
+      success: true,
+      users: users.map(user => ({
+        id: user._id,
+        username: user.username,
+        coins: user.coins,
+        avatar: user.avatar
+      }))
+    });
+  } catch (error) {
+    console.error('Erreur users root:', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+});
+
+// And support explicit path (in case function mounted at root)
+app.get('/api/users', async (req, res) => {
+  try {
+    await connectDB();
+    const users = await User.find({}, 'username coins avatar')
+      .sort({ coins: -1 })
+      .limit(10);
+    res.json({
+      success: true,
+      users: users.map(user => ({
+        id: user._id,
+        username: user.username,
+        coins: user.coins,
+        avatar: user.avatar
+      }))
+    });
+  } catch (error) {
+    console.error('Erreur users explicit:', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+});
+
 export default app;

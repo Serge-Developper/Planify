@@ -137,4 +137,22 @@ app.get('/', async (req, res) => {
   }
 });
 
+// Support explicit path when function is mounted at root
+app.get('/api/items', async (req, res) => {
+  try {
+    await connectDB();
+    const items = await Item.find({});
+    res.json({
+      success: true,
+      items: items
+    });
+  } catch (error) {
+    console.error('Erreur items (explicit path):', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur serveur'
+    });
+  }
+});
+
 export default app;
