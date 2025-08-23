@@ -209,7 +209,7 @@ export const useCoinsStore = defineStore('coins', {
         this.loading = true;
         // Délai pour éviter les erreurs 429
         await new Promise(resolve => setTimeout(resolve, 100));
-        const response = await secureApiCall('/coins/user-coins');
+        const response = await secureApiCall('/coins-unified?action=user-coins');
         this.balance = response.coins || 0;
       } catch (error) {
         console.error('Erreur chargement solde:', error);
@@ -223,9 +223,9 @@ export const useCoinsStore = defineStore('coins', {
     async loadSpinStatus() {
       try {
         this.loading = true;
-        const response = await secureApiCall('/coins/spin-status');
+        const response = await secureApiCall('/coins-unified?action=spin-status');
         
-        if (response.success) {
+        if (response.canSpin !== undefined) {
           this.canSpinToday = response.canSpin;
           this.lastSpinDate = response.lastSpinDate ? new Date(response.lastSpinDate) : null;
         } else {
@@ -248,8 +248,8 @@ export const useCoinsStore = defineStore('coins', {
         this.loading = true;
         // Délai pour éviter les erreurs 429
         await new Promise(resolve => setTimeout(resolve, 200));
-        const response = await secureApiCall('/coins/inventory');
-        this.purchasedItems = response.purchasedItems || [];
+        const response = await secureApiCall('/coins-unified?action=inventory');
+        this.purchasedItems = response.inventory || [];
         // S'assurer que l'item Bordure Classique est présent côté front
         if (!this.purchasedItems.some(it => it.itemId === 0)) {
           this.purchasedItems.push({ itemId: 0, itemName: 'Bordure Classique', purchaseDate: new Date(), equipped: false });
@@ -279,18 +279,15 @@ export const useCoinsStore = defineStore('coins', {
     async purchaseItem(item: { id: number; name: string; price: number; type?: string }) {
       try {
         this.loading = true;
-        const response = await secureApiCall('/coins/purchase', {
+        const response = await secureApiCall('/coins-unified?action=purchase', {
           method: 'POST',
           body: JSON.stringify({
-            itemId: item.id,
-            itemName: item.name,
-            price: item.price,
-            type: item.type
+            itemName: item.name
           })
         });
 
         if (response.success) {
-          this.balance = response.newCoins;
+          this.balance = response.newBalance;
           
           // Si c'est une couleur de bordure, la débloquer
           if (item.type === 'border-color' || item.type === 'border-gradient') {
@@ -305,7 +302,7 @@ export const useCoinsStore = defineStore('coins', {
             }
           } else {
             // Sinon, ajouter l'item normalement
-            this.purchasedItems.push(response.purchasedItem);
+            this.purchasedItems.push({ itemId: item.id, itemName: item.name, purchaseDate: new Date(), equipped: false } as any);
           }
           
           return { success: true, message: response.message };
@@ -406,8 +403,9 @@ export const useCoinsStore = defineStore('coins', {
         // Si l'item est déjà équipé, le déséquiper
         if (this.equippedItemId === itemId) {
           console.log('🔧 Déséquipement de l\'item:', itemId);
-          const response = await secureApiCall('/coins/unequip', {
-            method: 'POST'
+          const response = await secureApiCall('/coins-unified?action=unequip', {
+            method: 'POST',
+            body: JSON.stringify({ itemName: itemId })
           });
 
           console.log('🔧 Réponse déséquipement:', response);
@@ -428,9 +426,9 @@ export const useCoinsStore = defineStore('coins', {
         } else {
           // Sinon, équiper l'item
           console.log('🔧 Équipement de l\'item:', itemId);
-          const response = await secureApiCall('/coins/equip', {
+          const response = await secureApiCall('/coins-unified?action=equip', {
             method: 'POST',
-            body: JSON.stringify({ itemId })
+            body: JSON.stringify({ itemName: itemId })
           });
 
           console.log('🔧 Réponse équipement:', response);
@@ -461,8 +459,9 @@ export const useCoinsStore = defineStore('coins', {
     async unequipItem() {
       try {
         this.loading = true;
-        const response = await secureApiCall('/coins/unequip', {
-          method: 'POST'
+        const response = await secureApiCall('/coins-unified?action=unequip', {
+          method: 'POST',
+          body: JSON.stringify({ itemName: this.equippedItemId })
         });
 
         if (response.success) {
@@ -487,17 +486,17 @@ export const useCoinsStore = defineStore('coins', {
     async spinWheel() {
       try {
         this.loading = true;
-        const response = await secureApiCall('/coins/spin-wheel', {
+        const response = await secureApiCall('/coins-unified?action=spin-wheel', {
           method: 'POST'
         });
 
         if (response.success) {
-          this.balance = response.newCoins;
+          this.balance = response.newBalance;
           // Recharger le statut depuis le serveur pour avoir les bonnes informations
           await this.loadSpinStatus();
           return { 
             success: true, 
-            coinsWon: response.coinsWon,
+            coinsWon: response.reward,
             message: response.message,
             rewardName: response.rewardName
           };
@@ -518,7 +517,7 @@ export const useCoinsStore = defineStore('coins', {
     async spinWheelWithoutUpdate() {
       try {
         this.loading = true;
-        const response = await secureApiCall('/coins/spin-wheel', {
+        const response = await secureApiCall('/coins-unified?action=spin-wheel', {
           method: 'POST'
         });
 
@@ -527,7 +526,7 @@ export const useCoinsStore = defineStore('coins', {
           await this.loadSpinStatus();
           return { 
             success: true, 
-            coinsWon: response.coinsWon,
+            coinsWon: response.reward,
             message: response.message,
             rewardName: response.rewardName
           };
