@@ -13,7 +13,7 @@
     },
     {
       "src": "/users/(.*)",
-      "dest": "/api/users-direct/$1"
+      "dest": "/api/users/$1"
     }
   ]
 }
