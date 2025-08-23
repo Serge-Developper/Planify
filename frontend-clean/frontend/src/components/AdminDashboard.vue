@@ -693,7 +693,7 @@ async function addUser() {
       'Authorization': `Bearer ${token}`
     }
     
-    const response = await fetch(`${API_URL}/register`, {
+    const response = await fetch(`${API_URL}/auth/register`, {
       method: 'POST',
       headers: headers,
       credentials: 'include',
