@@ -41,13 +41,14 @@ export default async function handler(req, res) {
   if (req.method === 'GET' && !path) {
     // Toujours retourner le leaderboard (avec ou sans token)
     return handleLeaderboard(req, res);
-  } else {
-    console.log('❌ Méthode non autorisée:', req.method);
-    res.status(405).json({
-      success: false,
-      message: 'Méthode non autorisée'
-    });
   }
+  
+  // Si on arrive ici, c'est une route non reconnue
+  console.log('❌ Route non reconnue:', path, 'Method:', req.method);
+  res.status(405).json({
+    success: false,
+    message: 'Méthode non autorisée'
+  });
 }
 
 // Fonction pour récupérer les questions secrètes d'un utilisateur
