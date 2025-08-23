@@ -137,13 +137,13 @@ module.exports = async (req, res) => {
 
   try {
     // Parse the URL to determine the endpoint
-    const url = new URL(req.url, `http://${req.headers.host}`);
-    const pathSegments = url.pathname.split('/').filter(Boolean);
+    const urlPath = req.url.split('?')[0]; // Remove query params
+    const pathSegments = urlPath.split('/').filter(Boolean);
     
     // Remove 'api' and 'coins' from path
     const endpoint = pathSegments.slice(2).join('/') || 'main';
     
-    console.log('🪙 Coins API called:', { method: req.method, endpoint, url: req.url });
+    console.log('🪙 Coins API called:', { method: req.method, endpoint, urlPath, pathSegments });
 
     // Handle different endpoints
     if (endpoint === 'weekly-items' && req.method === 'GET') {
