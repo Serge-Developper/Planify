@@ -753,9 +753,9 @@
         <h2>Profil</h2>
         <div class="profile-info">
           <div><strong>Nom d'utilisateur :</strong> {{ user?.username || user?.name || 'Utilisateur' }}</div>
-          <div><strong>Rôle :</strong> {{ user?.role ? afficherRole(user.role) : 'Utilisateur' }}</div>
-          <div v-if="user?.year"><strong>Année :</strong> {{ afficherAnnee(user.year) }}</div>
-          <div v-if="user?.groupe"><strong>Groupe :</strong> {{ user.groupe }}</div>
+          <div><strong>Rôle :</strong> {{ user?.role ? afficherRole(user.role) : 'Non défini' }}</div>
+          <div><strong>Année :</strong> {{ user?.year ? afficherAnnee(user.year) : 'Non définie' }}</div>
+          <div><strong>Groupe :</strong> {{ user?.groupe || 'Non défini' }}</div>
           <div class="coins-profile-row">
             <strong>PlanifyCoins :</strong>
             <span class="coins-value">{{ formattedBalance }}</span>
@@ -1523,17 +1523,32 @@ function handleAdminMobile() {
 }
 
 function afficherRole(role) {
-  if (role === 'eleve' || role === 'etudiant') return 'Étudiant';
-  if (role === 'delegue') return 'Délégué';
-  if (role === 'prof') return 'Professeur';
-  if (role === 'admin') return 'Administrateur';
-  return role;
+  const roleMap = {
+    'student': 'Étudiant',
+    'etudiant': 'Étudiant', 
+    'eleve': 'Étudiant',
+    'professor': 'Professeur',
+    'prof': 'Professeur',
+    'delegate': 'Délégué',
+    'delegue': 'Délégué',
+    'admin': 'Administrateur',
+    'user': 'Utilisateur'
+  };
+  return roleMap[role] || role;
 }
 function afficherAnnee(year) {
-  if (year === 'BUT1') return '1ère année';
-  if (year === 'BUT2') return '2ème année';
-  if (year === 'BUT3') return '3ème année';
-  return year;
+  const yearMap = {
+    '1ere': '1ère année',
+    '2eme': '2ème année', 
+    '3eme': '3ème année',
+    'BUT1': '1ère année',
+    'BUT2': '2ème année',
+    'BUT3': '3ème année',
+    'licence': 'Licence',
+    'master': 'Master',
+    'doctorat': 'Doctorat'
+  };
+  return yearMap[year] || year;
 }
 
 // Fonction pour gérer les erreurs de chargement d'image

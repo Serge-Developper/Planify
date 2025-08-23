@@ -29,7 +29,9 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   coins: { type: Number, default: 0 },
   avatar: { type: String, default: null },
-  role: { type: String, enum: ['user', 'admin'], default: 'user' },
+  role: { type: String, enum: ['user', 'admin', 'student', 'professor', 'delegate'], default: 'student' },
+  year: { type: String, enum: ['1ere', '2eme', '3eme', 'licence', 'master', 'doctorat'], default: null },
+  groupe: { type: String, enum: ['A', 'B', 'C', 'D'], default: null },
   secretQuestions: [{
     question: { type: String, required: true },
     answer: { type: String, required: true }

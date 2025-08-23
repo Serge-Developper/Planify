@@ -27,7 +27,9 @@ const UserSchema = new mongoose.Schema({
   username: String,
   email: String,
   password: String,
-  role: { type: String, default: 'user' },
+  role: { type: String, enum: ['user', 'admin', 'student', 'professor', 'delegate'], default: 'student' },
+  year: { type: String, enum: ['1ere', '2eme', '3eme', 'licence', 'master', 'doctorat'], default: null },
+  groupe: { type: String, enum: ['A', 'B', 'C', 'D'], default: null },
   coins: { type: Number, default: 0 },
   lastSpinDate: Date,
   inventory: [{
