@@ -140,6 +140,15 @@ const verifyToken = async (req, res, next) => {
   }
 };
 
+// Add simple base handlers to avoid 404 on base coins path
+app.get('/', (req, res) => {
+  res.json({ success: true, message: 'Coins API' });
+});
+
+app.get('/api/coins', (req, res) => {
+  res.json({ success: true, message: 'Coins API' });
+});
+
 // GET /api/coins/weekly-items
 app.get('/weekly-items', async (req, res) => {
   try {

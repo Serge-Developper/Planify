@@ -72,17 +72,23 @@ const connectDB = async () => {
 app.get('/', async (req, res) => {
   try {
     await connectDB();
-    const events = await Event.find({}).populate('createdBy', 'username');
-    res.json({
-      success: true,
-      events: events
-    });
+    const events = await Event.find({}).sort({ startDate: 1 });
+    res.json({ success: true, events });
   } catch (error) {
     console.error('Erreur events:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erreur serveur'
-    });
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+});
+
+// Support explicit path when function is mounted at root
+app.get('/api/events', async (req, res) => {
+  try {
+    await connectDB();
+    const events = await Event.find({}).sort({ startDate: 1 });
+    res.json({ success: true, events });
+  } catch (error) {
+    console.error('Erreur events (explicit path):', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 });
 
