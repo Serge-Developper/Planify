@@ -1,5 +1,5 @@
-import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
 // MongoDB connection
 let isConnected = false;
@@ -43,7 +43,7 @@ const setCorsHeaders = (res) => {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 };
 
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
   setCorsHeaders(res);
   
   if (req.method === 'OPTIONS') {
@@ -87,4 +87,4 @@ export default async function handler(req, res) {
     console.error('Erreur lors de la réinitialisation du mot de passe:', error);
     res.status(500).json({ error: 'Erreur serveur interne' });
   }
-}
+};

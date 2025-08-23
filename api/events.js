@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
 // MongoDB connection
 let isConnected = false;
@@ -56,7 +56,7 @@ const setCorsHeaders = (res) => {
 };
 
 // JWT verification
-import jwt from 'jsonwebtoken';
+const jwt = require('jsonwebtoken');
 
 const verifyToken = (req) => {
   const authHeader = req.headers.authorization;
@@ -77,7 +77,7 @@ const verifyToken = (req) => {
   }
 };
 
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
   setCorsHeaders(res);
   
   if (req.method === 'OPTIONS') {
@@ -171,4 +171,4 @@ export default async function handler(req, res) {
     console.error('Erreur API events:', error);
     res.status(500).json({ error: 'Erreur serveur interne' });
   }
-}
+};
