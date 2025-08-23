@@ -50,7 +50,7 @@ export default async function handler(req, res) {
       await client.connect();
       console.log('✅ Connexion MongoDB réussie');
       
-      const db = client.db('planifyvrai');
+      const db = client.db();
       const usersCollection = db.collection('users');
       
       // Find user by username
