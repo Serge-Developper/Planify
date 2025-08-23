@@ -1,10 +1,16 @@
 {
   "version": 2,
-  "buildCommand": "npm run build",
+  "buildCommand": "cd 'frontend (7)/frontend' && npm install && npm run build",
   "outputDirectory": "frontend (7)/frontend/dist",
   "functions": {
     "api/**/*.js": {
       "maxDuration": 30
     }
-  }
+  },
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    }
+  ]
 }
