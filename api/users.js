@@ -81,7 +81,7 @@ export default async function handler(req, res) {
       try {
         decoded = jwt.default.verify(token, process.env.JWT_SECRET);
         // Vérifier que decoded est un objet avec les propriétés attendues
-        if (typeof decoded === 'string' || !decoded.username || !decoded.userId) {
+        if (typeof decoded === 'string' || !decoded.username || !decoded.id) {
           throw new Error('Token invalide - structure incorrecte');
         }
         console.log('✅ Token JWT vérifié pour:', decoded.username);
@@ -104,7 +104,7 @@ export default async function handler(req, res) {
       
       // Find user by ID
       const { ObjectId } = await import('mongodb');
-      const user = await usersCollection.findOne({ _id: new ObjectId(decoded.userId) });
+      const user = await usersCollection.findOne({ _id: new ObjectId(decoded.id) });
       
       if (!user) {
         await client.close();
