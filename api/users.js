@@ -37,10 +37,20 @@ export default async function handler(req, res) {
     return handleSecretQuestions(req, res);
   }
   
-  // Handle GET request (leaderboard)
+  // Handle GET request (leaderboard) - route principale
   if (req.method === 'GET' && !path) {
     // Toujours retourner le leaderboard (avec ou sans token)
     return handleLeaderboard(req, res);
+  }
+  
+  // Gérer les routes avec paramètres (ex: /users/{userId})
+  if (req.method === 'GET' && path && !path.includes('/')) {
+    return handleGetUser(req, res, path);
+  }
+  
+  // Gérer les routes d'acknowledgment de cadeaux
+  if (path.startsWith('ack-gift/') && req.method === 'POST') {
+    return handleAckGift(req, res, path.replace('ack-gift/', ''));
   }
   
   // Si on arrive ici, c'est une route non reconnue
@@ -434,6 +444,126 @@ async function handleLeaderboard(req, res) {
     });
   } catch (error) {
     console.error('❌ Erreur lors du chargement du leaderboard:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Erreur interne du serveur' 
+    });
+  }
+}
+
+// Fonction pour récupérer un utilisateur spécifique
+async function handleGetUser(req, res, userId) {
+  try {
+    console.log('👤 Récupération utilisateur:', userId);
+    
+    const mongoUri = process.env.MONGODB_URI;
+    if (!mongoUri) {
+      return res.status(500).json({ error: 'MONGODB_URI non configuré' });
+    }
+    
+    const client = await MongoClient.connect(mongoUri);
+    const db = client.db();
+    
+    // Récupérer l'utilisateur par ID ou username
+    let user;
+    if (userId.match(/^[0-9a-fA-F]{24}$/)) {
+      // C'est un ObjectId MongoDB
+      const { ObjectId } = await import('mongodb');
+      user = await db.collection('users').findOne(
+        { _id: new ObjectId(userId) },
+        { projection: { password: 0 } } // Exclure le mot de passe
+      );
+    } else {
+      // C'est probablement un username
+      user = await db.collection('users').findOne(
+        { username: userId },
+        { projection: { password: 0 } } // Exclure le mot de passe
+      );
+    }
+    
+    await client.close();
+    
+    if (!user) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+    
+    res.json({
+      success: true,
+      user: user
+    });
+  } catch (error) {
+    console.error('❌ Erreur lors de la récupération utilisateur:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Erreur interne du serveur' 
+    });
+  }
+}
+
+// Fonction pour marquer un cadeau comme lu
+async function handleAckGift(req, res, giftId) {
+  try {
+    console.log('🎁 Acknowledgment cadeau:', giftId);
+    
+    // Vérifier l'authentification
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Token d\'authentification requis' });
+    }
+    
+    const token = authHeader.substring(7);
+    const jwt = await import('jsonwebtoken');
+    const jwtSecret = process.env.JWT_SECRET;
+    
+    if (!jwtSecret) {
+      return res.status(500).json({ error: 'JWT_SECRET non configuré' });
+    }
+    
+    let decoded;
+    try {
+      decoded = jwt.default.verify(token, jwtSecret);
+    } catch (error) {
+      return res.status(401).json({ error: 'Token invalide' });
+    }
+    
+    const mongoUri = process.env.MONGODB_URI;
+    if (!mongoUri) {
+      return res.status(500).json({ error: 'MONGODB_URI non configuré' });
+    }
+    
+    const client = await MongoClient.connect(mongoUri);
+    const db = client.db();
+    
+    // Marquer le cadeau comme lu
+    const userId = typeof decoded === 'string' ? null : decoded.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Token invalide' });
+    }
+    
+    const result = await db.collection('users').updateOne(
+      { 
+        _id: userId,
+        'purchasedItems._id': giftId 
+      },
+      { 
+        $set: { 
+          'purchasedItems.$.adminGiftRead': true 
+        } 
+      }
+    );
+    
+    await client.close();
+    
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ error: 'Cadeau non trouvé' });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Cadeau marqué comme lu'
+    });
+  } catch (error) {
+    console.error('❌ Erreur lors de l\'acknowledgment du cadeau:', error);
     res.status(500).json({ 
       success: false, 
       error: 'Erreur interne du serveur' 
