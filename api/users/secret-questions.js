@@ -1,5 +1,4 @@
-import { MongoClient } from 'mongodb';
-
+// API pour sauvegarder les questions secrètes
 export default async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGINS || '*');
@@ -26,6 +25,9 @@ export default async function handler(req, res) {
         });
       }
       
+      // Import dynamique des modules pour éviter les problèmes Vercel
+      const { MongoClient } = await import('mongodb');
+      
       // Connect to MongoDB
       if (!process.env.MONGODB_URI) {
         throw new Error('MONGODB_URI environment variable is not set');
@@ -33,7 +35,7 @@ export default async function handler(req, res) {
       const client = new MongoClient(process.env.MONGODB_URI);
       await client.connect();
       
-      const db = client.db('planifyvrai');
+      const db = client.db();
       const usersCollection = db.collection('users');
       
       // Update user with secret questions

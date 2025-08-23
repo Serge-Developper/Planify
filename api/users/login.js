@@ -99,6 +99,11 @@ export default async function handler(req, res) {
       // Check if user has secret questions
       const hasSecretQuestions = user.secretQuestions && Array.isArray(user.secretQuestions) && user.secretQuestions.length > 0;
       console.log('❓ Questions secrètes:', hasSecretQuestions);
+      console.log('📋 Détails questions secrètes:', {
+        secretQuestions: user.secretQuestions ? user.secretQuestions.length : 0,
+        hasSecretQuestions: user.hasSecretQuestions,
+        calculatedHasSecretQuestions: hasSecretQuestions
+      });
       
       console.log('🎉 Connexion réussie pour:', user.username);
       
