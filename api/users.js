@@ -1,4 +1,4 @@
-// API pour récupérer le statut du spin de l'utilisateur
+// API pour récupérer les informations de l'utilisateur connecté
 export default async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGINS || '*');
@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   // Handle GET request
   if (req.method === 'GET') {
     try {
-      console.log('🔍 Début de la requête pour récupérer le statut du spin');
+      console.log('🔍 Début de la requête pour récupérer les infos utilisateur');
       
       // Import dynamique des modules
       const { MongoClient } = await import('mongodb');
@@ -85,41 +85,33 @@ export default async function handler(req, res) {
       
       console.log('✅ Utilisateur trouvé:', user.username);
       
-      // Check if user can spin today
-      const today = new Date();
-      const lastSpinDate = user.lastSpinDate ? new Date(user.lastSpinDate) : null;
-      
-      let canSpin = true;
-      let nextSpinDate = null;
-      
-      if (lastSpinDate) {
-        const lastSpinDay = new Date(lastSpinDate.getFullYear(), lastSpinDate.getMonth(), lastSpinDate.getDate());
-        const todayDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-        
-        if (lastSpinDay.getTime() === todayDay.getTime()) {
-          canSpin = false;
-          // Next spin will be tomorrow
-          nextSpinDate = new Date(todayDay.getTime() + 24 * 60 * 60 * 1000);
-        }
-      }
-      
-      console.log('🎰 Peut faire un spin aujourd\'hui:', canSpin);
-      
       await client.close();
       console.log('📡 Connexion MongoDB fermée');
       
+      // Return user info (without sensitive data)
       res.status(200).json({
         success: true,
-        canSpin: canSpin,
-        lastSpinDate: lastSpinDate,
-        nextSpinDate: nextSpinDate
+        user: {
+          id: user._id.toString(),
+          username: user.username,
+          role: user.role || 'Non défini',
+          groupe: user.groupe || 'Non défini',
+          year: user.year || 'Non définie',
+          coins: user.coins || 0,
+          avatar: user.avatar || null,
+          hasSecretQuestions: user.hasSecretQuestions || false,
+          completedTasks: user.completedTasks || 0,
+          validations: user.validations || 0,
+          equippedItemId: user.equippedItemId || null,
+          selectedBorderColor: user.selectedBorderColor || 'default'
+        }
       });
       
     } catch (error) {
-      console.error('❌ Erreur lors de la récupération du statut du spin:', error);
+      console.error('❌ Erreur lors de la récupération des infos utilisateur:', error);
       res.status(500).json({
         success: false,
-        message: 'Erreur lors de la récupération du statut du spin',
+        message: 'Erreur lors de la récupération des infos utilisateur',
         error: error.message
       });
     }
