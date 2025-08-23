@@ -30,8 +30,11 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Vérifier le token
-    const user = verifyToken(req);
+    // Vérifier le token seulement pour les actions POST (test-add)
+    let user = null;
+    if (req.method === 'POST') {
+      user = verifyToken(req);
+    }
     
     if (req.method === 'GET') {
       // Tous les items disponibles pour la boutique hebdomadaire
