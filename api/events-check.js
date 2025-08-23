@@ -104,7 +104,10 @@ module.exports = async (req, res) => {
     await connectDB();
     
     const user = verifyToken(req);
-    const userId = user.id || user._id;
+    const userIdString = user.id || user._id;
+    const userId = new mongoose.Types.ObjectId(userIdString);
+    
+    console.log('🔍 Events-check debug:', { userIdString, userId, action: req.body.action, eventId: req.body.eventId });
     
     const { eventId, action } = req.body;
     
@@ -120,7 +123,7 @@ module.exports = async (req, res) => {
 
     switch (action) {
       case 'check':
-        if (!event.checkedBy.includes(userId)) {
+        if (!event.checkedBy.some(id => id.equals(userId))) {
           // Vérifier si la tâche est en retard
           const [h, m] = (event.heure || '').split(':');
           const target = new Date(event.date);
@@ -160,7 +163,7 @@ module.exports = async (req, res) => {
         break;
         
       case 'archive':
-        if (!event.archivedBy.includes(userId)) {
+        if (!event.archivedBy.some(id => id.equals(userId))) {
           event.archivedBy.push(userId);
           await event.save();
         }
@@ -175,15 +178,18 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: 'Action non supportée' });
     }
 
+    console.log('✅ Events-check réussi:', { action, eventId, userId: userIdString });
+    
     return res.status(200).json({ 
       message: `Événement ${action}é avec succès`,
       event: event 
     });
 
   } catch (authError) {
+    console.error('❌ Erreur auth events-check:', authError.message);
     return res.status(401).json({ error: 'Non autorisé' });
   } catch (error) {
-    console.error('Erreur lors de l\'action sur l\'événement:', error);
-    res.status(500).json({ error: 'Erreur serveur interne' });
+    console.error('❌ Erreur events-check:', error);
+    res.status(500).json({ error: 'Erreur serveur interne', details: error.message });
   }
 };
