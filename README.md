@@ -1,45 +1,79 @@
-# .
+# Planify - Application de Gestion Scolaire
 
-This template should help get you started developing with Vue 3 in Vite.
+🎓 **Application complète de gestion des devoirs, examens et planning pour étudiants MMI**
 
-## Recommended IDE Setup
+## 🚀 Migration vers Vercel - TERMINÉE ✅
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+✅ **Migration complète d'Ionos Plesk vers Vercel**  
+✅ **18 fonctions serverless déployées**  
+✅ **Frontend entièrement adapté**  
+✅ **Architecture moderne et scalable**
 
-## Type Support for `.vue` Imports in TS
+## 📡 API Routes disponibles :
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+### Authentification
+- `/api/login` - Connexion utilisateur
+- `/api/register` - Inscription
+- `/api/forgot-password-questions` - Questions secrètes
+- `/api/forgot-password-verify` - Vérification réponses
+- `/api/forgot-password-reset` - Reset mot de passe
 
-## Customize configuration
+### Gestion des événements
+- `/api/events` - CRUD événements/devoirs
+- `/api/events-check` - Actions (check/uncheck/archive/unarchive)
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+### Administration
+- `/api/users` - Leaderboard utilisateurs
+- `/api/users-admin` - Gestion admin complète
 
-## Project Setup
+### Boutique & Coins
+- `/api/items` - Catalogue d'items
+- `/api/coins` - Système de pièces
 
-```sh
-npm install
-```
+### Utilitaires
+- `/api/contact` - Formulaire de contact
+- `/api/secret-questions` - Configuration questions
+- `/api/upload-avatar` - Upload d'avatar
 
-### Compile and Hot-Reload for Development
+## 🛠️ Stack Technique
 
-```sh
-npm run dev
-```
+- **Frontend**: Vue.js 3 + Vite
+- **Backend**: Node.js + Express (Serverless Functions)
+- **Base de données**: MongoDB Atlas
+- **Authentification**: JWT
+- **Déploiement**: Vercel
+- **Styling**: CSS moderne + responsive
 
-### Type-Check, Compile and Minify for Production
+## 🔒 Sécurité
 
-```sh
-npm run build
-```
+- Authentification JWT sécurisée
+- Validation des données côté serveur
+- Headers CORS configurés
+- Protection contre les attaques communes
+- Rate limiting sur les routes sensibles
 
-### Run Unit Tests with [Vitest](https://vitest.dev/)
+## 📱 Fonctionnalités
 
-```sh
-npm run test:unit
-```
+### Pour les étudiants :
+- 📅 Gestion des devoirs et examens
+- ✅ Système de validation des tâches
+- 🎯 Leaderboard avec système de points
+- 🛍️ Boutique d'items cosmétiques
+- 👤 Profil personnalisable avec avatar
 
-### Lint with [ESLint](https://eslint.org/)
+### Pour les administateurs :
+- 👥 Gestion complète des utilisateurs
+- 📊 Création et modification d'événements
+- 🎁 Attribution d'items et de coins
+- 📧 Gestion des messages de contact
 
-```sh
-npm run lint
-```
+## 🌐 Déploiement
+
+- **Production**: https://planify-snowy.vercel.app
+- **GitHub**: https://github.com/Serge-Developper/Planify
+- **Auto-déploiement**: Push sur main → déploiement automatique
+
+---
+
+*Migration réalisée avec succès le 23 Août 2025 🎉*  
+*Développé par Serge TOVMASSIAN - BUT MMI Nancy*
