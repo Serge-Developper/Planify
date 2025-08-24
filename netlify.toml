@@ -22,6 +22,12 @@
   to = "/.netlify/functions/:splat"
   status = 200
 
+# Nouveau endpoint de contact (bypass de l’ancienne fonction en cache)
+[[redirects]]
+  from = "/api/contact2"
+  to = "/.netlify/functions/contact2"
+  status = 200
+
 # Redirection des fichiers uploadés vers la fonction dédiée
 [[redirects]]
   from = "/uploads/*"
