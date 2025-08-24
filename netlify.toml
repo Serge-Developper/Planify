@@ -1,10 +1,12 @@
 [build]
+  # Répertoire de base pour le build
+  base = "frontend (7)/frontend"
   # Commande de build pour Vue.js
   command = "npm run build"
   # Répertoire où sont les fichiers buildés
   publish = "dist"
   # Répertoire des fonctions Netlify (équivalent du dossier /api de Vercel)
-  functions = "netlify/functions"
+  functions = "../netlify/functions"
 
 [build.environment]
   # Version Node.js
