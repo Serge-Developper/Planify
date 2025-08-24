@@ -115,9 +115,10 @@ exports.handler = async (event, context) => {
       const { password: _, ...userWithoutPassword } = user.toObject();
       
       // Vérifier si l'utilisateur a des questions secrètes configurées
-      const hasSecretQuestions = user.secretQuestions && 
-                                user.secretQuestions.length > 0 && 
-                                user.secretQuestions.every(q => q.question && q.answer);
+      const hasSecretQuestions = (user.hasSecretQuestions === true) || (
+                                Array.isArray(user.secretQuestions) && user.secretQuestions.length > 0 && 
+                                user.secretQuestions.every(q => q.question && q.answer)
+                              );
 
       return { statusCode: 200, headers, body: JSON.stringify({
         _id: user._id,

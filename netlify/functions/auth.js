@@ -110,7 +110,7 @@ const handleLogin = async (event) => {
           groupe: user.groupe,
           coins: user.coins,
           avatar: user.avatar,
-          hasSecretQuestions: user.secretQuestions && user.secretQuestions.length >= 3 && user.secretQuestions.every(q => q.question && q.answer)
+          hasSecretQuestions: (user.hasSecretQuestions === true) || (Array.isArray(user.secretQuestions) && user.secretQuestions.length >= 3 && user.secretQuestions.every(q => q.question && q.answer))
         }
       })
     };
@@ -267,7 +267,7 @@ const handleVerifyToken = async (event) => {
           groupe: user.groupe,
           coins: user.coins,
           avatar: user.avatar,
-          hasSecretQuestions: user.secretQuestions && user.secretQuestions.length >= 3 && user.secretQuestions.every(q => q.question && q.answer)
+          hasSecretQuestions: (user.hasSecretQuestions === true) || (Array.isArray(user.secretQuestions) && user.secretQuestions.length >= 3 && user.secretQuestions.every(q => q.question && q.answer))
         }
       })
     };
