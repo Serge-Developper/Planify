@@ -76,7 +76,8 @@ async function handleLogin() {
     
                 if (res.ok && data) {
       userData = data; // Stocke temporairement les données
-      if (!data.user || !data.user.hasSecretQuestions) {
+      const hasSQ = (data && typeof data.hasSecretQuestions !== 'undefined') ? data.hasSecretQuestions : (data.user && data.user.hasSecretQuestions);
+      if (!hasSQ) {
         showSecretQuestionsSetup.value = true;
         // NE PAS stocker dans localStorage ici - attendre que les questions soient définies
       } else {
