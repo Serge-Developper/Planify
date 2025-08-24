@@ -60,8 +60,7 @@ exports.handler = async (event, context) => {
   try {
     // Connexion à MongoDB
     await mongoose.connect(process.env.MONGODB_URI || '', {
-      bufferCommands: false,
-      bufferMaxEntries: 0
+      bufferCommands: false
     });
 
     // Route GET /api/coins/inventory - Récupérer l'inventaire des items
