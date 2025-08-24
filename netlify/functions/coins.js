@@ -376,7 +376,7 @@ const handleWeeklyItems = async (event) => {
       return (hash / 233280) - 0.5;
     });
     
-    const weeklyBorderColors = shuffledBorders.slice(0, 2 + (daySeed.length % 2)); // 2 ou 3 couleurs
+    const weeklyBorderColors = shuffledBorders.slice(0, 3); // Toujours 3 couleurs
 
     // Combiner les items normaux et les couleurs de bordure
     weeklyItems = [...weeklyItems, ...weeklyBorderColors];
