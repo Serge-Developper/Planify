@@ -465,11 +465,11 @@ function resolveAssetSrc(path: string): string {
   if (!path) return ''
   if (String(path).startsWith('/uploads/')) {
     if (path.startsWith('/uploads/avatars/')) {
-      return getApiOrigin() + '/api/uploads/avatars/' + path.split('/').pop()
+      return API_URL + '/uploads/avatars/' + path.split('/').pop()
     } else if (path.startsWith('/uploads/items/')) {
-      return getApiOrigin() + '/api/uploads/items/' + path.split('/').pop()
+      return API_URL + '/uploads/items/' + path.split('/').pop()
     }
-    return getApiOrigin() + path
+    return API_URL + path
   }
   return path
 }

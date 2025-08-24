@@ -1197,10 +1197,10 @@ const playSound = (src) => {
   } catch {}
 }
 
-// URL de base pour les avatars (comme dans la Navbar)
+// URL de base pour Netlify (serveur de fonctions)
 const baseUrl = API_URL.endsWith('/api') 
-  ? API_URL.slice(0, -4) // Supprime '/api' de la fin pour avoir l'URL du serveur
-  : API_URL.replace('/api', '')
+  ? API_URL.slice(0, -4) 
+  : (API_URL || '')
 
 // Fonction pour obtenir l'ID de l'utilisateur
 const getUserId = () => {
@@ -2251,14 +2251,14 @@ const getUserEquippedItemData = (user) => {
  }
 
  const getUserAvatar = (user) => {
-  if (user.avatar && user.avatar.startsWith('/uploads/')) {
+  if (user && user.avatar && typeof user.avatar === 'string' && user.avatar.startsWith('/uploads/')) {
     // Utiliser les nouvelles APIs pour servir les images depuis la base de données
     if (user.avatar.startsWith('/uploads/avatars/')) {
-      const avatarUrl = `${baseUrl}/api/uploads/avatars/${user.avatar.split('/').pop()}`
+      const avatarUrl = `${API_URL}/uploads/avatars/${user.avatar.split('/').pop()}`
       console.log('🖼️ URL avatar:', avatarUrl)
       return avatarUrl
     }
-    const avatarUrl = `${baseUrl}${user.avatar}`
+    const avatarUrl = `${API_URL}${user.avatar.replace('/uploads', '/uploads')}`
     console.log('🖼️ URL avatar:', avatarUrl)
     return avatarUrl
   }
