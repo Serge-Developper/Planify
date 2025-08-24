@@ -111,7 +111,14 @@ function getCoinsEndpoint(path) {
 
 // Routeur pour les endpoints coins
 const handleCoinsRoute = async (event, path) => {
-  const endpoint = getCoinsEndpoint(path);
+  let endpoint = getCoinsEndpoint(path);
+  if (!endpoint) {
+    try {
+      const raw = (event && (event.rawUrl || event.rawPath)) || '';
+      const pathname = raw ? new URL(raw).pathname : '';
+      endpoint = getCoinsEndpoint(pathname);
+    } catch {}
+  }
 
   switch (endpoint) {
     case 'user-coins':
