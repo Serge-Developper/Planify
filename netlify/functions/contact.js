@@ -38,7 +38,7 @@ exports.handler = async (event, context) => {
     }
 
     // Create a transporter object using a Google SMTP account
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER,
@@ -65,17 +65,25 @@ exports.handler = async (event, context) => {
 
     // Send the email
     await transporter.sendMail(mailOptions);
-    
-    res.status(200).json({ 
-      success: true, 
-      message: 'Le message a été envoyé avec succès.' 
-    });
+
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({
+        success: true,
+        message: 'Le message a été envoyé avec succès.'
+      })
+    };
 
   } catch (error) {
     console.error('Erreur lors de l\'envoi de l\'e-mail:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: "Erreur lors de l'envoi de l'e-mail." 
-    });
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({
+        success: false,
+        message: "Erreur lors de l'envoi de l'e-mail."
+      })
+    };
   }
 };
