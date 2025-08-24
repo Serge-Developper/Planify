@@ -110,7 +110,7 @@ const handleLogin = async (event) => {
           groupe: user.groupe,
           coins: user.coins,
           avatar: user.avatar,
-          hasSecretQuestions: user.hasSecretQuestions
+          hasSecretQuestions: user.hasSecretQuestions && user.secretQuestions && user.secretQuestions.length >= 3
         }
       })
     };
@@ -267,7 +267,7 @@ const handleVerifyToken = async (event) => {
           groupe: user.groupe,
           coins: user.coins,
           avatar: user.avatar,
-          hasSecretQuestions: user.hasSecretQuestions
+          hasSecretQuestions: user.hasSecretQuestions && user.secretQuestions && user.secretQuestions.length >= 3
         }
       })
     };
