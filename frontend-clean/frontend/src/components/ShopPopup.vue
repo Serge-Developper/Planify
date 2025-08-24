@@ -2252,9 +2252,9 @@ const getUserEquippedItemData = (user) => {
 
  const getUserAvatar = (user) => {
   if (user.avatar && user.avatar.startsWith('/uploads/')) {
-    // Utiliser les nouvelles APIs pour servir les images depuis la base de données
+    // Utiliser la fonction Netlify via redirection /uploads/*
     if (user.avatar.startsWith('/uploads/avatars/')) {
-      const avatarUrl = `${baseUrl}/api/uploads/avatars/${user.avatar.split('/').pop()}`
+      const avatarUrl = `${baseUrl}/uploads/avatars/${user.avatar.split('/').pop()}`
       console.log('🖼️ URL avatar:', avatarUrl)
       return avatarUrl
     }
