@@ -1,4 +1,0 @@
-# Fichier temporaire pour forcer le déploiement Netlify
-# Les fonctions Netlify ont été mises à jour et doivent être redéployées
-# Date: $(Get-Date)
-# Commit: 40f48d4 - Réorganisation des fonctions Netlify
