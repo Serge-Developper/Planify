@@ -95,9 +95,23 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
 };
 
+// Extraire l'endpoint à partir du chemin Netlify ou API
+function getCoinsEndpoint(path) {
+  try {
+    const clean = (path || '').split('?')[0];
+    const parts = clean.split('/').filter(Boolean);
+    // Chercher le segment 'coins' et prendre ce qui suit
+    const idx = parts.lastIndexOf('coins');
+    if (idx !== -1 && parts[idx + 1]) {
+      return parts.slice(idx + 1).join('/');
+    }
+  } catch {}
+  return '';
+}
+
 // Routeur pour les endpoints coins
 const handleCoinsRoute = async (event, path) => {
-  const endpoint = path.replace('/api/coins/', '');
+  const endpoint = getCoinsEndpoint(path);
 
   switch (endpoint) {
     case 'user-coins':
