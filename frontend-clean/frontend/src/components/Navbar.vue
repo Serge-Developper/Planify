@@ -967,15 +967,21 @@ console.log('🔧 API_URL:', API_URL)
 console.log('🔧 baseUrl:', baseUrl)
 
 const user = computed(() => {
-  const currentUser = auth.user;
-  console.log('👤 Utilisateur actuel:', {
-    id: currentUser?.id,
-    _id: currentUser?._id,
-    username: currentUser?.username,
-    avatar: currentUser?.avatar,
-    hasToken: !!currentUser?.token
-  });
-  return currentUser;
+  const u = auth.user;
+  if (!u) return null;
+  // Accepte les deux formats: aplati ({ id, role, ... }) OU imbriqué ({ user: {...}, token })
+  const inner = u.user || {};
+  const normalized = {
+    id: u.id || u._id || inner.id || inner._id,
+    _id: u._id || u.id || inner._id || inner.id,
+    username: u.username || inner.username,
+    role: u.role || inner.role,
+    year: u.year || inner.year,
+    groupe: u.groupe || inner.groupe,
+    avatar: u.avatar || inner.avatar,
+    token: u.token || inner.token
+  };
+  return normalized;
 })
 const isLoggedIn = computed(() => auth.isLoggedIn)
 const isAdmin = computed(() => auth.isAdmin)
@@ -990,7 +996,14 @@ async function loadUserAvatar() {
   }
 
   try {
-    const avatarUrl = `${baseUrl}${user.value.avatar}`;
+    let avatarUrl = '';
+    const avatar = user.value.avatar || '';
+    if (avatar && avatar.startsWith('/uploads/avatars/')) {
+      const filename = avatar.split('/').pop();
+      avatarUrl = `${baseUrl}/uploads/avatars/${filename}`;
+    } else {
+      avatarUrl = `${baseUrl}${avatar}`;
+    }
     userAvatar.value = avatarUrl;
   } catch (error) {
     console.error('Erreur lors du chargement de l\'avatar:', error);
@@ -1356,26 +1369,32 @@ async function handleAvatarUpload(event) {
   }
 
   try {
-    const formData = new FormData();
-    formData.append('avatar', file);
+    // Convertir en base64 (data URL) et envoyer en JSON à la fonction Netlify
+    const dataUrl = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
 
-    console.log('🚀 Upload avatar en cours...');
-    const response = await axios.post(`${API_URL}/upload-avatar`, formData, {
+    console.log('🚀 Upload avatar en cours (base64)...');
+    const response = await axios.post(`${API_URL}/upload-avatar`, {
+      filename: file.name,
+      data: dataUrl
+    }, {
       headers: {
         'Authorization': `Bearer ${user.value.token}`,
-        'Content-Type': 'multipart/form-data'
+        'Content-Type': 'application/json'
       }
     });
 
     console.log('📤 Réponse upload:', response.data);
 
     if (response.data.avatar) {
-      // Mettre à jour l'avatar affiché
-      const newAvatarUrl = `${baseUrl}${response.data.avatar}`;
-      console.log('🖼️ Construction URL avatar:');
-      console.log('  - baseUrl:', baseUrl);
-      console.log('  - avatar path:', response.data.avatar);
-      console.log('  - URL complète:', newAvatarUrl);
+      // Mettre à jour l'avatar affiché (via fonction uploads Netlify)
+      const filename = response.data.avatar.split('/').pop();
+      const newAvatarUrl = `${baseUrl}/uploads/avatars/${filename}`;
+      console.log('🖼️ URL avatar servie par Netlify:', newAvatarUrl);
       userAvatar.value = newAvatarUrl;
       
       // Mettre à jour les données utilisateur dans le store et localStorage
@@ -1411,8 +1430,9 @@ function handleLoginSuccess(payload) {
   // Charger l'avatar après connexion
   if (payload.user.avatar) {
     console.log('✅ Avatar trouvé lors de la connexion:', payload.user.avatar);
-    const avatarUrl = `${baseUrl}${payload.user.avatar}`;
-    console.log('🖼️ URL avatar construite:', avatarUrl);
+    const filename = String(payload.user.avatar).split('/').pop();
+    const avatarUrl = `${baseUrl}/uploads/avatars/${filename}`;
+    console.log('🖼️ URL avatar servie par Netlify:', avatarUrl);
     userAvatar.value = avatarUrl;
   } else {
     console.log('❌ Pas d\'avatar lors de la connexion, chargement depuis la DB...');
@@ -1592,7 +1612,8 @@ onMounted(async () => {
 watch(user, async (newUser) => {
   if (newUser) {
     if (newUser.avatar) {
-      const avatarUrl = `${baseUrl}${newUser.avatar}`;
+      const filename = String(newUser.avatar).split('/').pop();
+      const avatarUrl = `${baseUrl}/uploads/avatars/${filename}`;
       userAvatar.value = avatarUrl;
     } else if (newUser.id || newUser._id) {
       loadUserAvatar();
