@@ -120,13 +120,15 @@ exports.handler = async (event, context) => {
                                 user.secretQuestions.every(q => q.question && q.answer);
 
       return { statusCode: 200, headers, body: JSON.stringify({
-        _id: user._id,
-        username: user.username,
-        role: user.role,
-        groupe: user.groupe,
-        year: user.year,
-        token: token,
-        hasSecretQuestions: hasSecretQuestions
+        user: {
+          _id: user._id,
+          username: user.username,
+          role: user.role,
+          groupe: user.groupe,
+          year: user.year,
+          hasSecretQuestions: hasSecretQuestions
+        },
+        token: token
       }) };
     }
 
