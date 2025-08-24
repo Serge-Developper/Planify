@@ -10,10 +10,12 @@ const connectDB = async () => {
   }
   
   try {
-    await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    const mongoUri = process.env.MONGODB_URI;
+    if (!mongoUri) {
+      throw new Error('MONGODB_URI environment variable is not defined');
+    }
+    
+    await mongoose.connect(mongoUri);
     isConnected = true;
   } catch (error) {
     console.error('Erreur de connexion MongoDB:', error);
@@ -62,15 +64,15 @@ const userSchema = new mongoose.Schema({
 const User = mongoose.models.User || mongoose.model('User', userSchema);
 
 // CORS headers
-const setCorsHeaders = (res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization'
 };
 
 // JWT verification
-const verifyToken = (req) => {
-  const authHeader = event.headers.authorization;
+const verifyToken = (request) => {
+  const authHeader = request.headers?.authorization;
   if (!authHeader) {
     throw new Error('Token manquant');
   }
@@ -80,8 +82,13 @@ const verifyToken = (req) => {
     throw new Error('Token manquant');
   }
 
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) {
+    throw new Error('JWT_SECRET environment variable is not defined');
+  }
+
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET, {
+    const decoded = jwt.verify(token, jwtSecret, {
       issuer: 'planify-api',
       audience: 'planify-frontend'
     });
@@ -91,13 +98,17 @@ const verifyToken = (req) => {
   }
 };
 
+// Fonction utilitaire pour extraire l'ID utilisateur du token
+const getUserId = (user) => {
+  if (typeof user === 'string') {
+    return user;
+  }
+  return user.id || user._id || user.userId;
+};
+
 exports.handler = async (event, context) => {
   // Headers pour CORS
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-  };
+  const headers = corsHeaders;
   
   if (event.httpMethod === 'OPTIONS') {
     return {
@@ -116,8 +127,8 @@ exports.handler = async (event, context) => {
     
     console.log('🔍 Events-check start:', { method: event.httpMethod, body: JSON.parse(event.body || '{}') });
     
-    const user = verifyToken(req);
-    const userIdString = user.id || user._id;
+    const user = verifyToken(event);
+    const userIdString = getUserId(user);
     
     console.log('🔍 User from token:', { userIdString, userObj: user });
     
@@ -145,26 +156,26 @@ exports.handler = async (event, context) => {
     }
 
     console.log('🔍 Searching for event:', eventId);
-    const event = await Event.findById(eventId);
-    console.log('🔍 Event found:', event ? 'Yes' : 'No', event ? { title: event.titre, checkedBy: event.checkedBy.length } : null);
+    const eventDoc = await Event.findById(eventId);
+    console.log('🔍 Event found:', eventDoc ? 'Yes' : 'No', eventDoc ? { title: eventDoc.titre, checkedBy: eventDoc.checkedBy.length } : null);
     
-    if (!event) {
+    if (!eventDoc) {
       return { statusCode: 404, headers, body: JSON.stringify({ error: 'Événement non trouvé' }) };
     }
 
     switch (action) {
       case 'check':
-        if (!event.checkedBy.some(id => id.equals(userId))) {
+        if (!eventDoc.checkedBy.some(id => id.equals(userId))) {
           // Vérifier si la tâche est en retard
-          const [h, m] = (event.heure || '').split(':');
-          const target = new Date(event.date);
+          const [h, m] = (eventDoc.heure || '').split(':');
+          const target = new Date(eventDoc.date);
           target.setHours(Number(h), Number(m || 0), 0, 0);
           const now = new Date();
           const isLate = now > target;
 
           // Ajouter l'utilisateur à la liste des utilisateurs qui ont validé cette tâche
-          event.checkedBy.push(userId);
-          await event.save();
+          eventDoc.checkedBy.push(userId);
+          await eventDoc.save();
           
           // Incrémenter le compteur de tâches complétées seulement si la tâche n'est PAS en retard
           if (!isLate) {
@@ -174,17 +185,17 @@ exports.handler = async (event, context) => {
         break;
         
       case 'uncheck':
-        if (event.checkedBy.some(id => id.equals(userId))) {
+        if (eventDoc.checkedBy.some(id => id.equals(userId))) {
           // Vérifier si la tâche était en retard au moment de la validation
-          const [h, m] = (event.heure || '').split(':');
-          const target = new Date(event.date);
+          const [h, m] = (eventDoc.heure || '').split(':');
+          const target = new Date(eventDoc.date);
           target.setHours(Number(h), Number(m || 0), 0, 0);
           const now = new Date();
           const isLate = now > target;
 
           // Retirer l'utilisateur de la liste des utilisateurs qui ont validé cette tâche
-          event.checkedBy = event.checkedBy.filter(id => !id.equals(userId));
-          await event.save();
+          eventDoc.checkedBy = eventDoc.checkedBy.filter(id => !id.equals(userId));
+          await eventDoc.save();
           
           // Décrémenter le compteur de tâches complétées seulement si la tâche n'était PAS en retard
           if (!isLate) {
@@ -194,15 +205,15 @@ exports.handler = async (event, context) => {
         break;
         
       case 'archive':
-        if (!event.archivedBy.some(id => id.equals(userId))) {
-          event.archivedBy.push(userId);
-          await event.save();
+        if (!eventDoc.archivedBy.some(id => id.equals(userId))) {
+          eventDoc.archivedBy.push(userId);
+          await eventDoc.save();
         }
         break;
         
       case 'unarchive':
-        event.archivedBy = event.archivedBy.filter(id => !id.equals(userId));
-        await event.save();
+        eventDoc.archivedBy = eventDoc.archivedBy.filter(id => !id.equals(userId));
+        await eventDoc.save();
         break;
         
       default:
@@ -213,14 +224,24 @@ exports.handler = async (event, context) => {
     
     return { statusCode: 200, headers, body: JSON.stringify({ 
       message: `Événement ${action}é avec succès`,
-      event: event 
+      event: eventDoc 
     }) };
 
-  } catch (authError) {
-    console.error('❌ Erreur auth events-check:', authError.message);
-    return { statusCode: 401, headers, body: JSON.stringify({ error: 'Non autorisé' }) };
   } catch (error) {
     console.error('❌ Erreur events-check:', error);
-    res.status(500).json({ error: 'Erreur serveur interne', details: error.message });
+    
+    // Vérifier si c'est une erreur d'authentification
+    if (error.message === 'Token manquant' || error.message === 'Token invalide' || error.message === 'Non autorisé') {
+      return { statusCode: 401, headers, body: JSON.stringify({ error: 'Non autorisé' }) };
+    }
+    
+    return { 
+      statusCode: 500, 
+      headers, 
+      body: JSON.stringify({ 
+        error: 'Erreur serveur interne', 
+        details: error.message 
+      }) 
+    };
   }
 };

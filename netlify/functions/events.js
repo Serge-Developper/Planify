@@ -1,6 +1,13 @@
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 
+// Interface pour le payload JWT
+/**
+ * @typedef {Object} JwtPayload
+ * @property {string} id - ID de l'utilisateur
+ * @property {string} _id - ID alternatif de l'utilisateur
+ */
+
 // Modèle Event pour les devoirs/événements
 const eventSchema = new mongoose.Schema({
   title: String,
@@ -32,6 +39,14 @@ const verifyToken = (req) => {
   }
 };
 
+// Fonction utilitaire pour extraire l'ID utilisateur du token
+const getUserId = (user) => {
+  if (typeof user === 'string') {
+    return user;
+  }
+  return user.id || user._id || user.userId;
+};
+
 // Configuration CORS
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -43,9 +58,10 @@ const corsHeaders = {
 const handleGetEvents = async (event) => {
   try {
     const user = verifyToken(event);
+    const userId = getUserId(user);
     
     // Récupérer tous les événements de l'utilisateur
-    const events = await Event.find({ userId: user.id || user._id })
+    const events = await Event.find({ userId: userId })
       .sort({ dueDate: 1 })
       .lean();
 
@@ -70,6 +86,7 @@ const handleGetEvents = async (event) => {
 const handleCreateEvent = async (event) => {
   try {
     const user = verifyToken(event);
+    const userId = getUserId(user);
     const body = JSON.parse(event.body || '{}');
     const { title, description, type, subject, dueDate, priority } = body;
 
@@ -87,7 +104,7 @@ const handleCreateEvent = async (event) => {
       type: type || 'devoir',
       subject,
       dueDate: new Date(dueDate),
-      userId: user.id || user._id,
+      userId: userId,
       priority: priority || 'medium'
     });
 
@@ -115,6 +132,7 @@ const handleCreateEvent = async (event) => {
 const handleUpdateEvent = async (event) => {
   try {
     const user = verifyToken(event);
+    const userId = getUserId(user);
     const body = JSON.parse(event.body || '{}');
     const { eventId, title, description, type, subject, dueDate, isCompleted, priority } = body;
 
@@ -126,7 +144,7 @@ const handleUpdateEvent = async (event) => {
       };
     }
 
-    const eventDoc = await Event.findOne({ _id: eventId, userId: user.id || user._id });
+    const eventDoc = await Event.findOne({ _id: eventId, userId: userId });
     if (!eventDoc) {
       return {
         statusCode: 404,
@@ -168,6 +186,7 @@ const handleUpdateEvent = async (event) => {
 const handleDeleteEvent = async (event) => {
   try {
     const user = verifyToken(event);
+    const userId = getUserId(user);
     const body = JSON.parse(event.body || '{}');
     const { eventId } = body;
 
@@ -179,7 +198,7 @@ const handleDeleteEvent = async (event) => {
       };
     }
 
-    const eventDoc = await Event.findOneAndDelete({ _id: eventId, userId: user.id || user._id });
+    const eventDoc = await Event.findOneAndDelete({ _id: eventId, userId: userId });
     if (!eventDoc) {
       return {
         statusCode: 404,

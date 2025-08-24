@@ -11,10 +11,10 @@ const connectDB = async () => {
   }
   
   try {
-    await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    if (!process.env.MONGODB_URI) {
+      throw new Error('MONGODB_URI est manquant dans les variables d\'environnement');
+    }
+    await mongoose.connect(process.env.MONGODB_URI, {});
     isConnected = true;
   } catch (error) {
     console.error('Erreur de connexion MongoDB:', error);
@@ -54,9 +54,9 @@ const setCorsHeaders = (res) => {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 };
 
-// JWT verification with admin check
-const verifyToken = (req, requireAdmin = false) => {
-  const authHeader = event.headers.authorization;
+// Vérification JWT avec contrôle admin
+const verifyToken = (event, requireAdmin = false) => {
+  const authHeader = event && event.headers ? event.headers.authorization : null;
   if (!authHeader) {
     throw new Error('Token manquant');
   }
@@ -67,17 +67,22 @@ const verifyToken = (req, requireAdmin = false) => {
   }
 
   try {
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET non défini dans les variables d\'environnement');
+    }
     const decoded = jwt.verify(token, process.env.JWT_SECRET, {
       issuer: 'planify-api',
       audience: 'planify-frontend'
     });
-    console.log('🔍 Token décodé:', { username: decoded.username, role: decoded.role, requireAdmin });
     
-    if (requireAdmin && decoded.role !== 'admin') {
-      console.log('❌ Accès refusé: rôle', decoded.role, 'mais admin requis');
+    // Correction du typage JWT pour éviter l'erreur TypeScript/Lint
+    // On force le typage de decoded en JwtPayload pour accéder à la propriété 'role'
+    const decodedPayload = typeof decoded === 'object' && decoded !== null ? decoded : {};
+    if (requireAdmin && decodedPayload.role !== 'admin') {
+      // (console.log supprimé selon vos préférences)
       throw new Error('Accès admin requis');
     }
-    return decoded;
+    return decodedPayload;
   } catch (error) {
     console.log('❌ Erreur token:', error.message);
     throw new Error('Token invalide ou accès insuffisant');
@@ -106,10 +111,10 @@ exports.handler = async (event, context) => {
     // GET /api/users-admin - Get all users or specific user (admin only)
     if (event.httpMethod === 'GET') {
       try {
-        const user = verifyToken(req, true); // Require admin
+        const user = verifyToken(event, true); // Require admin
 
-        // Check for userId query param
-        const url = new URL(event.path, 'http://localhost');
+        // Vérifier le paramètre userId dans la query string
+        const url = new URL(event.rawUrl || `http://localhost${event.path}${event.queryStringParameters ? '?' + new URLSearchParams(event.queryStringParameters).toString() : ''}`);
         const userId = url.searchParams.get('userId');
 
         if (userId) {
@@ -140,7 +145,7 @@ exports.handler = async (event, context) => {
     // POST /api/users-admin - Admin operations on users
     if (event.httpMethod === 'POST') {
       try {
-        const user = verifyToken(req, true); // Require admin
+        const user = verifyToken(event, true); // Require admin
         const { action, userId, ...data } = JSON.parse(event.body || '{}');
 
         if (!action || !userId) {
@@ -257,10 +262,10 @@ exports.handler = async (event, context) => {
     // PUT /api/users-admin - Update user (admin only)
     if (event.httpMethod === 'PUT') {
       try {
-        const user = verifyToken(req, true); // Require admin
-        
-        // Get userId from query params or body
-        const url = new URL(event.path, 'http://localhost');
+        const user = verifyToken(event, true); // Exiger admin
+
+        // Récupérer userId depuis les query params ou le body
+        const url = new URL(event.rawUrl || `http://localhost${event.path}${event.queryStringParameters ? '?' + new URLSearchParams(event.queryStringParameters).toString() : ''}`);
         const userIdFromQuery = url.searchParams.get('userId');
         const { userId: userIdFromBody, username, email, coins, role } = JSON.parse(event.body || '{}');
         const userId = userIdFromQuery || userIdFromBody;
@@ -295,10 +300,10 @@ exports.handler = async (event, context) => {
     // DELETE /api/users-admin - Delete user (admin only)
     if (event.httpMethod === 'DELETE') {
       try {
-        const user = verifyToken(req, true); // Require admin
+        const user = verifyToken(event, true); // Utiliser 'event' au lieu de 'req' pour la vérification admin
         
-        // Get userId from query params or body
-        const url = new URL(event.path, 'http://localhost');
+        // Récupérer userId depuis les query params ou le body
+        const url = new URL(event.rawUrl || `http://localhost${event.path}${event.queryStringParameters ? '?' + new URLSearchParams(event.queryStringParameters).toString() : ''}`);
         const userId = url.searchParams.get('userId') || JSON.parse(event.body || '{}')?.userId;
 
         if (!userId) {
@@ -323,6 +328,6 @@ exports.handler = async (event, context) => {
 
   } catch (error) {
     console.error('Erreur API users-admin:', error);
-    res.status(500).json({ error: 'Erreur serveur interne' });
+    return { statusCode: 500, headers, body: JSON.stringify({ error: 'Erreur serveur interne' }) };
   }
 };

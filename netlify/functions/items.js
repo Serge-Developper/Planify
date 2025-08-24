@@ -9,10 +9,12 @@ const connectDB = async () => {
   }
   
   try {
-    await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    const mongoUri = process.env.MONGODB_URI;
+    if (!mongoUri) {
+      throw new Error('MONGODB_URI environment variable is not defined');
+    }
+    
+    await mongoose.connect(mongoUri);
     isConnected = true;
   } catch (error) {
     console.error('Erreur de connexion MongoDB:', error);
@@ -89,19 +91,15 @@ const itemSchema = new mongoose.Schema({
 const Item = mongoose.models.Item || mongoose.model('Item', itemSchema);
 
 // CORS headers
-const setCorsHeaders = (res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization'
 };
 
 exports.handler = async (event, context) => {
   // Headers pour CORS
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-  };
+  const headers = corsHeaders;
   
   if (event.httpMethod === 'OPTIONS') {
     return {
@@ -139,9 +137,13 @@ exports.handler = async (event, context) => {
 
   } catch (error) {
     console.error('Erreur API items:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Erreur chargement items' 
-    });
+    return { 
+      statusCode: 500, 
+      headers, 
+      body: JSON.stringify({ 
+        success: false, 
+        message: 'Erreur chargement items' 
+      })
+    };
   }
 };
