@@ -78,17 +78,28 @@ async function handleLogin() {
       throw new Error('Erreur réseau');
     }
     
-                if (res.ok && data) {
+                if (res.ok && data && data.user) {
       userData = data; // Stocke temporairement les données
-      if (!data.user || !data.user.hasSecretQuestions) {
+      console.log('Login response:', { 
+        hasSecretQuestions: data.user.hasSecretQuestions, 
+        userData: data.user 
+      });
+      
+      if (data.user.hasSecretQuestions === false) {
+        console.log('Opening secret questions setup - user has no secret questions');
         showSecretQuestionsSetup.value = true;
         // NE PAS stocker dans localStorage ici - attendre que les questions soient définies
       } else {
+        console.log('User has secret questions, proceeding with login');
         // Seulement stocker dans localStorage si l'utilisateur a déjà des questions secrètes
         localStorage.setItem('user', JSON.stringify(data));
         emit('login-success', { user: data, password: password.value });
         close();
       }
+    } else if (res.ok && (!data || !data.user)) {
+      // Réponse OK mais données utilisateur manquantes
+      error.value = 'Erreur de données utilisateur';
+      try { const a = new Audio(errorSound); a.volume = 0.7; a.play().catch(() => {}) } catch {}
     } else {
       // Erreur du backend (400, 404, etc.)
       error.value = data.message || 'Nom d\'utilisateur ou mot de passe incorrect';
