@@ -327,6 +327,60 @@ const handleWeeklyItems = async (event) => {
     const daySeed = getCurrentDaySeed();
     let weeklyItems = getRandomItemsFromSeed(daySeed, 3);
 
+    // Ajouter des couleurs de bordure hebdomadaires
+    const borderColors = [
+      { id: 100, name: 'Rouge', price: 50, type: 'border-color', colorId: 'red', img: 'border-red' },
+      { id: 101, name: 'Bleu', price: 50, type: 'border-color', colorId: 'blue', img: 'border-blue' },
+      { id: 102, name: 'Vert', price: 50, type: 'border-color', colorId: 'green', img: 'border-green' },
+      { id: 103, name: 'Jaune', price: 50, type: 'border-color', colorId: 'yellow', img: 'border-yellow' },
+      { id: 104, name: 'Violet', price: 50, type: 'border-color', colorId: 'purple', img: 'border-purple' },
+      { id: 105, name: 'Orange', price: 50, type: 'border-color', colorId: 'orange', img: 'border-orange' },
+      { id: 106, name: 'Rose', price: 50, type: 'border-color', colorId: 'pink', img: 'border-pink' },
+      { id: 107, name: 'Cyan', price: 50, type: 'border-color', colorId: 'cyan', img: 'border-cyan' },
+      { id: 108, name: 'Or', price: 100, type: 'border-color', colorId: 'gold', img: 'border-gold' },
+      { id: 109, name: 'Argent', price: 100, type: 'border-color', colorId: 'silver', img: 'border-silver' },
+      { id: 110, name: 'Arc-en-ciel', price: 150, type: 'border-color', colorId: 'rainbow', img: 'border-rainbow' },
+      { id: 111, name: 'Feu', price: 75, type: 'border-color', colorId: 'fire', img: 'border-fire' },
+      { id: 112, name: 'Glace', price: 75, type: 'border-color', colorId: 'ice', img: 'border-ice' },
+      { id: 113, name: 'Océan', price: 75, type: 'border-color', colorId: 'ocean', img: 'border-ocean' },
+      { id: 114, name: 'Forêt', price: 75, type: 'border-color', colorId: 'forest', img: 'border-forest' },
+      { id: 115, name: 'Galaxie', price: 125, type: 'border-color', colorId: 'galaxy', img: 'border-galaxy' },
+      { id: 116, name: 'Aurore', price: 125, type: 'border-color', colorId: 'aurora', img: 'border-aurora' },
+      { id: 117, name: 'Volcan', price: 75, type: 'border-color', colorId: 'volcano', img: 'border-volcano' },
+      { id: 118, name: 'Cristal', price: 75, type: 'border-color', colorId: 'crystal', img: 'border-crystal' },
+      { id: 119, name: 'Minuit', price: 75, type: 'border-color', colorId: 'midnight', img: 'border-midnight' },
+      { id: 120, name: 'Aube', price: 75, type: 'border-color', colorId: 'dawn', img: 'border-dawn' },
+      { id: 121, name: 'Crépuscule', price: 75, type: 'border-color', colorId: 'dusk', img: 'border-dusk' },
+      { id: 122, name: 'Tempête', price: 75, type: 'border-color', colorId: 'storm', img: 'border-storm' },
+      { id: 123, name: 'Printemps', price: 75, type: 'border-color', colorId: 'spring', img: 'border-spring' },
+      { id: 124, name: 'Été', price: 75, type: 'border-color', colorId: 'summer', img: 'border-summer' },
+      { id: 125, name: 'Automne', price: 75, type: 'border-color', colorId: 'autumn', img: 'border-autumn' },
+      { id: 126, name: 'Hiver', price: 75, type: 'border-color', colorId: 'winter', img: 'border-winter' },
+      { id: 127, name: 'Magenta', price: 50, type: 'border-color', colorId: 'magenta', img: 'border-magenta' },
+      { id: 128, name: 'Vert Lime', price: 50, type: 'border-color', colorId: 'lime-green', img: 'border-lime-green' },
+      { id: 129, name: 'Bleu Royal', price: 50, type: 'border-color', colorId: 'royal-blue', img: 'border-royal-blue' },
+      { id: 130, name: 'Blanc', price: 50, type: 'border-color', colorId: 'white', img: 'border-white' },
+      { id: 131, name: 'Bronze', price: 100, type: 'border-color', colorId: 'bronze', img: 'border-bronze' }
+    ];
+
+    // Générer des couleurs de bordure aléatoires (2-3 par jour)
+    const borderSeed = daySeed + '-borders';
+    const shuffledBorders = [...borderColors].sort(() => {
+      let hash = 0;
+      for (let i = 0; i < borderSeed.length; i++) {
+        const char = borderSeed.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+      }
+      hash = (hash * 9301 + 49297) % 233280;
+      return (hash / 233280) - 0.5;
+    });
+    
+    const weeklyBorderColors = shuffledBorders.slice(0, 2 + (daySeed.length % 2)); // 2 ou 3 couleurs
+
+    // Combiner les items normaux et les couleurs de bordure
+    weeklyItems = [...weeklyItems, ...weeklyBorderColors];
+
     // Calculer le temps jusqu'à la prochaine rotation
     const now = new Date();
     const tomorrow = new Date(now);
