@@ -1430,8 +1430,9 @@ function handleLoginSuccess(payload) {
   // Charger l'avatar après connexion
   if (payload.user.avatar) {
     console.log('✅ Avatar trouvé lors de la connexion:', payload.user.avatar);
-    const avatarUrl = `${baseUrl}${payload.user.avatar}`;
-    console.log('🖼️ URL avatar construite:', avatarUrl);
+    const filename = String(payload.user.avatar).split('/').pop();
+    const avatarUrl = `${baseUrl}/uploads/avatars/${filename}`;
+    console.log('🖼️ URL avatar servie par Netlify:', avatarUrl);
     userAvatar.value = avatarUrl;
   } else {
     console.log('❌ Pas d\'avatar lors de la connexion, chargement depuis la DB...');
@@ -1611,7 +1612,8 @@ onMounted(async () => {
 watch(user, async (newUser) => {
   if (newUser) {
     if (newUser.avatar) {
-      const avatarUrl = `${baseUrl}${newUser.avatar}`;
+      const filename = String(newUser.avatar).split('/').pop();
+      const avatarUrl = `${baseUrl}/uploads/avatars/${filename}`;
       userAvatar.value = avatarUrl;
     } else if (newUser.id || newUser._id) {
       loadUserAvatar();
