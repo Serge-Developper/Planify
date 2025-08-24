@@ -25,9 +25,12 @@ import { ref, defineEmits, watch, onMounted, onUnmounted } from 'vue';
 import { API_URL } from '../api';
 import ForgotPasswordPopup from './ForgotPasswordPopup.vue';
 import SecretQuestionsSetup from './SecretQuestionsSetup.vue';
-import errorSound from '@/assets/son/erreur.mp3'
-import closeImg from '@/assets/img/bouton_supprimer_decocher.png'
-import closeHoverImg from '@/assets/img/bouton_supprimer_cocher.png'
+// @ts-ignore
+import errorSound from '../assets/son/erreur.mp3'
+// @ts-ignore
+import closeImg from '../assets/img/bouton_supprimer_decocher.png'
+// @ts-ignore
+import closeHoverImg from '../assets/img/bouton_supprimer_cocher.png'
 
 const emit = defineEmits(['close', 'login-success']);
 const username = ref('');
@@ -58,6 +61,7 @@ onUnmounted(() => {
 async function handleLogin() {
   loading.value = true;
   error.value = '';
+  // Version corrigée pour questions secrètes - Force déploiement
   try {
     const res = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
