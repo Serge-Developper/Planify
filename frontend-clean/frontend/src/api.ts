@@ -1,5 +1,8 @@
-// Configuration sécurisée de l'API pour Netlify
-export const API_URL = import.meta.env.VITE_API_URL || '/.netlify/functions';
+// Configuration sécurisée de l'API: si on est sur Netlify => fonctions Netlify
+const isNetlifyHost = typeof window !== 'undefined' && !!window.location && /netlify\.app$/i.test(window.location.hostname);
+export const API_URL = isNetlifyHost
+  ? '/.netlify/functions'
+  : (import.meta.env.VITE_API_URL || '/.netlify/functions');
 
 // Headers de sécurité par défaut
 export const getAuthHeaders = () => {
