@@ -299,9 +299,25 @@ exports.handler = async (event, context) => {
       bufferCommands: false
     });
 
-    // Extraire le chemin de la requête
-    const path = event.path || event.rawPath || '';
-    const endpoint = path.replace('/api/auth/', '');
+    // Extraire l'endpoint à partir du chemin Netlify ou API
+    function getAuthEndpoint(p) {
+      try {
+        const clean = (p || '').split('?')[0];
+        const parts = clean.split('/').filter(Boolean);
+        const idx = parts.lastIndexOf('auth');
+        if (idx !== -1 && parts[idx + 1]) return parts[idx + 1];
+      } catch {}
+      return '';
+    }
+
+    let endpoint = getAuthEndpoint(event.path || event.rawPath || '');
+    if (!endpoint) {
+      try {
+        const raw = event.rawUrl || '';
+        const pathname = raw ? new URL(raw).pathname : '';
+        endpoint = getAuthEndpoint(pathname);
+      } catch {}
+    }
 
     // Router selon l'endpoint
     switch (endpoint) {
