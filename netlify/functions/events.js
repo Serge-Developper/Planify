@@ -1,186 +1,258 @@
 const mongoose = require('mongoose');
-
-// MongoDB connection
-let isConnected = false;
-
-const connectDB = async () => {
-  if (isConnected) {
-    return;
-  }
-  
-  try {
-    await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    isConnected = true;
-  } catch (error) {
-    console.error('Erreur de connexion MongoDB:', error);
-    throw error;
-  }
-};
-
-// Event Schema
-const eventSchema = new mongoose.Schema({
-  titre: { type: String, required: true },
-  date: { type: String, required: true },
-  heure: { type: String, required: true },
-  groupe: { type: String, required: true },
-  groupes: [{ type: String }],
-  type: { type: String, required: true },
-  matiere: { type: String, required: true },
-  year: { type: String, required: true },
-  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  checkedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  archivedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
-}, { timestamps: true });
-
-const Event = mongoose.models.Event || mongoose.model('Event', eventSchema);
-
-// User Schema (for authentication)
-const userSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  coins: { type: Number, default: 0 },
-  avatar: { type: String, default: null }
-}, { timestamps: true });
-
-const User = mongoose.models.User || mongoose.model('User', userSchema);
-
-// CORS headers
-const setCorsHeaders = (res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-};
-
-// JWT verification
 const jwt = require('jsonwebtoken');
 
+// Modèle Event pour les devoirs/événements
+const eventSchema = new mongoose.Schema({
+  title: String,
+  description: String,
+  type: { type: String, enum: ['devoir', 'examen', 'archive'], default: 'devoir' },
+  subject: String,
+  dueDate: Date,
+  createdAt: { type: Date, default: Date.now },
+  userId: String,
+  isCompleted: { type: Boolean, default: false },
+  priority: { type: String, enum: ['low', 'medium', 'high'], default: 'medium' }
+});
+
+const Event = mongoose.model('Event', eventSchema);
+
+// Middleware d'authentification simplifié
 const verifyToken = (req) => {
-  const authHeader = event.headers.authorization;
-  if (!authHeader) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
     throw new Error('Token manquant');
   }
 
-  const token = authHeader.split(' ')[1];
-  if (!token) {
-    throw new Error('Token manquant');
-  }
-
+  const token = authHeader.substring(7);
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET, {
-      issuer: 'planify-api',
-      audience: 'planify-frontend'
-    });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production');
     return decoded;
   } catch (error) {
     throw new Error('Token invalide');
   }
 };
 
+// Configuration CORS
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
+};
+
+// Handler pour récupérer tous les événements
+const handleGetEvents = async (event) => {
+  try {
+    const user = verifyToken(event);
+    
+    // Récupérer tous les événements de l'utilisateur
+    const events = await Event.find({ userId: user.id || user._id })
+      .sort({ dueDate: 1 })
+      .lean();
+
+    return {
+      statusCode: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        success: true,
+        events: events || []
+      })
+    };
+  } catch (error) {
+    return {
+      statusCode: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ success: false, message: 'Token invalide' })
+    };
+  }
+};
+
+// Handler pour créer un nouvel événement
+const handleCreateEvent = async (event) => {
+  try {
+    const user = verifyToken(event);
+    const body = JSON.parse(event.body || '{}');
+    const { title, description, type, subject, dueDate, priority } = body;
+
+    if (!title || !subject || !dueDate) {
+      return {
+        statusCode: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: false, message: 'Titre, matière et date de rendu requis' })
+      };
+    }
+
+    const newEvent = new Event({
+      title,
+      description,
+      type: type || 'devoir',
+      subject,
+      dueDate: new Date(dueDate),
+      userId: user.id || user._id,
+      priority: priority || 'medium'
+    });
+
+    await newEvent.save();
+
+    return {
+      statusCode: 201,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        success: true,
+        message: 'Devoir créé avec succès',
+        event: newEvent
+      })
+    };
+  } catch (error) {
+    return {
+      statusCode: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ success: false, message: 'Token invalide' })
+    };
+  }
+};
+
+// Handler pour mettre à jour un événement
+const handleUpdateEvent = async (event) => {
+  try {
+    const user = verifyToken(event);
+    const body = JSON.parse(event.body || '{}');
+    const { eventId, title, description, type, subject, dueDate, isCompleted, priority } = body;
+
+    if (!eventId) {
+      return {
+        statusCode: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: false, message: 'ID de l\'événement manquant' })
+      };
+    }
+
+    const eventDoc = await Event.findOne({ _id: eventId, userId: user.id || user._id });
+    if (!eventDoc) {
+      return {
+        statusCode: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: false, message: 'Événement non trouvé' })
+      };
+    }
+
+    // Mettre à jour les champs fournis
+    if (title !== undefined) eventDoc.title = title;
+    if (description !== undefined) eventDoc.description = description;
+    if (type !== undefined) eventDoc.type = type;
+    if (subject !== undefined) eventDoc.subject = subject;
+    if (dueDate !== undefined) eventDoc.dueDate = new Date(dueDate);
+    if (isCompleted !== undefined) eventDoc.isCompleted = isCompleted;
+    if (priority !== undefined) eventDoc.priority = priority;
+
+    await eventDoc.save();
+
+    return {
+      statusCode: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        success: true,
+        message: 'Événement mis à jour avec succès',
+        event: eventDoc
+      })
+    };
+  } catch (error) {
+    return {
+      statusCode: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ success: false, message: 'Token invalide' })
+    };
+  }
+};
+
+// Handler pour supprimer un événement
+const handleDeleteEvent = async (event) => {
+  try {
+    const user = verifyToken(event);
+    const body = JSON.parse(event.body || '{}');
+    const { eventId } = body;
+
+    if (!eventId) {
+      return {
+        statusCode: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: false, message: 'ID de l\'événement manquant' })
+      };
+    }
+
+    const eventDoc = await Event.findOneAndDelete({ _id: eventId, userId: user.id || user._id });
+    if (!eventDoc) {
+      return {
+        statusCode: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: false, message: 'Événement non trouvé' })
+      };
+    }
+
+    return {
+      statusCode: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        success: true,
+        message: 'Événement supprimé avec succès'
+      })
+    };
+  } catch (error) {
+    return {
+      statusCode: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ success: false, message: 'Token invalide' })
+    };
+  }
+};
+
 exports.handler = async (event, context) => {
-  // Headers pour CORS
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-  };
-  
+  // Gérer les requêtes OPTIONS (preflight)
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
-      headers,
+      headers: corsHeaders,
       body: ''
     };
   }
 
   try {
-    await connectDB();
+    // Connexion à MongoDB
+    await mongoose.connect(process.env.MONGODB_URI || '', {
+      bufferCommands: false
+    });
 
-    // GET /api/events - List all events
-    if (event.httpMethod === 'GET') {
-      const events = await Event.find({}).sort({ date: 1, heure: 1 });
-      return res.status(200).json(events);
+    // Router selon la méthode HTTP
+    switch (event.httpMethod) {
+      case 'GET':
+        return await handleGetEvents(event);
+      case 'POST':
+        return await handleCreateEvent(event);
+      case 'PUT':
+        return await handleUpdateEvent(event);
+      case 'DELETE':
+        return await handleDeleteEvent(event);
+      default:
+        return {
+          statusCode: 405,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ success: false, message: 'Méthode non autorisée' })
+        };
     }
-
-    // POST /api/events - Create new event
-    if (event.httpMethod === 'POST') {
-      try {
-        const user = verifyToken(req);
-        const eventData = JSON.parse(event.body || '{}');
-        
-        const newEvent = new Event({
-          ...eventData,
-          createdBy: user.id || user._id
-        });
-        
-        const savedEvent = await newEvent.save();
-        return res.status(201).json(savedEvent);
-      } catch (authError) {
-        return { statusCode: 401, headers, body: JSON.stringify({ error: 'Non autorisé' }) };
-      }
-    }
-
-    // PUT /api/events - Update event
-    if (event.httpMethod === 'PUT') {
-      try {
-        const user = verifyToken(req);
-        const { eventId, ...updateData } = JSON.parse(event.body || '{}');
-        
-        if (!eventId) {
-          return { statusCode: 400, headers, body: JSON.stringify({ error: 'ID événement requis dans le body' }) };
-        }
-
-        const updatedEvent = await Event.findByIdAndUpdate(
-          eventId, 
-          updateData, 
-          { new: true }
-        );
-        
-        if (!updatedEvent) {
-          return { statusCode: 404, headers, body: JSON.stringify({ error: 'Événement non trouvé' }) };
-        }
-
-        return { statusCode: 200, headers, body: JSON.stringify({
-          success: true,
-          event: updatedEvent
-        }) };
-      } catch (authError) {
-        return { statusCode: 401, headers, body: JSON.stringify({ error: 'Non autorisé' }) };
-      }
-    }
-
-    // DELETE /api/events - Delete event
-    if (event.httpMethod === 'DELETE') {
-      try {
-        const user = verifyToken(req);
-        const { eventId } = JSON.parse(event.body || '{}');
-        
-        if (!eventId) {
-          return { statusCode: 400, headers, body: JSON.stringify({ error: 'ID événement requis dans le body' }) };
-        }
-
-        const deletedEvent = await Event.findByIdAndDelete(eventId);
-        
-        if (!deletedEvent) {
-          return { statusCode: 404, headers, body: JSON.stringify({ error: 'Événement non trouvé' }) };
-        }
-
-        return { statusCode: 200, headers, body: JSON.stringify({ 
-          success: true,
-          message: 'Événement supprimé' 
-        }) };
-      } catch (authError) {
-        return { statusCode: 401, headers, body: JSON.stringify({ error: 'Non autorisé' }) };
-      }
-    }
-
-    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Méthode non autorisée' }) };
 
   } catch (error) {
-    console.error('Erreur API events:', error);
-    res.status(500).json({ error: 'Erreur serveur interne' });
+    console.error('❌ Erreur events:', error);
+    return {
+      statusCode: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        success: false,
+        message: 'Erreur serveur interne'
+      })
+    };
+  } finally {
+    // Fermer la connexion MongoDB
+    if (mongoose.connection.readyState === 1) {
+      await mongoose.connection.close();
+    }
   }
 };
