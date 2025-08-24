@@ -77,7 +77,7 @@ async function handleSave() {
   error.value = '';
   
   try {
-    const response = await fetch(`${API_URL}/users/secret-questions`, {
+    const response = await fetch(`${API_URL}/secret-questions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
