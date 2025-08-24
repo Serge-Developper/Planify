@@ -1,7 +1,0 @@
-# Ignorer les fichiers non nécessaires
-node_modules/
-.env
-*.log
-backend2/
-test/
-*.zip

@@ -3,7 +3,9 @@
   "include": [
     "env.d.ts",
     "src/**/*",
-    "src/**/*.vue"
+    "src/**/*.vue",
+    "src/types/**/*.d.ts",
+    "netlify/functions/types.d.ts"
   ],
   "exclude": [
     "src/**/__tests__/*"
