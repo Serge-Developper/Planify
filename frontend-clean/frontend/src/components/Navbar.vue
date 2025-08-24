@@ -967,15 +967,20 @@ console.log('🔧 API_URL:', API_URL)
 console.log('🔧 baseUrl:', baseUrl)
 
 const user = computed(() => {
-  const currentUser = auth.user;
-  console.log('👤 Utilisateur actuel:', {
-    id: currentUser?.id,
-    _id: currentUser?._id,
-    username: currentUser?.username,
-    avatar: currentUser?.avatar,
-    hasToken: !!currentUser?.token
-  });
-  return currentUser;
+  const u = auth.user;
+  // Normaliser les clés entre API Netlify (user + token) et format local aplati
+  if (!u) return null;
+  const normalized = {
+    id: u.id || u._id,
+    _id: u._id || u.id,
+    username: u.username,
+    role: u.role,
+    year: u.year,
+    groupe: u.groupe,
+    avatar: u.avatar,
+    token: u.token
+  };
+  return normalized;
 })
 const isLoggedIn = computed(() => auth.isLoggedIn)
 const isAdmin = computed(() => auth.isAdmin)

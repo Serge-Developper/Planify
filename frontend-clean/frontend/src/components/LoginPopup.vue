@@ -82,8 +82,9 @@ async function handleLogin() {
         // NE PAS stocker dans localStorage ici - attendre que les questions soient définies
       } else {
         // Seulement stocker dans localStorage si l'utilisateur a déjà des questions secrètes
-        localStorage.setItem('user', JSON.stringify(data));
-        emit('login-success', { user: data, password: password.value });
+        const flattened = { ...(data.user || {}), token: data.token };
+        localStorage.setItem('user', JSON.stringify(flattened));
+        emit('login-success', { user: flattened, password: password.value });
         close();
       }
     } else {
@@ -107,8 +108,9 @@ async function handleLogin() {
 function handleSecretQuestionsSaved() {
   showSecretQuestionsSetup.value = false;
   // Maintenant on peut stocker dans localStorage car les questions secrètes sont définies
-  localStorage.setItem('user', JSON.stringify(userData));
-  emit('login-success', { user: userData, password: password.value });
+  const flattened = { ...(userData?.user || {}), token: userData?.token };
+  localStorage.setItem('user', JSON.stringify(flattened));
+  emit('login-success', { user: flattened, password: password.value });
   close();
 }
 
