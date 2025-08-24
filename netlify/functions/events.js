@@ -33,17 +33,20 @@ const verifyToken = (req) => {
 };
 
 // Extraction robuste de l'identifiant utilisateur depuis le payload JWT
+/**
+ * @param {import('jsonwebtoken').JwtPayload | string} decoded
+ */
 function getUserIdFromToken(decoded) {
   try {
     if (!decoded) return '';
     if (typeof decoded === 'string') return decoded || '';
     if (typeof decoded === 'object') {
       // Cas classiques { id, ... } ou { _id, ... }
-      if (decoded.id) return String(decoded.id);
-      if (decoded._id) return String(decoded._id);
+      if (decoded['id']) return String(decoded['id']);
+      if (decoded['_id']) return String(decoded['_id']);
       // Cas { user: { id/_id } }
-      if (decoded.user && (decoded.user.id || decoded.user._id)) {
-        return String(decoded.user.id || decoded.user._id);
+      if (decoded['user'] && (decoded['user']['id'] || decoded['user']['_id'])) {
+        return String(decoded['user']['id'] || decoded['user']['_id']);
       }
     }
   } catch {}
