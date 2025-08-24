@@ -15,6 +15,7 @@ const userSchema = new mongoose.Schema({
     purchaseDate: { type: Date, default: Date.now }
   }],
   equippedItemId: Number,
+  selectedBorderColor: { type: String, default: 'default' },
   lastSpinDate: Date,
   spinCount: { type: Number, default: 0 },
   weeklySpinCount: { type: Number, default: 0 },
@@ -109,6 +110,8 @@ const handleCoinsRoute = async (event, path) => {
       return await handleEquip(event);
     case 'weekly-items':
       return await handleWeeklyItems(event);
+    case 'border-color':
+      return await handleBorderColor(event);
     default:
       return {
         statusCode: 404,
@@ -202,7 +205,8 @@ const handleInventory = async (event) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         purchasedItems: userDoc?.purchasedItems || [],
-        equippedItemId: userDoc?.equippedItemId
+        equippedItemId: userDoc?.equippedItemId,
+        selectedBorderColor: userDoc?.selectedBorderColor || 'default'
       })
     };
   } catch (error) {
@@ -416,6 +420,62 @@ const handleWeeklyItems = async (event) => {
         weeklyItems: [],
         timeUntilReset: '00:00:00'
       })
+    };
+  }
+};
+
+// Handler pour border-color
+const handleBorderColor = async (event) => {
+  try {
+    const user = verifyToken(event);
+    const body = JSON.parse(event.body || '{}');
+    const { colorId } = body;
+
+    if (!colorId) {
+      return {
+        statusCode: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: false, message: 'ID de couleur manquant' })
+      };
+    }
+
+    const userDoc = await User.findById(user.id || user._id);
+    if (!userDoc) {
+      return {
+        statusCode: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: false, message: 'Utilisateur non trouvé' })
+      };
+    }
+
+    // Vérifier si l'utilisateur possède la bordure classique (itemId 0)
+    const hasClassicBorder = userDoc.purchasedItems.some(item => item.itemId === 0);
+    if (!hasClassicBorder) {
+      return {
+        statusCode: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: false, message: 'Vous devez posséder la bordure classique pour changer sa couleur' })
+      };
+    }
+
+    // Mettre à jour la couleur de bordure sélectionnée
+    userDoc.selectedBorderColor = colorId;
+    await userDoc.save();
+
+    return {
+      statusCode: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        success: true,
+        message: 'Couleur de bordure mise à jour avec succès',
+        selectedBorderColor: colorId
+      })
+    };
+  } catch (error) {
+    return {
+      statusCode: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ success: false, message: 'Token invalide' })
     };
   }
 };
