@@ -5,7 +5,7 @@
       "path": "./tsconfig.node.json"
     },
     {
-      "path": "./frontend (7)/frontend/tsconfig.app.json"
+      "path": "./frontend-clean/frontend/tsconfig.app.json"
     },
     {
       "path": "./tsconfig.vitest.json"
