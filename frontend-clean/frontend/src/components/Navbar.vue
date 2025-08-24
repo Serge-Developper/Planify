@@ -996,7 +996,14 @@ async function loadUserAvatar() {
   }
 
   try {
-    const avatarUrl = `${baseUrl}${user.value.avatar}`;
+    let avatarUrl = '';
+    const avatar = user.value.avatar || '';
+    if (avatar && avatar.startsWith('/uploads/avatars/')) {
+      const filename = avatar.split('/').pop();
+      avatarUrl = `${baseUrl}/uploads/avatars/${filename}`;
+    } else {
+      avatarUrl = `${baseUrl}${avatar}`;
+    }
     userAvatar.value = avatarUrl;
   } catch (error) {
     console.error('Erreur lors du chargement de l\'avatar:', error);
