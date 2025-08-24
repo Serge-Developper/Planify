@@ -24,7 +24,10 @@ exports.handler = async (event, context) => {
       return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: 'Chemin de fichier manquant' }) };
     }
 
-    const origin = process.env.UPLOADS_ORIGIN || 'https://planify-snowy.vercel.app';
+    // Utiliser le host courant par défaut (Netlify) et fallback sur UPLOADS_ORIGIN si fourni
+    const requestHost = (event.headers && (event.headers['x-forwarded-host'] || event.headers.host)) || '';
+    const defaultOrigin = requestHost ? `https://${requestHost}` : '';
+    const origin = process.env.UPLOADS_ORIGIN || defaultOrigin;
     const targetUrl = `${origin}/uploads/${tail}`;
 
     return {
