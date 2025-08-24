@@ -273,71 +273,95 @@ const handleWeeklyItems = async (event) => {
   try {
     const user = verifyToken(event);
     
-    const weeklyItems = await Item.find({ 
-      isWeekly: true, 
-      isActive: true 
-    }).sort({ createdAt: -1 }).limit(10);
+    // Tous les items disponibles pour la boutique hebdomadaire
+    const allWeeklyItems = [
+      { id: 1, name: 'Oreilles de chat', price: 50, img: 'oreilleschat' },
+      { id: 2, name: 'Clown', price: 80, img: 'clowncheveux' },
+      { id: 3, name: 'Cash', price: 60, img: 'cash' },
+      { id: 4, name: 'Cible', price: 100, img: 'target' },
+      { id: 6, name: 'Roi', price: 90, img: 'roi' },
+      { id: 7, name: 'Matrix', price: 110, img: 'matrix' },
+      { id: 8, name: 'Ange', price: 120, img: 'angelwings' },
+      { id: 9, name: 'Tomb Raider', price: 130, img: 'laracroft' },
+      { id: 10, name: 'Étoiles', price: 85, img: 'star' },
+      { id: 11, name: 'Cadre royale', price: 95, img: 'cadre' },
+      { id: 12, name: 'Roses', price: 105, img: 'love' },
+      { id: 13, name: 'Gentleman', price: 115, img: 'moustache' },
+      { id: 14, name: 'Vinyle', price: 135, img: 'vinyle' },
+      { id: 15, name: 'Advisory', price: 145, img: 'advisory' },
+      { id: 16, name: 'Espace', price: 155, img: 'spacestars' },
+      { id: 17, name: 'Absolute Cinema', price: 165, img: 'bras' },
+      { id: 18, name: 'Flash', price: 175, img: 'flash' },
+      { id: 19, name: 'Miaou', price: 185, img: 'chat' },
+      { id: 20, name: 'DVD', price: 195, img: 'dvd' },
+      { id: 21, name: 'Lunettes pixel', price: 205, img: 'mlglunette' },
+      { id: 22, name: '2000', price: 215, img: 'nokia' }
+    ];
 
-    if (weeklyItems.length === 0) {
-      const defaultItems = [
-        {
-          itemId: 'weekly-1',
-          name: 'Border Classique',
-          description: 'Une bordure élégante pour votre profil',
-          price: 100,
-          image: '/img/border-classic.png',
-          category: 'border',
-          rarity: 'common',
-          isWeekly: true,
-          isActive: true
-        },
-        {
-          itemId: 'weekly-2',
-          name: 'Avatar Premium',
-          description: 'Un avatar exclusif pour la semaine',
-          price: 200,
-          image: '/img/avatar-premium.png',
-          category: 'avatar',
-          rarity: 'rare',
-          isWeekly: true,
-          isActive: true
-        },
-        {
-          itemId: 'weekly-3',
-          name: 'Background Étoilé',
-          description: 'Un fond d\'écran magique',
-          price: 150,
-          image: '/img/background-stars.png',
-          category: 'background',
-          rarity: 'uncommon',
-          isWeekly: true,
-          isActive: true
-        }
-      ];
-
-      return {
-        statusCode: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          success: true,
-          items: defaultItems
-        })
-      };
+    // Fonction pour obtenir la seed du jour actuel
+    function getCurrentDaySeed() {
+      const now = new Date();
+      const dateString = now.toISOString().split('T')[0];
+      return dateString;
     }
+
+    // Fonction pour générer des items aléatoires basés sur une seed
+    function getRandomItemsFromSeed(seed, count = 3) {
+      let hash = 0;
+      for (let i = 0; i < seed.length; i++) {
+        const char = seed.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convertir en 32-bit integer
+      }
+      
+      // Utiliser la seed pour mélanger le tableau
+      const shuffled = [...allWeeklyItems].sort(() => {
+        hash = (hash * 9301 + 49297) % 233280;
+        return (hash / 233280) - 0.5;
+      });
+      
+      return shuffled.slice(0, count);
+    }
+
+    // Générer les items hebdomadaires pour aujourd'hui
+    const daySeed = getCurrentDaySeed();
+    let weeklyItems = getRandomItemsFromSeed(daySeed, 3);
+
+    // Calculer le temps jusqu'à la prochaine rotation
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+
+    const timeLeft = tomorrow.getTime() - now.getTime();
+    const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+    const timeUntilReset = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
     return {
       statusCode: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         success: true,
-        items: weeklyItems
+        weeklyItems,
+        timeUntilReset,
+        daySeed,
+        nextReset: tomorrow.toISOString()
       })
     };
+
   } catch (error) {
+    console.error('Erreur récupération items hebdomadaires:', error);
     return {
-      statusCode: 401,
+      statusCode: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ success: false, message: 'Token invalide' })
+      body: JSON.stringify({ 
+        success: false, 
+        message: 'Erreur lors de la récupération des items hebdomadaires',
+        weeklyItems: [],
+        timeUntilReset: '00:00:00'
+      })
     };
   }
 };
