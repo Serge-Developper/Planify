@@ -32,6 +32,24 @@ const verifyToken = (req) => {
   }
 };
 
+// Extraction robuste de l'identifiant utilisateur depuis le payload JWT
+function getUserIdFromToken(decoded) {
+  try {
+    if (!decoded) return '';
+    if (typeof decoded === 'string') return decoded || '';
+    if (typeof decoded === 'object') {
+      // Cas classiques { id, ... } ou { _id, ... }
+      if (decoded.id) return String(decoded.id);
+      if (decoded._id) return String(decoded._id);
+      // Cas { user: { id/_id } }
+      if (decoded.user && (decoded.user.id || decoded.user._id)) {
+        return String(decoded.user.id || decoded.user._id);
+      }
+    }
+  } catch {}
+  return '';
+}
+
 // Configuration CORS
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -42,10 +60,12 @@ const corsHeaders = {
 // Handler pour récupérer tous les événements
 const handleGetEvents = async (event) => {
   try {
-    const user = verifyToken(event);
+    const decoded = verifyToken(event);
+    const userId = getUserIdFromToken(decoded);
+    if (!userId) throw new Error('Token invalide');
     
     // Récupérer tous les événements de l'utilisateur
-    const events = await Event.find({ userId: user.id || user._id })
+    const events = await Event.find({ userId })
       .sort({ dueDate: 1 })
       .lean();
 
@@ -69,7 +89,9 @@ const handleGetEvents = async (event) => {
 // Handler pour créer un nouvel événement
 const handleCreateEvent = async (event) => {
   try {
-    const user = verifyToken(event);
+    const decoded = verifyToken(event);
+    const userId = getUserIdFromToken(decoded);
+    if (!userId) throw new Error('Token invalide');
     const body = JSON.parse(event.body || '{}');
     const { title, description, type, subject, dueDate, priority } = body;
 
@@ -87,7 +109,7 @@ const handleCreateEvent = async (event) => {
       type: type || 'devoir',
       subject,
       dueDate: new Date(dueDate),
-      userId: user.id || user._id,
+      userId,
       priority: priority || 'medium'
     });
 
@@ -114,7 +136,9 @@ const handleCreateEvent = async (event) => {
 // Handler pour mettre à jour un événement
 const handleUpdateEvent = async (event) => {
   try {
-    const user = verifyToken(event);
+    const decoded = verifyToken(event);
+    const userId = getUserIdFromToken(decoded);
+    if (!userId) throw new Error('Token invalide');
     const body = JSON.parse(event.body || '{}');
     const { eventId, title, description, type, subject, dueDate, isCompleted, priority } = body;
 
@@ -126,7 +150,7 @@ const handleUpdateEvent = async (event) => {
       };
     }
 
-    const eventDoc = await Event.findOne({ _id: eventId, userId: user.id || user._id });
+    const eventDoc = await Event.findOne({ _id: eventId, userId });
     if (!eventDoc) {
       return {
         statusCode: 404,
@@ -167,7 +191,9 @@ const handleUpdateEvent = async (event) => {
 // Handler pour supprimer un événement
 const handleDeleteEvent = async (event) => {
   try {
-    const user = verifyToken(event);
+    const decoded = verifyToken(event);
+    const userId = getUserIdFromToken(decoded);
+    if (!userId) throw new Error('Token invalide');
     const body = JSON.parse(event.body || '{}');
     const { eventId } = body;
 
@@ -179,7 +205,7 @@ const handleDeleteEvent = async (event) => {
       };
     }
 
-    const eventDoc = await Event.findOneAndDelete({ _id: eventId, userId: user.id || user._id });
+    const eventDoc = await Event.findOneAndDelete({ _id: eventId, userId });
     if (!eventDoc) {
       return {
         statusCode: 404,
