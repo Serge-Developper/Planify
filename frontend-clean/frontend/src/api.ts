@@ -10,6 +10,9 @@ export const getAuthHeaders = () => {
     'Content-Type': 'application/json',
     'Authorization': token ? `Bearer ${token}` : '',
     'X-Requested-With': 'XMLHttpRequest',
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0',
   };
 };
 
@@ -26,7 +29,10 @@ export const secureApiCall = async (url: string, options: RequestInit = {}) => {
   };
 
   try {
-    const response = await fetch(`${API_URL}${url}`, config);
+    // Ajouter un paramètre de cache-busting pour éviter les problèmes de cache
+    const cacheBuster = `?cb=${Date.now()}`;
+    const fullUrl = url.includes('?') ? `${API_URL}${url}&cb=${Date.now()}` : `${API_URL}${url}${cacheBuster}`;
+    const response = await fetch(fullUrl, config);
     
     if (!response.ok) {
       if (response.status === 401) {
