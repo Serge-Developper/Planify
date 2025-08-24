@@ -25,9 +25,9 @@ import { ref, defineEmits, watch, onMounted, onUnmounted } from 'vue';
 import { API_URL } from '../api';
 import ForgotPasswordPopup from './ForgotPasswordPopup.vue';
 import SecretQuestionsSetup from './SecretQuestionsSetup.vue';
-import errorSound from '@/assets/son/erreur.mp3'
-import closeImg from '@/assets/img/bouton_supprimer_decocher.png'
-import closeHoverImg from '@/assets/img/bouton_supprimer_cocher.png'
+import errorSound from '../assets/son/erreur.mp3'
+import closeImg from '../assets/img/bouton_supprimer_decocher.png'
+import closeHoverImg from '../assets/img/bouton_supprimer_cocher.png'
 
 const emit = defineEmits(['close', 'login-success']);
 const username = ref('');
