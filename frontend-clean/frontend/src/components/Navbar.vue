@@ -1369,26 +1369,32 @@ async function handleAvatarUpload(event) {
   }
 
   try {
-    const formData = new FormData();
-    formData.append('avatar', file);
+    // Convertir en base64 (data URL) et envoyer en JSON à la fonction Netlify
+    const dataUrl = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
 
-    console.log('🚀 Upload avatar en cours...');
-    const response = await axios.post(`${API_URL}/upload-avatar`, formData, {
+    console.log('🚀 Upload avatar en cours (base64)...');
+    const response = await axios.post(`${API_URL}/upload-avatar`, {
+      filename: file.name,
+      data: dataUrl
+    }, {
       headers: {
         'Authorization': `Bearer ${user.value.token}`,
-        'Content-Type': 'multipart/form-data'
+        'Content-Type': 'application/json'
       }
     });
 
     console.log('📤 Réponse upload:', response.data);
 
     if (response.data.avatar) {
-      // Mettre à jour l'avatar affiché
-      const newAvatarUrl = `${baseUrl}${response.data.avatar}`;
-      console.log('🖼️ Construction URL avatar:');
-      console.log('  - baseUrl:', baseUrl);
-      console.log('  - avatar path:', response.data.avatar);
-      console.log('  - URL complète:', newAvatarUrl);
+      // Mettre à jour l'avatar affiché (via fonction uploads Netlify)
+      const filename = response.data.avatar.split('/').pop();
+      const newAvatarUrl = `${baseUrl}/uploads/avatars/${filename}`;
+      console.log('🖼️ URL avatar servie par Netlify:', newAvatarUrl);
       userAvatar.value = newAvatarUrl;
       
       // Mettre à jour les données utilisateur dans le store et localStorage
