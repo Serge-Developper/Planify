@@ -97,13 +97,22 @@ const corsHeaders = {
 
 // Routeur pour les endpoints coins
 const handleCoinsRoute = async (event, path) => {
-  const endpoint = path.replace('/api/coins/', '');
+  // Supporte à la fois "/api/coins/*" (proxy) et "/.netlify/functions/coins/*"
+  const endpoint = (() => {
+    if (!path) return '';
+    const marker = '/coins/';
+    const idx = path.indexOf(marker);
+    if (idx !== -1) return path.slice(idx + marker.length);
+    return path.replace('/api/coins/', '');
+  })();
 
   switch (endpoint) {
     case 'user-coins':
       return await handleUserCoins(event);
     case 'spin-status':
       return await handleSpinStatus(event);
+    case 'spin-wheel':
+      return await handleSpinWheel(event);
     case 'inventory':
       return await handleInventory(event);
     case 'equip':
@@ -476,6 +485,112 @@ const handleBorderColor = async (event) => {
       statusCode: 401,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({ success: false, message: 'Token invalide' })
+    };
+  }
+};
+
+// Handler pour la roue de la fortune
+const handleSpinWheel = async (event) => {
+  try {
+    const user = verifyToken(event);
+    const userDoc = await User.findById(user.id || user._id);
+
+    if (!userDoc) {
+      return {
+        statusCode: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: false, message: 'Utilisateur non trouvé' })
+      };
+    }
+
+    // Réinitialiser le compteur hebdomadaire si la semaine a changé
+    if (hasWeekChanged(userDoc.lastWeeklyReset)) {
+      userDoc.weeklySpinCount = 0;
+      userDoc.lastWeeklyReset = new Date();
+      await userDoc.save();
+    }
+
+    const now = new Date();
+
+    // Empêcher plus d'un spin par jour
+    const lastSpin = userDoc.lastSpinDate ? new Date(userDoc.lastSpinDate) : null;
+    if (lastSpin) {
+      const sameDay = lastSpin.toDateString() === now.toDateString();
+      if (sameDay) {
+        return {
+          statusCode: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            success: false,
+            canSpin: false,
+            message: "Vous avez déjà tourné la roue aujourd'hui. Revenez demain !"
+          })
+        };
+      }
+    }
+
+    // Récompenses possibles (avec une faible probabilité de "Perdu")
+    const rewards = [
+      { coins: 10, probability: 0.15, name: '10 coins' },
+      { coins: 20, probability: 0.15, name: '20 coins' },
+      { coins: 30, probability: 0.15, name: '30 coins' },
+      { coins: 50, probability: 0.15, name: '50 coins' },
+      { coins: 70, probability: 0.15, name: '70 coins' },
+      { coins: 100, probability: 0.15, name: '100 coins' },
+      { coins: 0, probability: 0.10, name: 'Perdu' }
+    ];
+
+    // Tirage au sort pondéré
+    const rand = Math.random();
+    let cumulative = 0;
+    let reward = rewards[0];
+    for (const r of rewards) {
+      cumulative += r.probability;
+      if (rand <= cumulative) { reward = r; break; }
+    }
+
+    // Bonus weekend (x2) sauf si Perdu
+    const weekend = isWeekend();
+    const originalCoins = reward.coins;
+    const finalCoins = weekend && reward.coins > 0 ? reward.coins * 2 : reward.coins;
+    const isWeekendBonus = weekend && reward.coins > 0;
+
+    // Mise à jour utilisateur
+    userDoc.coins = (userDoc.coins || 0) + finalCoins;
+    userDoc.lastSpinDate = now;
+    userDoc.weeklySpinCount = (userDoc.weeklySpinCount || 0) + 1;
+    await userDoc.save();
+
+    // Message
+    let message;
+    if (finalCoins > 0 && isWeekendBonus) {
+      message = `🎉 WEEKEND BONUS x2 ! Vous avez gagné ${finalCoins} coins (${originalCoins} x 2) !`;
+    } else if (finalCoins > 0) {
+      message = `Félicitations ! Vous avez gagné ${finalCoins} coins !`;
+    } else {
+      message = `😔 Dommage, vous n'avez rien gagné cette fois-ci !`;
+    }
+
+    return {
+      statusCode: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        success: true,
+        coinsWon: finalCoins,
+        newCoins: userDoc.coins,
+        rewardName: reward.name,
+        isWeekendBonus,
+        originalCoins,
+        message
+      })
+    };
+  } catch (error) {
+    // Token invalide => 401, sinon 500
+    const isAuthError = String(error && error.message || '').toLowerCase().includes('token');
+    return {
+      statusCode: isAuthError ? 401 : 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ success: false, message: isAuthError ? 'Token invalide' : 'Erreur lors du spin' })
     };
   }
 };
