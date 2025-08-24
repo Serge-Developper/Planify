@@ -968,17 +968,18 @@ console.log('🔧 baseUrl:', baseUrl)
 
 const user = computed(() => {
   const u = auth.user;
-  // Normaliser les clés entre API Netlify (user + token) et format local aplati
   if (!u) return null;
+  // Accepte les deux formats: aplati ({ id, role, ... }) OU imbriqué ({ user: {...}, token })
+  const inner = u.user || {};
   const normalized = {
-    id: u.id || u._id,
-    _id: u._id || u.id,
-    username: u.username,
-    role: u.role,
-    year: u.year,
-    groupe: u.groupe,
-    avatar: u.avatar,
-    token: u.token
+    id: u.id || u._id || inner.id || inner._id,
+    _id: u._id || u.id || inner._id || inner.id,
+    username: u.username || inner.username,
+    role: u.role || inner.role,
+    year: u.year || inner.year,
+    groupe: u.groupe || inner.groupe,
+    avatar: u.avatar || inner.avatar,
+    token: u.token || inner.token
   };
   return normalized;
 })
