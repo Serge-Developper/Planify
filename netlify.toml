@@ -16,25 +16,31 @@
   # Disable cache pour forcer installation complète
   NETLIFY_SKIP_CACHE = "true"
 
-# Redirections pour les API endpoints (DOIT être en premier)
+# Priorité: route contact -> nouvelle fonction contact2
 [[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
+  from = "/api/contact"
+  to = "/.netlify/functions/contact2"
   status = 200
 
-# Nouveau endpoint de contact (bypass de l’ancienne fonction en cache)
+# Route dédiée contact2
 [[redirects]]
   from = "/api/contact2"
   to = "/.netlify/functions/contact2"
   status = 200
 
-# Redirection des fichiers uploadés vers la fonction dédiée
+# Générique API -> functions
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# Uploads -> function uploads (fichiers/avatars)
 [[redirects]]
   from = "/uploads/*"
   to = "/.netlify/functions/uploads/:splat"
   status = 200
 
-# Redirection pour les routes Vue.js (SPA)
+# SPA fallback
 [[redirects]]
   from = "/*"
   to = "/index.html"
