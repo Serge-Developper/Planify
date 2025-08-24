@@ -79,7 +79,6 @@ async function handleLogin() {
     }
     
                 if (res.ok && data) {
-      userData = data; // Stocke temporairement les données
       // Supporter les deux formats de réponse API:
       // - Vercel: { _id, username, token, hasSecretQuestions }
       // - Netlify: { token, user: { ..., hasSecretQuestions } }
@@ -87,13 +86,20 @@ async function handleLogin() {
         ? Boolean(data.user.hasSecretQuestions)
         : Boolean(data && data.hasSecretQuestions);
 
+      // Normaliser l'objet user pour tout le frontend
+      const normalizedUser = (data && data.user && typeof data.user === 'object')
+        ? { ...data.user, token: data.token }
+        : data;
+
+      userData = normalizedUser; // Stockage temporaire
+
       if (!hasSecrets) {
         showSecretQuestionsSetup.value = true;
         // NE PAS stocker dans localStorage ici - attendre que les questions soient définies
       } else {
         // Seulement stocker dans localStorage si l'utilisateur a déjà des questions secrètes
-        localStorage.setItem('user', JSON.stringify(data));
-        emit('login-success', { user: data, password: password.value });
+        localStorage.setItem('user', JSON.stringify(normalizedUser));
+        emit('login-success', { user: normalizedUser, password: password.value });
         close();
       }
     } else {

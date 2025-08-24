@@ -29,7 +29,7 @@ module.exports = async (req, res) => {
     }
 
     // Create a transporter object using a Google SMTP account
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER,
