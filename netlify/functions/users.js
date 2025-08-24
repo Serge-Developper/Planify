@@ -8,13 +8,16 @@ const userSchema = new mongoose.Schema({
   role: { type: String, default: 'user' },
   year: String,
   groupe: String,
+  avatar: String,
   purchasedItems: [{
-    itemId: String,
+    itemId: Number,
     itemName: String,
     price: Number,
     purchaseDate: { type: Date, default: Date.now }
   }],
-  equippedItemId: String,
+  equippedItemId: Number,
+  selectedBorderColor: { type: String, default: 'default' },
+  completedTasks: { type: Number, default: 0 },
   lastSpinDate: Date,
   spinCount: { type: Number, default: 0 },
   weeklySpinCount: { type: Number, default: 0 },
@@ -70,8 +73,8 @@ exports.handler = async (event, context) => {
         // Vérifier l'authentification
         const user = verifyToken(event);
         
-        // Récupérer tous les utilisateurs avec leurs coins pour le leaderboard
-        const users = await User.find({}, 'username coins role year groupe')
+        // Récupérer tous les utilisateurs avec infos utiles au leaderboard
+        const users = await User.find({}, 'username coins role year groupe avatar equippedItemId selectedBorderColor completedTasks')
           .sort({ coins: -1 })
           .limit(50); // Limiter à 50 utilisateurs
 
@@ -85,10 +88,14 @@ exports.handler = async (event, context) => {
             success: true,
             users: users.map(u => ({
               username: u.username,
-              coins: u.coins || 0,
+              coins: Number(u.coins) || 0,
               role: u.role,
               year: u.year,
-              groupe: u.groupe
+              groupe: u.groupe,
+              avatar: u.avatar || null,
+              equippedItemId: typeof u.equippedItemId === 'number' ? u.equippedItemId : (u.equippedItemId ? Number(u.equippedItemId) : null),
+              selectedBorderColor: u.selectedBorderColor || 'default',
+              completedTasks: Number(u.completedTasks) || 0
             }))
           })
         };
