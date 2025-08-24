@@ -28,6 +28,22 @@ exports.handler = async (event, context) => {
   }
 
   try {
+    // Vérifier les variables d'environnement
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      console.error('Variables d\'environnement manquantes:', {
+        EMAIL_USER: !!process.env.EMAIL_USER,
+        EMAIL_PASS: !!process.env.EMAIL_PASS
+      });
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({
+          success: false,
+          message: "Configuration email manquante. Veuillez contacter l'administrateur."
+        })
+      };
+    }
+
     const { name, phone, email_from, Promo, subject, Description } = JSON.parse(event.body || '{}');
 
     if (!name || !email_from || !subject || !Description) {
@@ -36,6 +52,13 @@ exports.handler = async (event, context) => {
         message: 'Tous les champs obligatoires doivent être remplis' 
       }) };
     }
+
+    console.log('Tentative d\'envoi d\'email avec les données:', {
+      name,
+      email_from,
+      subject,
+      hasDescription: !!Description
+    });
 
     // Create a transporter object using a Google SMTP account
     const transporter = nodemailer.createTransport({
@@ -55,16 +78,20 @@ exports.handler = async (event, context) => {
         <h3>Nouveau message depuis le formulaire de contact Planify</h3>
         <p><strong>Nom :</strong> ${name}</p>
         <p><strong>Email :</strong> ${email_from}</p>
-        <p><strong>Téléphone :</strong> ${phone}</p>
-        <p><strong>Promo :</strong> ${Promo}</p>
+        <p><strong>Téléphone :</strong> ${phone || 'Non renseigné'}</p>
+        <p><strong>Promo :</strong> ${Promo || 'Non renseigné'}</p>
         <hr>
         <h4>Sujet : ${subject}</h4>
         <p>${Description}</p>
       `
     };
 
+    console.log('Envoi de l\'email...');
+    
     // Send the email
     await transporter.sendMail(mailOptions);
+
+    console.log('Email envoyé avec succès');
 
     return {
       statusCode: 200,
@@ -76,13 +103,18 @@ exports.handler = async (event, context) => {
     };
 
   } catch (error) {
-    console.error('Erreur lors de l\'envoi de l\'e-mail:', error);
+    console.error('Erreur détaillée lors de l\'envoi de l\'e-mail:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code
+    });
+    
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({
         success: false,
-        message: "Erreur lors de l'envoi de l'e-mail."
+        message: "Erreur lors de l'envoi de l'e-mail. Veuillez réessayer plus tard."
       })
     };
   }
