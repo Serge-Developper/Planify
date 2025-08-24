@@ -26,29 +26,7 @@ exports.handler = async (event, context) => {
       }) };
     }
 
-    const EMAIL_USER = process.env.EMAIL_USER;
-    const EMAIL_PASS = process.env.EMAIL_PASS;
-
-    if (!EMAIL_USER || !EMAIL_PASS) {
-      console.warn('⚠️ EMAIL_USER/EMAIL_PASS non configurés - envoi simulé.');
-      return { statusCode: 200, headers, body: JSON.stringify({ success: true, message: 'Message reçu (mode dégradé: email non envoyé)' }) };
-    }
-
-    // Transport SMTP (Gmail par défaut)
-    const transporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-      port: process.env.EMAIL_PORT ? Number(process.env.EMAIL_PORT) : 465,
-      secure: !process.env.EMAIL_PORT || Number(process.env.EMAIL_PORT) === 465,
-      auth: { user: EMAIL_USER, pass: EMAIL_PASS }
-    });
-
-    // Options de l'e-mail: utiliser from = EMAIL_USER et replyTo = email de l'expéditeur
-    const mailOptions = {
-      from: `Planify Contact <${EMAIL_USER}>`,
-      to: 'planifymmi@gmail.com',
-      replyTo: `${name} <${email_from}>`,
-      subject: `Nouveau message de contact : ${subject}`,
-      html: `
+    const HTML = `
         <h3>Nouveau message depuis le formulaire de contact Planify</h3>
         <p><strong>Nom :</strong> ${name}</p>
         <p><strong>Email :</strong> ${email_from}</p>
@@ -57,15 +35,70 @@ exports.handler = async (event, context) => {
         <hr />
         <h4>Sujet : ${subject}</h4>
         <p>${(Description || '').replace(/\n/g, '<br/>')}</p>
-      `
+      `;
+
+    // 1) Tentative via Resend si disponible
+    const RESEND_API_KEY = process.env.RESEND_API_KEY;
+    if (RESEND_API_KEY) {
+      try {
+        const r = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${RESEND_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            from: `Planify <onboarding@resend.dev>`,
+            to: ['planifymmi@gmail.com'],
+            reply_to: `${name} <${email_from}>`,
+            subject: `Nouveau message de contact : ${subject}`,
+            html: HTML,
+            bcc: process.env.EMAIL_USER ? [process.env.EMAIL_USER] : undefined
+          })
+        });
+        if (r.ok) {
+          return { statusCode: 200, headers, body: JSON.stringify({ success: true, message: 'Le message a été envoyé avec succès (Resend).' }) };
+        } else {
+          const txt = await r.text().catch(() => '');
+          console.error('Resend error:', r.status, txt);
+          // On continue vers nodemailer fallback
+        }
+      } catch (e) {
+        console.error('Resend exception:', e);
+        // On continue vers nodemailer fallback
+      }
+    }
+
+    // 2) Fallback SMTP (Gmail/nodemailer)
+    const EMAIL_USER = process.env.EMAIL_USER;
+    const EMAIL_PASS = process.env.EMAIL_PASS;
+
+    if (!EMAIL_USER || !EMAIL_PASS) {
+      console.warn('EMAIL_USER/EMAIL_PASS absents - mode dégradé.');
+      return { statusCode: 200, headers, body: JSON.stringify({ success: true, message: 'Message reçu (mode dégradé: email non envoyé)' }) };
+    }
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+      port: process.env.EMAIL_PORT ? Number(process.env.EMAIL_PORT) : 587,
+      secure: Number(process.env.EMAIL_PORT) === 465,
+      auth: { user: EMAIL_USER, pass: EMAIL_PASS }
+    });
+
+    const mailOptions = {
+      from: `Planify Contact <${EMAIL_USER}>`,
+      to: 'planifymmi@gmail.com',
+      replyTo: `${name} <${email_from}>`,
+      subject: `Nouveau message de contact : ${subject}`,
+      html: HTML,
+      bcc: EMAIL_USER
     };
 
     try {
       await transporter.sendMail(mailOptions);
-      return { statusCode: 200, headers, body: JSON.stringify({ success: true, message: 'Le message a été envoyé avec succès.' }) };
+      return { statusCode: 200, headers, body: JSON.stringify({ success: true, message: 'Le message a été envoyé avec succès (SMTP).' }) };
     } catch (smtpError) {
-      console.error('❌ SMTP error:', smtpError);
-      // Éviter les 500 côté client; on confirme réception et on loggue l’erreur pour traitement ultérieur
+      console.error('SMTP error:', smtpError);
       return { statusCode: 200, headers, body: JSON.stringify({ success: true, message: 'Message reçu. Envoi email différé.' }) };
     }
   } catch (error) {
