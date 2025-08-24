@@ -11,10 +11,10 @@ const connectDB = async () => {
   }
   
   try {
-    await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    if (!process.env.MONGODB_URI) {
+      throw new Error("La variable d'environnement MONGODB_URI n'est pas définie.");
+    }
+    await mongoose.connect(process.env.MONGODB_URI, {});
     isConnected = true;
   } catch (error) {
     console.error('Erreur de connexion MongoDB:', error);
@@ -75,8 +75,8 @@ exports.handler = async (event, context) => {
   try {
     await connectDB();
 
-    // Extract action from Vercel dynamic route parameter
-    const { action } = req.query;
+    // Extraire l'action depuis l'URL de la requête (Netlify : via event.queryStringParameters)
+    const { action } = event.queryStringParameters || {};
 
     // LOGIN
     if (action === 'login' && event.httpMethod === 'POST') {
@@ -104,7 +104,7 @@ exports.handler = async (event, context) => {
           year: user.year,
           groupe: user.groupe
         },
-        process.env.JWT_SECRET,
+        process.env.JWT_SECRET || '47313b08ce548d70a55502b72e7441428ab5a7e555eb44224f412bd34b793d44a33a69da07f65714dd5be733ccd08fb2',
         { 
           expiresIn: '24h',
           issuer: 'planify-api',
@@ -273,6 +273,10 @@ exports.handler = async (event, context) => {
 
   } catch (error) {
     console.error('Erreur API auth:', error);
-    res.status(500).json({ error: 'Erreur serveur interne' });
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ error: 'Erreur serveur interne' })
+    };
   }
 };

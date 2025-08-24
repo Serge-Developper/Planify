@@ -241,7 +241,9 @@ const handleVerifyToken = async (event) => {
       process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production'
     );
 
-    const user = await User.findById(decoded.id);
+    // Correction du typage de decoded pour supporter JwtPayload
+    const userId = typeof decoded === 'string' ? decoded : decoded.id;
+    const user = await User.findById(userId);
     if (!user) {
       return {
         statusCode: 401,

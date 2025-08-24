@@ -125,7 +125,13 @@ const handleCoinsRoute = async (event, path) => {
 const handleUserCoins = async (event) => {
   try {
     const user = verifyToken(event);
-    const userDoc = await User.findById(user.id || user._id);
+    let userId;
+    if (typeof user === 'object' && user !== null) {
+      userId = user.id || user._id;
+    } else {
+      userId = user;
+    }
+    const userDoc = await User.findById(userId);
     
     return {
       statusCode: 200,
@@ -145,7 +151,13 @@ const handleUserCoins = async (event) => {
 const handleSpinStatus = async (event) => {
   try {
     const user = verifyToken(event);
-    const userDoc = await User.findById(user.id || user._id);
+    let userId;
+    if (typeof user === 'object' && user !== null) {
+      userId = user.id || user._id;
+    } else {
+      userId = user;
+    }
+    const userDoc = await User.findById(userId);
     
     if (!userDoc) {
       return {
@@ -198,8 +210,14 @@ const handleSpinStatus = async (event) => {
 const handleInventory = async (event) => {
   try {
     const user = verifyToken(event);
-    const userDoc = await User.findById(user.id || user._id);
-    
+    let userId;
+    if (typeof user === 'object' && user !== null) {
+      userId = user.id || user._id;
+    } else {
+      userId = user;
+    }
+    const userDoc = await User.findById(userId);
+
     return {
       statusCode: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -233,7 +251,14 @@ const handleEquip = async (event) => {
       };
     }
 
-    const userDoc = await User.findById(user.id || user._id);
+    let userId;
+    if (typeof user === 'object' && user !== null) {
+      userId = user.id || user._id;
+    } else {
+      userId = user;
+    }
+
+    const userDoc = await User.findById(userId);
     if (!userDoc) {
       return {
         statusCode: 404,
@@ -439,8 +464,21 @@ const handleBorderColor = async (event) => {
       };
     }
 
-    const userDoc = await User.findById(user.id || user._id);
-      if (!userDoc) {
+    // Correction du typage pour récupérer l'ID utilisateur
+    let userId;
+    if (typeof user === 'object' && user !== null) {
+      userId = user.id || user._id;
+    }
+    if (!userId) {
+      return {
+        statusCode: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: false, message: 'Utilisateur non authentifié' })
+      };
+    }
+
+    const userDoc = await User.findById(userId);
+    if (!userDoc) {
       return {
         statusCode: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

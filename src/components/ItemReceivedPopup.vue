@@ -19,100 +19,100 @@
           <div v-for="(it, idx) in items" :key="idx" class="item-info">
           <div class="item-preview">
               <div class="item-img-wrapper">
-                <div class="item-img-container" :class="{ 'black-bg': isGreenBg(it) }">
+                <div class="item-img-container" :class="{ 'black-bg': isGreenBg(it as any) }">
                   <!-- Rendus composites inspirés de l'onglet Collection -->
                   <!-- Matrix (animation CSS, même structure que Collection) -->
-                  <div v-if="it.name === 'Matrix'" class="matrix-rain-inside-shop">
-                    <div class="matrix-column" v-for="(col, ci) in getMatrixColumns(it)" :key="'mc-'+ci" :style="{ left: (ci * 5) + '%', animationDelay: (col.delay) + 's' }">
+                  <div v-if="(it as any).name === 'Matrix'" class="matrix-rain-inside-shop">
+                    <div class="matrix-column" v-for="(col, ci) in getMatrixColumns(it as any)" :key="'mc-'+ci" :style="{ left: (ci * 5) + '%', animationDelay: (col.delay) + 's' }">
                       <span v-for="(ch, ri) in col.chars" :key="'mch-'+ri" class="matrix-char">{{ ch }}</span>
                     </div>
                   </div>
-                  <div v-else-if="it.name === 'Clown'" class="clown-item-shop">
+                  <div v-else-if="(it as any).name === 'Clown'" class="clown-item-shop">
                     <img :src="clowncheveux" alt="Clown hair" class="clown-hair-shop" />
                     <img :src="clownnose" alt="Clown nose" class="clown-nose-shop" />
                   </div>
-                  <div v-else-if="it.name === 'Gentleman'" class="gentleman-item-shop">
+                  <div v-else-if="(it as any).name === 'Gentleman'" class="gentleman-item-shop">
                     <img :src="moustache" alt="Moustache" class="moustache-img-shop" />
                     <img :src="gentleman" alt="Gentleman" class="gentleman-img-shop" />
                   </div>
-                  <div v-else-if="it.name === 'Espace'" class="espace-item-shop">
+                  <div v-else-if="(it as any).name === 'Espace'" class="espace-item-shop">
                     <img :src="spacestars" alt="Stars" class="spacestars-img-shop" />
                     <img :src="asteroide" alt="Asteroide" class="asteroide-img-shop" />
                   </div>
-                  <div v-else-if="it.name === 'Absolute Cinema'" class="absolute-cinema-item-shop">
+                  <div v-else-if="(it as any).name === 'Absolute Cinema'" class="absolute-cinema-item-shop">
                     <img :src="bras" alt="Bras" class="absolute-cinema-img-shop" />
                     <img :src="bras" alt="Bras" class="absolute-cinema-img-shop-right" />
                   </div>
-                  <div v-else-if="it.name === 'Flash'" class="flash-item-shop">
+                  <div v-else-if="(it as any).name === 'Flash'" class="flash-item-shop">
                     <img :src="flash" alt="Flash" class="flash-img-shop" />
                     <img :src="camera" alt="Camera" class="camera-img-shop" />
                   </div>
                   <!-- Discord -->
-                  <div v-else-if="it.name === 'Discord'" class="discord-item-shop">
+                  <div v-else-if="(it as any).name === 'Discord'" class="discord-item-shop">
                     <img :src="discordon" alt="Discord" class="discord-img-shop" />
                   </div>
                   <!-- Jojo -->
-                  <div v-else-if="it.name === 'Jojo'" class="jojo-item-shop jojo-bg-anim">
+                  <div v-else-if="(it as any).name === 'Jojo'" class="jojo-item-shop jojo-bg-anim">
                     <img :src="jojo" alt="Jojo" class="jojo-img-shop jojo-swipe jojo-sepia-anim" :style="getJojoImgStyle()" />
                     <img v-if="false" :src="jojotext" alt="Jojo text" class="jojo-text-preview jojotext-fade" :style="getJojoTextStyle()" />
                   </div>
-                  <div v-else-if="it.name === 'Miaou'" class="miaou-item-shop">
+                  <div v-else-if="(it as any).name === 'Miaou'" class="miaou-item-shop">
                     <img :src="chat" alt="Chat" class="chat-img-shop" />
                     <img :src="pate" alt="Patte" class="pate-img-shop" />
                   </div>
-                  <div v-else-if="it.name === '2000'" class="nokia-item-shop">
+                  <div v-else-if="(it as any).name === '2000'" class="nokia-item-shop">
                     <img :src="nokia" alt="Nokia" class="nokia-img-shop" />
                     <img :src="clippy" alt="Clippy" class="clippy-img-shop" />
                     <img :src="daftpunk" alt="Daft Punk" class="daftpunk-img-shop" />
                   </div>
-                  <div v-else-if="it.name === 'DVD'" class="dvd-item-shop">
+                  <div v-else-if="(it as any).name === 'DVD'" class="dvd-item-shop">
                     <img :src="dvd" alt="DVD" class="dvd-img-shop" />
                   </div>
-                  <div v-else-if="it.name === 'Lunettes pixel'" class="lunettes-pixel-item-shop">
+                  <div v-else-if="(it as any).name === 'Lunettes pixel'" class="lunettes-pixel-item-shop">
                     <img :src="mlglunette" alt="Lunettes pixel" class="lunettes-pixel-img-shop" />
                   </div>
                   <!-- Étoiles / Cadre royale / Roses / Vinyle -->
-                  <div v-else-if="it.name === 'Étoiles'" class="stars-item-shop">
+                  <div v-else-if="(it as any).name === 'Étoiles'" class="stars-item-shop">
                     <img :src="star" alt="Étoiles" class="stars-img-shop" />
                   </div>
-                  <div v-else-if="it.name === 'Cadre royale'" class="royal-frame-item-shop">
+                  <div v-else-if="(it as any).name === 'Cadre royale'" class="royal-frame-item-shop">
                     <img :src="cadre" alt="Cadre royale" class="royal-frame-img-shop" />
                   </div>
-                  <div v-else-if="it.name === 'Roses'" class="rainbow-item-shop">
+                  <div v-else-if="(it as any).name === 'Roses'" class="rainbow-item-shop">
                     <img :src="love" alt="Roses" class="rainbow-img-shop" />
                   </div>
-                  <div v-else-if="it.name === 'Vinyle'" class="vinyle-item-shop">
+                  <div v-else-if="(it as any).name === 'Vinyle'" class="vinyle-item-shop">
                     <img :src="vinyle" alt="Vinyle" class="vinyle-img-shop" />
                   </div>
                   <!-- Galaxie / Coeur / Prestige / Planify -->
-                  <div v-else-if="it.name === 'Galaxie'" class="galaxie-item-shop">
+                  <div v-else-if="(it as any).name === 'Galaxie'" class="galaxie-item-shop">
                     <img :src="galaxie" alt="Galaxie" class="galaxie-img-shop" />
                   </div>
-                  <div v-else-if="it.name === 'Coeur'" class="coeur-item-shop">
+                  <div v-else-if="(it as any).name === 'Coeur'" class="coeur-item-shop">
                     <img :src="coeur" alt="Coeur" class="coeur-img-shop" />
                   </div>
-                  <div v-else-if="it.name === 'Prestige'" class="alpha-item-shop">
+                  <div v-else-if="(it as any).name === 'Prestige'" class="alpha-item-shop">
                     <img :src="alphaImg" alt="Prestige" class="alpha-img-shop" />
                   </div>
-                  <div v-else-if="it.name === 'Planify'" class="admin-planify-item-shop">
+                  <div v-else-if="(it as any).name === 'Planify'" class="admin-planify-item-shop">
                     <img :src="adminPlanify" alt="Planify" class="admin-planify-img-shop" />
                   </div>
                   <!-- Variantes de bordure: disque rempli couleur/dégradé -->
-                  <div v-else-if="isBorderVariant(it)" class="classic-border-preview" :style="getBorderFillStyle(it)"></div>
+                  <div v-else-if="isBorderVariant(it as any)" class="classic-border-preview" :style="getBorderFillStyle(it as any)"></div>
                   <!-- Items dynamiques (créés via AdminItemEditor) -->
-                  <template v-else-if="isDynamic(it)">
-                    <div class="dyn-bg" :style="getDynBgStyle(it)"></div>
-                    <img v-for="(a, ai) in (it.assets || [])"
+                  <template v-else-if="isDynamic(it as any)">
+                    <div class="dyn-bg" :style="getDynBgStyle(it as any)"></div>
+                    <img v-for="(a, ai) in ((it as any).assets || [])"
                          :key="'gift-dyn-'+ai"
                          :src="resolveAssetSrc(a && a.src)"
                          :style="getDynAssetStyle(a)" />
                   </template>
                   <!-- Fallback image unique -->
-                  <img v-else :src="resolveImg(it)" :alt="it.name" class="item-img" />
+                  <img v-else :src="resolveImg(it as any)" :alt="(it as any).name" class="item-img" />
                 </div>
               </div>
             </div>
-            <h3 class="item-name">{{ displayName(it) }}</h3>
+            <h3 class="item-name">{{ displayName(it as any) }}</h3>
           </div>
         </div>
         
@@ -134,60 +134,89 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, ref } from 'vue'
-import oreilleschat from '@/assets/img/oreilleschat.gif'
-import clowncheveux from '@/assets/img/clowncheveux.gif'
-import clownnose from '@/assets/img/clownnose.gif'
-import cash from '@/assets/img/cash.gif'
-import target from '@/assets/img/target.gif'
-import roi from '@/assets/img/roi.gif'
-import matrix from '@/assets/img/matrix.gif'
-import angelwings from '@/assets/img/angelwings.gif'
-import laracroft from '@/assets/img/laracroft.gif'
-import star from '@/assets/img/star.gif'
-import cadre from '@/assets/img/cadre.gif'
-import love from '@/assets/img/love.gif'
-import moustache from '@/assets/img/moustache.gif'
-import gentleman from '@/assets/img/gentleman.gif'
-import vinyle from '@/assets/img/vinyle.gif'
-import advisory from '@/assets/img/advisory.gif'
-import spacestars from '@/assets/img/spacestars.gif'
-import asteroide from '@/assets/img/asteroide.gif'
-import bras from '@/assets/img/bras.png'
-import flash from '@/assets/img/flash.gif'
-import camera from '@/assets/img/camera.gif'
-import chat from '@/assets/img/chat.gif'
-import pate from '@/assets/img/pate.gif'
-import dvd from '@/assets/img/dvd.png'
-import mlglunette from '@/assets/img/mlglunette.gif'
-import nokia from '@/assets/img/nokia.gif'
-import clippy from '@/assets/img/clippy.gif'
-import daftpunk from '@/assets/img/daftpunk.gif'
-import galaxie from '@/assets/img/Galaxie.png'
-import coeur from '@/assets/img/Coeur.png'
-import alphaImg from '@/assets/img/Alpha.png'
-import adminPlanify from '@/assets/img/Admin Planify.png'
-import discordon from '@/assets/img/discordon.png'
-import jojo from '@/assets/img/tobecontinued.png'
-import jojotext from '@/assets/img/jojotext.gif'
-import { useCoinsStore } from '@/stores/coins'
-import closeImg from '@/assets/img/bouton_supprimer_decocher.png'
-import closeHoverImg from '@/assets/img/bouton_supprimer_cocher.png'
 
-const props = defineProps({
-  show: {
-    type: Boolean,
-    default: false
-  },
-  items: { type: Array, default: () => [] },
-  adminMessage: {
-    type: String,
-    default: ''
+// Types pour les items
+interface Item {
+  id?: string | number
+  name?: string
+  img?: string
+  isDynamic?: boolean
+  assets?: Array<{
+    src?: string
+    collectionStyle?: {
+      top?: number
+      left?: number
+      width?: number
+      height?: number
+      rotate?: number
+      objectFit?: string
+      zIndex?: number
+    }
+    style?: {
+      top?: number
+      left?: number
+      width?: number
+      height?: number
+      rotate?: number
+      objectFit?: string
+      zIndex?: number
+    }
+  }>
+  backgrounds?: {
+    collection?: string
+    avatar?: string
+    leaderboard?: string
   }
-})
+}
 
-const mapImg = {
+// Imports d'images avec gestion d'erreurs
+const oreilleschat = new URL('@/assets/img/oreilleschat.gif', import.meta.url).href
+const clowncheveux = new URL('@/assets/img/clowncheveux.gif', import.meta.url).href
+const clownnose = new URL('@/assets/img/clownnose.gif', import.meta.url).href
+const cash = new URL('@/assets/img/cash.gif', import.meta.url).href
+const target = new URL('@/assets/img/target.gif', import.meta.url).href
+const roi = new URL('@/assets/img/roi.gif', import.meta.url).href
+const matrix = new URL('@/assets/img/matrix.gif', import.meta.url).href
+const angelwings = new URL('@/assets/img/angelwings.gif', import.meta.url).href
+const laracroft = new URL('@/assets/img/laracroft.gif', import.meta.url).href
+const star = new URL('@/assets/img/star.gif', import.meta.url).href
+const cadre = new URL('@/assets/img/cadre.gif', import.meta.url).href
+const love = new URL('@/assets/img/love.gif', import.meta.url).href
+const moustache = new URL('@/assets/img/moustache.gif', import.meta.url).href
+const gentleman = new URL('@/assets/img/gentleman.gif', import.meta.url).href
+const vinyle = new URL('@/assets/img/vinyle.gif', import.meta.url).href
+const advisory = new URL('@/assets/img/advisory.gif', import.meta.url).href
+const spacestars = new URL('@/assets/img/spacestars.gif', import.meta.url).href
+const asteroide = new URL('@/assets/img/asteroide.gif', import.meta.url).href
+const bras = new URL('@/assets/img/bras.png', import.meta.url).href
+const flash = new URL('@/assets/img/flash.gif', import.meta.url).href
+const camera = new URL('@/assets/img/camera.gif', import.meta.url).href
+const chat = new URL('@/assets/img/chat.gif', import.meta.url).href
+const pate = new URL('@/assets/img/pate.gif', import.meta.url).href
+const dvd = new URL('@/assets/img/dvd.png', import.meta.url).href
+const mlglunette = new URL('@/assets/img/mlglunette.gif', import.meta.url).href
+const nokia = new URL('@/assets/img/nokia.gif', import.meta.url).href
+const clippy = new URL('@/assets/img/clippy.gif', import.meta.url).href
+const daftpunk = new URL('@/assets/img/daftpunk.gif', import.meta.url).href
+const galaxie = new URL('@/assets/img/Galaxie.png', import.meta.url).href
+const coeur = new URL('@/assets/img/Coeur.png', import.meta.url).href
+const alphaImg = new URL('@/assets/img/Alpha.png', import.meta.url).href
+const adminPlanify = new URL('@/assets/img/Admin Planify.png', import.meta.url).href
+const discordon = new URL('@/assets/img/discordon.png', import.meta.url).href
+const jojo = new URL('@/assets/img/tobecontinued.png', import.meta.url).href
+const jojotext = new URL('@/assets/img/jojotext.gif', import.meta.url).href
+const closeImg = new URL('@/assets/img/bouton_supprimer_decocher.png', import.meta.url).href
+const closeHoverImg = new URL('@/assets/img/bouton_supprimer_cocher.png', import.meta.url).href
+
+const props = defineProps<{
+  show: boolean
+  items: Item[]
+  adminMessage?: string
+}>()
+
+const mapImg: Record<string, string> = {
   'Oreilles de chat': oreilleschat,
   'Oreillettes de chat': oreilleschat,
   'Clown': clowncheveux,
@@ -220,20 +249,20 @@ const mapImg = {
   'Admin Planify': adminPlanify
 }
 
-function resolveImg(item) {
+function resolveImg(item: Item): string {
   if (!item) return ''
-  return item.img || mapImg[item.name] || ''
+  return item.img || mapImg[item.name || ''] || ''
 }
 
-function isDynamic(item) {
+function isDynamic(item: Item): boolean {
   if (!item) return false
   return !!(item.isDynamic || (Array.isArray(item.assets) && item.assets.length))
 }
 
-function resolveAssetSrc(path) {
+function resolveAssetSrc(path: string | undefined): string {
   try {
     if (typeof path === 'string' && path.startsWith('/uploads/')) {
-      const api = import.meta.env && import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : '/api'
+      const api = (import.meta as any).env?.VITE_API_URL ? (import.meta as any).env.VITE_API_URL : '/api'
       const base = api.endsWith('/api') ? api.slice(0, -4) : api.replace('/api','')
       return base + path
     }
@@ -241,9 +270,13 @@ function resolveAssetSrc(path) {
   return path || ''
 }
 
-function getDynAssetStyle(asset) {
+function getDynAssetStyle(asset: NonNullable<Item['assets']>[0]): Record<string, string | number> {
   const s = (asset && asset.collectionStyle) || asset?.style || {}
-  const style = { position: 'absolute', objectFit: s.objectFit || 'contain', zIndex: typeof s.zIndex === 'number' ? s.zIndex : 1 }
+  const style: Record<string, string | number> = { 
+    position: 'absolute', 
+    objectFit: (s.objectFit as 'contain' | 'cover' | 'fill' | 'none' | 'scale-down') || 'contain', 
+    zIndex: typeof s.zIndex === 'number' ? s.zIndex : 1 
+  }
   if (typeof s.top === 'number') style.top = s.top + 'px'
   if (typeof s.left === 'number') style.left = s.left + 'px'
   if (typeof s.width === 'number') style.width = s.width + 'px'
@@ -252,17 +285,23 @@ function getDynAssetStyle(asset) {
   return style
 }
 
-function getDynBgStyle(item) {
+function getDynBgStyle(item: Item): Record<string, string> {
   try {
     const bg = item && item.backgrounds ? (item.backgrounds.collection || item.backgrounds.avatar || item.backgrounds.leaderboard || null) : null
     if (!bg) return { display: 'none' }
-    return { position: 'absolute', inset: '0', background: bg, zIndex: 0, pointerEvents: 'none' }
+    return { 
+      position: 'absolute', 
+      inset: '0', 
+      background: bg, 
+      zIndex: '0', 
+      pointerEvents: 'none' 
+    }
   } catch {
     return { display: 'none' }
   }
 }
 
-function displayName(item) {
+function displayName(item: Item): string {
   try {
     const raw = String(item?.name || '')
     return raw.replace(/\s*\(couleur\)\s*$/i, '')
@@ -271,42 +310,30 @@ function displayName(item) {
   }
 }
 
-// Store bordures pour les variantes de bordure
-const coinsStore = useCoinsStore()
-
-function isBorderVariant(it) {
+// Fonctions simplifiées sans dépendance au store coins
+function isBorderVariant(it: Item): boolean {
   if (!it) return false
   try {
     if (String(it.name || '').toLowerCase().startsWith('bordure ')) return true
-    if (typeof coinsStore.getBorderColorIdFromItem === 'function') {
-      const id = coinsStore.getBorderColorIdFromItem({ id: it.id, name: it.name })
-      return !!id
-    }
-  } catch {}
-  return false
+    return false
+  } catch {
+    return false
+  }
 }
 
-function getBorderFillStyle(it) {
+function getBorderFillStyle(it: Item): Record<string, string> {
   try {
-    const colorId = typeof coinsStore.getBorderColorIdFromItem === 'function'
-      ? coinsStore.getBorderColorIdFromItem({ id: it.id, name: it.name })
-      : null
-    const color = (coinsStore.borderColors || []).find(c => c.id === colorId)
-    if (color) {
-      const style = { width: '100%', height: '100%' }
-      if (color.gradient) style.background = color.gradient
-      else if (color.color) style.background = color.color
-      else style.background = '#000'
-      return style
-    }
-  } catch {}
-  return { background: '#000', width: '100%', height: '100%' }
+    // Style par défaut pour les bordures
+    return { background: '#000', width: '100%', height: '100%' }
+  } catch {
+    return { background: '#000', width: '100%', height: '100%' }
+  }
 }
 
 // Génère une structure stable pour Matrix (copié de Shop)
-function getMatrixColumns(seedObj) {
+function getMatrixColumns(seedObj: Item) {
   const seed = String(seedObj?.id || seedObj?.name || 'matrix')
-  const seededRandom = (s) => {
+  const seededRandom = (s: string) => {
     let h = 0
     for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0
     return () => {
@@ -315,10 +342,10 @@ function getMatrixColumns(seedObj) {
     }
   }
   const rand = seededRandom(seed)
-  const columns = []
+  const columns: Array<{delay: string, chars: string[]}> = []
   for (let c = 0; c < 20; c++) {
     const delay = (rand() * 2).toFixed(3)
-    const chars = []
+    const chars: string[] = []
     for (let r = 0; r < 5; r++) {
       const charsSet = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン'
       const idx = Math.floor(rand() * charsSet.length)
@@ -330,16 +357,31 @@ function getMatrixColumns(seedObj) {
 }
 
 // Helpers Jojo (mêmes positions que Collection)
-function getJojoImgStyle() {
+function getJojoImgStyle(): Record<string, string> {
   const p = { top: 50, left: 87, width: 90 }
-  return { position: 'absolute', top: p.top + 'px', left: p.left + 'px', width: p.width + '%', height: 'auto', objectFit: 'contain' }
-}
-function getJojoTextStyle() {
-  const p = { top: -5, left: 5, width: 90 }
-  return { position: 'absolute', top: p.top + 'px', left: p.left + 'px', width: p.width + '%', height: 'auto', objectFit: 'contain' }
+  return { 
+    position: 'absolute', 
+    top: p.top + 'px', 
+    left: p.left + 'px', 
+    width: p.width + '%', 
+    height: 'auto', 
+    objectFit: 'contain' 
+  }
 }
 
-function isGreenBg(it) {
+function getJojoTextStyle(): Record<string, string> {
+  const p = { top: -5, left: 5, width: 90 }
+  return { 
+    position: 'absolute', 
+    top: p.top + 'px', 
+    left: p.left + 'px', 
+    width: p.width + '%', 
+    height: 'auto', 
+    objectFit: 'contain' 
+  }
+}
+
+function isGreenBg(it: Item): boolean {
   return it && (it.name === 'Étoiles' || it.name === 'Espace' || it.name === 'DVD')
 }
 
@@ -356,7 +398,9 @@ const colsClass = computed(() => {
 
 const hoverCloseGift = ref(false)
 
-defineEmits(['close']);
+defineEmits<{
+  close: []
+}>()
 </script>
 
 <style scoped>
