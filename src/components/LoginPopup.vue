@@ -79,7 +79,8 @@ async function handleLogin() {
     }
     
                 if (res.ok && data && data.user) {
-      userData = data; // Stocke temporairement les donnéess
+      userData = data; // Stocke temporairement les données
+      // Force deploy - Test questions secrètes
       console.log('Login response:', { 
         hasSecretQuestions: data.user.hasSecretQuestions, 
         userData: data.user 
