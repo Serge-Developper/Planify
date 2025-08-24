@@ -10,10 +10,7 @@ const connectDB = async () => {
   }
   
   try {
-    await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    await mongoose.connect(process.env.MONGODB_URI || '');
     isConnected = true;
   } catch (error) {
     console.error('Erreur de connexion MongoDB:', error);
@@ -64,7 +61,7 @@ const verifyToken = (req) => {
     throw new Error('Token manquant');
   }
   const token = authHeader.substring(7);
-  return jwt.verify(token, process.env.JWT_SECRET, {
+  return jwt.verify(token, process.env.JWT_SECRET || '', {
     issuer: 'planify-api',
     audience: 'planify-frontend'
   });
@@ -187,7 +184,7 @@ module.exports = async (req, res) => {
 
     // For all other endpoints, require authentication
     const user = verifyToken(req);
-    const userIdString = user.id || user._id;
+    const userIdString = typeof user === 'object' ? (user.id || user._id) : null;
     
     if (!userIdString || !mongoose.Types.ObjectId.isValid(userIdString)) {
       return res.status(400).json({ 
@@ -497,14 +494,17 @@ module.exports = async (req, res) => {
       message: 'Méthode ou endpoint non supporté' 
     });
     
-  } catch (authError) {
-    console.error('❌ Erreur auth coins:', authError.message);
-    return res.status(401).json({ 
-      success: false, 
-      message: 'Non autorisé' 
-    });
   } catch (error) {
     console.error('❌ Erreur coins:', error);
+    
+    // Check if it's an auth error
+    if (error.message === 'Token manquant' || error.message === 'Non autorisé') {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Non autorisé' 
+      });
+    }
+    
     return res.status(500).json({ 
       success: false, 
       message: 'Erreur serveur',
