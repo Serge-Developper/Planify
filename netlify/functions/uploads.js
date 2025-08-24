@@ -99,9 +99,19 @@ exports.handler = async (event) => {
     if (folder === 'avatars') {
       try {
         await connectDB();
-        const doc = await Avatar.findOne({ filename }).lean();
+        const doc = await Avatar.findOne({ filename });
         if (doc && doc.data) {
-          return { statusCode: 200, headers: { ...headers, 'Content-Type': doc.contentType || 'image/png', 'Cache-Control': 'public, max-age=31536000, immutable' }, body: Buffer.from(doc.data).toString('base64'), isBase64Encoded: true };
+          let buf = null;
+          if (Buffer.isBuffer(doc.data)) {
+            buf = doc.data;
+          } else if (doc.data.buffer && Buffer.isBuffer(doc.data.buffer)) {
+            buf = doc.data.buffer;
+          } else if (Array.isArray(doc.data.data)) {
+            buf = Buffer.from(doc.data.data);
+          }
+          if (buf && buf.length > 0) {
+            return { statusCode: 200, headers: { ...headers, 'Content-Type': doc.contentType || 'image/png', 'Cache-Control': 'public, max-age=31536000, immutable' }, body: buf.toString('base64'), isBase64Encoded: true };
+          }
         }
       } catch (e) {
         console.error('Erreur lecture avatar DB:', e);
