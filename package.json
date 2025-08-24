@@ -24,10 +24,11 @@
     "vite": "^6.2.4",
     "@vitejs/plugin-vue": "^5.2.3",
     "@vitejs/plugin-vue-jsx": "^4.1.2",
-    "vite-plugin-vue-devtools": "^7.7.2"
+    "vite-plugin-vue-devtools": "^7.7.2",
+    "@tsconfig/node22": "^22.0.1",
+    "typescript": "~5.8.0"
   },
   "devDependencies": {
-    "@tsconfig/node22": "^22.0.1",
     "@types/jsdom": "^21.1.7",
     "@types/node": "^22.14.0",
     "@vitest/eslint-plugin": "^1.1.39",
@@ -44,7 +45,6 @@
     "oxlint": "^0.16.0",
     "prettier": "3.5.3",
     "terser": "^5.43.1",
-    "typescript": "~5.8.0",
     "vitest": "^3.1.1",
     "vue-tsc": "^2.2.8"
   }
