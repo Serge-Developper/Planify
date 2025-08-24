@@ -2,7 +2,7 @@
   # Répertoire de base pour le build
   base = "frontend-clean/frontend"
   # Commande de build pour Vue.js
-  command = "npm install && npm run build"
+  command = "npm install --include=dev && npm run build"
   # Répertoire où sont les fichiers buildés
   publish = "dist"
   # Répertoire des fonctions Netlify (équivalent du dossier /api de Vercel)
