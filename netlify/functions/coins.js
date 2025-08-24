@@ -9,12 +9,12 @@ const userSchema = new mongoose.Schema({
   year: String,
   groupe: String,
   purchasedItems: [{
-    itemId: String,
+    itemId: Number,
     itemName: String,
     price: Number,
     purchaseDate: { type: Date, default: Date.now }
   }],
-  equippedItemId: String,
+  equippedItemId: Number,
   lastSpinDate: Date,
   spinCount: { type: Number, default: 0 },
   weeklySpinCount: { type: Number, default: 0 },
