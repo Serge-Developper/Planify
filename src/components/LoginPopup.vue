@@ -79,7 +79,7 @@ async function handleLogin() {
     }
     
                 if (res.ok && data && data.user) {
-      userData = data; // Stocke temporairement les données
+      userData = data; // Stocke temporairement les donnéess
       console.log('Login response:', { 
         hasSecretQuestions: data.user.hasSecretQuestions, 
         userData: data.user 
