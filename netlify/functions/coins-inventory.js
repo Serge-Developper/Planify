@@ -60,21 +60,32 @@ exports.handler = async (event, context) => {
   try {
     // Connexion à MongoDB
     await mongoose.connect(process.env.MONGODB_URI || '', {
-      bufferCommands: false
-      // bufferMaxEntries n'est plus supporté dans les versions récentes de Mongoose/MongoDB
+      bufferCommands: false,
+      bufferMaxEntries: 0
     });
 
-    // Route GET /api/users - Récupérer la liste des utilisateurs pour le leaderboard
+    // Route GET /api/coins/inventory - Récupérer l'inventaire des items
     if (event.httpMethod === 'GET') {
       try {
         // Vérifier l'authentification
         const user = verifyToken(event);
         
-        // Récupérer tous les utilisateurs avec leurs coins pour le leaderboard
-        const users = await User.find({}, 'username coins role year groupe')
-          .sort({ coins: -1 })
-          .limit(50); // Limiter à 50 utilisateurs
-
+        // Récupérer l'utilisateur par son ID
+        const userDoc = await User.findById(user.id || user._id);
+        if (!userDoc) {
+          return {
+            statusCode: 200,
+            headers: {
+              ...headers,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              purchasedItems: [],
+              equippedItemId: null
+            })
+          };
+        }
+        
         return {
           statusCode: 200,
           headers: {
@@ -82,18 +93,12 @@ exports.handler = async (event, context) => {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            success: true,
-            users: users.map(u => ({
-              username: u.username,
-              coins: u.coins || 0,
-              role: u.role,
-              year: u.year,
-              groupe: u.groupe
-            }))
+            purchasedItems: userDoc.purchasedItems || [],
+            equippedItemId: userDoc.equippedItemId
           })
         };
       } catch (authError) {
-        console.error('❌ Erreur auth users:', authError.message);
+        console.error('❌ Erreur auth inventory:', authError.message);
         return {
           statusCode: 401,
           headers: {
@@ -122,16 +127,16 @@ exports.handler = async (event, context) => {
     };
 
   } catch (error) {
-    console.error('❌ Erreur users:', error);
+    console.error('❌ Erreur inventory:', error);
     return {
-      statusCode: 500,
+      statusCode: 200, // Retourner un inventaire vide en cas d'erreur
       headers: {
         ...headers,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        success: false,
-        message: 'Erreur serveur interne'
+        purchasedItems: [],
+        equippedItemId: null
       })
     };
   } finally {

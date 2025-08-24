@@ -64,36 +64,35 @@ exports.handler = async (event, context) => {
       // bufferMaxEntries n'est plus supporté dans les versions récentes de Mongoose/MongoDB
     });
 
-    // Route GET /api/users - Récupérer la liste des utilisateurs pour le leaderboard
+    // Route GET /api/coins/user-coins - Récupérer les coins d'un utilisateur
     if (event.httpMethod === 'GET') {
       try {
         // Vérifier l'authentification
         const user = verifyToken(event);
         
-        // Récupérer tous les utilisateurs avec leurs coins pour le leaderboard
-        const users = await User.find({}, 'username coins role year groupe')
-          .sort({ coins: -1 })
-          .limit(50); // Limiter à 50 utilisateurs
-
+        // Récupérer l'utilisateur par son ID
+        const userDoc = await User.findById(user.id || user._id);
+        if (!userDoc) {
+          return {
+            statusCode: 200,
+            headers: {
+              ...headers,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ coins: 0 })
+          };
+        }
+        
         return {
           statusCode: 200,
           headers: {
             ...headers,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({
-            success: true,
-            users: users.map(u => ({
-              username: u.username,
-              coins: u.coins || 0,
-              role: u.role,
-              year: u.year,
-              groupe: u.groupe
-            }))
-          })
+          body: JSON.stringify({ coins: userDoc.coins || 0 })
         };
       } catch (authError) {
-        console.error('❌ Erreur auth users:', authError.message);
+        console.error('❌ Erreur auth user-coins:', authError.message);
         return {
           statusCode: 401,
           headers: {
@@ -122,17 +121,14 @@ exports.handler = async (event, context) => {
     };
 
   } catch (error) {
-    console.error('❌ Erreur users:', error);
+    console.error('❌ Erreur user-coins:', error);
     return {
-      statusCode: 500,
+      statusCode: 200, // Retourner 0 coins en cas d'erreur
       headers: {
         ...headers,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        success: false,
-        message: 'Erreur serveur interne'
-      })
+      body: JSON.stringify({ coins: 0 })
     };
   } finally {
     // Fermer la connexion MongoDB
