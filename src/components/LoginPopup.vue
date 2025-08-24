@@ -22,7 +22,7 @@
 
 <script setup>
 import { ref, defineEmits, watch, onMounted, onUnmounted } from 'vue';
-import { API_URL } from '@/api';
+import { API_URL } from '../api';
 import ForgotPasswordPopup from './ForgotPasswordPopup.vue';
 import SecretQuestionsSetup from './SecretQuestionsSetup.vue';
 import errorSound from '@/assets/son/erreur.mp3'
@@ -74,9 +74,9 @@ async function handleLogin() {
       throw new Error('Erreur réseau');
     }
     
-            if (res.ok && data) {
-          userData = data; // Stocke temporairement les données
-          if (!data.hasSecretQuestions) {
+                if (res.ok && data) {
+      userData = data; // Stocke temporairement les données
+      if (!data.user || !data.user.hasSecretQuestions) {
         showSecretQuestionsSetup.value = true;
         // NE PAS stocker dans localStorage ici - attendre que les questions soient définies
       } else {
