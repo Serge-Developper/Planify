@@ -22,6 +22,11 @@
   to = "/.netlify/functions/:splat"
   status = 200
 
+[[redirects]]
+  from = "/api/uploads/*"
+  to = "/.netlify/functions/uploads/:splat"
+  status = 200
+
 # Redirection pour les routes Vue.js (SPA)
 [[redirects]]
   from = "/*"
