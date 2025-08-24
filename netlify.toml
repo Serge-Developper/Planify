@@ -28,5 +28,9 @@
   to = "/index.html"
   status = 200
 
+# Plugin pour installer automatiquement les dépendances des fonctions
+[[plugins]]
+package = "@netlify/plugin-functions-install-core"
+
 # Variables d'environnement (à configurer via l'interface Netlify)
 # MONGODB_URI, JWT_SECRET, JWT_ISSUER, JWT_AUDIENCE
