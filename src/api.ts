@@ -1,4 +1,4 @@
-// Configuration sécurisée de l'API pour Netlify
+// Configuration sécurisée de l'API pour Netlify (v2)
 export const API_URL = import.meta.env.VITE_API_URL || 'https://planify-mmi.netlify.app/.netlify/functions';
 
 // Headers de sécurité par défaut
