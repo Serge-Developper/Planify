@@ -253,40 +253,35 @@ exports.handler = async (event, context) => {
 
     // PUT /api/users-admin - Update user (admin only)
     if (event.httpMethod === 'PUT') {
+      // 1) Authentification stricte (+ fallback decode si role=admin dans le payload)
+      let authPayload;
       try {
-        let user;
         try {
-          user = await verifyToken(event, true); // Exiger admin
+          authPayload = await verifyToken(event, true);
         } catch (e) {
-          // Fallback: décoder le token sans vérif et accepter si role==='admin'
           const authHeader = (event.headers && (event.headers.authorization || event.headers.Authorization)) || '';
           const parts = authHeader.split(' ');
           const token = parts.length === 2 ? parts[1] : parts[0];
           const decoded = token ? jwt.decode(token) : null;
           const payload = (decoded && typeof decoded === 'object') ? decoded : {};
-          if (payload && payload.role === 'admin') {
-            user = payload;
-          } else {
-            throw e;
-          }
+          if (payload && payload.role === 'admin') authPayload = payload; else throw e;
         }
- 
-        // Récupérer userId depuis les query params ou le body
+      } catch (e) {
+        return { statusCode: 401, headers, body: JSON.stringify({ error: 'Non autorisé' }) };
+      }
+
+      // 2) Traitement de la mise à jour
+      try {
         const url = new URL(event.rawUrl || `http://localhost${event.path}${event.queryStringParameters ? '?' + new URLSearchParams(event.queryStringParameters).toString() : ''}`);
         const userIdFromQuery = url.searchParams.get('userId');
         const { userId: userIdFromBody, username, email, coins, role, password, newPassword } = JSON.parse(event.body || '{}');
         const userId = userIdFromQuery || userIdFromBody;
 
-        if (!userId) {
-          return { statusCode: 400, headers, body: JSON.stringify({ error: 'UserId requis' }) };
-        }
+        if (!userId) return { statusCode: 400, headers, body: JSON.stringify({ error: 'UserId requis' }) };
 
         const targetUser = await User.findById(userId);
-        if (!targetUser) {
-          return { statusCode: 404, headers, body: JSON.stringify({ error: 'Utilisateur non trouvé' }) };
-        }
+        if (!targetUser) return { statusCode: 404, headers, body: JSON.stringify({ error: 'Utilisateur non trouvé' }) };
 
-        // Update fields if provided
         if (username) targetUser.username = username;
         if (email) targetUser.email = email;
         if (typeof coins === 'number') targetUser.coins = Math.max(0, coins);
@@ -299,13 +294,9 @@ exports.handler = async (event, context) => {
 
         await targetUser.save();
 
-        return { statusCode: 200, headers, body: JSON.stringify({
-          success: true,
-          message: 'Utilisateur mis à jour',
-          user: { ...targetUser.toObject(), password: undefined }
-        }) };
-      } catch (authError) {
-        return { statusCode: 401, headers, body: JSON.stringify({ error: 'Non autorisé' }) };
+        return { statusCode: 200, headers, body: JSON.stringify({ success: true, message: 'Utilisateur mis à jour', user: { ...targetUser.toObject(), password: undefined } }) };
+      } catch (err) {
+        return { statusCode: 500, headers, body: JSON.stringify({ error: 'Erreur serveur', details: String(err && err.message || err) }) };
       }
     }
 
