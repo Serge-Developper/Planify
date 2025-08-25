@@ -54,35 +54,26 @@ const setCorsHeaders = (res) => {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 };
 
-// Vérification JWT avec contrôle admin
-const verifyToken = (event, requireAdmin = false) => {
-  const authHeader = event && event.headers ? event.headers.authorization : null;
-  if (!authHeader) {
-    throw new Error('Token manquant');
-  }
-
-  const token = authHeader.split(' ')[1];
-  if (!token) {
-    throw new Error('Token manquant');
-  }
+// Vérification JWT avec contrôle admin (compatible auth.js)
+const verifyToken = async (event, requireAdmin = false) => {
+  const authHeader = (event && event.headers && (event.headers.authorization || event.headers.Authorization)) || null;
+  if (!authHeader) throw new Error('Token manquant');
+  const parts = authHeader.split(' ');
+  const token = parts.length === 2 ? parts[1] : parts[0];
+  if (!token) throw new Error('Token manquant');
 
   try {
-    if (!process.env.JWT_SECRET) {
-      throw new Error('JWT_SECRET non défini dans les variables d\'environnement');
+    if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET non défini');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const payload = typeof decoded === 'object' && decoded !== null ? decoded : {};
+
+    if (requireAdmin) {
+      const userId = payload.id || payload._id;
+      if (!userId) throw new Error('Accès admin requis');
+      const u = await User.findById(userId).lean();
+      if (!u || u.role !== 'admin') throw new Error('Accès admin requis');
     }
-    const decoded = jwt.verify(token, process.env.JWT_SECRET, {
-      issuer: 'planify-api',
-      audience: 'planify-frontend'
-    });
-    
-    // Correction du typage JWT pour éviter l'erreur TypeScript/Lint
-    // On force le typage de decoded en JwtPayload pour accéder à la propriété 'role'
-    const decodedPayload = typeof decoded === 'object' && decoded !== null ? decoded : {};
-    if (requireAdmin && decodedPayload.role !== 'admin') {
-      // (console.log supprimé selon vos préférences)
-      throw new Error('Accès admin requis');
-    }
-    return decodedPayload;
+    return payload;
   } catch (error) {
     console.log('❌ Erreur token:', error.message);
     throw new Error('Token invalide ou accès insuffisant');
@@ -111,7 +102,7 @@ exports.handler = async (event, context) => {
     // GET /api/users-admin - Get all users or specific user (admin only)
     if (event.httpMethod === 'GET') {
       try {
-        const user = verifyToken(event, true); // Require admin
+        const user = await verifyToken(event, true); // Require admin
 
         // Vérifier le paramètre userId dans la query string
         const url = new URL(event.rawUrl || `http://localhost${event.path}${event.queryStringParameters ? '?' + new URLSearchParams(event.queryStringParameters).toString() : ''}`);
@@ -145,7 +136,7 @@ exports.handler = async (event, context) => {
     // POST /api/users-admin - Admin operations on users
     if (event.httpMethod === 'POST') {
       try {
-        const user = verifyToken(event, true); // Require admin
+        const user = await verifyToken(event, true); // Require admin
         const { action, userId, ...data } = JSON.parse(event.body || '{}');
 
         if (!action || !userId) {
@@ -262,7 +253,7 @@ exports.handler = async (event, context) => {
     // PUT /api/users-admin - Update user (admin only)
     if (event.httpMethod === 'PUT') {
       try {
-        const user = verifyToken(event, true); // Exiger admin
+        const user = await verifyToken(event, true); // Exiger admin
 
         // Récupérer userId depuis les query params ou le body
         const url = new URL(event.rawUrl || `http://localhost${event.path}${event.queryStringParameters ? '?' + new URLSearchParams(event.queryStringParameters).toString() : ''}`);
@@ -300,7 +291,7 @@ exports.handler = async (event, context) => {
     // DELETE /api/users-admin - Delete user (admin only)
     if (event.httpMethod === 'DELETE') {
       try {
-        const user = verifyToken(event, true); // Utiliser 'event' au lieu de 'req' pour la vérification admin
+        const user = await verifyToken(event, true); // Utiliser 'event' au lieu de 'req' pour la vérification admin
         
         // Récupérer userId depuis les query params ou le body
         const url = new URL(event.rawUrl || `http://localhost${event.path}${event.queryStringParameters ? '?' + new URLSearchParams(event.queryStringParameters).toString() : ''}`);
