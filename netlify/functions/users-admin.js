@@ -186,8 +186,20 @@ exports.handler = async (event, context) => {
               return { statusCode: 400, headers, body: JSON.stringify({ error: 'ItemId requis' }) };
             }
 
-            targetUser.purchasedItems = targetUser.purchasedItems.filter(id => id !== removeItemId);
-            if (targetUser.equippedItemId === removeItemId) {
+            const removeNum = Number(removeItemId);
+            const prev = Array.isArray(targetUser.purchasedItems) ? targetUser.purchasedItems : [];
+            targetUser.purchasedItems = prev.filter((entry) => {
+              // Supporte: number, string numérique, ou objet { itemId } / { id }
+              if (typeof entry === 'number') return entry !== removeNum;
+              if (typeof entry === 'string') return Number(entry) !== removeNum;
+              if (entry && typeof entry === 'object') {
+                if (typeof entry.itemId !== 'undefined') return Number(entry.itemId) !== removeNum;
+                if (typeof entry.id !== 'undefined') return Number(entry.id) !== removeNum;
+              }
+              // Conserver par défaut si non identifiable
+              return true;
+            });
+            if (Number(targetUser.equippedItemId) === removeNum) {
               targetUser.equippedItemId = 0; // Reset to default
             }
             await targetUser.save();

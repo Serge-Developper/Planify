@@ -130,6 +130,8 @@ async function closeItemReceivedPopup() {
 onMounted(() => {
   // Vérifier les nouveaux items après le chargement initial
   setTimeout(async () => {
+    // S’assurer que la palette de couleurs est prête pour le rendu des pastilles
+    try { if (!coinsStore.borderColors || coinsStore.borderColors.length === 0) coinsStore.initializeBorderColors() } catch {}
     await checkForNewItemsWithMessages();
     await fetchGiftsFromServer();
   }, 1000);
