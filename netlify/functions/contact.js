@@ -87,7 +87,8 @@ exports.handler = async (event, context) => {
         };
       } catch (smtpError) {
         console.error('✉️  Échec SMTP:', smtpError?.message || smtpError);
-        if (!process.env.RESEND_API_KEY) {
+        // Si CONTACT_USE_RESEND !== 'true', on renvoie l'erreur SMTP tout de suite (pas de fallback)
+        if (process.env.CONTACT_USE_RESEND !== 'true') {
           return {
             statusCode: 500,
             headers,
@@ -104,14 +105,14 @@ exports.handler = async (event, context) => {
             })
           };
         }
-        // sinon, on tentera Resend plus bas
+        // sinon, on tentera Resend plus bas si configuré et autorisé
       }
     } else {
       console.warn('EMAIL_USER/PASS manquants, tentative Resend si disponible...');
     }
 
     // Fallback via Resend s’il est configuré
-    if (process.env.RESEND_API_KEY) {
+    if (process.env.RESEND_API_KEY && process.env.CONTACT_USE_RESEND === 'true') {
       try {
         const payload = {
           from: 'Planify <onboarding@resend.dev>',
@@ -163,8 +164,8 @@ exports.handler = async (event, context) => {
       headers,
       body: JSON.stringify({
         success: false,
-        message: "Aucun service d'envoi configuré. Ajoutez EMAIL_USER/EMAIL_PASS ou RESEND_API_KEY.",
-        debug: { hasEmailUser: !!process.env.EMAIL_USER, hasEmailPass: !!process.env.EMAIL_PASS, hasResend: !!process.env.RESEND_API_KEY }
+        message: "Aucun service d'envoi configuré. Ajoutez EMAIL_USER/EMAIL_PASS ou activez CONTACT_USE_RESEND avec RESEND_API_KEY.",
+        debug: { hasEmailUser: !!process.env.EMAIL_USER, hasEmailPass: !!process.env.EMAIL_PASS, hasResend: !!process.env.RESEND_API_KEY, useResend: process.env.CONTACT_USE_RESEND === 'true' }
       })
     };
 
