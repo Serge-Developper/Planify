@@ -68,6 +68,7 @@ const verifyToken = async (event, requireAdmin = false) => {
     const payload = typeof decoded === 'object' && decoded !== null ? decoded : {};
 
     if (requireAdmin) {
+      if (payload.role === 'admin') return payload;
       const userId = payload.id || payload._id;
       if (!userId) throw new Error('Accès admin requis');
       const u = await User.findById(userId).lean();
@@ -274,7 +275,7 @@ exports.handler = async (event, context) => {
         if (username) targetUser.username = username;
         if (email) targetUser.email = email;
         if (typeof coins === 'number') targetUser.coins = Math.max(0, coins);
-        if (role && ['user', 'admin'].includes(role)) targetUser.role = role;
+        if (role && ['admin','prof','delegue','eleve','etudiant','user'].includes(role)) targetUser.role = role;
 
         await targetUser.save();
 
