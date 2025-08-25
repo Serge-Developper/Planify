@@ -1484,7 +1484,10 @@ async function handleProfile() {
       if (response.success && response.user) {
         console.log('✅ Données utilisateur récupérées:', response.user);
         // Mettre à jour l'utilisateur dans le store avec les données complètes
-        auth.login(response.user);
+        const current = auth.user || {};
+        // Conserver le token existant s'il n'est pas renvoyé par l'API
+        const mergedUser = { ...current, ...response.user, token: current.token || current?.user?.token };
+        auth.login(mergedUser);
       } else {
         console.log('❌ Erreur lors de la récupération des données utilisateur');
       }
@@ -1659,8 +1662,14 @@ onMounted(async () => {
 watch(user, async (newUser) => {
   if (newUser) {
     if (newUser.avatar) {
-      const avatarUrl = `${baseUrl}${newUser.avatar}`;
-      userAvatar.value = avatarUrl;
+      if (typeof newUser.avatar === 'string' && newUser.avatar.startsWith('data:')) {
+        // Data URL (nouveau format) → utiliser tel quel
+        userAvatar.value = newUser.avatar;
+      } else {
+        // Ancien format (chemin relatif) → préfixer par baseUrl
+        const avatarUrl = `${baseUrl}${newUser.avatar}`;
+        userAvatar.value = avatarUrl;
+      }
     } else if (newUser.id || newUser._id) {
       loadUserAvatar();
     } else {
