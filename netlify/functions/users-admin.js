@@ -25,13 +25,13 @@ const connectDB = async () => {
 // User Schema
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
-  email: { type: String, required: true, unique: true },
+  email: { type: String, required: false, unique: false },
   password: { type: String, required: true },
   coins: { type: Number, default: 0 },
   avatar: { type: String, default: null },
   role: { type: String, enum: ['admin', 'prof', 'delegue', 'eleve', 'etudiant'], required: true },
-  year: { type: String, enum: ['BUT1', 'BUT2', 'BUT3'], default: null },
-  groupe: { type: String, enum: ['A', "A'", 'A2', 'B', "B'", 'B2', 'Promo'], default: null },
+  year: { type: String, enum: ['BUT1', 'BUT2', 'BUT3', ''], default: '' },
+  groupe: { type: String, enum: ['A', "A'", 'A2', 'B', "B'", 'B2', 'Promo', ''], default: '' },
   secretQuestions: [{
     question: { type: String, required: true },
     answer: { type: String, required: true }
@@ -41,7 +41,8 @@ const userSchema = new mongoose.Schema({
     equipped: { type: Boolean, default: false },
     equippedSlot: { type: String, enum: ['avatar', 'border', 'background'], default: 'avatar' }
   }],
-  purchasedItems: [{ type: Number }],
+  // Accepter anciens formats (array de nombres) et nouveaux (objets)
+  purchasedItems: { type: [mongoose.Schema.Types.Mixed], default: [] },
   equippedItemId: { type: Number, default: null }
 }, { timestamps: true });
 
@@ -282,8 +283,9 @@ exports.handler = async (event, context) => {
         const targetUser = await User.findById(userId);
         if (!targetUser) return { statusCode: 404, headers, body: JSON.stringify({ error: 'Utilisateur non trouvé' }) };
 
-        if (username) targetUser.username = username;
-        if (email) targetUser.email = email;
+        // Mettre à jour uniquement les champs explicitement autorisés
+        if (username !== undefined) targetUser.username = username;
+        if (email !== undefined) targetUser.email = email;
         if (typeof coins === 'number') targetUser.coins = Math.max(0, coins);
         if (role && ['admin','prof','delegue','eleve','etudiant','user'].includes(role)) targetUser.role = role;
         const pwd = (newPassword !== undefined && newPassword !== null) ? newPassword : password;
@@ -291,6 +293,7 @@ exports.handler = async (event, context) => {
           const hashed = await bcrypt.hash(String(pwd), 10);
           targetUser.password = hashed;
         }
+        // Ne jamais toucher à purchasedItems ici; ignorer si fourni par erreur dans le body
 
         await targetUser.save();
 
