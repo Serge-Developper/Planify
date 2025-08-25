@@ -1466,7 +1466,7 @@ function logout() {
 }
 async function handleProfile() {
   // Récupérer les données utilisateur complètes depuis la base de données
-  if (user.value && (user.value.id || user.value._id)) {
+  if (user.value && user.value.id) {
     try {
       console.log('🔄 Récupération des données utilisateur complètes...');
       const response = await secureApiCall('/users/profile');
@@ -1626,7 +1626,7 @@ onMounted(async () => {
   handleResize();
   window.addEventListener('resize', handleResize);
   
-  if (user.value && (user.value.id || user.value._id)) {
+  if (user.value && user.value.id) {
     loadUserAvatar();
   }
   
