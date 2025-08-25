@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
 
 // MongoDB connection
 let isConnected = false;
@@ -90,6 +91,28 @@ const itemSchema = new mongoose.Schema({
 
 const Item = mongoose.models.Item || mongoose.model('Item', itemSchema);
 
+// User (minimal) pour vérifier le rôle
+const userSchema = new mongoose.Schema({ role: String });
+const User = mongoose.models.User || mongoose.model('User', userSchema);
+
+// Helpers
+const verifyToken = (event) => {
+  const authHeader = event.headers?.authorization || event.headers?.Authorization;
+  if (!authHeader) throw new Error('Non autorisé');
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error('Non autorisé');
+  try { return jwt.verify(token, secret); } catch { throw new Error('Non autorisé'); }
+};
+
+const getPathId = (event) => {
+  const qs = event.queryStringParameters || {};
+  if (qs.id || qs.itemId) return qs.id || qs.itemId;
+  const p = event.path || event.rawPath || '';
+  const m = p.match(/items\/(?:\.netlify\/functions\/)?items\/([^\/]+)$/) || p.match(/items\/([^\/]+)$/);
+  return m && m[1] ? m[1] : null;
+};
+
 // CORS headers
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -112,8 +135,14 @@ exports.handler = async (event, context) => {
   try {
     await connectDB();
 
-    // GET /api/items - List all active items
+    // GET /api/items or /api/items/:id
     if (event.httpMethod === 'GET') {
+      const id = getPathId(event);
+      if (id) {
+        const doc = await Item.findById(id).lean();
+        if (!doc) return { statusCode: 404, headers, body: JSON.stringify({ success: false, message: 'Item introuvable' }) };
+        return { statusCode: 200, headers, body: JSON.stringify({ success: true, item: doc }) };
+      }
       const items = await Item.find({ active: true }).sort({ createdAt: -1 }).lean();
       
       // S'assurer que les variantes sont bien incluses avec tous les champs
@@ -133,6 +162,46 @@ exports.handler = async (event, context) => {
       }) };
     }
 
+    // POST /api/items - create (admin only)
+    if (event.httpMethod === 'POST') {
+      const user = verifyToken(event);
+      const u = await User.findById(user.id || user._id).lean();
+      if (!u || (u.role !== 'admin')) return { statusCode: 403, headers, body: JSON.stringify({ success: false, message: 'Non autorisé' }) };
+      const body = JSON.parse(event.body || '{}');
+      if (typeof body.legacyId !== 'number' || !body.name) {
+        return { statusCode: 400, headers, body: JSON.stringify({ success: false, message: 'legacyId et name requis' }) };
+      }
+      const exists = await Item.findOne({ legacyId: body.legacyId });
+      if (exists) return { statusCode: 400, headers, body: JSON.stringify({ success: false, message: 'legacyId déjà utilisé' }) };
+      const doc = await Item.create({ ...body, createdBy: user.id || user._id, active: true });
+      return { statusCode: 201, headers, body: JSON.stringify({ success: true, item: doc }) };
+    }
+
+    // PUT /api/items/:id - update (admin only)
+    if (event.httpMethod === 'PUT') {
+      const user = verifyToken(event);
+      const u = await User.findById(user.id || user._id).lean();
+      if (!u || (u.role !== 'admin')) return { statusCode: 403, headers, body: JSON.stringify({ success: false, message: 'Non autorisé' }) };
+      const id = getPathId(event);
+      if (!id) return { statusCode: 400, headers, body: JSON.stringify({ success: false, message: 'ID manquant' }) };
+      const body = JSON.parse(event.body || '{}');
+      const doc = await Item.findByIdAndUpdate(id, body, { new: true });
+      if (!doc) return { statusCode: 404, headers, body: JSON.stringify({ success: false, message: 'Item introuvable' }) };
+      return { statusCode: 200, headers, body: JSON.stringify({ success: true, item: doc }) };
+    }
+
+    // DELETE /api/items/:id - delete (admin only)
+    if (event.httpMethod === 'DELETE') {
+      const user = verifyToken(event);
+      const u = await User.findById(user.id || user._id).lean();
+      if (!u || (u.role !== 'admin')) return { statusCode: 403, headers, body: JSON.stringify({ success: false, message: 'Non autorisé' }) };
+      const id = getPathId(event);
+      if (!id) return { statusCode: 400, headers, body: JSON.stringify({ success: false, message: 'ID manquant' }) };
+      const doc = await Item.findByIdAndDelete(id);
+      if (!doc) return { statusCode: 404, headers, body: JSON.stringify({ success: false, message: 'Item introuvable' }) };
+      return { statusCode: 200, headers, body: JSON.stringify({ success: true, message: 'Item supprimé' }) };
+    }
+
     return { statusCode: 405, headers, body: JSON.stringify({ error: 'Méthode non autorisée' }) };
 
   } catch (error) {
@@ -142,7 +211,7 @@ exports.handler = async (event, context) => {
       headers, 
       body: JSON.stringify({ 
         success: false, 
-        message: 'Erreur chargement items' 
+        message: 'Erreur API items' 
       })
     };
   }
