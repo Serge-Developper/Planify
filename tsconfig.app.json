@@ -5,7 +5,7 @@
     "src/**/*",
     "src/**/*.vue",
     "src/types/**/*.d.ts",
-    "netlify/functions/types.d.ts"
+    "netlify/functions/types-definitions.ts"
   ],
   "exclude": [
     "src/**/__tests__/*"
