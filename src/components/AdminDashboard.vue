@@ -163,7 +163,7 @@
            <h3 style="color: #000000; margin-bottom: 20px;">Items de {{ viewingUserItems?.username }}</h3>
            
                        <div v-if="viewingUserItems?.purchasedItems && viewingUserItems.purchasedItems.length > 0" class="items-list">
-              <div v-for="item in viewingUserItems.purchasedItems" :key="item.itemId" class="item-card">
+              <div v-for="item in viewingUserItems.purchasedItems.map(it => (typeof it === 'number' ? { itemId: it, itemName: (itemsCatalog.find(x=>x.id===it)?.name || String(it)) } : it))" :key="item.itemId" class="item-card">
                 <div class="item-info">
                   <h4>{{ item.itemName }}</h4>
                   <p class="item-details">

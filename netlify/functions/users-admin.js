@@ -43,7 +43,13 @@ const userSchema = new mongoose.Schema({
   }],
   // Accepter anciens formats (array de nombres) et nouveaux (objets)
   purchasedItems: { type: [mongoose.Schema.Types.Mixed], default: [] },
-  equippedItemId: { type: Number, default: null }
+  equippedItemId: { type: Number, default: null },
+  pendingGifts: [{
+    id: { type: Number, required: true },
+    name: { type: String, required: true },
+    adminMessage: { type: String, default: null },
+    date: { type: Date, default: Date.now }
+  }]
 }, { timestamps: true });
 
 const User = mongoose.models.User || mongoose.model('User', userSchema);
@@ -152,21 +158,27 @@ exports.handler = async (event, context) => {
 
         switch (action) {
           case 'give-item':
-            const { itemId } = data;
-            if (!itemId) {
-              return { statusCode: 400, headers, body: JSON.stringify({ error: 'ItemId requis' }) };
+            const { itemId, itemName, adminMessage } = data;
+            if (!itemId) return { statusCode: 400, headers, body: JSON.stringify({ error: 'ItemId requis' }) };
+
+            // Construire l'objet d'item enrichi
+            const giftObj = { id: Number(itemId), itemId: Number(itemId), itemName: itemName || String(itemId), purchaseDate: new Date(), equipped: false };
+
+            // Normaliser purchasedItems en tableau d'objets si besoin
+            const list = Array.isArray(targetUser.purchasedItems) ? targetUser.purchasedItems : [];
+            const alreadyHas = list.some((it) => (typeof it === 'object' && it && (it.id === Number(itemId) || it.itemId === Number(itemId))) || it === Number(itemId));
+            if (!alreadyHas) {
+              list.push(giftObj);
+              targetUser.purchasedItems = list;
             }
 
-            if (!targetUser.purchasedItems.includes(itemId)) {
-              targetUser.purchasedItems.push(itemId);
-              await targetUser.save();
-            }
+            // Ajouter dans pendingGifts pour la popup
+            if (!Array.isArray(targetUser.pendingGifts)) targetUser.pendingGifts = [];
+            targetUser.pendingGifts.push({ id: giftObj.id, name: giftObj.itemName, adminMessage: adminMessage || null, date: new Date() });
 
-            return { statusCode: 200, headers, body: JSON.stringify({
-              success: true,
-              message: 'Item donné avec succès',
-              user: { ...targetUser.toObject(), password: undefined }
-            }) };
+            await targetUser.save();
+
+            return { statusCode: 200, headers, body: JSON.stringify({ success: true, message: 'Item donné avec succès', user: { ...targetUser.toObject(), password: undefined } }) };
 
           case 'remove-item':
             const { itemId: removeItemId } = data;
