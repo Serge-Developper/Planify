@@ -1361,7 +1361,7 @@ function resolveAssetSrc(path) {
     if (path.startsWith('/uploads/avatars/')) {
       return getApiOrigin() + '/api/uploads/avatars/' + path.split('/').pop()
     } else if (path.startsWith('/uploads/items/')) {
-      return getApiOrigin() + '/api/uploads/items/' + path.split('/').pop()
+      return getApiOrigin() + '/api/items/uploads/' + path.split('/').pop()
     }
     return getApiOrigin() + path
   }
