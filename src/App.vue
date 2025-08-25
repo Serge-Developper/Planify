@@ -16,6 +16,7 @@ const authStore = useAuthStore();
 const showItemReceivedPopup = ref(false);
 const currentItems = ref<any[]>([]);
 const currentAdminMessage = ref('');
+let giftsIntervalId: any = null;
 
 function getBgClass() {
   if (route.path === '/') return 'bg-accueil';
@@ -66,6 +67,46 @@ async function checkForNewItemsWithMessages() {
   showItemReceivedPopup.value = true
 }
 
+// Récupère les gifts serveur et affiche la popup si nécessaire
+async function fetchGiftsFromServer() {
+  if (!authStore.user) return;
+  try {
+    const res: any = await secureApiCall('/users/gifts')
+    const gifts = (res && res.success && Array.isArray(res.gifts)) ? res.gifts : []
+    if (!gifts.length) return
+    // Normaliser vers { id, name }
+    let list: any[] = gifts.map((g: any) => ({ id: Number(g.id), name: g.name || String(g.id) }))
+    // Enrichir avec items dynamiques (assets/backgrounds) pour ItemReceivedPopup
+    try {
+      const itemsRes: any = await secureApiCall('/items')
+      if (itemsRes && itemsRes.success && Array.isArray(itemsRes.items)) {
+        const byId = new Map<number, any>()
+        for (const it of itemsRes.items) {
+          if (typeof it.legacyId !== 'undefined') byId.set(Number(it.legacyId), it)
+        }
+        list = list.map((lite) => {
+          const dyn = byId.get(Number(lite.id))
+          if (dyn) {
+            return {
+              id: Number(dyn.legacyId),
+              name: dyn.name,
+              isDynamic: true,
+              assets: Array.isArray(dyn.assets) ? dyn.assets : [],
+              backgrounds: dyn.backgrounds || {}
+            }
+          }
+          return lite
+        })
+      }
+    } catch {}
+    currentItems.value = list
+    // Message optionnel (prendre le premier gift qui en a un)
+    const withMsg = gifts.find((g: any) => typeof g.adminMessage === 'string' && g.adminMessage.trim().length > 0)
+    currentAdminMessage.value = withMsg ? withMsg.adminMessage : ''
+    showItemReceivedPopup.value = true
+  } catch {}
+}
+
 // Note: Pas de watch sur purchasedItems pour éviter d'ouvrir la pop-up
 // lors d'actions locales (équiper/déséquiper/achat). La vérification
 // s'effectue au chargement initial uniquement.
@@ -79,6 +120,8 @@ async function closeItemReceivedPopup() {
     for (const it of list) {
       await secureApiCall(`/users/ack-gift/${it.id}`, { method: 'POST' })
     }
+    // Recharger l'inventaire pour débloquer immédiatement les couleurs données
+    await coinsStore.loadInventory()
   } catch {}
   currentItems.value = [];
   currentAdminMessage.value = '';
@@ -88,7 +131,10 @@ onMounted(() => {
   // Vérifier les nouveaux items après le chargement initial
   setTimeout(async () => {
     await checkForNewItemsWithMessages();
+    await fetchGiftsFromServer();
   }, 1000);
+  // Polling léger toutes les 30 secondes
+  try { giftsIntervalId = setInterval(fetchGiftsFromServer, 30000) } catch {}
 });
 </script>
 
