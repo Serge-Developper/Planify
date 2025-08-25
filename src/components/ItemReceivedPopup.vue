@@ -97,7 +97,7 @@
                   <div v-else-if="(it as any).name === 'Planify'" class="admin-planify-item-shop">
                     <img :src="adminPlanify" alt="Planify" class="admin-planify-img-shop" />
                   </div>
-                  <!-- Variantes de bordure: disque rempli couleur/dégradé -->
+                  <!-- Variantes de bordure: pastille couleur/dégradé (comme Collection) -->
                   <div v-else-if="isBorderVariant(it as any)" class="classic-border-preview" :style="getBorderFillStyle(it as any)"></div>
                   <!-- Items dynamiques (créés via AdminItemEditor) -->
                   <template v-else-if="isDynamic(it as any)">
@@ -314,7 +314,11 @@ function displayName(item: Item): string {
 function isBorderVariant(it: Item): boolean {
   if (!it) return false
   try {
+    // Reconnaître par nom
     if (String(it.name || '').toLowerCase().startsWith('bordure ')) return true
+    // Reconnaître par id (plage 100-143 et 200-231)
+    const idNum = Number((it as any).id)
+    if (!Number.isNaN(idNum) && ((idNum >= 100 && idNum <= 143) || (idNum >= 200 && idNum <= 231))) return true
     return false
   } catch {
     return false
@@ -323,8 +327,16 @@ function isBorderVariant(it: Item): boolean {
 
 function getBorderFillStyle(it: Item): Record<string, string> {
   try {
-    // Style par défaut pour les bordures
-    return { background: '#000', width: '100%', height: '100%' }
+    const idNum = Number((it as any).id)
+    const mapping: Record<number, { color?: string, gradient?: string }> = {
+      100: { color: '#FF0000' }, 101: { color: '#0066FF' }, 102: { color: '#00FF00' }, 103: { color: '#FFFF00' }, 104: { color: '#7A1FFF' }, 105: { color: '#FF8800' }, 106: { color: '#FF2F72' }, 107: { color: '#00FFFF' },
+      108: { color: '#FFD700' }, 109: { color: '#C0C0C0' }, 110: { gradient: 'linear-gradient(90deg, #ff0000, #ffa500, #ffff00, #00ff00, #00ffff, #0000ff, #8b00ff)' }, 111: { color: '#FF4D00' }, 112: { color: '#A7E8FF' }, 114: { color: '#228B22' }, 115: { gradient: 'linear-gradient(90deg,#0d0b2d,#3f0b6d,#0b4a6d)' }, 116: { gradient: 'linear-gradient(90deg,#26ffb2,#00c1ff,#7a1fff)' }, 117: { color: '#8B0000' }, 118: { color: '#9AD9FF' }, 119: { color: '#FFDAB9' }, 120: { color: '#5B4B8A' }, 121: { color: '#708090' }, 122: { color: '#7CFC00' }, 123: { color: '#F4C430' }, 124: { color: '#D2691E' }, 125: { color: '#7CFC00' }, 126: { color: '#F4C430' }, 127: { color: '#D2691E' }, 128: { color: '#ADD8E6' }, 129: { color: '#FF00FF' }, 130: { color: '#00FF80' }, 131: { color: '#0FA3B1' }, 132: { color: '#FFFFFF' }, 133: { color: '#CD7F32' },
+      // Dégradés (200-231)
+      200: { gradient: 'linear-gradient(135deg,#ffffff,#424240)' }, 201: { gradient: 'linear-gradient(135deg,#1d1d1b,#cbcbcb)' }, 202: { gradient: 'linear-gradient(135deg,#fc0103,#763589,#0460fb)' }, 203: { gradient: 'linear-gradient(135deg,#00ff06,#00fffa)' }, 204: { gradient: 'linear-gradient(135deg,#03faff,#4982ff,#9304ff)' }, 205: { gradient: 'linear-gradient(135deg,#fffa00,#ff7a00,#ff7a00)' }, 206: { gradient: 'linear-gradient(135deg,#9205fa,#9205fa,#9205fa)' }, 207: { gradient: 'linear-gradient(135deg,#fd00ed,#c900f6,#9700ff)' }, 208: { gradient: 'linear-gradient(135deg,#05faff,#807ff6,#fa05ed)' }, 209: { gradient: 'linear-gradient(135deg,#ff035a,#ff422a,#ff7602)' }, 210: { gradient: 'linear-gradient(135deg,#06fc9f,#81bb51,#fa7c03)' }, 211: { gradient: 'linear-gradient(135deg,#0663f9,#826e7d,#f97806)' }, 212: { gradient: 'linear-gradient(135deg,#ff0505,#fffafa)' }, 213: { gradient: 'linear-gradient(135deg,#06ff06,#fafffa)' }, 214: { gradient: 'linear-gradient(135deg,#0666ff,#ffffff)' }, 215: { gradient: 'linear-gradient(135deg,#ffff05,#fffff9)' }, 216: { gradient: 'linear-gradient(135deg,#08ffff,#f6ffff)' }, 217: { gradient: 'linear-gradient(135deg,#9706ff,#fdfbff)' }, 218: { gradient: 'linear-gradient(135deg,#ff0660,#fffbfd)' }, 219: { gradient: 'linear-gradient(135deg,#ff7c06,#fffcfa)' }, 220: { gradient: 'linear-gradient(135deg,#05ffa5,#f8fffc)' }, 221: { gradient: 'linear-gradient(135deg,#fa0000,#030000)' }, 222: { gradient: 'linear-gradient(135deg,#00f800,#000400)' }, 223: { gradient: 'linear-gradient(135deg,#005ff8,#000205)' }, 224: { gradient: 'linear-gradient(135deg,#f8f800,#030300)' }, 225: { gradient: 'linear-gradient(135deg,#00f9f9,#000505)' }, 226: { gradient: 'linear-gradient(135deg,#f900e7,#050004)' }, 227: { gradient: 'linear-gradient(135deg,#9200f9,#030005)' }, 228: { gradient: 'linear-gradient(135deg,#f9005a,#060002)' }, 229: { gradient: 'linear-gradient(135deg,#f77500,#060002)' }, 230: { gradient: 'linear-gradient(135deg,#01f9a0,#1c231f)' }, 231: { gradient: 'linear-gradient(135deg,#0666ff,#ffffff)' }
+    }
+    const s = mapping[idNum] || {}
+    const bg = s.gradient || s.color || '#000'
+    return { background: bg, width: '100%', height: '100%' }
   } catch {
     return { background: '#000', width: '100%', height: '100%' }
   }
