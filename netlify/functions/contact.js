@@ -71,7 +71,10 @@ exports.handler = async (event, context) => {
 
     // Email options
     const mailOptions = {
-      from: `"${name}" <${email_from}>`,
+      // Utiliser l'adresse du compte comme expéditeur (DMARC/SPF safe)
+      from: `"Planify Contact" <${process.env.EMAIL_USER}>`,
+      // Répondre directement à l'expéditeur du formulaire
+      replyTo: email_from,
       to: 'planifymmi@gmail.com', // Your receiving email address
       subject: `Nouveau message de contact : ${subject}`,
       html: `
