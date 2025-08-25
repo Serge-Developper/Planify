@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
-const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
@@ -27,36 +26,14 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
-// Configuration multer pour l'upload d'avatar
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadDir = path.join(__dirname, '../../public/uploads/avatars');
-    // Créer le dossier s'il n'existe pas
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'avatar-' + uniqueSuffix + path.extname(file.originalname));
+// Fonction utilitaire pour créer le dossier d'upload
+function ensureUploadDirectory() {
+  const uploadDir = path.join(__dirname, '../../public/uploads/avatars');
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
   }
-});
-
-const upload = multer({ 
-  storage: storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB max
-  },
-  fileFilter: function (req, file, cb) {
-    // Vérifier que c'est une image
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Seules les images sont autorisées'), false);
-    }
-  }
-});
+  return uploadDir;
+}
 
 // Middleware d'authentification simplifié
 const verifyToken = (req) => {
@@ -163,7 +140,7 @@ exports.handler = async (event, context) => {
           };
         }
 
-        // Parser le body multipart
+        // Parser le body multipart manuellement
         const boundary = event.headers['content-type'].split('boundary=')[1];
         const body = Buffer.from(event.body, 'base64');
         
@@ -257,6 +234,8 @@ exports.handler = async (event, context) => {
         const avatarPath = `/uploads/avatars/${filename}`;
         await User.findByIdAndUpdate(user.userId, { avatar: avatarPath });
         
+        console.log('✅ Avatar uploadé avec succès:', avatarPath);
+        
         return {
           statusCode: 200,
           headers: {
@@ -271,8 +250,9 @@ exports.handler = async (event, context) => {
         };
         
       } catch (error) {
+        console.error('❌ Erreur détaillée upload avatar:', error);
+        
         if (error.message === 'Token manquant' || error.message === 'Token invalide') {
-          console.error('❌ Erreur auth upload avatar:', error.message);
           return {
             statusCode: 401,
             headers: {
@@ -285,7 +265,6 @@ exports.handler = async (event, context) => {
             })
           };
         } else {
-          console.error('❌ Erreur upload avatar:', error);
           return {
             statusCode: 500,
             headers: {
@@ -294,7 +273,7 @@ exports.handler = async (event, context) => {
             },
             body: JSON.stringify({
               success: false,
-              message: 'Erreur lors de l\'upload de l\'avatar'
+              message: 'Erreur lors de l\'upload de l\'avatar: ' + error.message
             })
           };
         }
