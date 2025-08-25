@@ -64,12 +64,19 @@ const loadEvents = async () => {
     })
 
     // Filtre de sécurité côté client (en plus du backend) : année et groupe
-    events.value = normalized.filter(ev => {
-      const okYear = !ev.year || !userYear || ev.year === userYear
-      const allowedGroups = new Set([userGroup, 'Promo'])
-      const okGroup = allowedGroups.has(ev.groupe) || ev.groupes.some(g => allowedGroups.has(g))
-      return okYear && okGroup
-    })
+    const role = (authStore.user && authStore.user.role) || ''
+    if (role === 'admin' || role === 'prof') {
+      // Admin/Prof : voient tout sans filtrage côté client
+      events.value = normalized
+    } else {
+      // Élèves : filtrage année + groupe
+      events.value = normalized.filter(ev => {
+        const okYear = !ev.year || !userYear || ev.year === userYear
+        const allowedGroups = new Set([userGroup, 'Promo'])
+        const okGroup = allowedGroups.has(ev.groupe) || ev.groupes.some(g => allowedGroups.has(g))
+        return okYear && okGroup
+      })
+    }
   } catch (error) {
     console.error('Erreur lors du chargement des events:', error)
     events.value = []
