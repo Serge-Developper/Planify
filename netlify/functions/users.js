@@ -36,17 +36,27 @@ function ensureUploadDirectory() {
 }
 
 // Middleware d'authentification simplifié
-const verifyToken = (req) => {
-  const authHeader = req.headers.authorization;
+const verifyToken = (event) => {
+  console.log('🔍 Vérification du token...');
+  console.log('Headers reçus:', event.headers);
+  
+  const authHeader = event.headers.authorization || event.headers.Authorization;
+  console.log('Auth header:', authHeader);
+  
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.log('❌ Token manquant ou format incorrect');
     throw new Error('Token manquant');
   }
 
   const token = authHeader.substring(7);
+  console.log('Token extrait:', token.substring(0, 20) + '...');
+  
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production');
+    console.log('✅ Token valide pour l\'utilisateur:', decoded.userId);
     return decoded;
   } catch (error) {
+    console.log('❌ Erreur de vérification du token:', error.message);
     throw new Error('Token invalide');
   }
 };

@@ -1360,6 +1360,9 @@ async function handleAvatarUpload(event) {
     formData.append('avatar', file);
 
     console.log('🚀 Upload avatar en cours...');
+    console.log('🔑 Token utilisé:', user.value.token ? user.value.token.substring(0, 20) + '...' : 'AUCUN TOKEN');
+    console.log('👤 Utilisateur:', user.value);
+    
     const response = await axios.post(`${API_URL}/users/upload-avatar`, formData, {
       headers: {
         'Authorization': `Bearer ${user.value.token}`,
