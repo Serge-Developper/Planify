@@ -1469,7 +1469,7 @@ async function handleProfile() {
   if (user.value && user.value.id) {
     try {
       console.log('🔄 Récupération des données utilisateur complètes...');
-      const response = await secureApiCall('GET', '/users/profile');
+      const response = await secureApiCall('/users/profile');
       
       if (response.success && response.user) {
         console.log('✅ Données utilisateur récupérées:', response.user);
