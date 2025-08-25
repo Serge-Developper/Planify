@@ -259,7 +259,7 @@ exports.handler = async (event, context) => {
         // Récupérer userId depuis les query params ou le body
         const url = new URL(event.rawUrl || `http://localhost${event.path}${event.queryStringParameters ? '?' + new URLSearchParams(event.queryStringParameters).toString() : ''}`);
         const userIdFromQuery = url.searchParams.get('userId');
-        const { userId: userIdFromBody, username, email, coins, role } = JSON.parse(event.body || '{}');
+        const { userId: userIdFromBody, username, email, coins, role, password, newPassword } = JSON.parse(event.body || '{}');
         const userId = userIdFromQuery || userIdFromBody;
 
         if (!userId) {
@@ -276,6 +276,14 @@ exports.handler = async (event, context) => {
         if (email) targetUser.email = email;
         if (typeof coins === 'number') targetUser.coins = Math.max(0, coins);
         if (role && ['admin','prof','delegue','eleve','etudiant','user'].includes(role)) targetUser.role = role;
+        const pwd = newPassword || password;
+        if (pwd) {
+          if (String(pwd).length < 6) {
+            return { statusCode: 400, headers, body: JSON.stringify({ error: 'Mot de passe trop court (min 6 caractères)' }) };
+          }
+          const hashed = await bcrypt.hash(String(pwd), 10);
+          targetUser.password = hashed;
+        }
 
         await targetUser.save();
 
