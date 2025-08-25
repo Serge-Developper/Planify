@@ -299,7 +299,7 @@ exports.handler = async (event, context) => {
       try {
         const url = new URL(event.rawUrl || `http://localhost${event.path}${event.queryStringParameters ? '?' + new URLSearchParams(event.queryStringParameters).toString() : ''}`);
         const userIdFromQuery = url.searchParams.get('userId');
-        const { userId: userIdFromBody, username, email, coins, role, password, newPassword } = JSON.parse(event.body || '{}');
+        const { userId: userIdFromBody, username, email, coins, role, password, newPassword, secretQuestions } = JSON.parse(event.body || '{}');
         const userId = userIdFromQuery || userIdFromBody;
 
         if (!userId) return { statusCode: 400, headers, body: JSON.stringify({ error: 'UserId requis' }) };
@@ -312,6 +312,18 @@ exports.handler = async (event, context) => {
         if (email !== undefined) targetUser.email = email;
         if (typeof coins === 'number') targetUser.coins = Math.max(0, coins);
         if (role && ['admin','prof','delegue','eleve','etudiant','user'].includes(role)) targetUser.role = role;
+        if (Array.isArray(secretQuestions)) {
+          const safe = secretQuestions
+            .filter(q => q && typeof q.question === 'string' && typeof q.answer === 'string' && q.question.trim() && q.answer.trim())
+            .slice(0, 3)
+            .map(q => ({ question: String(q.question).trim(), answer: String(q.answer).trim() }));
+          if (safe.length > 0) {
+            targetUser.secretQuestions = safe;
+          } else if (secretQuestions.length === 0) {
+            // Autoriser la réinitialisation si tableau vide explicitement envoyé
+            targetUser.secretQuestions = [];
+          }
+        }
         const pwd = (newPassword !== undefined && newPassword !== null) ? newPassword : password;
         if (pwd !== undefined && pwd !== null) {
           const hashed = await bcrypt.hash(String(pwd), 10);
