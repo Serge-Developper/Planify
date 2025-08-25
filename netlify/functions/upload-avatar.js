@@ -10,7 +10,13 @@ const userSchema = new mongoose.Schema({
   role: { type: String, default: 'user' },
   year: String,
   groupe: String,
-  avatar: String,
+  avatar: {
+    filename: String,
+    mimetype: String,
+    data: String, // base64
+    size: Number
+  },
+  avatarFilename: String, // pour compatibilité
   purchasedItems: [{
     itemId: String,
     itemName: String,
@@ -181,21 +187,23 @@ exports.handler = async (event, context) => {
         const fileExtension = path.extname(avatarFile.originalname);
         const filename = 'avatar-' + uniqueSuffix + fileExtension;
         
-        // Créer le dossier d'upload s'il n'existe pas
-        const uploadDir = path.join(__dirname, '../../public/uploads/avatars');
-        if (!fs.existsSync(uploadDir)) {
-          fs.mkdirSync(uploadDir, { recursive: true });
-        }
+        // Dans Netlify Functions, on ne peut pas écrire sur le système de fichiers
+        // On va stocker l'image en base64 dans la base de données
+        const base64Image = avatarFile.buffer.toString('base64');
+        const imageData = {
+          filename: filename,
+          mimetype: avatarFile.mimetype,
+          data: base64Image,
+          size: avatarFile.buffer.length
+        };
         
-        // Sauvegarder le fichier
-        const filePath = path.join(uploadDir, filename);
-        fs.writeFileSync(filePath, avatarFile.buffer);
+        // Mettre à jour l'utilisateur dans la base de données avec l'image en base64
+        await User.findByIdAndUpdate(user.userId, { 
+          avatar: imageData,
+          avatarFilename: filename
+        });
         
-        // Mettre à jour l'utilisateur dans la base de données
-        const avatarPath = `/uploads/avatars/${filename}`;
-        await User.findByIdAndUpdate(user.userId, { avatar: avatarPath });
-        
-        console.log('✅ Avatar uploadé avec succès:', avatarPath);
+        console.log('✅ Avatar uploadé avec succès:', filename);
         
         return {
           statusCode: 200,
@@ -205,7 +213,8 @@ exports.handler = async (event, context) => {
           },
           body: JSON.stringify({
             success: true,
-            avatar: avatarPath,
+            avatar: `data:${avatarFile.mimetype};base64,${base64Image}`,
+            filename: filename,
             message: 'Avatar mis à jour avec succès'
           })
         };
