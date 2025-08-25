@@ -1,5 +1,8 @@
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 
 // Modèle User simplifié pour Netlify Functions
 const userSchema = new mongoose.Schema({
@@ -23,6 +26,37 @@ const userSchema = new mongoose.Schema({
 });
 
 const User = mongoose.model('User', userSchema);
+
+// Configuration multer pour l'upload d'avatar
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadDir = path.join(__dirname, '../../public/uploads/avatars');
+    // Créer le dossier s'il n'existe pas
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'avatar-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB max
+  },
+  fileFilter: function (req, file, cb) {
+    // Vérifier que c'est une image
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Seules les images sont autorisées'), false);
+    }
+  }
+});
 
 // Middleware d'authentification simplifié
 const verifyToken = (req) => {
@@ -105,6 +139,165 @@ exports.handler = async (event, context) => {
             message: 'Token invalide ou manquant'
           })
         };
+      }
+    }
+
+    // Route POST /api/users/upload-avatar - Upload d'avatar
+    if (event.httpMethod === 'POST' && event.path.endsWith('/upload-avatar')) {
+      try {
+        // Vérifier l'authentification
+        const user = verifyToken(event);
+        
+        // Vérifier que le contenu est multipart/form-data
+        if (!event.headers['content-type'] || !event.headers['content-type'].includes('multipart/form-data')) {
+          return {
+            statusCode: 400,
+            headers: {
+              ...headers,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              success: false,
+              message: 'Le contenu doit être multipart/form-data'
+            })
+          };
+        }
+
+        // Parser le body multipart
+        const boundary = event.headers['content-type'].split('boundary=')[1];
+        const body = Buffer.from(event.body, 'base64');
+        
+        // Extraire le fichier du body multipart
+        const parts = body.toString().split('--' + boundary);
+        let avatarFile = null;
+        
+        for (const part of parts) {
+          if (part.includes('Content-Disposition: form-data; name="avatar"')) {
+            const lines = part.split('\r\n');
+            const filenameMatch = lines.find(line => line.includes('filename='));
+            if (filenameMatch) {
+              const filename = filenameMatch.split('filename=')[1].replace(/"/g, '');
+              const contentTypeMatch = lines.find(line => line.includes('Content-Type:'));
+              const contentType = contentTypeMatch ? contentTypeMatch.split(': ')[1] : 'image/jpeg';
+              
+              // Extraire le contenu du fichier
+              const fileContentStart = part.indexOf('\r\n\r\n') + 4;
+              const fileContent = part.substring(fileContentStart, part.lastIndexOf('\r\n'));
+              
+              avatarFile = {
+                originalname: filename,
+                mimetype: contentType,
+                buffer: Buffer.from(fileContent, 'binary')
+              };
+              break;
+            }
+          }
+        }
+
+        if (!avatarFile) {
+          return {
+            statusCode: 400,
+            headers: {
+              ...headers,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              success: false,
+              message: 'Aucun fichier avatar trouvé'
+            })
+          };
+        }
+
+        // Vérifier le type de fichier
+        if (!avatarFile.mimetype.startsWith('image/')) {
+          return {
+            statusCode: 400,
+            headers: {
+              ...headers,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              success: false,
+              message: 'Seules les images sont autorisées'
+            })
+          };
+        }
+
+        // Vérifier la taille (5MB max)
+        if (avatarFile.buffer.length > 5 * 1024 * 1024) {
+          return {
+            statusCode: 400,
+            headers: {
+              ...headers,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              success: false,
+              message: 'Le fichier est trop volumineux (max 5MB)'
+            })
+          };
+        }
+
+        // Générer un nom de fichier unique
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const fileExtension = path.extname(avatarFile.originalname);
+        const filename = 'avatar-' + uniqueSuffix + fileExtension;
+        
+        // Créer le dossier d'upload s'il n'existe pas
+        const uploadDir = path.join(__dirname, '../../public/uploads/avatars');
+        if (!fs.existsSync(uploadDir)) {
+          fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        
+        // Sauvegarder le fichier
+        const filePath = path.join(uploadDir, filename);
+        fs.writeFileSync(filePath, avatarFile.buffer);
+        
+        // Mettre à jour l'utilisateur dans la base de données
+        const avatarPath = `/uploads/avatars/${filename}`;
+        await User.findByIdAndUpdate(user.userId, { avatar: avatarPath });
+        
+        return {
+          statusCode: 200,
+          headers: {
+            ...headers,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            success: true,
+            avatar: avatarPath,
+            message: 'Avatar mis à jour avec succès'
+          })
+        };
+        
+      } catch (error) {
+        if (error.message === 'Token manquant' || error.message === 'Token invalide') {
+          console.error('❌ Erreur auth upload avatar:', error.message);
+          return {
+            statusCode: 401,
+            headers: {
+              ...headers,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              success: false,
+              message: 'Token invalide ou manquant'
+            })
+          };
+        } else {
+          console.error('❌ Erreur upload avatar:', error);
+          return {
+            statusCode: 500,
+            headers: {
+              ...headers,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              success: false,
+              message: 'Erreur lors de l\'upload de l\'avatar'
+            })
+          };
+        }
       }
     }
 
