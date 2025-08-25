@@ -438,6 +438,8 @@ function resolveSrc(src) {
     if (src.startsWith('/uploads/avatars/')) {
       return baseUrl + '/api/uploads/avatars/' + src.split('/').pop()
     } else if (src.startsWith('/uploads/items/')) {
+      // L’endpoint renvoie un JSON { file: { dataUrl } }, on préfère charger directement la dataUrl
+      // Ici on renvoie tout de même l’URL; le fetch se fera au moment d’utilisation
       return baseUrl + '/api/uploads/items/' + src.split('/').pop()
     }
     return baseUrl + src
@@ -736,7 +738,7 @@ async function saveItem() {
         existingItems.value = [res.item, ...existingItems.value]
       }
     } catch {}
-    form.value = { legacyId: null, name: '', price: 0, type: 'generic', infoOnly: false, infoDescription: '', hasDefaultText: false, defaultText: '', availableInDailyShop: false, assets: [], backgrounds: { collection: null, leaderboard: null, avatar: null, navbar: null, 'popup-style': null }, variants: [] }
+    form.value = { legacyId: null, name: '', price: 0, type: 'generic', infoOnly: false, infoDescription: '', availableInDailyShop: false, assets: [], backgrounds: { collection: null, leaderboard: null, avatar: null, navbar: null, 'popup-style': null }, variants: [] }
     isEditing.value = false
     editingId.value = null
     selectedIndex.value = null

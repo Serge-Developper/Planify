@@ -95,6 +95,16 @@ const Item = mongoose.models.Item || mongoose.model('Item', itemSchema);
 const userSchema = new mongoose.Schema({ role: String });
 const User = mongoose.models.User || mongoose.model('User', userSchema);
 
+// Asset binaire stocké en DB pour les items
+const itemAssetSchema = new mongoose.Schema({
+  filename: String,
+  mimetype: String,
+  data: String, // base64
+  size: Number,
+  createdAt: { type: Date, default: Date.now }
+});
+const ItemAsset = mongoose.models.ItemAsset || mongoose.model('ItemAsset', itemAssetSchema);
+
 // Helpers
 const verifyToken = (event) => {
   const authHeader = event.headers?.authorization || event.headers?.Authorization;
@@ -134,6 +144,66 @@ exports.handler = async (event, context) => {
 
   try {
     await connectDB();
+
+    // POST /api/items/upload (admin) - multipart/form-data; champ "files"
+    if (event.httpMethod === 'POST' && /\/items\/upload$/.test(event.path || '')) {
+      const user = verifyToken(event);
+      const u = await User.findById(user.id || user._id).lean();
+      if (!u || u.role !== 'admin') {
+        return { statusCode: 403, headers, body: JSON.stringify({ success: false, message: 'Non autorisé' }) };
+      }
+
+      const contentType = event.headers['content-type'] || event.headers['Content-Type'] || '';
+      if (!contentType.includes('multipart/form-data')) {
+        return { statusCode: 400, headers, body: JSON.stringify({ success: false, message: 'multipart/form-data requis' }) };
+      }
+      const boundary = contentType.split('boundary=')[1];
+      if (!boundary) {
+        return { statusCode: 400, headers, body: JSON.stringify({ success: false, message: 'boundary manquant' }) };
+      }
+      const raw = Buffer.from(event.body || '', 'base64').toString('binary');
+      const parts = raw.split(`--${boundary}`);
+      const saved = [];
+      for (const part of parts) {
+        if (!part.includes('Content-Disposition')) continue;
+        if (!/name="files"/.test(part)) continue;
+        const filenameLine = part.split(/\r\n/).find(l => l.includes('filename='));
+        if (!filenameLine) continue;
+        const filename = filenameLine.split('filename=')[1].replace(/"/g, '') || `item-${Date.now()}`;
+        const typeLine = part.split(/\r\n/).find(l => l.startsWith('Content-Type:')) || 'Content-Type: application/octet-stream';
+        const mimetype = typeLine.split(': ')[1] || 'application/octet-stream';
+        const start = part.indexOf('\r\n\r\n');
+        if (start === -1) continue;
+        const fileContent = part.substring(start + 4, part.lastIndexOf('\r\n'));
+        const buffer = Buffer.from(fileContent, 'binary');
+        const unique = `item-${Date.now()}-${Math.round(Math.random()*1e9)}${(filename.match(/\.[^.]+$/) || [''])[0]}`;
+
+        await ItemAsset.create({ filename: unique, mimetype, data: buffer.toString('base64'), size: buffer.length });
+        saved.push({ filename: unique, url: `/uploads/items/${unique}`, mimetype });
+      }
+
+      if (!saved.length) {
+        return { statusCode: 400, headers, body: JSON.stringify({ success: false, message: 'Aucun fichier trouvé' }) };
+      }
+
+      return { statusCode: 200, headers, body: JSON.stringify({ success: true, files: saved }) };
+    }
+
+    // GET /api/uploads/items/:filename -> renvoyer data base64 pour affichage
+    if (event.httpMethod === 'GET' && /\/uploads\/items\//.test(event.path || '')) {
+      const p = event.path || '';
+      const m = p.match(/uploads\/items\/(.+)$/);
+      const filename = m && m[1] ? m[1] : null;
+      if (!filename) return { statusCode: 404, headers, body: JSON.stringify({ success: false }) };
+      const doc = await ItemAsset.findOne({ filename }).lean();
+      if (!doc) return { statusCode: 404, headers, body: JSON.stringify({ success: false }) };
+      // Pour rester cohérent avec l’UI actuelle qui attend une URL, on renvoie un JSON contenant une data URL
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ success: true, file: { filename, mimetype: doc.mimetype, dataUrl: `data:${doc.mimetype};base64,${doc.data}` } })
+      };
+    }
 
     // GET /api/items or /api/items/:id
     if (event.httpMethod === 'GET') {
