@@ -267,6 +267,12 @@ function resolveAssetSrc(path: string | undefined): string {
     if (typeof path === 'string' && path.startsWith('/uploads/')) {
       const api = (import.meta as any).env?.VITE_API_URL ? (import.meta as any).env.VITE_API_URL : '/api'
       const base = api.endsWith('/api') ? api.slice(0, -4) : api.replace('/api','')
+      if (path.startsWith('/uploads/avatars/')) {
+        return base + '/api/uploads/avatars/' + path.split('/').pop()
+      }
+      if (path.startsWith('/uploads/items/')) {
+        return base + '/api/items/uploads/' + path.split('/').pop()
+      }
       return base + path
     }
   } catch {}
