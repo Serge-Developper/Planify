@@ -990,8 +990,21 @@ async function loadUserAvatar() {
   }
 
   try {
-    const avatarUrl = `${baseUrl}${user.value.avatar}`;
-    userAvatar.value = avatarUrl;
+    // Vérifier si l'avatar existe et son format
+    if (user.value.avatar) {
+      if (user.value.avatar.startsWith('data:')) {
+        // C'est une data URL (nouveau format)
+        userAvatar.value = user.value.avatar;
+        console.log('🖼️ Avatar data URL chargé depuis loadUserAvatar');
+      } else {
+        // C'est un chemin relatif (ancien format)
+        const avatarUrl = `${baseUrl}${user.value.avatar}`;
+        userAvatar.value = avatarUrl;
+        console.log('🖼️ Avatar URL chargé depuis loadUserAvatar:', avatarUrl);
+      }
+    } else {
+      userAvatar.value = accountIcon;
+    }
   } catch (error) {
     console.error('Erreur lors du chargement de l\'avatar:', error);
     userAvatar.value = accountIcon;
@@ -1374,11 +1387,9 @@ async function handleAvatarUpload(event) {
 
     if (response.data.avatar) {
       // Mettre à jour l'avatar affiché
-      const newAvatarUrl = `${baseUrl}${response.data.avatar}`;
-      console.log('🖼️ Construction URL avatar:');
-      console.log('  - baseUrl:', baseUrl);
-      console.log('  - avatar path:', response.data.avatar);
-      console.log('  - URL complète:', newAvatarUrl);
+      // response.data.avatar est maintenant une data URL complète (data:image/jpeg;base64,...)
+      const newAvatarUrl = response.data.avatar;
+      console.log('🖼️ Avatar reçu (data URL):', newAvatarUrl.substring(0, 50) + '...');
       userAvatar.value = newAvatarUrl;
       
       // Mettre à jour les données utilisateur dans le store et localStorage
@@ -1414,9 +1425,18 @@ function handleLoginSuccess(payload) {
   // Charger l'avatar après connexion
   if (payload.user.avatar) {
     console.log('✅ Avatar trouvé lors de la connexion:', payload.user.avatar);
-    const avatarUrl = `${baseUrl}${payload.user.avatar}`;
-    console.log('🖼️ URL avatar construite:', avatarUrl);
-    userAvatar.value = avatarUrl;
+    
+    // Vérifier si c'est une data URL ou un chemin relatif
+    if (payload.user.avatar.startsWith('data:')) {
+      // C'est une data URL (nouveau format)
+      userAvatar.value = payload.user.avatar;
+      console.log('🖼️ Avatar data URL chargé');
+    } else {
+      // C'est un chemin relatif (ancien format)
+      const avatarUrl = `${baseUrl}${payload.user.avatar}`;
+      console.log('🖼️ URL avatar construite:', avatarUrl);
+      userAvatar.value = avatarUrl;
+    }
   } else {
     console.log('❌ Pas d\'avatar lors de la connexion, chargement depuis la DB...');
     loadUserAvatar();
