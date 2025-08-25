@@ -2251,14 +2251,15 @@ const getUserEquippedItemData = (user) => {
  }
 
  const getUserAvatar = (user) => {
-  if (user.avatar && user.avatar.startsWith('/uploads/')) {
+  const av = user && user.avatar
+  if (typeof av === 'string' && av.startsWith('/uploads/')) {
     // Utiliser les nouvelles APIs pour servir les images depuis la base de données
-    if (user.avatar.startsWith('/uploads/avatars/')) {
-      const avatarUrl = `${baseUrl}/api/uploads/avatars/${user.avatar.split('/').pop()}`
+    if (av.startsWith('/uploads/avatars/')) {
+      const avatarUrl = `${baseUrl}/api/uploads/avatars/${av.split('/').pop()}`
       console.log('🖼️ URL avatar:', avatarUrl)
       return avatarUrl
     }
-    const avatarUrl = `${baseUrl}${user.avatar}`
+    const avatarUrl = `${baseUrl}${av}`
     console.log('🖼️ URL avatar:', avatarUrl)
     return avatarUrl
   }

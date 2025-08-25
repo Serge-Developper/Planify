@@ -996,15 +996,23 @@ async function loadUserAvatar() {
   try {
     // Vérifier si l'avatar existe et son format
     if (user.value.avatar) {
-      if (user.value.avatar.startsWith('data:')) {
-        // C'est une data URL (nouveau format)
-        userAvatar.value = user.value.avatar;
-        console.log('🖼️ Avatar data URL chargé depuis loadUserAvatar');
+      const av = user.value.avatar;
+      if (typeof av === 'string') {
+        if (av.startsWith('data:')) {
+          // C'est une data URL (nouveau format)
+          userAvatar.value = av;
+          console.log('🖼️ Avatar data URL chargé depuis loadUserAvatar');
+        } else {
+          // C'est un chemin relatif (ancien format)
+          const avatarUrl = `${baseUrl}${av}`;
+          userAvatar.value = avatarUrl;
+          console.log('🖼️ Avatar URL chargé depuis loadUserAvatar:', avatarUrl);
+        }
+      } else if (typeof av === 'object' && av !== null && typeof av.data === 'string' && typeof av.mimetype === 'string') {
+        // Objet avatar (ancien format DB) → reconstruire la data URL
+        userAvatar.value = `data:${av.mimetype};base64,${av.data}`;
       } else {
-        // C'est un chemin relatif (ancien format)
-        const avatarUrl = `${baseUrl}${user.value.avatar}`;
-        userAvatar.value = avatarUrl;
-        console.log('🖼️ Avatar URL chargé depuis loadUserAvatar:', avatarUrl);
+        userAvatar.value = accountIcon;
       }
     } else {
       userAvatar.value = accountIcon;
@@ -1430,16 +1438,23 @@ function handleLoginSuccess(payload) {
   if (payload.user.avatar) {
     console.log('✅ Avatar trouvé lors de la connexion:', payload.user.avatar);
     
-    // Vérifier si c'est une data URL ou un chemin relatif
-    if (payload.user.avatar.startsWith('data:')) {
-      // C'est une data URL (nouveau format)
-      userAvatar.value = payload.user.avatar;
-      console.log('🖼️ Avatar data URL chargé');
+    // Vérifier si c'est une data URL, un chemin relatif ou un objet avatar
+    const av = payload.user.avatar;
+    if (typeof av === 'string') {
+      if (av.startsWith('data:')) {
+        // C'est une data URL (nouveau format)
+        userAvatar.value = av;
+        console.log('🖼️ Avatar data URL chargé');
+      } else {
+        // C'est un chemin relatif (ancien format)
+        const avatarUrl = `${baseUrl}${av}`;
+        console.log('🖼️ URL avatar construite:', avatarUrl);
+        userAvatar.value = avatarUrl;
+      }
+    } else if (typeof av === 'object' && av !== null && typeof av.data === 'string' && typeof av.mimetype === 'string') {
+      userAvatar.value = `data:${av.mimetype};base64,${av.data}`;
     } else {
-      // C'est un chemin relatif (ancien format)
-      const avatarUrl = `${baseUrl}${payload.user.avatar}`;
-      console.log('🖼️ URL avatar construite:', avatarUrl);
-      userAvatar.value = avatarUrl;
+      userAvatar.value = accountIcon;
     }
   } else {
     console.log('❌ Pas d\'avatar lors de la connexion, chargement depuis la DB...');
