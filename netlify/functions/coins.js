@@ -95,9 +95,118 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
 };
 
+// Handler racine pour /api/coins (POST action)
+const handleCoinsRoot = async (event) => {
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ success: false, message: 'Méthode non autorisée' })
+    };
+  }
+  try {
+    const body = JSON.parse(event.body || '{}');
+    const action = body.action;
+    if (action === 'spin-wheel') {
+      return await handleSpinWheel(event);
+    }
+    return {
+      statusCode: 400,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ success: false, message: 'Action non reconnue' })
+    };
+  } catch (e) {
+    return {
+      statusCode: 400,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ success: false, message: 'Requête invalide' })
+    };
+  }
+};
+
+// Handler spin-wheel
+const handleSpinWheel = async (event) => {
+  try {
+    const user = verifyToken(event);
+    const userId = (typeof user === 'object' && user !== null) ? (user.id || user._id) : user;
+    const userDoc = await User.findById(userId);
+    if (!userDoc) {
+      return {
+        statusCode: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: false, message: 'Utilisateur non trouvé' })
+      };
+    }
+
+    // Reset hebdomadaire si nécessaire
+    if (hasWeekChanged(userDoc.lastWeeklyReset)) {
+      userDoc.weeklySpinCount = 0;
+      userDoc.lastWeeklyReset = new Date();
+    }
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const lastSpin = userDoc.lastSpinDate ? new Date(userDoc.lastSpinDate) : null;
+    const lastSpinDay = lastSpin ? new Date(lastSpin.getFullYear(), lastSpin.getMonth(), lastSpin.getDate()) : null;
+    const alreadySpunToday = !!lastSpinDay && lastSpinDay.getTime() === today.getTime();
+
+    const weekendBonus = isWeekend();
+    const maxSpins = weekendBonus ? 10 : 5;
+    if (alreadySpunToday || userDoc.weeklySpinCount >= maxSpins) {
+      return {
+        statusCode: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          success: false,
+          message: 'Vous avez déjà tourné la roue aujourd\'hui.'
+        })
+      };
+    }
+
+    // Table de gains de base
+    const baseRewards = [10, 20, 30, 50, 70, 100, 0]; // 0 = Perdu
+    const idx = Math.floor(Math.random() * baseRewards.length);
+    let coinsWon = baseRewards[idx];
+    if (weekendBonus && coinsWon > 0) coinsWon *= 2;
+
+    userDoc.coins = (userDoc.coins || 0) + coinsWon;
+    userDoc.lastSpinDate = now;
+    userDoc.weeklySpinCount = (userDoc.weeklySpinCount || 0) + 1;
+    await userDoc.save();
+
+    const rewardName = coinsWon === 0 ? 'Perdu' : `${coinsWon} coins`;
+
+    return {
+      statusCode: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        success: true,
+        message: coinsWon === 0 ? 'Dommage, retentez demain !' : `Bravo ! Vous gagnez ${coinsWon} coins !`,
+        coinsWon,
+        newCoins: userDoc.coins,
+        rewardName
+      })
+    };
+  } catch (error) {
+    return {
+      statusCode: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ success: false, message: 'Token invalide' })
+    };
+  }
+};
+
 // Routeur pour les endpoints coins
 const handleCoinsRoute = async (event, path) => {
-  const endpoint = path.replace('/api/coins/', '');
+  // Gérer le chemin racine (/api/coins ou /.netlify/functions/coins)
+  const isRoot = /\/api\/coins$|\.netlify\/functions\/coins$/.test(path);
+  if (isRoot) {
+    return await handleCoinsRoot(event);
+  }
+
+  // Extraire l\'endpoint après /api/coins/ ou /.netlify/functions/coins/
+  let endpoint = path.replace('/api/coins/', '');
+  endpoint = endpoint.replace('/.netlify/functions/coins/', '');
 
   switch (endpoint) {
     case 'user-coins':
