@@ -189,19 +189,19 @@ exports.handler = async (event, context) => {
       return { statusCode: 200, headers, body: JSON.stringify({ success: true, files: saved }) };
     }
 
-    // GET /api/uploads/items/:filename -> renvoyer data base64 pour affichage
-    if (event.httpMethod === 'GET' && /\/uploads\/items\//.test(event.path || '')) {
+    // GET /api/items/uploads/:filename -> renvoyer le binaire base64 avec le bon Content-Type
+    if (event.httpMethod === 'GET' && /\/items\/uploads\//.test(event.path || '')) {
       const p = event.path || '';
-      const m = p.match(/uploads\/items\/(.+)$/);
+      const m = p.match(/items\/uploads\/(.+)$/);
       const filename = m && m[1] ? m[1] : null;
       if (!filename) return { statusCode: 404, headers, body: JSON.stringify({ success: false }) };
       const doc = await ItemAsset.findOne({ filename }).lean();
       if (!doc) return { statusCode: 404, headers, body: JSON.stringify({ success: false }) };
-      // Pour rester cohérent avec l’UI actuelle qui attend une URL, on renvoie un JSON contenant une data URL
       return {
         statusCode: 200,
-        headers,
-        body: JSON.stringify({ success: true, file: { filename, mimetype: doc.mimetype, dataUrl: `data:${doc.mimetype};base64,${doc.data}` } })
+        headers: { ...headers, 'Content-Type': doc.mimetype, 'Cache-Control': 'public, max-age=31536000, immutable' },
+        body: doc.data,
+        isBase64Encoded: true
       };
     }
 

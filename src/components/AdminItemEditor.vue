@@ -438,9 +438,8 @@ function resolveSrc(src) {
     if (src.startsWith('/uploads/avatars/')) {
       return baseUrl + '/api/uploads/avatars/' + src.split('/').pop()
     } else if (src.startsWith('/uploads/items/')) {
-      // L’endpoint renvoie un JSON { file: { dataUrl } }, on préfère charger directement la dataUrl
-      // Ici on renvoie tout de même l’URL; le fetch se fera au moment d’utilisation
-      return baseUrl + '/api/uploads/items/' + src.split('/').pop()
+      // Servir en binaire base64 via la route items/uploads
+      return baseUrl + '/api/items/uploads/' + src.split('/').pop()
     }
     return baseUrl + src
   }
