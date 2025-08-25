@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
   role: { type: String, default: 'user' },
   year: String,
   groupe: String,
+  avatar: String,
   purchasedItems: [{
     itemId: String,
     itemName: String,
@@ -25,15 +26,6 @@ const userSchema = new mongoose.Schema({
 });
 
 const User = mongoose.model('User', userSchema);
-
-// Fonction utilitaire pour créer le dossier d'upload
-function ensureUploadDirectory() {
-  const uploadDir = path.join(__dirname, '../../public/uploads/avatars');
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
-  return uploadDir;
-}
 
 // Middleware d'authentification simplifié
 const verifyToken = (event) => {
@@ -66,7 +58,7 @@ exports.handler = async (event, context) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
   };
 
   // Gérer les requêtes OPTIONS (preflight)
@@ -79,59 +71,17 @@ exports.handler = async (event, context) => {
   }
 
   try {
+    console.log('🚀 Fonction upload-avatar appelée');
+    console.log('Méthode:', event.httpMethod);
+    console.log('Path:', event.path);
+    
     // Connexion à MongoDB
     await mongoose.connect(process.env.MONGODB_URI || '', {
       bufferCommands: false
-      // bufferMaxEntries n'est plus supporté dans les versions récentes de Mongoose/MongoDB
     });
 
-    // Route GET /api/users - Récupérer la liste des utilisateurs pour le leaderboard
-    if (event.httpMethod === 'GET') {
-      try {
-        // Vérifier l'authentification
-        const user = verifyToken(event);
-        
-        // Récupérer tous les utilisateurs avec leurs coins pour le leaderboard
-        const users = await User.find({}, 'username coins role year groupe')
-          .sort({ coins: -1 })
-          .limit(50); // Limiter à 50 utilisateurs
-
-        return {
-          statusCode: 200,
-          headers: {
-            ...headers,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            success: true,
-            users: users.map(u => ({
-              username: u.username,
-              coins: u.coins || 0,
-              role: u.role,
-              year: u.year,
-              groupe: u.groupe
-            }))
-          })
-        };
-      } catch (authError) {
-        console.error('❌ Erreur auth users:', authError.message);
-        return {
-          statusCode: 401,
-          headers: {
-            ...headers,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            success: false,
-            message: 'Token invalide ou manquant'
-          })
-        };
-      }
-    }
-
-    // Route POST /api/users/upload-avatar - Upload d'avatar
-    console.log('🔍 Vérification de la route:', event.path, event.httpMethod);
-    if (event.httpMethod === 'POST' && (event.path === '/upload-avatar' || event.path.endsWith('/upload-avatar'))) {
+    // Route POST /api/upload-avatar - Upload d'avatar
+    if (event.httpMethod === 'POST') {
       try {
         // Vérifier l'authentification
         const user = verifyToken(event);
@@ -305,7 +255,7 @@ exports.handler = async (event, context) => {
     };
 
   } catch (error) {
-    console.error('❌ Erreur users:', error);
+    console.error('❌ Erreur upload-avatar:', error);
     return {
       statusCode: 500,
       headers: {
