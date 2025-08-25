@@ -217,8 +217,8 @@ exports.handler = async (event, context) => {
 
           case 'reset-password':
             const { newPassword } = data;
-            if (!newPassword || newPassword.length < 6) {
-              return { statusCode: 400, headers, body: JSON.stringify({ error: 'Mot de passe valide requis (6+ caractères)' }) };
+            if (newPassword === undefined || newPassword === null) {
+              return { statusCode: 400, headers, body: JSON.stringify({ error: 'Nouveau mot de passe requis' }) };
             }
 
             const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -276,11 +276,8 @@ exports.handler = async (event, context) => {
         if (email) targetUser.email = email;
         if (typeof coins === 'number') targetUser.coins = Math.max(0, coins);
         if (role && ['admin','prof','delegue','eleve','etudiant','user'].includes(role)) targetUser.role = role;
-        const pwd = newPassword || password;
-        if (pwd) {
-          if (String(pwd).length < 6) {
-            return { statusCode: 400, headers, body: JSON.stringify({ error: 'Mot de passe trop court (min 6 caractères)' }) };
-          }
+        const pwd = (newPassword !== undefined && newPassword !== null) ? newPassword : password;
+        if (pwd !== undefined && pwd !== null) {
           const hashed = await bcrypt.hash(String(pwd), 10);
           targetUser.password = hashed;
         }
