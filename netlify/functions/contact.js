@@ -44,7 +44,6 @@ exports.handler = async (event, context) => {
       hasDescription: !!Description
     });
 
-    // Préparer le contenu
     const html = `
         <h3>Nouveau message depuis le formulaire de contact Planify</h3>
         <p><strong>Nom :</strong> ${name}</p>
@@ -56,45 +55,7 @@ exports.handler = async (event, context) => {
         <p>${Description}</p>
       `;
 
-    // 1) Tentative via Gmail SMTP (Nodemailer)
-    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-      try {
-        const transporter = nodemailer.createTransport({
-          host: 'smtp.gmail.com',
-          port: 465,
-          secure: true,
-          auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS
-          }
-        });
-
-        const mailOptions = {
-          from: `"Planify Contact" <${process.env.EMAIL_USER}>`,
-          replyTo: email_from,
-          to: 'planifymmi@gmail.com',
-          subject: `Nouveau message de contact : ${subject}`,
-          html
-        };
-
-        console.log('Envoi de l\'email via Gmail SMTP...');
-        await transporter.sendMail(mailOptions);
-        console.log('Email envoyé avec succès (SMTP)');
-
-        return {
-          statusCode: 200,
-          headers,
-          body: JSON.stringify({ success: true, message: 'Le message a été envoyé avec succès.' })
-        };
-      } catch (smtpError) {
-        console.error('✉️  Échec SMTP:', smtpError?.message || smtpError);
-        // Fallback vers Resend si disponible
-      }
-    } else {
-      console.warn('EMAIL_USER/PASS manquants, tentative Resend si disponible...');
-    }
-
-    // 2) Fallback via Resend REST API si clé disponible
+    // Préférence: Resend d'abord si configuré (plus fiable en production sans réglages Gmail)
     if (process.env.RESEND_API_KEY) {
       try {
         const payload = {
@@ -104,7 +65,7 @@ exports.handler = async (event, context) => {
           html,
           reply_to: email_from
         };
-        console.log('Envoi via Resend...');
+        console.log('Envoi via Resend (prioritaire)...');
         const resp = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
@@ -125,17 +86,51 @@ exports.handler = async (event, context) => {
           body: JSON.stringify({ success: true, message: 'Le message a été envoyé avec succès.' })
         };
       } catch (resendError) {
-        console.error('✉️  Échec Resend:', resendError?.message || resendError);
+        console.error('✉️  Échec Resend, tentative SMTP Gmail:', resendError?.message || resendError);
       }
     }
 
-    // Si tout a échoué
+    // SMTP Gmail en fallback
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+      try {
+        const transporter = nodemailer.createTransport({
+          host: 'smtp.gmail.com',
+          port: 465,
+          secure: true,
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS
+          }
+        });
+
+        const mailOptions = {
+          from: `"Planify Contact" <${process.env.EMAIL_USER}>`,
+          replyTo: email_from,
+          to: 'planifymmi@gmail.com',
+          subject: `Nouveau message de contact : ${subject}`,
+          html
+        };
+
+        console.log('Envoi de l\'email via Gmail SMTP (fallback)...');
+        await transporter.sendMail(mailOptions);
+        console.log('Email envoyé avec succès (SMTP)');
+
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({ success: true, message: 'Le message a été envoyé avec succès.' })
+        };
+      } catch (smtpError) {
+        console.error('✉️  Échec SMTP aussi:', smtpError?.message || smtpError);
+      }
+    }
+
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({
         success: false,
-        message: "Impossible d'envoyer l'e-mail pour le moment. Vérifiez la configuration SMTP ou RESEND_API_KEY."
+        message: "Impossible d'envoyer l'e-mail pour le moment. Vérifiez RESEND_API_KEY ou les identifiants Gmail.",
       })
     };
 
