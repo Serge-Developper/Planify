@@ -709,7 +709,7 @@ async function archiverTout() {
 const userId = user.value && (user.value._id || user.value.id);
 // Utiliser le booléen normalisé 'archived' pour afficher les archives
 const archivesFiltered = computed(() =>
-  props.events.filter(e => e.archived && (!selectedMatiere.value || e.matiere === selectedMatiere.value))
+  props.events.filter(e => e.archived && !e.hidden && (!selectedMatiere.value || e.matiere === selectedMatiere.value))
 );
 
 async function viderArchive() {
