@@ -753,9 +753,9 @@
         <h2>Profil</h2>
         <div class="profile-info">
           <div><strong>Nom d'utilisateur :</strong> {{ user?.username || user?.name || 'Utilisateur' }}</div>
-                      <div><strong>Rôle :</strong> {{ user?.role ? afficherRole(user.role) : 'Non défini' }}</div>
-            <div><strong>Année :</strong> {{ user?.year ? afficherAnnee(user.year) : 'Non définie' }}</div>
-            <div><strong>Groupe :</strong> {{ user?.groupe || 'Non défini' }}</div>
+          <div><strong>Rôle :</strong> {{ user?.role ? afficherRole(user.role) : 'Non défini' }} ({{ user?.role }})</div>
+          <div><strong>Année :</strong> {{ user?.year ? afficherAnnee(user.year) : 'Non définie' }} ({{ user?.year }})</div>
+          <div><strong>Groupe :</strong> {{ user?.groupe || 'Non défini' }} ({{ user?.groupe }})</div>
           <div class="coins-profile-row">
             <strong>PlanifyCoins :</strong>
             <span class="coins-value">{{ formattedBalance }}</span>
@@ -968,10 +968,14 @@ console.log('🔧 baseUrl:', baseUrl)
 
 const user = computed(() => {
   const currentUser = auth.user;
-  console.log('👤 Utilisateur actuel:', {
+  console.log('👤 Utilisateur actuel complet:', currentUser);
+  console.log('🔍 Détails utilisateur:', {
     id: currentUser?.id,
     _id: currentUser?._id,
     username: currentUser?.username,
+    role: currentUser?.role,
+    year: currentUser?.year,
+    groupe: currentUser?.groupe,
     avatar: currentUser?.avatar,
     hasToken: !!currentUser?.token
   });
