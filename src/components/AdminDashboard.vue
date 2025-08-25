@@ -527,8 +527,27 @@ const showEmploi = ref(false);
 
 onMounted(async () => {
   try {
-    const res = await axios.get(`${API_URL}/events`);
-    events.value = Array.isArray(res.data) ? res.data : (Array.isArray(res.data.events) ? res.data.events : []);
+    // Utiliser l'appel sécurisé (ajoute le Bearer token)
+    const res = await secureApiCall('/events');
+    const raw = Array.isArray(res) ? res : (Array.isArray(res?.events) ? res.events : []);
+    // Normaliser les propriétés en français attendues par l'UI admin
+    events.value = raw.map(ev => ({
+      _id: ev._id,
+      titre: ev.titre ?? ev.title ?? '',
+      description: ev.description ?? '',
+      type: (() => {
+        const t = (ev.type ?? '').toLowerCase();
+        if (t === 'exam' || t === 'examen') return 'examen';
+        if (t === 'devoir') return 'devoir';
+        return t || 'devoir';
+      })(),
+      matiere: ev.matiere ?? ev.subject ?? '',
+      date: ev.date ?? (ev.dueDate ? new Date(ev.dueDate).toISOString().slice(0,10) : ''),
+      heure: ev.heure ?? '',
+      groupe: ev.groupe ?? 'Promo',
+      year: ev.year ?? '',
+      groupes: Array.isArray(ev.groupes) ? ev.groupes : [],
+    }));
   } catch (e) {
     events.value = [];
   }
@@ -555,13 +574,11 @@ function handleEditRoleChange() {
   }
 }
 
-const filteredEvents = computed(() =>
-  Array.isArray(events.value)
-    ? selectedMatiere.value === 'Toutes'
-      ? events.value
-      : events.value.filter(e => e.matiere === selectedMatiere.value)
-    : []
-);
+const filteredEvents = computed(() => {
+  if (!Array.isArray(events.value)) return [];
+  if (selectedMatiere.value === 'Toutes') return events.value;
+  return events.value.filter(e => (e.matiere || e.subject) === selectedMatiere.value);
+});
 
 function formatDate(dateStr) {
   if (!dateStr) return '';
