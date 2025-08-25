@@ -9,13 +9,27 @@ const jwt = require('jsonwebtoken');
  */
 
 // Modèle Event pour les devoirs/événements
+// Unifie l'ancien schéma (EN) et le schéma actuel (FR)
 const eventSchema = new mongoose.Schema({
-  title: String,
+  // Schéma FR actuel (utilisé par le frontend ListeDevoirs/Admin)
+  titre: String,
   description: String,
-  type: { type: String, enum: ['devoir', 'examen', 'archive'], default: 'devoir' },
+  type: { type: String }, // 'devoir' | 'exam' | 'examen' | 'archive'
+  matiere: String,
+  date: String, // yyyy-mm-dd
+  heure: String, // HH:mm
+  groupe: String,
+  groupes: [{ type: String }],
+  year: String,
+  archivedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  checkedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  createdBy: String,
+  createdAt: { type: Date, default: Date.now },
+
+  // Ancien schéma (legacy EN)
+  title: String,
   subject: String,
   dueDate: Date,
-  createdAt: { type: Date, default: Date.now },
   userId: String,
   isCompleted: { type: Boolean, default: false },
   priority: { type: String, enum: ['low', 'medium', 'high'], default: 'medium' }
@@ -39,14 +53,6 @@ const verifyToken = (req) => {
   }
 };
 
-// Fonction utilitaire pour extraire l'ID utilisateur du token
-const getUserId = (user) => {
-  if (typeof user === 'string') {
-    return user;
-  }
-  return user.id || user._id || user.userId;
-};
-
 // Configuration CORS
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -54,15 +60,15 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
 };
 
-// Handler pour récupérer tous les événements
+// Handler pour récupérer tous les événements (compat FR)
 const handleGetEvents = async (event) => {
   try {
-    const user = verifyToken(event);
-    const userId = getUserId(user);
-    
-    // Récupérer tous les événements de l'utilisateur
-    const events = await Event.find({ userId: userId })
-      .sort({ dueDate: 1 })
+    // Vérifier l'authentification (obligatoire) mais ne pas filtrer par userId
+    verifyToken(event);
+
+    // Récupérer tous les événements existants (schéma FR et legacy)
+    const events = await Event.find({})
+      .sort({ date: 1, dueDate: 1, createdAt: 1 })
       .lean();
 
     return {
@@ -82,30 +88,45 @@ const handleGetEvents = async (event) => {
   }
 };
 
-// Handler pour créer un nouvel événement
+// Handler pour créer un nouvel événement (laisse la compat legacy pour l’instant)
 const handleCreateEvent = async (event) => {
   try {
     const user = verifyToken(event);
-    const userId = getUserId(user);
     const body = JSON.parse(event.body || '{}');
-    const { title, description, type, subject, dueDate, priority } = body;
 
-    if (!title || !subject || !dueDate) {
+    // Accepter les deux formats d'entrée
+    const titre = body.titre ?? body.title;
+    const matiere = body.matiere ?? body.subject;
+    const type = body.type ?? 'devoir';
+    const description = body.description ?? '';
+    // date/heure (FR) ou dueDate (legacy)
+    const date = body.date ?? (body.dueDate ? new Date(body.dueDate).toISOString().slice(0,10) : '');
+    const heure = body.heure ?? '';
+
+    if (!titre || !matiere || (!date && !body.dueDate)) {
       return {
         statusCode: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ success: false, message: 'Titre, matière et date de rendu requis' })
+        body: JSON.stringify({ success: false, message: 'Titre, matière et date requis' })
       };
     }
 
     const newEvent = new Event({
-      title,
+      titre,
       description,
-      type: type || 'devoir',
-      subject,
-      dueDate: new Date(dueDate),
-      userId: userId,
-      priority: priority || 'medium'
+      type,
+      matiere,
+      date,
+      heure,
+      groupe: body.groupe || 'Promo',
+      groupes: Array.isArray(body.groupes) ? body.groupes : [],
+      year: body.year || '',
+      // Legacy mirrors
+      title: titre,
+      subject: matiere,
+      dueDate: body.dueDate ? new Date(body.dueDate) : (date ? new Date(date) : undefined),
+      priority: body.priority || 'medium',
+      createdBy: user.id || user._id
     });
 
     await newEvent.save();
@@ -113,11 +134,7 @@ const handleCreateEvent = async (event) => {
     return {
       statusCode: 201,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        success: true,
-        message: 'Devoir créé avec succès',
-        event: newEvent
-      })
+      body: JSON.stringify({ success: true, message: 'Devoir créé avec succès', event: newEvent })
     };
   } catch (error) {
     return {
@@ -128,13 +145,12 @@ const handleCreateEvent = async (event) => {
   }
 };
 
-// Handler pour mettre à jour un événement
+// Handler pour mettre à jour un événement (compat simple)
 const handleUpdateEvent = async (event) => {
   try {
-    const user = verifyToken(event);
-    const userId = getUserId(user);
+    verifyToken(event);
     const body = JSON.parse(event.body || '{}');
-    const { eventId, title, description, type, subject, dueDate, isCompleted, priority } = body;
+    const { eventId } = body;
 
     if (!eventId) {
       return {
@@ -144,7 +160,7 @@ const handleUpdateEvent = async (event) => {
       };
     }
 
-    const eventDoc = await Event.findOne({ _id: eventId, userId: userId });
+    const eventDoc = await Event.findById(eventId);
     if (!eventDoc) {
       return {
         statusCode: 404,
@@ -153,25 +169,27 @@ const handleUpdateEvent = async (event) => {
       };
     }
 
-    // Mettre à jour les champs fournis
-    if (title !== undefined) eventDoc.title = title;
-    if (description !== undefined) eventDoc.description = description;
-    if (type !== undefined) eventDoc.type = type;
-    if (subject !== undefined) eventDoc.subject = subject;
-    if (dueDate !== undefined) eventDoc.dueDate = new Date(dueDate);
-    if (isCompleted !== undefined) eventDoc.isCompleted = isCompleted;
-    if (priority !== undefined) eventDoc.priority = priority;
+    // Mettre à jour les champs fournis (FR/legacy)
+    const assignIfDefined = (k, v) => { if (v !== undefined) eventDoc[k] = v; };
+    assignIfDefined('titre', body.titre ?? body.title);
+    assignIfDefined('description', body.description);
+    assignIfDefined('type', body.type);
+    assignIfDefined('matiere', body.matiere ?? body.subject);
+    assignIfDefined('date', body.date);
+    assignIfDefined('heure', body.heure);
+    assignIfDefined('groupe', body.groupe);
+    if (Array.isArray(body.groupes)) eventDoc.groupes = body.groupes;
+    assignIfDefined('year', body.year);
+    assignIfDefined('title', body.title ?? body.titre);
+    assignIfDefined('subject', body.subject ?? body.matiere);
+    if (body.dueDate !== undefined) eventDoc.dueDate = new Date(body.dueDate);
 
     await eventDoc.save();
 
     return {
       statusCode: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        success: true,
-        message: 'Événement mis à jour avec succès',
-        event: eventDoc
-      })
+      body: JSON.stringify({ success: true, message: 'Événement mis à jour avec succès', event: eventDoc })
     };
   } catch (error) {
     return {
@@ -185,8 +203,7 @@ const handleUpdateEvent = async (event) => {
 // Handler pour supprimer un événement
 const handleDeleteEvent = async (event) => {
   try {
-    const user = verifyToken(event);
-    const userId = getUserId(user);
+    verifyToken(event);
     const body = JSON.parse(event.body || '{}');
     const { eventId } = body;
 
@@ -198,7 +215,7 @@ const handleDeleteEvent = async (event) => {
       };
     }
 
-    const eventDoc = await Event.findOneAndDelete({ _id: eventId, userId: userId });
+    const eventDoc = await Event.findByIdAndDelete(eventId);
     if (!eventDoc) {
       return {
         statusCode: 404,
@@ -210,10 +227,7 @@ const handleDeleteEvent = async (event) => {
     return {
       statusCode: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        success: true,
-        message: 'Événement supprimé avec succès'
-      })
+      body: JSON.stringify({ success: true, message: 'Événement supprimé avec succès' })
     };
   } catch (error) {
     return {
@@ -236,9 +250,7 @@ exports.handler = async (event, context) => {
 
   try {
     // Connexion à MongoDB
-    await mongoose.connect(process.env.MONGODB_URI || '', {
-      bufferCommands: false
-    });
+    await mongoose.connect(process.env.MONGODB_URI || '', { bufferCommands: false });
 
     // Router selon la méthode HTTP
     switch (event.httpMethod) {
@@ -263,10 +275,7 @@ exports.handler = async (event, context) => {
     return {
       statusCode: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        success: false,
-        message: 'Erreur serveur interne'
-      })
+      body: JSON.stringify({ success: false, message: 'Erreur serveur interne' })
     };
   } finally {
     // Fermer la connexion MongoDB
