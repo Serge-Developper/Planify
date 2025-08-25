@@ -201,14 +201,21 @@ const handleCoinsRoute = async (event, path) => {
   // Gérer le chemin racine (/api/coins ou /.netlify/functions/coins)
   const isRoot = /\/api\/coins$|\.netlify\/functions\/coins$/.test(path);
   if (isRoot) {
-    return await handleCoinsRoot(event);
+    // Déléguer au gestionnaire racine pour les requêtes POST avec action
+    if (event.httpMethod === 'POST') {
+      return await handleCoinsRoot(event);
+    }
+    // GET root -> status
+    if (event.httpMethod === 'GET') {
+      return await handleSpinStatus(event);
+    }
   }
 
-  // Extraire l\'endpoint après /api/coins/ ou /.netlify/functions/coins/
-  let endpoint = path.replace('/api/coins/', '');
-  endpoint = endpoint.replace('/.netlify/functions/coins/', '');
+  // Extraire la dernière partie du chemin après /coins/
+  const subPathMatch = path.match(/\/coins\/(.+)$/);
+  const subPath = subPathMatch ? subPathMatch[1] : '';
 
-  switch (endpoint) {
+  switch (subPath) {
     case 'user-coins':
       return await handleUserCoins(event);
     case 'spin-status':
@@ -217,6 +224,8 @@ const handleCoinsRoute = async (event, path) => {
       return await handleInventory(event);
     case 'equip':
       return await handleEquip(event);
+    case 'unequip':
+      return await handleUnequip(event);
     case 'weekly-items':
       return await handleWeeklyItems(event);
     case 'border-color':
@@ -557,6 +566,28 @@ const handleWeeklyItems = async (event) => {
     };
   }
 };
+
+// Handler pour unequip
+const handleUnequip = async (event) => {
+  try {
+    const user = verifyToken(event)
+    let userId
+    if (typeof user === 'object' && user !== null) {
+      userId = user.id || user._id
+    } else {
+      userId = user
+    }
+    const userDoc = await User.findById(userId)
+    if (!userDoc) {
+      return { statusCode: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success: false, message: 'Utilisateur non trouvé' }) }
+    }
+    userDoc.equippedItemId = null
+    await userDoc.save()
+    return { statusCode: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success: true, message: 'Item déséquipé' }) }
+  } catch (error) {
+    return { statusCode: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success: false, message: 'Token invalide' }) }
+  }
+}
 
 // Handler pour border-color
 const handleBorderColor = async (event) => {
