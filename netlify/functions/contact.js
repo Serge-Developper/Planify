@@ -55,42 +55,7 @@ exports.handler = async (event, context) => {
         <p>${Description}</p>
       `;
 
-    // Préférence: Resend d'abord si configuré (plus fiable en production sans réglages Gmail)
-    if (process.env.RESEND_API_KEY) {
-      try {
-        const payload = {
-          from: 'Planify <onboarding@resend.dev>',
-          to: ['planifymmi@gmail.com'],
-          subject: `Nouveau message de contact : ${subject}`,
-          html,
-          reply_to: email_from
-        };
-        console.log('Envoi via Resend (prioritaire)...');
-        const resp = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(payload)
-        });
-        const data = await resp.json().catch(() => ({}));
-        if (!resp.ok) {
-          console.error('Resend non OK:', resp.status, data);
-          throw new Error('Resend error ' + resp.status);
-        }
-        console.log('Email envoyé avec succès (Resend)');
-        return {
-          statusCode: 200,
-          headers,
-          body: JSON.stringify({ success: true, message: 'Le message a été envoyé avec succès.' })
-        };
-      } catch (resendError) {
-        console.error('✉️  Échec Resend, tentative SMTP Gmail:', resendError?.message || resendError);
-      }
-    }
-
-    // SMTP Gmail en fallback
+    // SMTP Gmail en priorité
     if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
       try {
         const transporter = nodemailer.createTransport({
@@ -111,7 +76,7 @@ exports.handler = async (event, context) => {
           html
         };
 
-        console.log('Envoi de l\'email via Gmail SMTP (fallback)...');
+        console.log('Envoi de l\'email via Gmail SMTP (priorité)...');
         await transporter.sendMail(mailOptions);
         console.log('Email envoyé avec succès (SMTP)');
 
@@ -121,16 +86,73 @@ exports.handler = async (event, context) => {
           body: JSON.stringify({ success: true, message: 'Le message a été envoyé avec succès.' })
         };
       } catch (smtpError) {
-        console.error('✉️  Échec SMTP aussi:', smtpError?.message || smtpError);
+        console.error('✉️  Échec SMTP:', smtpError?.message || smtpError);
+        if (!process.env.RESEND_API_KEY) {
+          return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({
+              success: false,
+              message: "Échec SMTP (Gmail). Vérifiez EMAIL_USER/EMAIL_PASS (mot de passe d'application 16 caractères, sans espaces) et que l'authentification à deux facteurs est activée."
+            })
+          };
+        }
+        // sinon, on tentera Resend plus bas
+      }
+    } else {
+      console.warn('EMAIL_USER/PASS manquants, tentative Resend si disponible...');
+    }
+
+    // Fallback via Resend s’il est configuré
+    if (process.env.RESEND_API_KEY) {
+      try {
+        const payload = {
+          from: 'Planify <onboarding@resend.dev>',
+          to: ['planifymmi@gmail.com'],
+          subject: `Nouveau message de contact : ${subject}`,
+          html,
+          reply_to: email_from
+        };
+        console.log('Envoi via Resend (fallback)...');
+        const resp = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+        const data = await resp.json().catch(() => ({}));
+        if (!resp.ok) {
+          console.error('Resend non OK:', resp.status, data);
+          throw new Error('Resend error ' + resp.status);
+        }
+        console.log('Email envoyé avec succès (Resend)');
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({ success: true, message: 'Le message a été envoyé avec succès.' })
+        };
+      } catch (resendError) {
+        console.error('✉️  Échec Resend:', resendError?.message || resendError);
+        return {
+          statusCode: 500,
+          headers,
+          body: JSON.stringify({
+            success: false,
+            message: "Impossible d'envoyer l'e-mail (SMTP et Resend ont échoué)."
+          })
+        };
       }
     }
 
+    // Si aucune méthode n'est disponible
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({
         success: false,
-        message: "Impossible d'envoyer l'e-mail pour le moment. Vérifiez RESEND_API_KEY ou les identifiants Gmail.",
+        message: "Aucun service d'envoi configuré. Ajoutez EMAIL_USER/EMAIL_PASS ou RESEND_API_KEY."
       })
     };
 
