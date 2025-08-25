@@ -1465,6 +1465,16 @@ function logout() {
   router.push('/')
 }
 async function handleProfile() {
+  console.log('🚀 handleProfile appelé');
+  console.log('👤 User actuel:', user.value);
+  console.log('🔍 ID check:', {
+    hasUser: !!user.value,
+    hasId: !!user.value?.id,
+    has_id: !!user.value?._id,
+    idValue: user.value?.id,
+    _idValue: user.value?._id
+  });
+  
   // Récupérer les données utilisateur complètes depuis la base de données
   if (user.value && (user.value.id || user.value._id)) {
     try {
@@ -1481,6 +1491,13 @@ async function handleProfile() {
     } catch (error) {
       console.error('❌ Erreur lors de la récupération du profil:', error);
     }
+  } else {
+    console.log('❌ Condition non remplie - pas d\'appel API:', {
+      hasUser: !!user.value,
+      hasId: !!user.value?.id,
+      has_id: !!user.value?._id,
+      userKeys: user.value ? Object.keys(user.value) : 'no user'
+    });
   }
   
   showProfilePopup.value = true
