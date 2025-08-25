@@ -729,10 +729,7 @@ async function viderArchive() {
           action: 'uncheck'
         }, { headers: { Authorization: `Bearer ${user.value.token}` } });
       } catch (e) { /* tolérant si déjà décoché */ }
-      // 3) Tenter la suppression définitive (réussit si autorisé côté backend)
-      try {
-        await axios.delete(`${API_URL}/events/${event._id}`, { headers: { Authorization: `Bearer ${user.value.token}` } });
-      } catch (e) { /* si non autorisé, on ignore et laisse la tâche désarchivée et décochée */ }
+      // Suppression globale désactivée ici (action personnelle uniquement)
     }
     emit('refresh-events');
     playSound(supprimerArchiveSound)
@@ -757,7 +754,7 @@ async function viderArchiveType(type) {
           action: 'uncheck'
         }, { headers: { Authorization: `Bearer ${user.value.token}` } }); 
       } catch {}
-      try { await axios.delete(`${API_URL}/events/${event._id}`, { headers: { Authorization: `Bearer ${user.value.token}` } }); } catch {}
+      // Suppression globale désactivée ici (action personnelle uniquement)
     }
     emit('refresh-events');
     playSound(supprimerArchiveSound)
@@ -782,7 +779,7 @@ async function viderArchiveMatiere(matiere) {
           action: 'uncheck'
         }, { headers: { Authorization: `Bearer ${user.value.token}` } }); 
       } catch {}
-      try { await axios.delete(`${API_URL}/events/${event._id}`, { headers: { Authorization: `Bearer ${user.value.token}` } }); } catch {}
+      // Suppression globale désactivée ici (action personnelle uniquement)
     }
     emit('refresh-events');
     playSound(supprimerArchiveSound)
@@ -807,7 +804,7 @@ async function viderArchiveTypeMatiere(type, matiere) {
           action: 'uncheck'
         }, { headers: { Authorization: `Bearer ${user.value.token}` } }); 
       } catch {}
-      try { await axios.delete(`${API_URL}/events/${event._id}`, { headers: { Authorization: `Bearer ${user.value.token}` } }); } catch {}
+      // Suppression globale désactivée ici (action personnelle uniquement)
     }
     emit('refresh-events');
     playSound(supprimerArchiveSound)
