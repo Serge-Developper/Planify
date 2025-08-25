@@ -753,9 +753,9 @@
         <h2>Profil</h2>
         <div class="profile-info">
           <div><strong>Nom d'utilisateur :</strong> {{ user?.username || user?.name || 'Utilisateur' }}</div>
-          <div><strong>Rôle :</strong> {{ user?.role ? afficherRole(user.role) : 'Non défini' }} ({{ user?.role }})</div>
-          <div><strong>Année :</strong> {{ user?.year ? afficherAnnee(user.year) : 'Non définie' }} ({{ user?.year }})</div>
-          <div><strong>Groupe :</strong> {{ user?.groupe || 'Non défini' }} ({{ user?.groupe }})</div>
+          <div><strong>Rôle :</strong> {{ user?.role ? afficherRole(user.role) : 'Non défini' }}</div>
+          <div><strong>Année :</strong> {{ user?.year ? afficherAnnee(user.year) : 'Non définie' }}</div>
+          <div><strong>Groupe :</strong> {{ user?.groupe || 'Non défini' }}</div>
           <div class="coins-profile-row">
             <strong>PlanifyCoins :</strong>
             <span class="coins-value">{{ formattedBalance }}</span>
@@ -1464,7 +1464,25 @@ function logout() {
   
   router.push('/')
 }
-function handleProfile() {
+async function handleProfile() {
+  // Récupérer les données utilisateur complètes depuis la base de données
+  if (user.value && user.value.id) {
+    try {
+      console.log('🔄 Récupération des données utilisateur complètes...');
+      const response = await secureApiCall('GET', '/users/profile');
+      
+      if (response.success && response.user) {
+        console.log('✅ Données utilisateur récupérées:', response.user);
+        // Mettre à jour l'utilisateur dans le store avec les données complètes
+        auth.login(response.user);
+      } else {
+        console.log('❌ Erreur lors de la récupération des données utilisateur');
+      }
+    } catch (error) {
+      console.error('❌ Erreur lors de la récupération du profil:', error);
+    }
+  }
+  
   showProfilePopup.value = true
   showUserDropdown.value = false
 }

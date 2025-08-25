@@ -93,7 +93,7 @@ exports.handler = async (event, context) => {
     });
 
     // Route GET /api/users - Récupérer la liste des utilisateurs pour le leaderboard
-    if (event.httpMethod === 'GET') {
+    if (event.httpMethod === 'GET' && !event.path.includes('/profile')) {
       try {
         // Vérifier l'authentification
         const user = verifyToken(event);
@@ -122,6 +122,80 @@ exports.handler = async (event, context) => {
         };
       } catch (authError) {
         console.error('❌ Erreur auth users:', authError.message);
+        return {
+          statusCode: 401,
+          headers: {
+            ...headers,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            success: false,
+            message: 'Token invalide ou manquant'
+          })
+        };
+      }
+    }
+
+    // Route GET /api/users/profile - Récupérer le profil utilisateur complet
+    if (event.httpMethod === 'GET' && event.path.includes('/profile')) {
+      try {
+        // Vérifier l'authentification
+        const decodedUser = verifyToken(event);
+        
+        // Récupérer l'utilisateur complet depuis la base de données
+        const user = await User.findById(decodedUser.userId || decodedUser.id);
+        
+        if (!user) {
+          return {
+            statusCode: 404,
+            headers: {
+              ...headers,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              success: false,
+              message: 'Utilisateur non trouvé'
+            })
+          };
+        }
+
+        console.log('✅ Profil utilisateur récupéré:', {
+          username: user.username,
+          role: user.role,
+          year: user.year,
+          groupe: user.groupe,
+          coins: user.coins
+        });
+
+        return {
+          statusCode: 200,
+          headers: {
+            ...headers,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            success: true,
+            user: {
+              id: user._id,
+              username: user.username,
+              role: user.role,
+              year: user.year,
+              groupe: user.groupe,
+              coins: user.coins || 0,
+              avatar: user.avatar && user.avatar.data ? 
+                `data:${user.avatar.mimetype};base64,${user.avatar.data}` : 
+                user.avatar, // Fallback pour l'ancien format
+              purchasedItems: user.purchasedItems || [],
+              equippedItemId: user.equippedItemId,
+              lastSpinDate: user.lastSpinDate,
+              spinCount: user.spinCount || 0,
+              weeklySpinCount: user.weeklySpinCount || 0,
+              lastWeeklyReset: user.lastWeeklyReset
+            }
+          })
+        };
+      } catch (authError) {
+        console.error('❌ Erreur auth profile:', authError.message);
         return {
           statusCode: 401,
           headers: {
