@@ -30,7 +30,7 @@
     "*.ts",
     "auth/*.js",
     "auth/*.ts",
-    "types.d.ts"
+    "types-definitions.ts"
   ],
   "exclude": [
     "node_modules",
