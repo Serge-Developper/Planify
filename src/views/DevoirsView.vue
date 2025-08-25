@@ -18,7 +18,7 @@
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import ListeDevoirs from '@/components/ListeDevoirs.vue'
-import { API_URL } from '@/api'
+import { API_URL, secureApiCall } from '@/api'
 import { useAuthStore } from '@/stores/auth'
 
 const events = ref([])
@@ -28,29 +28,36 @@ const authStore = useAuthStore()
 const loadEvents = async () => {
   try {
     loading.value = true
-    const token = authStore.user?.token || localStorage.getItem('token')
-    
-    if (!token) {
-      console.error('No token found')
-      return
-    }
+    // Utiliser l'appel sécurisé qui injecte le token
+    const res = await secureApiCall('/events')
+    const raw = Array.isArray(res) ? res : (Array.isArray(res?.events) ? res.events : [])
+    const userId = authStore.user?.id || authStore.user?._id
 
-    const response = await axios.get(`${API_URL}/events`, {
-      headers: { 
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
+    // Normaliser pour ListeDevoirs (champs FR)
+    events.value = raw.map(e => {
+      const titre = e.titre ?? e.title ?? ''
+      const matiere = e.matiere ?? e.subject ?? ''
+      const date = e.date ?? (e.dueDate ? new Date(e.dueDate).toISOString().slice(0,10) : '')
+      const heure = e.heure ?? ''
+      let type = (e.type ?? '').toLowerCase()
+      if (type === 'exam') type = 'examen'
+      if (!type) type = 'devoir'
+      const checked = Array.isArray(e.checkedBy) ? e.checkedBy.includes(userId) : !!e.isCompleted
+      const archived = Array.isArray(e.archivedBy) ? e.archivedBy.includes(userId) : false
+      return {
+        _id: e._id,
+        titre,
+        matiere,
+        date,
+        heure,
+        type,
+        groupe: e.groupe ?? 'Promo',
+        year: e.year ?? '',
+        description: e.description ?? '',
+        checked,
+        archived,
       }
     })
-    
-    if (response.data) {
-      // Ajouter les propriétés computed pour chaque event
-      events.value = response.data.map(event => ({
-        ...event,
-        // Ajouter les propriétés que le composant ListeDevoirs attend
-        checked: event.checkedBy && event.checkedBy.includes(authStore.user?.id || authStore.user?._id),
-        archived: event.archivedBy && event.archivedBy.includes(authStore.user?.id || authStore.user?._id)
-      }))
-    }
   } catch (error) {
     console.error('Erreur lors du chargement des events:', error)
     events.value = []
