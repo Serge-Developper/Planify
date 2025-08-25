@@ -418,7 +418,7 @@ function getAvailableQuestions(index) {
     { id: 110, name: 'Bordure Arc-en-ciel (couleur)' },
     { id: 111, name: 'Bordure Feu (couleur)' },
     { id: 112, name: 'Bordure Glace (couleur)' },
-    // { id: 113, name: 'Bordure Coucher de soleil (couleur)' },
+    { id: 113, name: 'Bordure Coucher de soleil (couleur)' },
     { id: 114, name: 'Bordure Océan (couleur)' },
     { id: 115, name: 'Bordure Forêt (couleur)' },
     { id: 116, name: 'Bordure Désert (couleur)' },
