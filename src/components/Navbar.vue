@@ -929,12 +929,16 @@ function getDynNavbarAssetStyle(asset) {
   const s = (asset && (isMobile.value ? asset.navbarStyleMobile : asset.navbarStyle))
     || (asset && (isMobile.value ? asset.collectionStyleMobile : asset.collectionStyle))
     || asset?.style || {}
-  const style = { position: 'absolute', objectFit: s.objectFit || 'contain', zIndex: typeof s.zIndex === 'number' ? s.zIndex : 1 }
-  if (typeof s.top === 'number') style.top = s.top + 'px'
-  if (typeof s.left === 'number') style.left = s.left + 'px'
-  if (typeof s.width === 'number') style.width = s.width + 'px'
-  if (typeof s.height === 'number') style.height = s.height + 'px'
-  if (typeof s.rotate === 'number') style.transform = `rotate(${s.rotate}deg)`
+  const num = (v) => {
+    const n = Number(v)
+    return Number.isFinite(n) ? n : null
+  }
+  const style = { position: 'absolute', objectFit: s.objectFit || 'contain', zIndex: num(s.zIndex) ?? 1 }
+  const top = num(s.top); if (top !== null) style.top = top + 'px'
+  const left = num(s.left); if (left !== null) style.left = left + 'px'
+  const w = num(s.width); if (w !== null) style.width = w + 'px'
+  const h = num(s.height); if (h !== null) style.height = h + 'px'
+  const r = num(s.rotate); if (r !== null) style.transform = `rotate(${r}deg)`
   return style
 }
 function getDynNavbarOverlayStyle(asset) {
