@@ -28,22 +28,6 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    // Vérifier les variables d'environnement
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-      console.error('Variables d\'environnement manquantes:', {
-        EMAIL_USER: !!process.env.EMAIL_USER,
-        EMAIL_PASS: !!process.env.EMAIL_PASS
-      });
-      return {
-        statusCode: 500,
-        headers,
-        body: JSON.stringify({
-          success: false,
-          message: "Configuration email manquante. Veuillez contacter l'administrateur."
-        })
-      };
-    }
-
     const { name, phone, email_from, Promo, subject, Description } = JSON.parse(event.body || '{}');
 
     if (!name || !email_from || !subject || !Description) {
@@ -60,24 +44,8 @@ exports.handler = async (event, context) => {
       hasDescription: !!Description
     });
 
-    // Create a transporter object using a Google SMTP account
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
-    });
-
-    // Email options
-    const mailOptions = {
-      // Utiliser l'adresse du compte comme expéditeur (DMARC/SPF safe)
-      from: `"Planify Contact" <${process.env.EMAIL_USER}>`,
-      // Répondre directement à l'expéditeur du formulaire
-      replyTo: email_from,
-      to: 'planifymmi@gmail.com', // Your receiving email address
-      subject: `Nouveau message de contact : ${subject}`,
-      html: `
+    // Préparer le contenu
+    const html = `
         <h3>Nouveau message depuis le formulaire de contact Planify</h3>
         <p><strong>Nom :</strong> ${name}</p>
         <p><strong>Email :</strong> ${email_from}</p>
@@ -86,22 +54,88 @@ exports.handler = async (event, context) => {
         <hr>
         <h4>Sujet : ${subject}</h4>
         <p>${Description}</p>
-      `
-    };
+      `;
 
-    console.log('Envoi de l\'email...');
-    
-    // Send the email
-    await transporter.sendMail(mailOptions);
+    // 1) Tentative via Gmail SMTP (Nodemailer)
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+      try {
+        const transporter = nodemailer.createTransport({
+          host: 'smtp.gmail.com',
+          port: 465,
+          secure: true,
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS
+          }
+        });
 
-    console.log('Email envoyé avec succès');
+        const mailOptions = {
+          from: `"Planify Contact" <${process.env.EMAIL_USER}>`,
+          replyTo: email_from,
+          to: 'planifymmi@gmail.com',
+          subject: `Nouveau message de contact : ${subject}`,
+          html
+        };
 
+        console.log('Envoi de l\'email via Gmail SMTP...');
+        await transporter.sendMail(mailOptions);
+        console.log('Email envoyé avec succès (SMTP)');
+
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({ success: true, message: 'Le message a été envoyé avec succès.' })
+        };
+      } catch (smtpError) {
+        console.error('✉️  Échec SMTP:', smtpError?.message || smtpError);
+        // Fallback vers Resend si disponible
+      }
+    } else {
+      console.warn('EMAIL_USER/PASS manquants, tentative Resend si disponible...');
+    }
+
+    // 2) Fallback via Resend REST API si clé disponible
+    if (process.env.RESEND_API_KEY) {
+      try {
+        const payload = {
+          from: 'Planify <onboarding@resend.dev>',
+          to: ['planifymmi@gmail.com'],
+          subject: `Nouveau message de contact : ${subject}`,
+          html,
+          reply_to: email_from
+        };
+        console.log('Envoi via Resend...');
+        const resp = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+        const data = await resp.json().catch(() => ({}));
+        if (!resp.ok) {
+          console.error('Resend non OK:', resp.status, data);
+          throw new Error('Resend error ' + resp.status);
+        }
+        console.log('Email envoyé avec succès (Resend)');
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({ success: true, message: 'Le message a été envoyé avec succès.' })
+        };
+      } catch (resendError) {
+        console.error('✉️  Échec Resend:', resendError?.message || resendError);
+      }
+    }
+
+    // Si tout a échoué
     return {
-      statusCode: 200,
+      statusCode: 500,
       headers,
       body: JSON.stringify({
-        success: true,
-        message: 'Le message a été envoyé avec succès.'
+        success: false,
+        message: "Impossible d'envoyer l'e-mail pour le moment. Vérifiez la configuration SMTP ou RESEND_API_KEY."
       })
     };
 
