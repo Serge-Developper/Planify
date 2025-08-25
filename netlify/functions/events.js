@@ -37,6 +37,14 @@ const eventSchema = new mongoose.Schema({
 
 const Event = mongoose.model('Event', eventSchema);
 
+// Modèle User minimal pour récupérer year/groupe/role
+const userSchema = new mongoose.Schema({
+  role: String,
+  year: String,
+  groupe: String
+});
+const User = mongoose.models.User || mongoose.model('User', userSchema);
+
 // Middleware d'authentification simplifié
 const verifyToken = (req) => {
   const authHeader = req.headers.authorization;
@@ -63,11 +71,45 @@ const corsHeaders = {
 // Handler pour récupérer tous les événements (compat FR)
 const handleGetEvents = async (event) => {
   try {
-    // Vérifier l'authentification (obligatoire) mais ne pas filtrer par userId
-    verifyToken(event);
+    // Vérifier l'authentification (obligatoire)
+    const decoded = verifyToken(event);
 
-    // Récupérer tous les événements existants (schéma FR et legacy)
-    const events = await Event.find({})
+    // Filtrage selon l'utilisateur (élève/délégué seulement)
+    let mongoFilter = {};
+    try {
+      const userId = decoded.id || decoded._id;
+      if (userId) {
+        const u = await User.findById(userId).lean();
+        if (u && u.role && u.role !== 'admin' && u.role !== 'prof') {
+          const allowedGroups = [];
+          if (u.groupe) allowedGroups.push(u.groupe);
+          allowedGroups.push('Promo');
+
+          mongoFilter = {
+            $and: [
+              {
+                $or: [
+                  { year: { $exists: false } },
+                  { year: '' },
+                  ...(u.year ? [{ year: u.year }] : [])
+                ]
+              },
+              {
+                $or: [
+                  { groupe: { $in: allowedGroups } },
+                  { groupes: { $in: allowedGroups } },
+                  { groupes: { $exists: false } },
+                  { groupe: { $exists: false } }
+                ]
+              }
+            ]
+          };
+        }
+      }
+    } catch {}
+
+    // Récupérer les événements (filtrés si nécessaire)
+    const events = await Event.find(mongoFilter)
       .sort({ date: 1, dueDate: 1, createdAt: 1 })
       .lean();
 
@@ -200,13 +242,13 @@ const handleUpdateEvent = async (event) => {
   }
 };
 
-// Handler pour supprimer un événement
+// Handler pour supprimer un événement (compat URL & query)
 const handleDeleteEvent = async (event) => {
   try {
     verifyToken(event);
     const body = JSON.parse(event.body || '{}');
     let { eventId } = body;
-    // Supporter aussi /api/events/:id et /api/events?eventId=:id
+    // Supporter aussi /api/events/:id et ?eventId=:id
     if (!eventId) {
       const qs = event.queryStringParameters || {};
       if (qs.eventId || qs.id) eventId = qs.eventId || qs.id;

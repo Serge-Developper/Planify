@@ -32,9 +32,11 @@ const loadEvents = async () => {
     const res = await secureApiCall('/events')
     const raw = Array.isArray(res) ? res : (Array.isArray(res?.events) ? res.events : [])
     const userId = authStore.user?.id || authStore.user?._id
+    const userYear = authStore.user?.year || ''
+    const userGroup = authStore.user?.groupe || ''
 
     // Normaliser pour ListeDevoirs (champs FR)
-    events.value = raw.map(e => {
+    const normalized = raw.map(e => {
       const titre = e.titre ?? e.title ?? ''
       const matiere = e.matiere ?? e.subject ?? ''
       const date = e.date ?? (e.dueDate ? new Date(e.dueDate).toISOString().slice(0,10) : '')
@@ -53,11 +55,20 @@ const loadEvents = async () => {
         heure,
         type,
         groupe: e.groupe ?? 'Promo',
+        groupes: Array.isArray(e.groupes) ? e.groupes : [],
         year: e.year ?? '',
         description: e.description ?? '',
         checked,
         archived,
       }
+    })
+
+    // Filtre de sécurité côté client (en plus du backend) : année et groupe
+    events.value = normalized.filter(ev => {
+      const okYear = !ev.year || !userYear || ev.year === userYear
+      const allowedGroups = new Set([userGroup, 'Promo'])
+      const okGroup = allowedGroups.has(ev.groupe) || ev.groupes.some(g => allowedGroups.has(g))
+      return okYear && okGroup
     })
   } catch (error) {
     console.error('Erreur lors du chargement des events:', error)
