@@ -117,6 +117,16 @@ async function closeItemReceivedPopup() {
   // Acquitter tous les items affichés
   try {
     const list = Array.isArray(currentItems.value) ? currentItems.value : []
+    // Déverrouiller immédiatement les couleurs données (sans attendre le reload)
+    try {
+      for (const it of list) {
+        const idNum = Number(it && (it.id ?? it.itemId))
+        if (!Number.isNaN(idNum)) {
+          const colorId = coinsStore.getBorderColorIdFromItem({ id: idNum } as any)
+          if (colorId) coinsStore.unlockBorderColor(colorId)
+        }
+      }
+    } catch {}
     for (const it of list) {
       await secureApiCall(`/users/ack-gift/${it.id}`, { method: 'POST' })
     }
