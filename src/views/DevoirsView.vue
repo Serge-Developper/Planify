@@ -47,6 +47,7 @@ const loadEvents = async () => {
       if (!type) type = 'devoir'
       const checked = Array.isArray(e.checkedBy) ? e.checkedBy.includes(userId) : !!e.isCompleted
       const archived = Array.isArray(e.archivedBy) ? e.archivedBy.includes(userId) : false
+      const hidden = Array.isArray(e.hiddenBy) ? e.hiddenBy.includes(userId) : false
       return {
         _id: e._id,
         titre,
@@ -60,6 +61,7 @@ const loadEvents = async () => {
         description: e.description ?? '',
         checked,
         archived,
+        hidden,
       }
     })
 

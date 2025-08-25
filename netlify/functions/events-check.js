@@ -35,6 +35,7 @@ const eventSchema = new mongoose.Schema({
   year: { type: String, required: true },
   archivedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   checkedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  hiddenBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   description: { type: String, default: '' },
   createdBy: { type: String, required: true },
   createdAt: { type: Date, default: Date.now }
@@ -214,7 +215,22 @@ exports.handler = async (event, context) => {
         eventDoc.archivedBy = eventDoc.archivedBy.filter(id => !id.equals(userId));
         await eventDoc.save();
         break;
-        
+
+      case 'hide':
+        if (!eventDoc.hiddenBy) eventDoc.hiddenBy = [];
+        if (!eventDoc.hiddenBy.some(id => id.equals(userId))) {
+          eventDoc.hiddenBy.push(userId);
+          await eventDoc.save();
+        }
+        break;
+
+      case 'unhide':
+        if (Array.isArray(eventDoc.hiddenBy)) {
+          eventDoc.hiddenBy = eventDoc.hiddenBy.filter(id => !id.equals(userId));
+          await eventDoc.save();
+        }
+        break;
+ 
       default:
         return { statusCode: 400, headers, body: JSON.stringify({ error: 'Action non supportée' }) };
     }

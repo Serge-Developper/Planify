@@ -23,6 +23,7 @@ const eventSchema = new mongoose.Schema({
   year: String,
   archivedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   checkedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  hiddenBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   createdBy: String,
   createdAt: { type: Date, default: Date.now },
 

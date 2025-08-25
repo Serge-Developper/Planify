@@ -502,12 +502,12 @@ const sortedEvents = computed(() => {
 });
 
 const doneEvents = computed(() =>
-  props.events.filter(e => e.checked && !e.archived)
+  props.events.filter(e => e.checked && !e.archived && !e.hidden)
     .filter(e => !selectedMatiere.value || e.matiere === selectedMatiere.value)
 );
 const toDoEvents = computed(() => {
   let filtered = props.events.filter(e => {
-    if (e.archived) return false;
+    if (e.archived || e.hidden) return false;
 
     const t = timeLeft(e.date, e.heure);
     let typeFilter = true;
@@ -536,12 +536,12 @@ const toDoEvents = computed(() => {
 });
 
 const archives = computed(() => 
-  props.events.filter(e => e.archived && (!selectedMatiere.value || e.matiere === selectedMatiere.value))
+  props.events.filter(e => e.archived && !e.hidden && (!selectedMatiere.value || e.matiere === selectedMatiere.value))
 );
 
 const lateEvents = computed(() =>
   props.events.filter(e =>
-    !e.archived &&
+    !e.archived && !e.hidden &&
     !e.checked &&
     isLate(e) &&
     (!selectedMatiere.value || e.matiere === selectedMatiere.value)
@@ -717,19 +717,11 @@ async function viderArchive() {
   if (!confirm('Voulez-vous vraiment désarchiver toutes les tâches archivées ?')) return;
   try {
     for (const event of archivesFiltered.value.slice()) {
-      // 1) Retirer des archives
+      // Masquer définitivement pour l'utilisateur
       await axios.post(`${API_URL}/events-check`, {
         eventId: event._id,
-        action: 'unarchive'
+        action: 'hide'
       }, { headers: { Authorization: `Bearer ${user.value.token}` } });
-      // 2) Retirer l'état "complété" pour ne pas réapparaître dans la liste "Tâches complétées"
-      try {
-        await axios.post(`${API_URL}/events-check`, {
-          eventId: event._id,
-          action: 'uncheck'
-        }, { headers: { Authorization: `Bearer ${user.value.token}` } });
-      } catch (e) { /* tolérant si déjà décoché */ }
-      // Suppression globale désactivée ici (action personnelle uniquement)
     }
     emit('refresh-events');
     playSound(supprimerArchiveSound)
@@ -746,15 +738,8 @@ async function viderArchiveType(type) {
     for (const event of archivesFiltered.value.filter(e => e.type === type).slice()) {
       await axios.post(`${API_URL}/events-check`, {
         eventId: event._id,
-        action: 'unarchive'
+        action: 'hide'
       }, { headers: { Authorization: `Bearer ${user.value.token}` } });
-      try { 
-        await axios.post(`${API_URL}/events-check`, {
-          eventId: event._id,
-          action: 'uncheck'
-        }, { headers: { Authorization: `Bearer ${user.value.token}` } }); 
-      } catch {}
-      // Suppression globale désactivée ici (action personnelle uniquement)
     }
     emit('refresh-events');
     playSound(supprimerArchiveSound)
@@ -771,15 +756,8 @@ async function viderArchiveMatiere(matiere) {
     for (const event of archivesFiltered.value.filter(e => e.matiere === matiere).slice()) {
       await axios.post(`${API_URL}/events-check`, {
         eventId: event._id,
-        action: 'unarchive'
+        action: 'hide'
       }, { headers: { Authorization: `Bearer ${user.value.token}` } });
-      try { 
-        await axios.post(`${API_URL}/events-check`, {
-          eventId: event._id,
-          action: 'uncheck'
-        }, { headers: { Authorization: `Bearer ${user.value.token}` } }); 
-      } catch {}
-      // Suppression globale désactivée ici (action personnelle uniquement)
     }
     emit('refresh-events');
     playSound(supprimerArchiveSound)
@@ -796,15 +774,8 @@ async function viderArchiveTypeMatiere(type, matiere) {
     for (const event of archivesFiltered.value.filter(e => e.type === type && e.matiere === matiere).slice()) {
       await axios.post(`${API_URL}/events-check`, {
         eventId: event._id,
-        action: 'unarchive'
+        action: 'hide'
       }, { headers: { Authorization: `Bearer ${user.value.token}` } });
-      try { 
-        await axios.post(`${API_URL}/events-check`, {
-          eventId: event._id,
-          action: 'uncheck'
-        }, { headers: { Authorization: `Bearer ${user.value.token}` } }); 
-      } catch {}
-      // Suppression globale désactivée ici (action personnelle uniquement)
     }
     emit('refresh-events');
     playSound(supprimerArchiveSound)
