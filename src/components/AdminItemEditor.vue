@@ -708,6 +708,8 @@ async function uploadAssets() {
   if (data.success) {
     const target = editingVariantIndex.value === -1 ? form.value.assets : ((form.value.variants[editingVariantIndex.value].assets ||= []))
     for (const file of data.files) target.push(sanitizeAsset({ src: file.url, style: { top: 0, left: 0, width: 100, height: 100 } }))
+    // Sélectionner automatiquement le dernier asset ajouté
+    try { selectedIndex.value = target.length - 1 } catch {}
   } else {
     alert('Upload échoué')
   }
@@ -718,6 +720,8 @@ function addAssetFromUrl() {
   if (!url) return
   const target = editingVariantIndex.value === -1 ? form.value.assets : ((form.value.variants[editingVariantIndex.value].assets ||= []))
   target.push(sanitizeAsset({ src: url, style: { top: 0, left: 0, width: 100 } }))
+  // Sélectionner automatiquement le dernier asset ajouté
+  try { selectedIndex.value = target.length - 1 } catch {}
 }
 
 async function saveItem() {
@@ -783,11 +787,14 @@ function editItem(it) {
       const src = (res && res.success && res.item) ? res.item : it
       form.value = sanitizeItem(src)
       editingVariantIndex.value = -1
+      // Auto-sélection du premier asset si présent
+      try { if (Array.isArray(form.value.assets) && form.value.assets.length > 0) selectedIndex.value = 0 } catch {}
     })
     .catch(() => {
       // Fallback en cas d'erreur réseau
       form.value = sanitizeItem(it)
       editingVariantIndex.value = -1
+      try { if (Array.isArray(form.value.assets) && form.value.assets.length > 0) selectedIndex.value = 0 } catch {}
     })
 }
 
