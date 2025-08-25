@@ -245,7 +245,7 @@ const handleUpdateEvent = async (event) => {
 // Handler pour supprimer un événement (compat URL & query)
 const handleDeleteEvent = async (event) => {
   try {
-    verifyToken(event);
+    const decoded = verifyToken(event);
     const body = JSON.parse(event.body || '{}');
     let { eventId } = body;
     // Supporter aussi /api/events/:id et ?eventId=:id
@@ -267,7 +267,7 @@ const handleDeleteEvent = async (event) => {
       };
     }
 
-    const eventDoc = await Event.findByIdAndDelete(eventId);
+    const eventDoc = await Event.findById(eventId);
     if (!eventDoc) {
       return {
         statusCode: 404,
@@ -275,6 +275,29 @@ const handleDeleteEvent = async (event) => {
         body: JSON.stringify({ success: false, message: 'Événement non trouvé' })
       };
     }
+
+    // Autorisation: seul le créateur ou un admin/prof peut supprimer globalement
+    const userId = decoded.id || decoded._id || decoded.userId;
+    const isOwner = eventDoc.createdBy && (String(eventDoc.createdBy) === String(userId));
+    // Récupérer le rôle de l'utilisateur si besoin
+    let role = decoded.role;
+    if (!role) {
+      try {
+        const UserModel = mongoose.models.User || mongoose.model('User', new mongoose.Schema({ role: String }));
+        const u = await UserModel.findById(userId).lean();
+        role = u?.role;
+      } catch {}
+    }
+    const isPrivileged = role === 'admin' || role === 'prof';
+    if (!isOwner && !isPrivileged) {
+      return {
+        statusCode: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: false, message: 'Non autorisé à supprimer cet événement' })
+      };
+    }
+
+    await Event.findByIdAndDelete(eventId);
 
     return {
       statusCode: 200,
