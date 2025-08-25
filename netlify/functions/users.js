@@ -29,6 +29,7 @@ const userSchema = new mongoose.Schema({
   weeklySpinCount: { type: Number, default: 0 },
   lastWeeklyReset: Date,
   password: String,
+  secretQuestions: [{ question: String, answer: String }],
   pendingGifts: [{ id: Number, name: String, adminMessage: String, date: Date }]
 });
 
@@ -102,6 +103,33 @@ exports.handler = async (event, context) => {
     });
 
     const path = event.path || event.rawPath || '';
+
+    // POST /api/users/secret-questions
+    if (event.httpMethod === 'POST' && /\/users\/secret-questions$/.test(path)) {
+      try {
+        const body = JSON.parse(event.body || '{}')
+        const { username, secretQuestions } = body || {}
+        if (!username || !Array.isArray(secretQuestions) || secretQuestions.length === 0) {
+          return { statusCode: 400, headers, body: JSON.stringify({ success: false, message: 'username et secretQuestions requis' }) }
+        }
+        const safe = secretQuestions
+          .filter((q) => q && typeof q.question === 'string' && typeof q.answer === 'string' && q.question.trim() && q.answer.trim())
+          .slice(0, 3)
+          .map((q) => ({ question: String(q.question).trim(), answer: String(q.answer).trim() }))
+        if (safe.length === 0) {
+          return { statusCode: 400, headers, body: JSON.stringify({ success: false, message: 'Aucune entrée valide' }) }
+        }
+        const userDoc = await User.findOne({ username: String(username) })
+        if (!userDoc) {
+          return { statusCode: 404, headers, body: JSON.stringify({ success: false, message: 'Utilisateur non trouvé' }) }
+        }
+        userDoc.secretQuestions = safe
+        await userDoc.save()
+        return { statusCode: 200, headers, body: JSON.stringify({ success: true }) }
+      } catch (e) {
+        return { statusCode: 500, headers, body: JSON.stringify({ success: false, message: 'Erreur serveur', details: String(e && e.message || e) }) }
+      }
+    }
 
     // GET /api/users/gifts
     if (event.httpMethod === 'GET' && /\/users\/gifts$/.test(path)) {
