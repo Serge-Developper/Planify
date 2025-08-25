@@ -93,7 +93,14 @@ exports.handler = async (event, context) => {
             headers,
             body: JSON.stringify({
               success: false,
-              message: "Échec SMTP (Gmail). Vérifiez EMAIL_USER/EMAIL_PASS (mot de passe d'application 16 caractères, sans espaces) et que l'authentification à deux facteurs est activée."
+              message: "Échec SMTP (Gmail). Vérifiez EMAIL_USER/EMAIL_PASS (mot de passe d'application 16 caractères, sans espaces) et que l'authentification à deux facteurs est activée.",
+              debug: {
+                provider: 'smtp',
+                code: smtpError?.code || null,
+                responseCode: smtpError?.responseCode || null,
+                command: smtpError?.command || null,
+                message: smtpError?.message || null
+              }
             })
           };
         }
@@ -140,7 +147,11 @@ exports.handler = async (event, context) => {
           headers,
           body: JSON.stringify({
             success: false,
-            message: "Impossible d'envoyer l'e-mail (SMTP et Resend ont échoué)."
+            message: "Impossible d'envoyer l'e-mail (SMTP et Resend ont échoué).",
+            debug: {
+              provider: 'resend',
+              message: resendError?.message || null
+            }
           })
         };
       }
@@ -152,7 +163,8 @@ exports.handler = async (event, context) => {
       headers,
       body: JSON.stringify({
         success: false,
-        message: "Aucun service d'envoi configuré. Ajoutez EMAIL_USER/EMAIL_PASS ou RESEND_API_KEY."
+        message: "Aucun service d'envoi configuré. Ajoutez EMAIL_USER/EMAIL_PASS ou RESEND_API_KEY.",
+        debug: { hasEmailUser: !!process.env.EMAIL_USER, hasEmailPass: !!process.env.EMAIL_PASS, hasResend: !!process.env.RESEND_API_KEY }
       })
     };
 
