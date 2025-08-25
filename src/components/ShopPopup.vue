@@ -44,6 +44,161 @@
         </div>
       </div>
 
+      <!-- Boutique hebdomadaire -->
+      <div v-if="activeTab === 'weekly'" class="shop-grid">
+        <div 
+          v-for="(item, index) in weeklyItems" 
+          :key="item.id" 
+          class="shop-item weekly-item" 
+          :class="{ 
+            'not-owned': !coinsStore.hasItem(item.id), 
+            'owned': coinsStore.hasItem(item.id) && !coinsStore.isItemEquipped(item.id),
+            'equipped': coinsStore.isItemEquipped(item.id)
+          }"
+        >
+          <!-- Checkmark pour les items débloqués -->
+          <div v-if="coinsStore.hasItem(item.id)" class="checkmark-icon">✓</div>
+          <!-- Cadenas pour les items verrouillés -->
+          <div v-if="!coinsStore.hasItem(item.id)" class="lock-icon">🔒</div>
+          
+          <div class="item-img-wrapper" :style="item.name === 'Roi' || item.name === 'Matrix' || item.name === 'Oreilles de chat' || item.name === 'Ange' || item.name === 'Tomb Raider' || item.name === 'Clown' || item.name === 'Cash' || item.name === 'Cible' || item.name === 'Étoiles' || item.name === 'Cadre royale' || item.name === 'Roses' || item.name === 'Gentleman' || item.name === 'Vinyle' || item.name === 'Advisory' || item.name === 'Espace' || item.name === 'Absolute Cinema' || item.name === 'Flash' || item.name === 'Miaou' || item.name === 'DVD' || item.name === 'Lunettes pixel' || item.name === '2000' ? 'background: #fff;' : ''">
+            <div class="item-img-container" :key="'weekly-'+item.id+'-'+index" :class="{ 'black-bg': item.name === 'Étoiles' || item.name === 'Espace' || item.name === 'DVD' }">
+              
+              <!-- Items de bordure (couleurs) -->
+              <div v-if="item.type === 'border-color'" class="border-color-preview" :style="{ backgroundColor: getBorderColor(item.colorId) }"></div>
+              
+              <!-- Items normaux -->
+              <template v-else>
+                <!-- Aperçu couleur pour Bordure classique (aucune image) -->
+                <div v-if="item.id === 0" class="classic-border-preview" :style="classicBorderStyle"></div>
+
+                <!-- Animation Matrix -->
+                <div v-else-if="item.name === 'Matrix'" class="matrix-rain-inside-shop">
+                  <div class="matrix-column" v-for="(col, ci) in getMatrixColumns(item)" :key="'mc-'+ci" :style="{ left: (ci * 5) + '%', animationDelay: (col.delay) + 's' }">
+                    <span v-for="(ch, ri) in col.chars" :key="'mch-'+ri" class="matrix-char">{{ ch }}</span>
+                  </div>
+                </div>
+
+                <!-- Item Clown -->
+                <div v-else-if="item.name === 'Clown'" class="clown-item-shop">
+                  <img :src="clowncheveux" :alt="item.name" class="clown-hair-shop" />
+                  <img :src="clownnose" alt="Nez de clown" class="clown-nose-shop" />
+                </div>
+
+                <!-- Item Cash -->
+                <div v-else-if="item.name === 'Cash'" class="cash-animation-shop">
+                  <img :src="cash" :alt="item.name" class="cash-img-shop" />
+                </div>
+
+                <!-- Item Roi -->
+                <div v-else-if="item.name === 'Roi'" class="roi-item-shop">
+                  <img :src="roi" :alt="item.name" class="roi-img-shop" />
+                </div>
+
+                <!-- Item Ange -->
+                <div v-else-if="item.name === 'Ange'" class="angel-item-shop">
+                  <img :src="angelwings" :alt="item.name" class="angel-img-shop" />
+                </div>
+
+                <!-- Item Cible -->
+                <div v-else-if="item.name === 'Cible'" class="target-animation-shop">
+                  <img :src="target" :alt="item.name" class="target-img-shop" />
+                </div>
+
+                <!-- Item Étoiles -->
+                <div v-else-if="item.name === 'Étoiles'" class="stars-item-shop">
+                  <img :src="star" :alt="item.name" class="stars-img-shop" />
+                </div>
+
+                <!-- Item Cadre royale -->
+                <div v-else-if="item.name === 'Cadre royale'" class="royal-frame-item-shop">
+                  <img :src="cadre" :alt="item.name" class="royal-frame-img-shop" />
+                </div>
+
+                <!-- Item Roses -->
+                <div v-else-if="item.name === 'Roses'" class="rainbow-item-shop">
+                  <img :src="love" :alt="item.name" class="rainbow-img-shop" />
+                </div>
+
+                <!-- Item Gentleman -->
+                <div v-else-if="item.name === 'Gentleman'" class="gentleman-item-shop">
+                  <img :src="moustache" :alt="item.name" class="moustache-img-shop" />
+                  <img :src="gentleman" :alt="item.name" class="gentleman-img-shop" />
+                </div>
+
+                <!-- Item Vinyle -->
+                <div v-else-if="item.name === 'Vinyle'" class="vinyle-item-shop">
+                  <img :src="vinyle" :alt="item.name" class="vinyle-img-shop" />
+                </div>
+
+                <!-- Item Advisory -->
+                <div v-else-if="item.name === 'Advisory'" class="advisory-item-shop">
+                  <img :src="advisory" :alt="item.name" class="advisory-img-shop" />
+                </div>
+
+                <!-- Item Espace -->
+                <div v-else-if="item.name === 'Espace'" class="espace-item-shop">
+                  <img :src="spacestars" :alt="item.name" class="spacestars-img-shop" />
+                  <img :src="asteroide" :alt="item.name" class="asteroide-img-shop" />
+                </div>
+
+                <!-- Item Absolute Cinema -->
+                <div v-else-if="item.name === 'Absolute Cinema'" class="absolute-cinema-item-shop">
+                  <img :src="bras" :alt="item.name" class="absolute-cinema-img-shop" />
+                  <img :src="bras" :alt="item.name" class="absolute-cinema-img-shop-right" />
+                </div>
+
+                <!-- Item Flash -->
+                <div v-else-if="item.name === 'Flash'" class="flash-item-shop">
+                  <img :src="flash" :alt="item.name" class="flash-img-shop" />
+                  <img :src="camera" :alt="item.name" class="camera-img-shop" />
+                </div>
+
+                <!-- Item Miaou -->
+                <div v-else-if="item.name === 'Miaou'" class="miaou-item-shop">
+                  <img :src="chat" :alt="item.name" class="chat-img-shop" />
+                  <img :src="pate" :alt="item.name" class="pate-img-shop" />
+                </div>
+
+                <!-- Item DVD -->
+                <div v-else-if="item.name === 'DVD'" class="dvd-item-shop">
+                  <img :src="dvd" :alt="item.name" class="dvd-img-shop" />
+                </div>
+
+                <!-- Item Lunettes pixel -->
+                <div v-else-if="item.name === 'Lunettes pixel'" class="lunettes-pixel-item-shop">
+                  <img :src="mlglunette" :alt="item.name" class="lunettes-pixel-img-shop" />
+                </div>
+
+                <!-- Item 2000 -->
+                <div v-else-if="item.name === '2000'" class="nokia-item-shop">
+                  <img :src="nokia" :alt="item.name" class="nokia-img-shop" />
+                  <img :src="clippy" :alt="item.name" class="clippy-img-shop" />
+                  <img :src="daftpunk" :alt="item.name" class="daftpunk-img-shop" />
+                </div>
+
+                <!-- Items avec images simples -->
+                <img v-else-if="item.img" :src="resolveAssetSrc(item.img)" :alt="item.name" class="item-img" />
+              </template>
+            </div>
+          </div>
+          
+          <div class="item-name">{{ item.name }}</div>
+          <div class="item-price">
+            <img src="@/assets/img/planicoins.png" alt="Coin" class="coin-icon" />
+            {{ item.price }}
+          </div>
+          <div class="item-actions">
+            <button v-if="!coinsStore.hasItem(item.id)" class="buy-btn" @click="buyItem(item)">
+              Acheter
+            </button>
+            <button v-else-if="coinsStore.hasItem(item.id)" class="equip-btn" :class="{ 'equipped': coinsStore.isItemEquipped(item.id) }" @click="equipItem(item)">
+              {{ coinsStore.isItemEquipped(item.id) ? 'Déséquiper' : 'Équiper' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Collection -->
       <div v-if="activeTab === 'main'" class="shop-grid">
         <div 
@@ -859,6 +1014,45 @@ function applyDynamicVariant(idx: number): void {
   }
   
   closeDynamicStylePicker()
+}
+
+// Fonction pour obtenir la couleur de bordure
+const getBorderColor = (colorId: string): string => {
+  const colors: { [key: string]: string } = {
+    'red': '#ff0000',
+    'blue': '#0000ff',
+    'green': '#00ff00',
+    'yellow': '#ffff00',
+    'purple': '#800080',
+    'orange': '#ffa500',
+    'pink': '#ffc0cb',
+    'cyan': '#00ffff',
+    'gold': '#ffd700',
+    'silver': '#c0c0c0',
+    'rainbow': 'linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3)',
+    'fire': 'linear-gradient(45deg, #ff4500, #ff6347, #ff8c00)',
+    'ice': 'linear-gradient(45deg, #87ceeb, #b0e0e6, #f0f8ff)',
+    'ocean': 'linear-gradient(45deg, #006994, #1e90ff, #00bfff)',
+    'forest': 'linear-gradient(45deg, #228b22, #32cd32, #90ee90)',
+    'galaxy': 'linear-gradient(45deg, #4b0082, #8a2be2, #9370db)',
+    'aurora': 'linear-gradient(45deg, #00ff7f, #00ffff, #ff00ff)',
+    'volcano': 'linear-gradient(45deg, #8b0000, #ff4500, #ff6347)',
+    'crystal': 'linear-gradient(45deg, #e6e6fa, #f0f8ff, #f5f5dc)',
+    'midnight': 'linear-gradient(45deg, #191970, #000080, #4169e1)',
+    'dawn': 'linear-gradient(45deg, #ff69b4, #ffb6c1, #ffe4e1)',
+    'dusk': 'linear-gradient(45deg, #ff6347, #ff4500, #8b0000)',
+    'storm': 'linear-gradient(45deg, #696969, #808080, #a9a9a9)',
+    'spring': 'linear-gradient(45deg, #90ee90, #98fb98, #f0fff0)',
+    'summer': 'linear-gradient(45deg, #ffd700, #ffa500, #ff6347)',
+    'autumn': 'linear-gradient(45deg, #d2691e, #cd853f, #daa520)',
+    'winter': 'linear-gradient(45deg, #f0f8ff, #e6e6fa, #b0c4de)',
+    'magenta': '#ff00ff',
+    'lime-green': '#32cd32',
+    'royal-blue': '#4169e1',
+    'white': '#ffffff',
+    'bronze': '#cd7f32'
+  }
+  return colors[colorId] || '#000000'
 }
 
 // Fonctions pour la boutique hebdomadaire

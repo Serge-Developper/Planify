@@ -1,44 +1,46 @@
 // Déclarations de types pour les fonctions Netlify
 
 declare module 'mongoose' {
-  export = mongoose;
-  export as namespace mongoose;
-  
-  namespace mongoose {
-    interface Connection {
-      readyState: number;
-      close(): Promise<void>;
-    }
-    
-    interface Model<T> {
-      find(filter?: any): Promise<T[]>;
-      findById(id: string): Promise<T | null>;
-      findOne(filter: any): Promise<T | null>;
-      create(data: any): Promise<T>;
-      updateOne(filter: any, update: any): Promise<any>;
-      deleteOne(filter: any): Promise<any>;
-      findByIdAndUpdate(id: string, update: any, options?: any): Promise<T | null>;
-      findByIdAndDelete(id: string): Promise<T | null>;
-    }
-    
-    interface Schema {
-      // Définition de base du schéma
-    }
-    
-    interface Document {
-      _id: any;
-      save(): Promise<Document>;
-    }
-    
-    function connect(uri: string, options?: any): Promise<Connection>;
-    function model<T>(name: string, schema: Schema): Model<T>;
-    function Schema(definition: any, options?: any): Schema;
-    namespace Types {
-      const ObjectId: any;
-    }
+  interface Connection {
+    readyState: number;
+    close(): Promise<void>;
   }
   
-  const mongoose: typeof mongoose;
+  interface Model<T> {
+    find(filter?: any): Promise<T[]>;
+    findById(id: string): Promise<T | null>;
+    findOne(filter: any): Promise<T | null>;
+    create(data: any): Promise<T>;
+    updateOne(filter: any, update: any): Promise<any>;
+    deleteOne(filter: any): Promise<any>;
+    findByIdAndUpdate(id: string, update: any, options?: any): Promise<T | null>;
+    findByIdAndDelete(id: string): Promise<T | null>;
+  }
+  
+  interface Schema {
+    // Définition de base du schéma
+  }
+  
+  interface Document {
+    _id: any;
+    save(): Promise<Document>;
+  }
+  
+  function connect(uri: string, options?: any): Promise<Connection>;
+  function model<T>(name: string, schema: Schema): Model<T>;
+  function Schema(definition: any, options?: any): Schema;
+  
+  namespace Types {
+    const ObjectId: any;
+  }
+  
+  const mongoose: {
+    connect: typeof connect;
+    model: typeof model;
+    Schema: typeof Schema;
+    Types: typeof Types;
+  };
+  
   export = mongoose;
 }
 
