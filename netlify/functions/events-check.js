@@ -72,12 +72,13 @@ const corsHeaders = {
 
 // JWT verification
 const verifyToken = (request) => {
-  const authHeader = request.headers?.authorization;
+  const authHeader = request.headers?.authorization || request.headers?.Authorization;
   if (!authHeader) {
     throw new Error('Token manquant');
   }
 
-  const token = authHeader.split(' ')[1];
+  const parts = authHeader.split(' ');
+  const token = parts.length === 2 ? parts[1] : parts[0];
   if (!token) {
     throw new Error('Token manquant');
   }
@@ -88,10 +89,8 @@ const verifyToken = (request) => {
   }
 
   try {
-    const decoded = jwt.verify(token, jwtSecret, {
-      issuer: 'planify-api',
-      audience: 'planify-frontend'
-    });
+    // Accepter les tokens signés par auth.js (sans issuer/audience spécifiques)
+    const decoded = jwt.verify(token, jwtSecret);
     return decoded;
   } catch (error) {
     throw new Error('Token invalide');
