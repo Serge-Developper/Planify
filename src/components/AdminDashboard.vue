@@ -537,7 +537,7 @@ onMounted(async () => {
       description: ev.description ?? '',
       type: (() => {
         const t = (ev.type ?? '').toLowerCase();
-        if (t === 'exam' || t === 'examen') return 'examen';
+        if (t === 'exam' || t === 'examen') return 'exam';
         if (t === 'devoir') return 'devoir';
         return t || 'devoir';
       })(),

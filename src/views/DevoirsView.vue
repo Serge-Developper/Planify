@@ -40,7 +40,8 @@ const loadEvents = async () => {
       const date = e.date ?? (e.dueDate ? new Date(e.dueDate).toISOString().slice(0,10) : '')
       const heure = e.heure ?? ''
       let type = (e.type ?? '').toLowerCase()
-      if (type === 'exam') type = 'examen'
+      // Harmoniser sur 'exam' pour rester cohérent avec ListeDevoirs
+      if (type === 'examen') type = 'exam'
       if (!type) type = 'devoir'
       const checked = Array.isArray(e.checkedBy) ? e.checkedBy.includes(userId) : !!e.isCompleted
       const archived = Array.isArray(e.archivedBy) ? e.archivedBy.includes(userId) : false
