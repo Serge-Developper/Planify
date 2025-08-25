@@ -205,7 +205,17 @@ const handleDeleteEvent = async (event) => {
   try {
     verifyToken(event);
     const body = JSON.parse(event.body || '{}');
-    const { eventId } = body;
+    let { eventId } = body;
+    // Supporter aussi /api/events/:id et /api/events?eventId=:id
+    if (!eventId) {
+      const qs = event.queryStringParameters || {};
+      if (qs.eventId || qs.id) eventId = qs.eventId || qs.id;
+    }
+    if (!eventId) {
+      const p = event.path || event.rawPath || '';
+      const m = p.match(/events\/(?:\.netlify\/functions\/)?events\/([^\/]+)$/) || p.match(/events\/([^\/]+)$/);
+      if (m && m[1]) eventId = m[1];
+    }
 
     if (!eventId) {
       return {
