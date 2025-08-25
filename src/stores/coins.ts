@@ -173,8 +173,10 @@ export const useCoinsStore = defineStore('coins', {
       return state.borderColors.filter(color => color.unlocked);
     },
 
-    // Getter pour extraire l'ID de couleur de bordure depuis un item weekly
-    getBorderColorIdFromItem: (state) => (item: any) => {
+    // Getter pour extraire l'ID de couleur de bordure depuis un item hebdo (payload shop)
+    // NOTE: l'action du même store nommée getBorderColorIdFromItem fait le mapping id->colorId.
+    // Ce getter est renommé pour éviter tout conflit.
+    getBorderColorIdFromWeeklyItem: (state) => (item: any) => {
       if (item && item.type === 'border-color' && item.colorId) {
         return item.colorId;
       }
