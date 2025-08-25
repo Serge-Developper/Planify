@@ -938,12 +938,13 @@ async function openUserSecrets(user) {
     };
     const res = await fetch(`${API_URL}/users-admin?userId=${user._id}`, { method: 'GET', headers, credentials: token ? 'include' : 'same-origin' });
     if (!res.ok) throw new Error('Erreur de récupération utilisateur');
-    const fullUser = await res.json();
+    const payload = await res.json();
+    const fullUser = (payload && typeof payload === 'object' && payload.user) ? payload.user : payload;
     // Mettre à jour le nom si on ne l'avait pas
     if (!secretsUser.value?.username && fullUser?.username) {
       secretsUser.value = { _id: fullUser._id, username: fullUser.username };
     }
-    const sq = Array.isArray(fullUser.secretQuestions) ? fullUser.secretQuestions : [];
+    const sq = Array.isArray(fullUser?.secretQuestions) ? fullUser.secretQuestions : [];
     if (sq.length >= 3) {
       // Pré-remplir questions et réponses existantes
       secretsForm.value = sq.slice(0, 3).map(q => ({ question: q.question || '', answer: q.answer || '' }));
