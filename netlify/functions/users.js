@@ -10,6 +10,13 @@ const userSchema = new mongoose.Schema({
   role: { type: String, default: 'user' },
   year: String,
   groupe: String,
+  avatar: {
+    filename: String,
+    mimetype: String,
+    data: String, // base64
+    size: Number
+  },
+  avatarFilename: String, // pour compatibilité avec l'ancien format
   purchasedItems: [{
     itemId: String,
     itemName: String,

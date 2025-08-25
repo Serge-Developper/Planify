@@ -11,7 +11,13 @@ const userSchema = new mongoose.Schema({
   year: String,
   groupe: String,
   coins: { type: Number, default: 0 },
-  avatar: String,
+  avatar: {
+    filename: String,
+    mimetype: String,
+    data: String, // base64
+    size: Number
+  },
+  avatarFilename: String, // pour compatibilité avec l'ancien format
   purchasedItems: [{
     itemId: Number,
     itemName: String,
@@ -109,7 +115,9 @@ const handleLogin = async (event) => {
           year: user.year,
           groupe: user.groupe,
           coins: user.coins,
-          avatar: user.avatar,
+          avatar: user.avatar && user.avatar.data ? 
+            `data:${user.avatar.mimetype};base64,${user.avatar.data}` : 
+            user.avatar, // Fallback pour l'ancien format
           hasSecretQuestions: user.secretQuestions && user.secretQuestions.length >= 3 && user.secretQuestions.every(q => q.question && q.answer)
         }
       })
