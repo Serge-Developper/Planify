@@ -110,8 +110,10 @@ function closeSuccess() {
 }
 
 function close() {
-  // Ferme simplement la popup sans connecter l'utilisateur
-  emit('close');
+  // Affiche un message d'erreur au lieu de fermer
+  error.value = '⚠️ Vous devez définir vos questions secrètes pour continuer';
+  try { const a = new Audio(errorSound); a.volume = 0.7; a.play().catch(() => {}) } catch {}
+  // Ne pas émettre 'close' pour empêcher la fermeture
 }
 
 onMounted(() => {

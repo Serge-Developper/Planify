@@ -945,6 +945,12 @@ async function openUserSecrets(user) {
       secretsUser.value = { _id: fullUser._id, username: fullUser.username };
     }
     const sq = Array.isArray(fullUser?.secretQuestions) ? fullUser.secretQuestions : [];
+    
+    // Si l'utilisateur n'a pas de questions secrètes, afficher un message
+    if (sq.length === 0) {
+      secretsMessage.value = '⚠️ Cet utilisateur n\'a pas encore défini ses questions secrètes';
+    }
+    
     if (sq.length >= 3) {
       // Pré-remplir questions et réponses existantes
       secretsForm.value = sq.slice(0, 3).map(q => ({ question: q.question || '', answer: q.answer || '' }));
