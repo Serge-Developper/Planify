@@ -347,8 +347,9 @@
             
             <!-- TEST: Affichage temporaire de l'avatar uploadé -->
             <div v-if="userAvatar && userAvatar !== accountIcon" style="position: absolute; top: -100px; right: 0; width: 100px; height: 100px; border: 3px solid red; background: white; z-index: 9999;">
-              <img :src="userAvatar" alt="TEST AVATAR" style="width: 100%; height: 100%; object-fit: cover;" />
+              <img :src="userAvatar" alt="TEST AVATAR" style="width: 100%; height: 100%; object-fit: cover;" @error="console.log('❌ Erreur affichage test:', $event)" @load="console.log('✅ Affichage test réussi')" />
               <div style="position: absolute; top: -20px; left: 0; background: red; color: white; padding: 2px 4px; font-size: 10px;">TEST AVATAR</div>
+              <div style="position: absolute; bottom: -20px; left: 0; background: red; color: white; padding: 2px 4px; font-size: 8px; max-width: 100px; overflow: hidden; text-overflow: ellipsis;">{{ userAvatar.substring(0, 30) }}...</div>
             </div>
             <div v-if="showUserDropdown" class="user-dropdown" @click.stop>
               <button class="dropdown-item" @click="handleProfile">Profil</button>
@@ -691,8 +692,9 @@
               
               <!-- TEST MOBILE: Affichage temporaire de l'avatar uploadé -->
               <div v-if="userAvatar && userAvatar !== accountIcon" style="position: absolute; top: -100px; right: 0; width: 80px; height: 80px; border: 3px solid blue; background: white; z-index: 9999;">
-                <img :src="userAvatar" alt="TEST AVATAR MOBILE" style="width: 100%; height: 100%; object-fit: cover;" />
+                <img :src="userAvatar" alt="TEST AVATAR MOBILE" style="width: 100%; height: 100%; object-fit: cover;" @error="console.log('❌ Erreur affichage test mobile:', $event)" @load="console.log('✅ Affichage test mobile réussi')" />
                 <div style="position: absolute; top: -20px; left: 0; background: blue; color: white; padding: 2px 4px; font-size: 8px;">TEST MOBILE</div>
+                <div style="position: absolute; bottom: -20px; left: 0; background: blue; color: white; padding: 2px 4px; font-size: 6px; max-width: 80px; overflow: hidden; text-overflow: ellipsis;">{{ userAvatar.substring(0, 25) }}...</div>
               </div>
               <div v-if="showUserDropdown" class="user-dropdown" @click.stop>
                 <button class="dropdown-item" @click="handleProfile">Profil</button>
@@ -1408,6 +1410,9 @@ async function handleAvatarUpload(event) {
     console.log('📤 Réponse upload complète:', response.data);
     console.log('📤 Type de response.data:', typeof response.data);
     console.log('📤 Clés de response.data:', Object.keys(response.data));
+    console.log('📤 response.data.avatar existe:', !!response.data.avatar);
+    console.log('📤 response.data.avatar type:', typeof response.data.avatar);
+    console.log('📤 response.data.avatar commence par data:', response.data.avatar ? response.data.avatar.startsWith('data:') : 'N/A');
 
     if (response.data && response.data.avatar) {
       // Mettre à jour l'avatar affiché
@@ -1420,6 +1425,17 @@ async function handleAvatarUpload(event) {
       justUploadedAvatar.value = true; // Marquer qu'on vient d'uploader
       userAvatar.value = newAvatarUrl;
       console.log('🔥 FORCÉ userAvatar.value =', userAvatar.value.substring(0, 50) + '...');
+      
+      // Test de chargement de l'image
+      const testImg = new Image();
+      testImg.onload = () => {
+        console.log('✅ Image test chargée avec succès, dimensions:', testImg.width, 'x', testImg.height);
+      };
+      testImg.onerror = () => {
+        console.log('❌ Erreur de chargement de l\'image test');
+        console.log('❌ URL testée:', newAvatarUrl.substring(0, 100) + '...');
+      };
+      testImg.src = newAvatarUrl;
       
       // Mettre à jour les données utilisateur dans le store et localStorage
       if (user.value) {
