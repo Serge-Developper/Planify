@@ -1459,6 +1459,16 @@ async function handleAvatarUpload(event) {
         const updatedUser = { ...user.value, avatar: stored };
         auth.login(updatedUser); // Met à jour le store et localStorage
         console.log('✅ Données utilisateur mises à jour avec l\'avatar');
+        // Resynchroniser avec la DB pour obtenir la forme canonique (data URL)
+        try {
+          const prof = await secureApiCall('/users/profile');
+          if (prof && prof.success && prof.user) {
+            const current = auth.user || {};
+            const mergedUser = { ...current, ...prof.user, token: current.token || current?.user?.token };
+            auth.login(mergedUser);
+            userAvatar.value = normalizeAvatarToUrl(mergedUser.avatar);
+          }
+        } catch (e) {}
       } else {
         console.log('⚠️ Pas d\'utilisateur dans le store, mais avatar uploadé avec succès');
       }
