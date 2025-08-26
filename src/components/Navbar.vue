@@ -881,6 +881,7 @@ const userAvatar = ref(accountIcon)
 const fileInput = ref(null)
 const fileInputMobile = ref(null)
 const lastSpinResult = ref(null)
+const justUploadedAvatar = ref(false) // Pour éviter que le watcher écrase l'avatar uploadé
 
 // URL de base pour les avatars
 const baseUrl = API_URL.endsWith('/api') 
@@ -1416,6 +1417,7 @@ async function handleAvatarUpload(event) {
       console.log('🖼️ Longueur de l\'avatar:', newAvatarUrl.length);
       
       // FORCER l'affichage de l'avatar
+      justUploadedAvatar.value = true; // Marquer qu'on vient d'uploader
       userAvatar.value = newAvatarUrl;
       console.log('🔥 FORCÉ userAvatar.value =', userAvatar.value.substring(0, 50) + '...');
       
@@ -1435,7 +1437,8 @@ async function handleAvatarUpload(event) {
         console.log('🔄 Vérification après timeout - userAvatar.value:', userAvatar.value ? userAvatar.value.substring(0, 50) + '...' : 'AUCUN');
       }, 100);
       
-      alert('Avatar mis à jour avec succès !');
+      // Remplace alert par console.log pour éviter les problèmes de rafraîchissement
+      console.log('🎉 Avatar mis à jour avec succès !');
     }
   } catch (error) {
     console.error('❌ Erreur upload avatar:', error);
@@ -1681,23 +1684,29 @@ watch(userAvatar, (newAvatar) => {
 // Watcher pour surveiller les changements de l'utilisateur
 watch(user, async (newUser) => {
   if (newUser) {
-    if (newUser.avatar) {
-      if (newUser.avatar.startsWith('data:')) {
-        // C'est une data URL (nouveau format)
-        userAvatar.value = newUser.avatar;
-      } else if (newUser.avatar.startsWith('/uploads/')) {
-        // C'est un chemin relatif vers les uploads (ancien format)
-        const avatarUrl = `${baseUrl}${newUser.avatar}`;
-        userAvatar.value = avatarUrl;
+    // Ne pas réécrire l'avatar si on vient de l'uploader
+    if (!justUploadedAvatar.value) {
+      if (newUser.avatar) {
+        if (newUser.avatar.startsWith('data:')) {
+          // C'est une data URL (nouveau format)
+          userAvatar.value = newUser.avatar;
+        } else if (newUser.avatar.startsWith('/uploads/')) {
+          // C'est un chemin relatif vers les uploads (ancien format)
+          const avatarUrl = `${baseUrl}${newUser.avatar}`;
+          userAvatar.value = avatarUrl;
+        } else {
+          // C'est peut-être un nom de fichier simple, essayer de construire l'URL
+          const avatarUrl = `${baseUrl}/uploads/avatars/${newUser.avatar}`;
+          userAvatar.value = avatarUrl;
+        }
+      } else if (newUser.id || newUser._id) {
+        loadUserAvatar();
       } else {
-        // C'est peut-être un nom de fichier simple, essayer de construire l'URL
-        const avatarUrl = `${baseUrl}/uploads/avatars/${newUser.avatar}`;
-        userAvatar.value = avatarUrl;
+        userAvatar.value = accountIcon;
       }
-    } else if (newUser.id || newUser._id) {
-      loadUserAvatar();
     } else {
-      userAvatar.value = accountIcon;
+      console.log('🚫 Watcher ignoré car avatar vient d\'être uploadé');
+      justUploadedAvatar.value = false; // Réinitialiser le flag
     }
     
     await coinsStore.initialize();
