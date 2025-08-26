@@ -935,14 +935,14 @@ const equippedDynItem = computed(() => {
   
   // Transformer l'item comme dans getUserEquippedItemData du ShopPopup
   const transformedItem = {
-    id: dynItem.id,
+    id: dynItem.legacyId || dynItem.id,  // Utiliser legacyId comme id principal
     name: dynItem.name,
     img: dynItem.assets && dynItem.assets[0] ? resolveAssetSrc(dynItem.assets[0].src) : '',
     isDynamic: true,
     assets: dynItem.assets || [],
     backgrounds: dynItem.backgrounds || {},
     variants: dynItem.variants || [],
-    legacyId: dynItem.id || dynItem.legacyId
+    legacyId: dynItem.legacyId
   }
   
   // Forcer la réactivité en accédant aux variantes du store et à la clé de mise à jour
@@ -952,6 +952,14 @@ const equippedDynItem = computed(() => {
   const updateKey = variantUpdateKey.value
   
   console.log('🔄 equippedDynItem computed - itemId:', itemId, 'currentVariant:', currentVariant, 'updateKey:', updateKey)
+  console.log('📦 Item transformé:', {
+    name: transformedItem.name,
+    id: transformedItem.id,
+    legacyId: transformedItem.legacyId,
+    hasAssets: transformedItem.assets?.length > 0,
+    hasVariants: transformedItem.variants?.length > 0,
+    variantsCount: transformedItem.variants?.length
+  })
   
   return transformedItem
 })
@@ -1045,22 +1053,20 @@ function getDynVariantAssetsForNavbar(item) {
     
     // Si pas de variantes, retourner les assets de base
     if (!item.variants || !Array.isArray(item.variants) || item.variants.length === 0) {
+      console.log('📋 Navbar: Pas de variantes, utilisation des assets de base')
       return item.assets || []
     }
     
-    // Utiliser legacyId si disponible, sinon id
-    const itemId = item.legacyId !== undefined ? item.legacyId : item.id
+    // Utiliser id directement (comme dans ShopPopup)
+    const itemId = item.id || item.legacyId
     const variantIndex = coinsStore.getDynamicItemVariant(itemId) || 0
     
-    console.log('🎨 Navbar getDynVariantAssets - itemId:', itemId, 'variantIndex:', variantIndex, 'item.variants:', item.variants)
+    console.log('🎨 Navbar getDynVariantAssets - item:', item.name, 'itemId:', itemId, 'variantIndex:', variantIndex, 'nombre de variantes:', item.variants.length)
     
     const variant = item.variants[variantIndex]
     if (!variant) {
-      console.log('❌ Pas de variante trouvée à l\'index', variantIndex, ', utilisation de la variante 0')
-      // Utiliser la première variante par défaut si disponible
-      if (item.variants.length > 0) {
-        return item.variants[0].assets || []
-      }
+      console.log('❌ Pas de variante trouvée à l\'index', variantIndex, ', utilisation des assets de base')
+      // Si pas de variante à cet index, utiliser les assets de base
       return item.assets || []
     }
     
@@ -1080,9 +1086,10 @@ function getDynVariantAssetsForNavbar(item) {
       }))
     }
     
-    if (!Array.isArray(variant.assets)) {
-      console.log('❌ Pas d\'assets pour la variante')
-      return []
+    if (!Array.isArray(variant.assets) || variant.assets.length === 0) {
+      console.log('⚠️ Pas d\'assets pour la variante, utilisation des assets de base')
+      // Si la variante n'a pas d'assets, utiliser les assets de base
+      return item.assets || []
     }
     console.log('✅ Assets trouvés pour la variante:', variant.assets.length, 'assets')
     return variant.assets
