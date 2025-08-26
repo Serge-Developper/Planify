@@ -38,18 +38,8 @@
               'alpha-equipped': equippedItem && (equippedItem.name === 'Alpha' || equippedItem.displayType === 'alpha')
             }" :style="getAccountBorderStyle()" @click="handleDropdown">
               <div class="avatar-image-container" :class="{ 'jojo-sepia': equippedItem && equippedItem.displayType === 'jojo' }" :key="'aic-'+coinsStore.jojoVariantIndex">
-                <!-- Items dynamiques: "below" à l'intérieur (sous l'avatar) -->
-                <template v-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
-                  <img
-                    v-for="(a, ai) in equippedDynItem.assets"
-                    v-if="a && a.src && ((a.meta && (a.meta.navbarPlacement === 'below' || a.meta.avatarPlacement === 'below')) || (!a.meta && a.navbarPlacement === 'below'))"
-                    :key="'dyn-nb-below-'+ai"
-                    :src="resolveAssetSrc(a.src)"
-                    :style="getDynNavbarAssetStyle(a)"
-                  />
-                </template>
                 <!-- Items dynamiques avec variantes: "below" à l'intérieur (sous l'avatar) -->
-                <template v-if="equippedDynItem && equippedDynItem.variants && Array.isArray(equippedDynItem.variants)">
+                <template v-if="equippedDynItem">
                   <img
                     v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
                     v-if="a && a.src && ((a.meta && (a.meta.navbarPlacement === 'below' || a.meta.avatarPlacement === 'below')) || (!a.meta && a.navbarPlacement === 'below'))"
@@ -68,18 +58,8 @@
                   @error="handleImageError"
                   @load="handleImageLoad"
                 />
-                <!-- Items dynamiques: "inside" à l'intérieur (au-dessus de l'avatar) -->
-                <template v-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
-                  <img
-                    v-for="(a, ai) in equippedDynItem.assets"
-                    v-if="a && a.src && ((a.meta && (a.meta.navbarPlacement === 'inside' || a.meta.avatarPlacement === 'inside')) || (!a.meta && (!a.navbarPlacement || a.navbarPlacement === 'inside')))"
-                    :key="'dyn-nb-inside-'+ai"
-                    :src="resolveAssetSrc(a.src)"
-                    :style="getDynNavbarAssetStyle(a)"
-                  />
-                </template>
                 <!-- Items dynamiques avec variantes: "inside" à l'intérieur (au-dessus de l'avatar) -->
-                <template v-if="equippedDynItem && equippedDynItem.variants && Array.isArray(equippedDynItem.variants)">
+                <template v-if="equippedDynItem">
                   <img
                     v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
                     v-if="a && a.src && ((a.meta && (a.meta.navbarPlacement === 'inside' || a.meta.avatarPlacement === 'inside')) || (!a.meta && (!a.navbarPlacement || a.navbarPlacement === 'inside')))"
@@ -148,18 +128,8 @@
 
               </div>
             </button>
-            <!-- Items dynamiques: "above" au-dessus du bouton account -->
-            <template v-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
-              <img
-                v-for="(a, ai) in equippedDynItem.assets"
-                v-if="a && a.src && (!a.meta || a.meta.navbarPlacement === 'above' || a.meta?.avatarPlacement === 'above' || a.navbarPlacement === 'above')"
-                :key="'dyn-nb-above-'+ai"
-                :src="resolveAssetSrc(a.src)"
-                :style="getDynNavbarOverlayStyle(a)"
-              />
-            </template>
             <!-- Items dynamiques avec variantes: "above" au-dessus du bouton account -->
-            <template v-if="equippedDynItem && equippedDynItem.variants && Array.isArray(equippedDynItem.variants)">
+            <template v-if="equippedDynItem">
               <img
                 v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
                 v-if="a && a.src && (!a.meta || a.meta.navbarPlacement === 'above' || a.meta?.avatarPlacement === 'above' || a.navbarPlacement === 'above')"
@@ -168,24 +138,7 @@
                 :style="getDynNavbarOverlayStyle(a)"
               />
             </template>
-            <!-- Fallback pour les items dynamiques sans placement spécifique -->
-            <template v-if="equippedDynItem && equippedDynItem.img && (!equippedDynItem.assets || !Array.isArray(equippedDynItem.assets) || equippedDynItem.assets.length === 0)">
-              <img
-                :src="resolveDynSrc(equippedDynItem.img)"
-                :alt="equippedDynItem.name"
-                class="equipped-dynamic-item-overlay"
-                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 15;"
-              />
-            </template>
-            <!-- Fallback simple pour tous les items dynamiques -->
-            <template v-if="equippedDynItem && equippedDynItem.img">
-              <img
-                :src="resolveAssetSrc(equippedDynItem.img)"
-                :alt="equippedDynItem.name"
-                class="equipped-dynamic-item-overlay"
-                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 15;"
-              />
-            </template>
+
             <!-- Item équipé générique (rendu seulement si une image est définie et pas d'item dynamique) -->
             <img 
               v-if="equippedItem && equippedItem.displayType === 'generic' && equippedItem.img && !equippedDynItem && equippedItem.name !== 'Galaxie' && equippedItem.name !== 'Coeur' && equippedItem.name !== 'Étoiles'" 
@@ -427,13 +380,13 @@
               </div>
               <button class="account-btn" :class="{ 'stars-equipped': equippedItem && equippedItem.name === 'Étoiles', 'rainbow-equipped': equippedItem && equippedItem.name === 'Roses', 'discord-equipped': equippedItem && equippedItem.displayType === 'discord', 'galaxie-equipped': equippedItem && equippedItem.name === 'Galaxie', 'alpha-equipped': equippedItem && (equippedItem.name === 'Alpha' || equippedItem.displayType === 'alpha') }" :style="getAccountBorderStyle()" @click="handleDropdown">
                 <div class="avatar-image-container-mobile" :class="{ 'jojo-sepia': equippedItem && equippedItem.displayType === 'jojo' }" :key="'aicm-'+coinsStore.jojoVariantIndex">
-                  <!-- Dyn (mobile): below -->
-                  <template v-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
+                  <!-- Items dynamiques avec variantes (mobile): below -->
+                  <template v-if="equippedDynItem">
                     <img
-                      v-for="(a, ai) in equippedDynItem.assets"
-                      v-if="a && ((a.meta && (a.meta.navbarPlacement === 'below' || a.meta.avatarPlacement === 'below')) || (!a.meta && a.navbarPlacement === 'below'))"
-                      :key="'dyn-m-below-'+ai"
-                      :src="resolveDynSrc(a.src)"
+                      v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
+                      v-if="a && a.src && ((a.meta && (a.meta.navbarPlacement === 'below' || a.meta.avatarPlacement === 'below')) || (!a.meta && a.navbarPlacement === 'below'))"
+                      :key="'dyn-variant-m-below-'+ai+'-'+variantUpdateKey"
+                      :src="resolveAssetSrc(a.src)"
                       :style="getDynNavbarAssetStyle(a)"
                     />
                   </template>
@@ -447,13 +400,13 @@
                     @error="handleImageError"
                     @load="handleImageLoad"
                   />
-                  <!-- Dyn (mobile): inside -->
-                  <template v-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
+                  <!-- Items dynamiques avec variantes (mobile): inside -->
+                  <template v-if="equippedDynItem">
                     <img
-                      v-for="(a, ai) in equippedDynItem.assets"
-                      v-if="a && ((a.meta && (a.meta.navbarPlacement === 'inside' || a.meta.avatarPlacement === 'inside')) || (!a.meta && (!a.navbarPlacement || a.navbarPlacement === 'inside')))"
-                      :key="'dyn-m-inside-'+ai"
-                      :src="resolveDynSrc(a.src)"
+                      v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
+                      v-if="a && a.src && ((a.meta && (a.meta.navbarPlacement === 'inside' || a.meta.avatarPlacement === 'inside')) || (!a.meta && (!a.navbarPlacement || a.navbarPlacement === 'inside')))"
+                      :key="'dyn-variant-m-inside-'+ai+'-'+variantUpdateKey"
+                      :src="resolveAssetSrc(a.src)"
                       :style="getDynNavbarAssetStyle(a)"
                     />
                   </template>
@@ -531,18 +484,8 @@
 
               </div>
             </button>
-            <!-- Dyn (mobile): above -->
-            <template v-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
-              <img
-                v-for="(a, ai) in equippedDynItem.assets"
-                v-if="a && a.src && (!a.meta || a.meta.navbarPlacement === 'above' || a.meta?.avatarPlacement === 'above' || a.navbarPlacement === 'above')"
-                :key="'dyn-m-above-'+ai"
-                :src="resolveAssetSrc(a.src)"
-                :style="getDynNavbarOverlayStyle(a)"
-              />
-            </template>
-            <!-- Items dynamiques avec variantes: "above" au-dessus du bouton account (mobile) -->
-            <template v-if="equippedDynItem && equippedDynItem.variants && Array.isArray(equippedDynItem.variants)">
+            <!-- Items dynamiques avec variantes (mobile): above -->
+            <template v-if="equippedDynItem">
               <img
                 v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
                 v-if="a && a.src && (!a.meta || a.meta.navbarPlacement === 'above' || a.meta?.avatarPlacement === 'above' || a.navbarPlacement === 'above')"
@@ -1098,18 +1041,27 @@ async function loadDynamicItems() {
 // Fonction pour obtenir les assets de la variante sélectionnée (comme dans ShopPopup)
 function getDynVariantAssetsForNavbar(item) {
   try {
-    if (!item || !item.variants || !Array.isArray(item.variants)) return []
+    if (!item) return []
+    
+    // Si pas de variantes, retourner les assets de base
+    if (!item.variants || !Array.isArray(item.variants) || item.variants.length === 0) {
+      return item.assets || []
+    }
     
     // Utiliser legacyId si disponible, sinon id
     const itemId = item.legacyId !== undefined ? item.legacyId : item.id
-    const variantIndex = coinsStore.getDynamicItemVariant(itemId)
+    const variantIndex = coinsStore.getDynamicItemVariant(itemId) || 0
     
     console.log('🎨 Navbar getDynVariantAssets - itemId:', itemId, 'variantIndex:', variantIndex, 'item.variants:', item.variants)
     
     const variant = item.variants[variantIndex]
     if (!variant) {
-      console.log('❌ Pas de variante trouvée à l\'index', variantIndex)
-      return []
+      console.log('❌ Pas de variante trouvée à l\'index', variantIndex, ', utilisation de la variante 0')
+      // Utiliser la première variante par défaut si disponible
+      if (item.variants.length > 0) {
+        return item.variants[0].assets || []
+      }
+      return item.assets || []
     }
     
     // Si c'est un style texte uniquement, retourner les assets de la base avec les styles de la variante
@@ -1156,8 +1108,19 @@ onMounted(() => {
     window.addEventListener('dynamic-variant-changed', (event) => {
       console.log('📡 Navbar: Événement dynamic-variant-changed reçu:', event.detail)
       // Incrémenter la clé pour forcer la mise à jour des templates
-      // Ne pas recharger tous les items, juste forcer le re-render
       variantUpdateKey.value++
+      
+      // Vérifier immédiatement si la variante a bien changé
+      if (event.detail && event.detail.itemId) {
+        const newVariant = coinsStore.getDynamicItemVariant(event.detail.itemId)
+        console.log('🔍 Navbar: Vérification variante après événement - itemId:', event.detail.itemId, 'nouvelle variante:', newVariant)
+      }
+      
+      // Forcer le recalcul de equippedDynItem
+      const item = equippedDynItem.value
+      if (item) {
+        console.log('🔄 Navbar: Item équipé actuel:', item.name, 'variants:', item.variants?.length)
+      }
     })
   } catch {}
 })
