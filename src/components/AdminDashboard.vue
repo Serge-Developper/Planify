@@ -1066,6 +1066,19 @@ async function giveItemToUser() {
       }
     }
     
+    if (!token) {
+      alert('❌ Aucun token d\'authentification trouvé')
+      itemsLoading.value = false
+      return
+    }
+
+    const currentUser = auth.user || JSON.parse(localStorage.getItem('user') || '{}')
+    if (currentUser.role !== 'admin' && currentUser.role !== 'prof') {
+      alert('❌ Accès non autorisé: rôle admin/prof requis')
+      itemsLoading.value = false
+      return
+    }
+    
     const headers = {
       'Content-Type': 'application/json',
       'X-Requested-With': 'XMLHttpRequest',
@@ -1125,6 +1138,19 @@ async function removeAllItemsAndBorderColor(userId) {
         const userData = JSON.parse(userFromStorage)
         token = userData.token
       }
+    }
+    
+    if (!token) {
+      alert('❌ Aucun token d\'authentification trouvé')
+      itemsLoading.value = false
+      return
+    }
+
+    const currentUser = auth.user || JSON.parse(localStorage.getItem('user') || '{}')
+    if (currentUser.role !== 'admin' && currentUser.role !== 'prof') {
+      alert('❌ Accès non autorisé: rôle admin/prof requis')
+      itemsLoading.value = false
+      return
     }
     const headers = {
       'Content-Type': 'application/json',
@@ -1187,6 +1213,19 @@ async function giveSelectedItemsToUser() {
         const userData = JSON.parse(userFromStorage)
         token = userData.token
       }
+    }
+    
+    if (!token) {
+      alert('❌ Aucun token d\'authentification trouvé')
+      itemsLoading.value = false
+      return
+    }
+
+    const currentUser = auth.user || JSON.parse(localStorage.getItem('user') || '{}')
+    if (currentUser.role !== 'admin' && currentUser.role !== 'prof') {
+      alert('❌ Accès non autorisé: rôle admin/prof requis')
+      itemsLoading.value = false
+      return
     }
     const headers = {
       'Content-Type': 'application/json',
@@ -1278,6 +1317,19 @@ async function removeItemFromUser(userId, itemId) {
         const userData = JSON.parse(userFromStorage)
         token = userData.token
       }
+    }
+    
+    if (!token) {
+      alert('❌ Aucun token d\'authentification trouvé')
+      itemsLoading.value = false
+      return
+    }
+
+    const currentUser = auth.user || JSON.parse(localStorage.getItem('user') || '{}')
+    if (currentUser.role !== 'admin' && currentUser.role !== 'prof') {
+      alert('❌ Accès non autorisé: rôle admin/prof requis')
+      itemsLoading.value = false
+      return
     }
     
     const headers = {
