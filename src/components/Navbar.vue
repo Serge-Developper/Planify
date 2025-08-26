@@ -1454,19 +1454,19 @@ async function handleAvatarUpload(event) {
           console.log('✅ Flag justUploadedAvatar réinitialisé après délai de sécurité');
         }, 3000); // Augmenté à 3 secondes
       }
-    } catch (error) {
-      console.error('❌ Erreur upload avatar:', error);
-      alert('Erreur lors de l\'upload de l\'avatar');
+    } else {
+      console.error('❌ Aucun avatar dans la réponse:', response.data);
+      alert('Erreur : aucun avatar reçu du serveur');
     }
-
-    // Réinitialiser les inputs
-    event.target.value = '';
-    if (fileInput.value) fileInput.value.value = '';
-    if (fileInputMobile.value) fileInputMobile.value.value = '';
-  } else {
-    console.error('❌ Aucun avatar dans la réponse:', response.data);
-    alert('Erreur : aucun avatar reçu du serveur');
+  } catch (error) {
+    console.error('❌ Erreur upload avatar:', error);
+    alert('Erreur lors de l\'upload de l\'avatar');
   }
+
+  // Réinitialiser les inputs
+  event.target.value = '';
+  if (fileInput.value) fileInput.value.value = '';
+  if (fileInputMobile.value) fileInputMobile.value.value = '';
 }
 
 function openLogin() {
