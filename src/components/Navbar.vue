@@ -42,7 +42,7 @@
                 <template v-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
                   <img
                     v-for="(a, ai) in equippedDynItem.assets"
-                    v-if="a && a.meta && a.meta.navbarPlacement === 'below'"
+                    v-if="(a && a.meta && (a.meta.navbarPlacement === 'below' || a.meta.avatarPlacement === 'below')) || (!a.meta && a.navbarPlacement === 'below')"
                     :key="'dyn-nb-below-'+ai"
                     :src="resolveDynSrc(a.src)"
                     :style="getDynNavbarAssetStyle(a)"
@@ -62,7 +62,7 @@
                 <template v-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
                   <img
                     v-for="(a, ai) in equippedDynItem.assets"
-                    v-if="a && a.meta && a.meta.navbarPlacement === 'inside'"
+                    v-if="(a && a.meta && (a.meta.navbarPlacement === 'inside' || a.meta.avatarPlacement === 'inside')) || (!a.meta && a.navbarPlacement === 'inside')"
                     :key="'dyn-nb-inside-'+ai"
                     :src="resolveDynSrc(a.src)"
                     :style="getDynNavbarAssetStyle(a)"
@@ -132,7 +132,7 @@
             <template v-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
               <img
                 v-for="(a, ai) in equippedDynItem.assets"
-                v-if="!a || !a.meta || a.meta.navbarPlacement === 'above'"
+                v-if="!a || !a.meta || a.meta.navbarPlacement === 'above' || a.meta?.avatarPlacement === 'above' || a.navbarPlacement === 'above'"
                 :key="'dyn-nb-above-'+ai"
                 :src="resolveDynSrc(a.src)"
                 :style="getDynNavbarOverlayStyle(a)"
@@ -383,7 +383,7 @@
                   <template v-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
                     <img
                       v-for="(a, ai) in equippedDynItem.assets"
-                      v-if="a && a.meta && a.meta.navbarPlacement === 'below'"
+                      v-if="(a && a.meta && (a.meta.navbarPlacement === 'below' || a.meta.avatarPlacement === 'below')) || (!a.meta && a.navbarPlacement === 'below')"
                       :key="'dyn-m-below-'+ai"
                       :src="resolveDynSrc(a.src)"
                       :style="getDynNavbarAssetStyle(a)"
@@ -403,7 +403,7 @@
                   <template v-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
                     <img
                       v-for="(a, ai) in equippedDynItem.assets"
-                      v-if="a && a.meta && a.meta.navbarPlacement === 'inside'"
+                      v-if="(a && a.meta && (a.meta.navbarPlacement === 'inside' || a.meta.avatarPlacement === 'inside')) || (!a.meta && a.navbarPlacement === 'inside')"
                       :key="'dyn-m-inside-'+ai"
                       :src="resolveDynSrc(a.src)"
                       :style="getDynNavbarAssetStyle(a)"
@@ -487,7 +487,7 @@
             <template v-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
               <img
                 v-for="(a, ai) in equippedDynItem.assets"
-                v-if="!a || !a.meta || a.meta.navbarPlacement === 'above'"
+                v-if="!a || !a.meta || a.meta.navbarPlacement === 'above' || a.meta?.avatarPlacement === 'above' || a.navbarPlacement === 'above'"
                 :key="'dyn-m-above-'+ai"
                 :src="resolveDynSrc(a.src)"
                 :style="getDynNavbarOverlayStyle(a)"
