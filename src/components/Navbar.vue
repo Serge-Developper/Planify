@@ -146,7 +146,7 @@
             <template v-if="equippedDynItem">
               <img
                 v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
-                v-if="a && a.src && (!a.meta || a.meta.navbarPlacement === 'above' || a.meta?.avatarPlacement === 'above' || a.navbarPlacement === 'above')"
+                v-if="a && a.src && ((a.meta && (a.meta.navbarPlacement === 'above' || a.meta.avatarPlacement === 'above')) || (!a.meta && a.navbarPlacement === 'above'))"
                 :key="'dyn-variant-nb-above-'+ai+'-'+variantUpdateKey"
                 :src="resolveAssetSrc(a.src)"
                 :style="getDynNavbarOverlayStyle(a)"
