@@ -276,7 +276,10 @@ const handleVerifyToken = async (event) => {
           year: user.year,
           groupe: user.groupe,
           coins: user.coins,
-          avatar: user.avatar,
+          avatar: user.avatar && user.avatar.data ? 
+            `data:${user.avatar.mimetype};base64,${user.avatar.data}` : 
+            (user.avatar || user.avatarFilename),
+          avatarFilename: user.avatarFilename,
           hasSecretQuestions: user.secretQuestions && user.secretQuestions.length >= 3 && user.secretQuestions.every(q => q.question && q.answer)
         }
       })

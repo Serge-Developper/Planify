@@ -1412,8 +1412,34 @@ async function handleAvatarUpload(event) {
       
       // Mettre à jour les données utilisateur dans le store et localStorage
       if (user.value) {
-        const updatedUser = { ...user.value, avatar: response.data.avatar };
+        const updatedUser = { 
+          ...user.value, 
+          avatar: response.data.avatar,
+          avatarFilename: response.data.filename 
+        };
         auth.login(updatedUser); // Met à jour le store et localStorage
+      }
+      
+      // Recharger les données utilisateur depuis le backend pour s'assurer de la synchronisation
+      try {
+        const userResponse = await axios.get(`${API_URL}/auth/verify`, {
+          headers: {
+            'Authorization': `Bearer ${user.value.token}`
+          }
+        });
+        
+        if (userResponse.data && userResponse.data.user) {
+          // Mettre à jour avec les données fraîches du serveur, mais garder l'avatar qu'on vient d'uploader
+          const serverUser = userResponse.data.user;
+          const finalUser = {
+            ...serverUser,
+            avatar: response.data.avatar, // Garder la data URL qu'on vient de recevoir
+            token: user.value.token // Préserver le token
+          };
+          auth.login(finalUser);
+        }
+      } catch (verifyError) {
+        console.warn('Impossible de vérifier les données utilisateur:', verifyError);
       }
       
       alert('Avatar mis à jour avec succès !');
@@ -1657,22 +1683,34 @@ onMounted(async () => {
 
 
 // Watcher pour surveiller les changements de l'utilisateur
-watch(user, async (newUser) => {
+watch(user, async (newUser, oldUser) => {
   if (newUser) {
     // Ne pas réécrire l'avatar si on vient de l'uploader
     if (!justUploadedAvatar.value) {
-      if (newUser.avatar) {
+      // Si l'avatar actuel est une data URL valide et que le nouveau user a le même ID, ne pas l'écraser
+      if (userAvatar.value && userAvatar.value.startsWith('data:') && 
+          oldUser && oldUser.id === newUser.id) {
+        console.log('🖼️ Avatar data URL déjà chargé, on le garde');
+      } else if (newUser.avatar) {
         if (newUser.avatar.startsWith('data:')) {
           // C'est une data URL (nouveau format)
           userAvatar.value = newUser.avatar;
+          console.log('🖼️ Avatar data URL chargé depuis le watcher');
         } else if (newUser.avatar.startsWith('/uploads/')) {
           // C'est un chemin relatif vers les uploads (ancien format)
           const avatarUrl = `${baseUrl}${newUser.avatar}`;
           userAvatar.value = avatarUrl;
+          console.log('🖼️ Avatar URL chargé depuis le watcher:', avatarUrl);
+        } else if (newUser.avatarFilename) {
+          // Utiliser avatarFilename si disponible
+          const avatarUrl = `${baseUrl}/uploads/avatars/${newUser.avatarFilename}`;
+          userAvatar.value = avatarUrl;
+          console.log('🖼️ Avatar URL construit depuis avatarFilename:', avatarUrl);
         } else {
           // C'est peut-être un nom de fichier simple, essayer de construire l'URL
           const avatarUrl = `${baseUrl}/uploads/avatars/${newUser.avatar}`;
           userAvatar.value = avatarUrl;
+          console.log('🖼️ Avatar URL construit depuis avatar:', avatarUrl);
         }
       } else if (newUser.id || newUser._id) {
         loadUserAvatar();
@@ -1680,7 +1718,10 @@ watch(user, async (newUser) => {
         userAvatar.value = accountIcon;
       }
     } else {
-      justUploadedAvatar.value = false; // Réinitialiser le flag
+      justUploadedAvatar.value = false; // Réinitialiser le flag après un court délai
+      setTimeout(() => {
+        justUploadedAvatar.value = false;
+      }, 1000);
     }
     
     await coinsStore.initialize();
