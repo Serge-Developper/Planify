@@ -176,10 +176,7 @@ const handleRegister = async (event) => {
       }
     } catch {}
 
-    // Email retiré du modèle logique: si fourni on l'ignore, on ne le stocke pas
-    const emailToUse = undefined;
-
-    // Vérifier si l'utilisateur existe déjà (par username ou email final)
+    // Vérifier si l'utilisateur existe déjà (par username uniquement)
     const existingUser = await User.findOne({ username });
     
     if (existingUser) {
@@ -240,7 +237,7 @@ const handleRegister = async (event) => {
           _id: newUser._id,
           id: newUser._id,
           username: newUser.username,
-          email: newUser.email,
+          // pas d'email renvoyé
           role: newUser.role,
           year: newUser.year,
           groupe: newUser.groupe,
