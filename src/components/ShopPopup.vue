@@ -2879,9 +2879,9 @@ const sortedLeaderboardUsers = computed(() => {
     height: 16px !important;
   }
 
-  /* Bordure par défaut autour des avatars dans le leaderboard (overridable inline) */
+  /* Bordure par défaut autour des avatars dans le leaderboard (la couleur est gérée en inline par getAvatarBorderStyle) */
   .leaderboard-container .user-avatar {
-    border: 3px solid black;
+    border: 3px solid transparent;
     border-radius: 12px !important;
     box-sizing: border-box !important;
     position: relative !important; /* Ajouté pour que les items soient positionnés relativement */
