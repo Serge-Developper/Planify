@@ -1003,6 +1003,14 @@ async function loadUserAvatar() {
     avatarFilename: user.value?.avatarFilename
   });
   
+  // D'abord vérifier localStorage
+  const savedAvatar = localStorage.getItem('userAvatar');
+  if (savedAvatar && savedAvatar.startsWith('data:')) {
+    userAvatar.value = savedAvatar;
+    console.log('🖼️ Avatar chargé depuis localStorage dans loadUserAvatar');
+    return;
+  }
+  
   if (!user.value || !user.value.id) {
     userAvatar.value = accountIcon;
     return;
@@ -1466,6 +1474,10 @@ async function handleAvatarUpload(event) {
         // D'abord sauvegarder dans le store/localStorage
         auth.login(updatedUser);
         
+        // Sauvegarder aussi l'avatar data URL séparément dans localStorage pour persistance
+        localStorage.setItem('userAvatar', newAvatarUrl);
+        console.log('💾 Avatar data URL sauvegardé dans localStorage');
+        
         // Ensuite afficher l'alerte et réinitialiser le flag après un délai plus long
         alert('Avatar mis à jour avec succès !');
         
@@ -1537,8 +1549,9 @@ function logout() {
   showProfilePopup.value = false
   userAvatar.value = accountIcon; // Remettre l'icône par défaut
   
-  // Remettre l'icône par défaut
-  userAvatar.value = accountIcon;
+  // Nettoyer aussi l'avatar du localStorage
+  localStorage.removeItem('userAvatar');
+  console.log('🧹 Avatar supprimé du localStorage');
   
   router.push('/')
 }
@@ -1731,10 +1744,15 @@ onMounted(async () => {
   if (user.value) {
     console.log('👤 User au montage:', user.value);
     
-    // D'abord charger l'avatar depuis les données locales immédiatement
-    if (user.value.avatar && user.value.avatar.startsWith('data:')) {
+    // D'abord essayer de charger l'avatar depuis localStorage
+    const savedAvatar = localStorage.getItem('userAvatar');
+    if (savedAvatar && savedAvatar.startsWith('data:')) {
+      userAvatar.value = savedAvatar;
+      console.log('🖼️ Avatar data URL chargé depuis localStorage séparé');
+    } else if (user.value.avatar && user.value.avatar.startsWith('data:')) {
+      // Sinon charger depuis les données user
       userAvatar.value = user.value.avatar;
-      console.log('🖼️ Avatar data URL chargé immédiatement depuis localStorage');
+      console.log('🖼️ Avatar data URL chargé immédiatement depuis user');
     }
     
     // Ensuite récupérer les données fraîches depuis le backend
