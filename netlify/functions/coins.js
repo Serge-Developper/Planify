@@ -429,24 +429,24 @@ const handleWeeklyItems = async (event) => {
     
     // Tous les items disponibles pour la boutique hebdomadaire
     const allWeeklyItems = [
-  { id: 1, name: 'Oreilles de chat', price: 50, img: 'oreilleschat' },
-  { id: 2, name: 'Clown', price: 80, img: 'clowncheveux' },
-  { id: 3, name: 'Cash', price: 60, img: 'cash' },
-  { id: 4, name: 'Cible', price: 100, img: 'target' },
-  { id: 6, name: 'Roi', price: 90, img: 'roi' },
-  { id: 7, name: 'Matrix', price: 110, img: 'matrix' },
-  { id: 8, name: 'Ange', price: 120, img: 'angelwings' },
-  { id: 9, name: 'Tomb Raider', price: 130, img: 'laracroft' },
-  { id: 10, name: 'Étoiles', price: 85, img: 'star' },
-  { id: 11, name: 'Cadre royale', price: 95, img: 'cadre' },
-  { id: 12, name: 'Roses', price: 105, img: 'love' },
-  { id: 13, name: 'Gentleman', price: 115, img: 'moustache' },
-  { id: 14, name: 'Vinyle', price: 135, img: 'vinyle' },
-  { id: 15, name: 'Advisory', price: 145, img: 'advisory' },
-  { id: 16, name: 'Espace', price: 160, img: 'spacestars' },
-  { id: 17, name: 'Absolute Cinema', price: 175, img: 'bras' },
-  { id: 18, name: 'Flash', price: 190, img: 'flash' },
-  { id: 19, name: 'Miaou', price: 185, img: 'chat' },
+  { id: 1, name: 'Oreilles de chat', price: 150, img: 'oreilleschat' },
+  { id: 2, name: 'Clown', price: 120, img: 'clowncheveux' },
+  { id: 3, name: 'Cash', price: 50, img: 'cash' },
+  { id: 4, name: 'Cible', price: 70, img: 'target' },
+  { id: 6, name: 'Roi', price: 170, img: 'roi' },
+  { id: 7, name: 'Matrix', price: 500, img: 'matrix' },
+  { id: 8, name: 'Ange', price: 600, img: 'angelwings' },
+  { id: 9, name: 'Tomb Raider', price: 400, img: 'laracroft' },
+  { id: 10, name: 'Étoiles', price: 100, img: 'star' },
+  { id: 11, name: 'Cadre royale', price: 230, img: 'cadre' },
+  { id: 12, name: 'Roses', price: 180, img: 'love' },
+  { id: 13, name: 'Gentleman', price: 150, img: 'moustache' },
+  { id: 14, name: 'Vinyle', price: 90, img: 'vinyle' },
+  { id: 15, name: 'Advisory', price: 200, img: 'advisory' },
+  { id: 16, name: 'Espace', price: 300, img: 'spacestars' },
+  { id: 17, name: 'Absolute Cinema', price: 350, img: 'bras' },
+  { id: 18, name: 'Flash', price: 120, img: 'flash' },
+  { id: 19, name: 'Miaou', price: 200, img: 'chat' },
   { id: 20, name: 'DVD', price: 110, img: 'dvd' },
   { id: 21, name: 'Lunettes pixel', price: 130, img: 'mlglunette' },
   { id: 22, name: '2000', price: 250, img: 'nokia' },
@@ -480,10 +480,36 @@ const handleWeeklyItems = async (event) => {
 
     // Intégrer les overrides de test (ajouts forcés)
     if (testWeeklyOverride.size > 0) {
-      const forced = [...testWeeklyOverride].map((id) => allWeeklyItems.find(it => Number(it.id) === Number(id))).filter(Boolean);
+      const forcedStatic = [...testWeeklyOverride]
+        .map((id) => allWeeklyItems.find(it => Number(it.id) === Number(id)))
+        .filter(Boolean);
+
+      // Tenter de compléter avec les items dynamiques (créés via AdminItemEditor)
+      try {
+        const mongooseModels = mongoose.models || {};
+        const DynItem = mongooseModels.Item || null;
+        if (DynItem) {
+          const dynDocs = await DynItem.find({ legacyId: { $in: [...testWeeklyOverride] }, active: true }).lean();
+          for (const d of dynDocs) {
+            // Fusion: prioriser name/price du dynamique si disponibles
+            const merged = {
+              id: Number(d.legacyId),
+              name: d.name || `Item ${d.legacyId}`,
+              price: typeof d.price === 'number' ? d.price : (forcedStatic.find(s => Number(s.id) === Number(d.legacyId))?.price ?? 0),
+              img: forcedStatic.find(s => Number(s.id) === Number(d.legacyId))?.img || 'dynamic',
+              isDynamic: true,
+              variants: Array.isArray(d.variants) ? d.variants : [],
+              backgrounds: d.backgrounds || {},
+            };
+            const idx = forcedStatic.findIndex(s => Number(s.id) === Number(d.legacyId));
+            if (idx >= 0) forcedStatic[idx] = merged; else forcedStatic.push(merged);
+          }
+        }
+      } catch {}
+
       // éviter les doublons par id
       const currentIds = new Set(weeklyItems.map(it => it.id));
-      for (const it of forced) {
+      for (const it of forcedStatic) {
         if (!currentIds.has(it.id)) weeklyItems.unshift(it);
       }
       // limiter visuel à 3 spéciaux + 3 couleurs (plus bas)

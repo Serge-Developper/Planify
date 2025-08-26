@@ -2451,8 +2451,9 @@ const getAvatarBorderStyle = (user) => {
           const fixedImg = assetById[it?.id] || assetByName[it?.name] || it?.img
           // Détecter Discord et attacher les variantes pour le sélecteur
           const isDiscord = (it && it.id === 23) || it?.name === 'Discord'
+          // Ne pas forcer de prix côté front: le backend renvoie désormais les prix définitifs (alignés Collection)
           if ((it && it.id === 7) || it?.name === 'Matrix') {
-            return { ...it, price: 500, img: fixedImg }
+            return { ...it, img: fixedImg }
           }
           if (isDiscord) {
             return { ...it, img: fixedImg, variants: [discordon, discordnepasderange, discordderange], variantIndex: coinsStore.discordVariantIndex || 0 }
