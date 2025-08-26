@@ -913,6 +913,12 @@ function resolveDynSrc(src) {
     if (typeof src === 'string' && src.startsWith('/uploads/')) {
       const orig = API_URL || ''
       const base = orig.endsWith('/api') ? orig.slice(0, -4) : orig.replace('/api','')
+      if (src.startsWith('/uploads/avatars/')) {
+        return base + '/api/uploads/avatars/' + src.split('/').pop()
+      }
+      if (src.startsWith('/uploads/items/')) {
+        return base + '/api/items/uploads/' + src.split('/').pop()
+      }
       return base + src
     }
   } catch {}
