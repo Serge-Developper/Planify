@@ -1493,8 +1493,10 @@ async function handleProfile() {
       
       if (response.success && response.user) {
         console.log('✅ Données utilisateur récupérées:', response.user);
-        // Mettre à jour l'utilisateur dans le store avec les données complètes
-        auth.login(response.user);
+        // Ne pas écraser le token/session. Fusionner uniquement les infos non sensibles.
+        const current = auth.user || {};
+        const merged = { ...current, ...response.user, token: current.token };
+        auth.login(merged);
       } else {
         console.log('❌ Erreur lors de la récupération des données utilisateur');
       }
