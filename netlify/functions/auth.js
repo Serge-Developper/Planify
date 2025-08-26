@@ -173,7 +173,7 @@ const handleRegister = async (event) => {
       password: hashedPassword,
       year: year || '',
       groupe: groupe || '',
-      coins: 1000, // Bonus de bienvenue
+      coins: 0, // Pas de coins au départ
       role: role || 'user' // Utiliser le rôle passé ou 'user' par défaut
     });
 
