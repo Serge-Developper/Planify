@@ -59,6 +59,7 @@ const loadEvents = async () => {
         groupes: Array.isArray(e.groupes) ? e.groupes : [],
         year: e.year ?? '',
         description: e.description ?? '',
+        createdBy: e.createdBy ?? e.userId ?? '',
         checked,
         archived,
         hidden,
