@@ -1682,8 +1682,8 @@ function handleImageError(event) {
     console.log('⏭️ Ignorer l\'erreur sur blob:, en attente de l\'URL finale');
     return;
   }
-  console.log('🔄 Retour à l\'icône par défaut');
-  userAvatar.value = accountIcon;
+  console.log('🔄 Fallback sur le dernier avatar valide');
+  userAvatar.value = lastGoodAvatar.value || accountIcon;
 }
 
 // Fonction pour gérer le chargement réussi d'image
