@@ -668,29 +668,10 @@ async function fetchUsers() {
       return
     }
     
-    const headers = {
-      'Content-Type': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest',
-      'Authorization': `Bearer ${token}`
-    }
-    
-    console.log('🔐 Headers envoyés:', headers)
     console.log('🔐 URL:', `${API_URL}/users-admin`)
     console.log('🔐 Utilisateur actuel:', { role: currentUser.role, username: currentUser.username })
-    
-    const response = await fetch(`${API_URL}/users-admin`, {
-      method: 'GET',
-      headers: headers,
-      credentials: 'include'
-    })
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Erreur API:', response.status, errorText);
-      throw new Error(`HTTP error! status: ${response.status} - ${errorText}`)
-    }
-    
-    const data = await response.json()
+
+    const data = await secureApiCall('/users-admin', { method: 'GET' })
     
     if (data && data.success && Array.isArray(data.users)) {
       users.value = data.users
@@ -720,23 +701,7 @@ async function addUser() {
       }
     }
     
-    const headers = {
-      'Content-Type': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest',
-      'Authorization': `Bearer ${token}`
-    }
-    
-    const response = await fetch(`${API_URL}/auth/register`, {
-      method: 'POST',
-      headers: headers,
-      credentials: 'include',
-      body: JSON.stringify(userForm.value)
-    })
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`HTTP error! status: ${response.status} - ${errorText}`)
-    }
+    await secureApiCall('/auth/register', { method: 'POST', body: JSON.stringify(userForm.value) })
     
     userFormMessage.value = 'Utilisateur ajouté avec succès !';
     userForm.value = { username: '', password: '', role: 'eleve', groupe: 'A', year: 'BUT1' };
@@ -832,23 +797,7 @@ async function updateUser() {
       }
     }
     
-    const headers = {
-      'Content-Type': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest',
-      'Authorization': `Bearer ${token}`
-    }
-    
-    const response = await fetch(`${API_URL}/users-admin?userId=${editingUser.value._id}`, {
-      method: 'PUT',
-      headers: headers,
-      credentials: 'include',
-      body: JSON.stringify(updateData)
-    })
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`HTTP error! status: ${response.status} - ${errorText}`)
-    }
+    await secureApiCall(`/users-admin?userId=${editingUser.value._id}`, { method: 'PUT', body: JSON.stringify(updateData) })
     
     editFormMessage.value = 'Utilisateur mis à jour avec succès !';
     
@@ -881,22 +830,7 @@ async function deleteUser(userId) {
       }
     }
     
-    const headers = {
-      'Content-Type': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest',
-      'Authorization': `Bearer ${token}`
-    }
-    
-    const response = await fetch(`${API_URL}/users-admin?userId=${userId}`, {
-      method: 'DELETE',
-      headers: headers,
-      credentials: 'include'
-    })
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`HTTP error! status: ${response.status} - ${errorText}`)
-    }
+    await secureApiCall(`/users-admin?userId=${userId}`, { method: 'DELETE' })
     
     await fetchUsers(); // Rafraîchir la liste
   } catch (error) {
@@ -949,14 +883,7 @@ async function openUserSecrets(user) {
         token = userData.token;
       }
     }
-    const headers = {
-      'Content-Type': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest',
-      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-    };
-    const res = await fetch(`${API_URL}/users-admin?userId=${user._id}`, { method: 'GET', headers, credentials: token ? 'include' : 'same-origin' });
-    if (!res.ok) throw new Error('Erreur de récupération utilisateur');
-    const payload = await res.json();
+    const payload = await secureApiCall(`/users-admin?userId=${user._id}`, { method: 'GET' });
     const fullUser = (payload && typeof payload === 'object' && payload.user) ? payload.user : payload;
     // Mettre à jour le nom si on ne l'avait pas
     if (!secretsUser.value?.username && fullUser?.username) {
@@ -1020,22 +947,10 @@ async function saveUserSecrets() {
         token = userData.token;
       }
     }
-    const headers = {
-      'Content-Type': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest',
-      'Authorization': `Bearer ${token}`
-    };
-    // Utiliser la route de mise à jour utilisateur avec payload libre
-    const res = await fetch(`${API_URL}/users-admin?userId=${secretsUser.value._id}`, {
+    await secureApiCall(`/users-admin?userId=${secretsUser.value._id}`, {
       method: 'PUT',
-      headers,
-      credentials: 'include',
       body: JSON.stringify({ secretQuestions: cleaned })
-    });
-    if (!res.ok) {
-      const txt = await res.text();
-      throw new Error(txt || 'Erreur lors de la sauvegarde');
-    }
+    })
 
     secretsMessage.value = 'Questions secrètes mises à jour avec succès !';
     await fetchUsers();
@@ -1079,19 +994,11 @@ async function giveItemToUser() {
       return
     }
     
-    const headers = {
-      'Content-Type': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest',
-      'Authorization': `Bearer ${token}`
-    }
-    
     // Récupérer le nom de l'item depuis le catalogue (inclut dynamiques)
     const nameById = Object.fromEntries(itemsCatalog.value.map(i => [i.id, i.name]))
     
-    const response = await fetch(`${API_URL}/users-admin`, {
+    await secureApiCall('/users-admin', {
       method: 'POST',
-      headers: headers,
-      credentials: 'include',
       body: JSON.stringify({
         action: 'give-item',
         userId: viewingUserItems.value._id,
@@ -1100,11 +1007,6 @@ async function giveItemToUser() {
         adminMessage: (adminMessage.value || '').trim() || null
       })
     })
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`HTTP error! status: ${response.status} - ${errorText}`)
-    }
     
     // Rafraîchir les données de l'utilisateur
     await fetchUsers();
@@ -1152,24 +1054,7 @@ async function removeAllItemsAndBorderColor(userId) {
       itemsLoading.value = false
       return
     }
-    const headers = {
-      'Content-Type': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest',
-      'Authorization': `Bearer ${token}`
-    }
-    const response = await fetch(`${API_URL}/users-admin`, {
-      method: 'POST',
-      headers,
-      credentials: 'include',
-      body: JSON.stringify({
-        action: 'clear-all-items',
-        userId: userId
-      })
-    })
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`HTTP error! status: ${response.status} - ${errorText}`)
-    }
+    await secureApiCall('/users-admin', { method: 'POST', body: JSON.stringify({ action: 'clear-all-items', userId }) })
     await fetchUsers();
     const updatedUser = users.value.find(u => u._id === userId);
     if (updatedUser) {
@@ -1227,12 +1112,6 @@ async function giveSelectedItemsToUser() {
       itemsLoading.value = false
       return
     }
-    const headers = {
-      'Content-Type': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest',
-      'Authorization': `Bearer ${token}`
-    }
-
     const nameById = Object.fromEntries(itemsCatalog.value.map(i => [i.id, i.name]))
     const ownedIds = new Set((viewingUserItems.value.purchasedItems || []).map(pi => pi.itemId))
     // Ne donner que les items manquants (y compris variantes de bordure)
@@ -1249,29 +1128,13 @@ async function giveSelectedItemsToUser() {
     let failedCount = 0
     for (const id of idsToGive) {
       try {
-        const response = await fetch(`${API_URL}/users-admin`, {
-          method: 'POST',
-          headers,
-          credentials: 'include',
-          body: JSON.stringify({ 
-            action: 'give-item',
-            userId: viewingUserItems.value._id,
-            itemId: id, 
-            itemName: nameById[id],
-            adminMessage: adminMessage.value.trim() || null
-          })
-        })
-        if (!response.ok) {
-          // Lire la réponse pour distinguer "déjà possédé" des vraies erreurs
-          let msg = ''
-          try { msg = await response.text() } catch {}
-          if (response.status === 400 && /déjà|deja/i.test(msg)) {
-            alreadyOwnedCount++
-            continue
-          }
-          failedCount++
-          continue
-        }
+        await secureApiCall('/users-admin', { method: 'POST', body: JSON.stringify({
+          action: 'give-item',
+          userId: viewingUserItems.value._id,
+          itemId: id,
+          itemName: nameById[id],
+          adminMessage: adminMessage.value.trim() || null
+        }) })
         givenCount++
       } catch (e) {
         failedCount++
@@ -1332,27 +1195,7 @@ async function removeItemFromUser(userId, itemId) {
       return
     }
     
-    const headers = {
-      'Content-Type': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest',
-      'Authorization': `Bearer ${token}`
-    }
-    
-    const response = await fetch(`${API_URL}/users-admin`, {
-      method: 'POST',
-      headers: headers,
-      credentials: 'include',
-      body: JSON.stringify({ 
-        action: 'remove-item',
-        userId: userId,
-        itemId: itemId 
-      })
-    })
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`HTTP error! status: ${response.status} - ${errorText}`)
-    }
+    await secureApiCall('/users-admin', { method: 'POST', body: JSON.stringify({ action: 'remove-item', userId, itemId }) })
     
     // Rafraîchir les données de l'utilisateur
     await fetchUsers();

@@ -63,6 +63,7 @@ const setCorsHeaders = (res) => {
 
 // Vérification JWT avec contrôle admin (compatible auth.js)
 const verifyToken = async (event, requireAdmin = false) => {
+  // Accepter différents formats d'entête (Bearer <token> ou token brut)
   const authHeader = (event && event.headers && (event.headers.authorization || event.headers.Authorization)) || null;
   if (!authHeader) throw new Error('Token manquant');
   
@@ -150,6 +151,7 @@ exports.handler = async (event, context) => {
           }) };
         }
       } catch (authError) {
+        // Détail utile pour le front lors du debug
         return { statusCode: 401, headers, body: JSON.stringify({ error: 'Non autorisé' }) };
       }
     }
