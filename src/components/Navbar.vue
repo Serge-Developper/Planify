@@ -981,8 +981,8 @@ function getDynNavbarAssetStyle(asset) {
   const isMob = !!isMobile && !!isMobile.value
   const s = asset
     ? (isMob
-        ? (asset.navbarStyleMobile || asset.avatarStyleMobile || asset.collectionStyleMobile || asset.collectionStyle || asset.style || {})
-        : (asset.navbarStyle || asset.avatarStyle || asset.collectionStyle || asset.style || {}))
+        ? (asset.navbarStyleMobile || asset.avatarStyleMobile || asset.style || asset.collectionStyleMobile || asset.collectionStyle || {})
+        : (asset.navbarStyle || asset.avatarStyle || asset.style || asset.collectionStyle || {}))
     : {}
   const style = { position: 'absolute', objectFit: s.objectFit || 'contain', zIndex: typeof s.zIndex === 'number' ? s.zIndex : 1 }
   if (typeof s.top === 'number') style.top = s.top + 'px'
@@ -990,18 +990,6 @@ function getDynNavbarAssetStyle(asset) {
   if (typeof s.width === 'number') style.width = s.width + 'px'
   if (typeof s.height === 'number') style.height = s.height + 'px'
   if (typeof s.rotate === 'number') style.transform = `rotate(${s.rotate}deg)`
-  // Appliquer un éventuel ajustement utilisateur enregistré
-  try {
-    const adj = coinsStore.dynamicItemAdjustments.get(Number(equippedDynItem.value?.id))
-    if (adj) {
-      if (typeof adj.top === 'number') style.top = (adj.top) + 'px'
-      if (typeof adj.left === 'number') style.left = (adj.left) + 'px'
-      if (typeof adj.width === 'number') style.width = (adj.width) + 'px'
-      if (typeof adj.height === 'number') style.height = (adj.height) + 'px'
-      if (typeof adj.rotate === 'number') style.transform = `rotate(${adj.rotate}deg)`
-      if (typeof adj.zIndex === 'number') style.zIndex = adj.zIndex
-    }
-  } catch {}
   return style
 }
 function getDynNavbarOverlayStyle(asset) {
