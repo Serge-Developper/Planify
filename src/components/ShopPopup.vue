@@ -1323,6 +1323,8 @@ async function loadDynamicItems() {
       
       // Nettoyer la map des computed properties pour les nouveaux items
       dynamicItemDisplays.clear()
+      // Notifier globalement que les items dynamiques sont prêts (Navbar écoute)
+      try { window.dispatchEvent(new CustomEvent('items-changed')) } catch {}
     } else {
       dynamicItems.value = []
       dynamicInfoById.value = new Map()
