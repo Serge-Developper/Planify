@@ -85,8 +85,14 @@ exports.handler = async (event, context) => {
   }
 
   try {
+    // Connexion à MongoDB
+    await mongoose.connect(process.env.MONGODB_URI || '', {
+      bufferCommands: false
+    });
+    
     // Vérifier l'authentification
-    const { userId } = verifyToken(event);
+    const decoded = verifyToken(event);
+    const userId = decoded.userId || decoded.id;
     
     // Parser le multipart form data
     const boundary = event.headers['content-type'].split('boundary=')[1];
@@ -164,7 +170,12 @@ exports.handler = async (event, context) => {
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ error: 'Erreur serveur' })
+      body: JSON.stringify({ error: 'Erreur serveur: ' + error.message })
     };
+  } finally {
+    // Fermer la connexion MongoDB
+    if (mongoose.connection.readyState === 1) {
+      await mongoose.connection.close();
+    }
   }
 };
