@@ -920,8 +920,7 @@ function resolveDynSrc(src) {
 }
 
 function getDynNavbarAssetStyle(asset) {
-  const s = (asset && (isMobile.value ? (asset.navbarStyleMobile || asset.navbarStyle) : asset.navbarStyle))
-    || asset?.style || {}
+  const s = (asset && asset.navbarStyle) || asset?.style || {}
   const style = { position: 'absolute', objectFit: s.objectFit || 'contain', zIndex: typeof s.zIndex === 'number' ? s.zIndex : 1 }
   if (typeof s.top === 'number') style.top = s.top + 'px'
   if (typeof s.left === 'number') style.left = s.left + 'px'
