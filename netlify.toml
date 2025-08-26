@@ -16,7 +16,13 @@
   # Disable cache pour forcer installation complète
   NETLIFY_SKIP_CACHE = "true"
 
-# Redirections pour les API endpoints (DOIT être en premier)
+# Redirection spécifique pour servir les avatars depuis la même fonction
+[[redirects]]
+  from = "/api/uploads/avatars/*"
+  to = "/.netlify/functions/upload-avatar/uploads/avatars/:splat"
+  status = 200
+
+# Redirections pour les API endpoints (générique)
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
