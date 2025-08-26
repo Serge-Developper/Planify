@@ -910,7 +910,23 @@ const equippedDynItem = computed(() => {
   if (it && it.isDynamic) return it
   const id = coinsStore.equippedItemId || it?.id
   if (!id) return null
-  return dynamicInfoById.value.get(Number(id)) || null
+  const dynItem = dynamicInfoById.value.get(Number(id))
+  if (!dynItem) return null
+  
+  // Si l'item a des variantes, récupérer la variante sélectionnée
+  if (dynItem.variants && Array.isArray(dynItem.variants)) {
+    const variantIndex = coinsStore.getDynamicItemVariant(Number(id))
+    const selectedVariant = dynItem.variants[variantIndex] || dynItem.variants[0]
+    
+    // Retourner l'item avec les assets de la variante sélectionnée
+    return {
+      ...dynItem,
+      assets: selectedVariant.assets || [],
+      backgrounds: selectedVariant.backgrounds || {}
+    }
+  }
+  
+  return dynItem
 })
 
 function resolveDynSrc(src) {
@@ -964,9 +980,21 @@ async function loadDynamicItems() {
 
 onMounted(() => {
   loadDynamicItems()
-  try { window.addEventListener('items-changed', loadDynamicItems) } catch {}
+  try { 
+    window.addEventListener('items-changed', loadDynamicItems)
+    // Écouter les changements de variantes
+    window.addEventListener('dynamic-variant-changed', (event) => {
+      console.log('📡 Navbar: Événement dynamic-variant-changed reçu:', event.detail)
+      // Forcer la mise à jour du computed equippedDynItem
+    })
+  } catch {}
 })
-onUnmounted(() => { try { window.removeEventListener('items-changed', loadDynamicItems) } catch {} })
+onUnmounted(() => { 
+  try { 
+    window.removeEventListener('items-changed', loadDynamicItems)
+    window.removeEventListener('dynamic-variant-changed', () => {})
+  } catch {} 
+})
 
 console.log('🔧 API_URL:', API_URL)
 console.log('🔧 baseUrl:', baseUrl)

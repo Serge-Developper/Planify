@@ -2125,29 +2125,39 @@ function closeDynamicStylePicker() {
 }
 
 // Appliquer une variante pour les items dynamiques
-function applyDynamicVariant(idx) {
+async function applyDynamicVariant(idx) {
   if (!dynamicPickerItem.value) return
   const item = dynamicPickerItem.value
   
   // Vérifier que la variante existe
-  if (!item.variants || !item.variants[idx]) return
+  if (!item.variants || !item.variants[idx]) {
+    console.error('❌ Variante invalide:', idx, 'pour item', item.id)
+    return
+  }
   
   console.log('🎨 Application de la variante', idx, 'pour item', item.id)
   
   // Sauvegarder la variante sélectionnée dans le store
   try {
-    coinsStore.setDynamicItemVariant(item.id, idx)
-    console.log('✅ Variante sauvegardée dans le store')
-    // Forcer la mise à jour en incrémentant la clé
-    variantUpdateKey.value++
-    console.log('🔄 Clé de mise à jour incrémentée:', variantUpdateKey.value)
-    // Déclencher l'événement pour notifier la navbar
-    window.dispatchEvent(new CustomEvent('dynamic-variant-changed', { 
-      detail: { itemId: item.id, variantIndex: idx } 
-    }))
-    console.log('📡 Événement dynamic-variant-changed déclenché')
+    const result = await coinsStore.setDynamicItemVariant(item.id, idx)
+    if (result.success) {
+      console.log('✅ Variante sauvegardée dans le store')
+      // Forcer la mise à jour en incrémentant la clé
+      variantUpdateKey.value++
+      console.log('🔄 Clé de mise à jour incrémentée:', variantUpdateKey.value)
+      // Déclencher l'événement pour notifier la navbar
+      window.dispatchEvent(new CustomEvent('dynamic-variant-changed', { 
+        detail: { itemId: item.id, variantIndex: idx } 
+      }))
+      console.log('📡 Événement dynamic-variant-changed déclenché')
+    } else {
+      console.error('❌ Erreur lors de la sauvegarde de la variante:', result.error)
+      // Afficher un message d'erreur à l'utilisateur
+      alert('Impossible de sauvegarder la variante. Veuillez réessayer.')
+    }
   } catch (e) {
-    console.warn('❌ Impossible de sauvegarder la variante:', e)
+    console.error('❌ Exception lors de la sauvegarde de la variante:', e)
+    alert('Une erreur est survenue. Veuillez réessayer.')
   }
   
   // Fermer la popup
