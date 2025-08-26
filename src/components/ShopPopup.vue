@@ -1864,6 +1864,7 @@ const shopItems = [
     name: 'Clown',
     price: 120,
     img: clowncheveux,
+    displayType: 'clown',
   },
   {
     id: 3,
@@ -1924,6 +1925,7 @@ const shopItems = [
     name: 'Gentleman',
      price: 150,
      img: gentleman,
+     displayType: 'gentleman',
   },
   {
     id: 14,
@@ -1985,6 +1987,7 @@ const shopItems = [
     name: 'Discord',
     price: 150,
     img: discordon,
+    displayType: 'discord',
     variants: [discordon, discordnepasderange, discordderange],
     variantIndex: 0,
   }
@@ -1994,6 +1997,7 @@ const shopItems = [
     name: 'Jojo',
     price: 200,
     img: jojo,
+    displayType: 'jojo',
   }
   ,
   {
@@ -2154,7 +2158,6 @@ function applyDynamicVariant(idx) {
 const getUserEquippedItemData = (user) => {
   // Tolérance si user est indéfini ou si aucun item n'est équipé
   if (!user || user.equippedItemId === null || user.equippedItemId === undefined || user.equippedItemId === 0) {
-    console.log('🔍 Utilisateur sans item équipé:', user?.username, 'equippedItemId:', user?.equippedItemId)
     return null
   }
   
@@ -2324,25 +2327,47 @@ const classicBorderStyle = computed(() => {
 
 // Style de bordure pour l'avatar du leaderboard (appliqué aux utilisateurs listés)
 const getAvatarBorderStyle = (user) => {
-  // Si Discord est équipé, pas de bordure
-  if (getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'discord') {
-    return { border: 'none', background: 'transparent' }
+  // Si Discord, Galaxie, Coeur, Alpha ou Admin Planify est équipé, pas de bordure
+  const equippedItem = getUserEquippedItemData(user)
+  if (equippedItem && (equippedItem.displayType === 'discord' || 
+      equippedItem.name === 'Galaxie' || 
+      equippedItem.name === 'Coeur' || 
+      equippedItem.name === 'Prestige' || 
+      equippedItem.name === 'Planify')) {
+    return { border: '3px solid transparent', background: 'transparent' }
   }
+  
+  // Si pas de couleur sélectionnée, bordure par défaut
+  if (!user || !user.selectedBorderColor) {
+    return { border: '3px solid #000000' }
+  }
+  
+  // Initialiser les bordures si nécessaire
+  if (!coinsStore.borderColors || coinsStore.borderColors.length === 0) {
+    coinsStore.initializeBorderColors()
+  }
+  
   // Extraire l'id de base si encodé avec variantes (ex: "red|dv=1|jv=0")
-  const raw = user && user.selectedBorderColor ? String(user.selectedBorderColor) : ''
-  const baseId = raw.split('|')[0] || ''
+  const raw = String(user.selectedBorderColor)
+  const baseId = raw.split('|')[0] || 'default'
   const selected = coinsStore.borderColors.find(c => c.id === baseId)
-  if (!selected) return {}
+  
+  if (!selected) {
+    return { border: '3px solid #000000' } // Bordure noire par défaut
+  }
+  
   if (selected.gradient) {
     return {
       border: '3px solid transparent',
       background: `linear-gradient(white, white) padding-box, ${selected.gradient} border-box`
     }
   }
+  
   if (selected.color) {
     return { border: `3px solid ${selected.color}` }
   }
-  return {}
+  
+  return { border: '3px solid #000000' }
 }
 
  // Fonctions pour la boutique hebdomadaire
@@ -2555,6 +2580,10 @@ const sortedLeaderboardUsers = computed(() => {
  // Lifecycle hooks
  onMounted(() => {
    if (authStore.isLoggedIn) {
+     // Initialiser les bordures si nécessaire
+     if (!coinsStore.borderColors || coinsStore.borderColors.length === 0) {
+       coinsStore.initializeBorderColors()
+     }
      loadWeeklyItems()
      loadLeaderboardUsers()
      updateWeeklyTimer()
