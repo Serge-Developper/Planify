@@ -996,21 +996,8 @@ function getDynNavbarAssetStyle(asset) {
   const isMob = !!isMobile && !!isMobile.value
   const s = asset
     ? (isMob
-        ? (
-            asset.navbarStyleMobile ||
-            asset.avatarStyleMobile ||
-            asset.collectionStyleMobile ||
-            asset.collectionStyle ||
-            asset.style ||
-            {}
-          )
-        : (
-            asset.navbarStyle ||
-            asset.avatarStyle ||
-            asset.collectionStyle ||
-            asset.style ||
-            {}
-          ))
+        ? (asset.navbarStyleMobile || asset.avatarStyleMobile || asset.style || {})
+        : (asset.navbarStyle || asset.avatarStyle || asset.style || {}))
     : {}
   const style = { position: 'absolute', objectFit: s.objectFit || 'contain', zIndex: typeof s.zIndex === 'number' ? s.zIndex : 1 }
   if (typeof s.top === 'number') style.top = s.top + 'px'
