@@ -50,6 +50,7 @@
                 </template>
                 <img class="avatar-img"
                   :src="userAvatar" 
+                  :key="'avatar-'+userAvatar"
                   alt="Compte" 
                   :style="equippedItem && equippedItem.name === '8-Bit' 
                     ? 'width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; image-rendering: -moz-crisp-edges; image-rendering: crisp-edges; filter: contrast(1.2) brightness(1.1) saturate(1.1);' 
@@ -1372,6 +1373,8 @@ function changeAvatar() {
     fileInput.value.click();
   }
   showUserDropdown.value = false;
+  // Prévenir cache: invalider la clé visuelle
+  try { userAvatar.value = userAvatar.value + (userAvatar.value.includes('?') ? '&' : '?') + 't=' + Date.now() } catch(e) {}
 }
 
 // Fonction pour gérer l'upload d'avatar
@@ -1426,10 +1429,12 @@ async function handleAvatarUpload(event) {
       }
       if (newAvatarUrl) {
         console.log('🖼️ Avatar normalisé:', newAvatarUrl.substring(0, 80))
-        userAvatar.value = newAvatarUrl
+        // Bust cache et forcer re-render
+        const withTs = newAvatarUrl + (newAvatarUrl.includes('?') ? '&' : '?') + 't=' + Date.now()
+        userAvatar.value = withTs
         // Mettre à jour les données utilisateur dans le store et localStorage
         if (user.value) {
-          const updatedUser = { ...user.value, avatar: newAvatarUrl }
+          const updatedUser = { ...user.value, avatar: withTs }
           auth.login(updatedUser)
           console.log('✅ Données utilisateur mises à jour avec l\'avatar')
         }
