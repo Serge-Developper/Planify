@@ -995,12 +995,7 @@ function getDynNavbarOverlayStyle(asset) {
 const dynamicInfoById = ref(new Map())
 async function loadDynamicItems() {
   try {
-    // Ne pas appeler l'API si l'utilisateur n'est pas connecté
-    if (!user.value || !user.value.token) {
-      console.log('⚠️ Pas d\'utilisateur connecté, skip loadDynamicItems')
-      return
-    }
-    
+    // Charger la liste publique des items dynamiques (pas besoin de token)
     const res = await secureApiCall('/items')
     if (res && res.success && Array.isArray(res.items)) {
       const map = new Map()
@@ -1090,16 +1085,11 @@ function getDynVariantAssetsForNavbar(item) {
 }
 
 onMounted(async () => {
-  // Ne charger les items dynamiques que si l'utilisateur est connecté
-  if (user.value && user.value.token) {
-    await loadDynamicItems()
-  }
+  // Charger dès le montage (liste publique) pour permettre l'affichage immédiat
+  await loadDynamicItems()
   try { 
     window.addEventListener('items-changed', () => {
-      // Ne recharger que si l'utilisateur est connecté
-      if (user.value && user.value.token) {
-        loadDynamicItems()
-      }
+      loadDynamicItems()
     })
     // Écouter les changements de variantes
     window.addEventListener('dynamic-variant-changed', (event) => {
@@ -1132,6 +1122,13 @@ onUnmounted(() => {
     window.removeEventListener('items-changed', loadDynamicItems)
     window.removeEventListener('dynamic-variant-changed', () => {})
   } catch {} 
+})
+
+// Recharger les items dynamiques si on équipe un item et que la liste est vide
+watch(() => coinsStore.equippedItemId, (id) => {
+  if (id && dynamicInfoById.value.size === 0) {
+    loadDynamicItems()
+  }
 })
 
 console.log('🔧 API_URL:', API_URL)
