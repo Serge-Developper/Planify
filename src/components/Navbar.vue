@@ -53,7 +53,7 @@
                   <img
                     v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
                     v-if="a && a.src && ((a.meta && (a.meta.navbarPlacement === 'below' || a.meta.avatarPlacement === 'below')) || (!a.meta && a.navbarPlacement === 'below'))"
-                    :key="'dyn-variant-nb-below-'+ai"
+                    :key="'dyn-variant-nb-below-'+ai+'-'+variantUpdateKey"
                     :src="resolveAssetSrc(a.src)"
                     :style="getDynNavbarAssetStyle(a)"
                   />
@@ -83,7 +83,7 @@
                   <img
                     v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
                     v-if="a && a.src && ((a.meta && (a.meta.navbarPlacement === 'inside' || a.meta.avatarPlacement === 'inside')) || (!a.meta && (!a.navbarPlacement || a.navbarPlacement === 'inside')))"
-                    :key="'dyn-variant-nb-inside-'+ai"
+                    :key="'dyn-variant-nb-inside-'+ai+'-'+variantUpdateKey"
                     :src="resolveAssetSrc(a.src)"
                     :style="getDynNavbarAssetStyle(a)"
                   />
@@ -163,7 +163,7 @@
               <img
                 v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
                 v-if="a && a.src && (!a.meta || a.meta.navbarPlacement === 'above' || a.meta?.avatarPlacement === 'above' || a.navbarPlacement === 'above')"
-                :key="'dyn-variant-nb-above-'+ai"
+                :key="'dyn-variant-nb-above-'+ai+'-'+variantUpdateKey"
                 :src="resolveAssetSrc(a.src)"
                 :style="getDynNavbarOverlayStyle(a)"
               />
@@ -546,7 +546,7 @@
               <img
                 v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
                 v-if="a && a.src && (!a.meta || a.meta.navbarPlacement === 'above' || a.meta?.avatarPlacement === 'above' || a.navbarPlacement === 'above')"
-                :key="'dyn-variant-m-above-'+ai"
+                :key="'dyn-variant-m-above-'+ai+'-'+variantUpdateKey"
                 :src="resolveAssetSrc(a.src)"
                 :style="getDynNavbarOverlayStyle(a)"
               />
@@ -965,6 +965,7 @@ const hoverCloseProfile = ref(false)
 
 // 2. Ajouter une variable showShopPopup
 const showShopPopup = ref(false)
+const variantUpdateKey = ref(0)
 
 // Fermer le dropdown utilisateur au clic hors zone
 function handleGlobalClick(event) {
@@ -1111,8 +1112,12 @@ onMounted(() => {
     // Écouter les changements de variantes
     window.addEventListener('dynamic-variant-changed', (event) => {
       console.log('📡 Navbar: Événement dynamic-variant-changed reçu:', event.detail)
+      console.log('🔄 Rechargement des items dynamiques...')
       // Forcer la mise à jour du computed equippedDynItem en rechargeant les items dynamiques
       loadDynamicItems()
+      // Incrémenter la clé pour forcer la mise à jour des templates
+      variantUpdateKey.value++
+      console.log('🔄 Clé de mise à jour incrémentée:', variantUpdateKey.value)
     })
   } catch {}
 })
