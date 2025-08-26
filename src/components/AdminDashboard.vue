@@ -643,21 +643,28 @@ async function fetchUsers() {
     // Récupérer le token d'authentification
     let token = auth.token || auth.user?.token
     
-    console.log('🔐 Admin fetchUsers - auth.token:', auth.token)
-    console.log('🔐 Admin fetchUsers - auth.user:', auth.user)
-    console.log('🔐 Admin fetchUsers - token final:', token)
+    console.log('🔐 Admin fetchUsers - auth.token:', auth.token ? 'Présent' : 'Manquant')
+    console.log('🔐 Admin fetchUsers - auth.user:', auth.user ? { role: auth.user.role, username: auth.user.username } : 'Manquant')
+    console.log('🔐 Admin fetchUsers - token final:', token ? 'Présent' : 'Manquant')
     
     if (!token) {
       const userFromStorage = localStorage.getItem('user')
       if (userFromStorage) {
         const userData = JSON.parse(userFromStorage)
         token = userData.token
-        console.log('🔐 Token récupéré du localStorage:', token)
+        console.log('🔐 Token récupéré du localStorage:', token ? 'Présent' : 'Manquant')
       }
     }
     
     if (!token) {
-      console.warn('Aucun token d\'authentification trouvé')
+      console.warn('❌ Aucun token d\'authentification trouvé')
+      return
+    }
+    
+    // Vérifier que l'utilisateur est admin
+    const currentUser = auth.user || JSON.parse(localStorage.getItem('user') || '{}')
+    if (currentUser.role !== 'admin' && currentUser.role !== 'prof') {
+      console.warn('❌ Utilisateur non admin:', currentUser.role)
       return
     }
     
@@ -669,8 +676,9 @@ async function fetchUsers() {
     
     console.log('🔐 Headers envoyés:', headers)
     console.log('🔐 URL:', `${API_URL}/users-admin`)
+    console.log('🔐 Utilisateur actuel:', { role: currentUser.role, username: currentUser.username })
     
-         const response = await fetch(`${API_URL}/users-admin`, {
+    const response = await fetch(`${API_URL}/users-admin`, {
       method: 'GET',
       headers: headers,
       credentials: 'include'

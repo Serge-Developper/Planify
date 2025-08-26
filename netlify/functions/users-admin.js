@@ -65,6 +65,7 @@ const setCorsHeaders = (res) => {
 const verifyToken = async (event, requireAdmin = false) => {
   const authHeader = (event && event.headers && (event.headers.authorization || event.headers.Authorization)) || null;
   if (!authHeader) throw new Error('Token manquant');
+  
   const parts = authHeader.split(' ');
   const token = parts.length === 2 ? parts[1] : parts[0];
   if (!token) throw new Error('Token manquant');
@@ -75,21 +76,26 @@ const verifyToken = async (event, requireAdmin = false) => {
     const payload = typeof decoded === 'object' && decoded !== null ? decoded : {};
 
     if (requireAdmin) {
-      if (payload.role === 'admin' || payload.role === 'prof') return payload;
+      // Vérifier directement le rôle dans le payload
+      if (payload.role === 'admin' || payload.role === 'prof') {
+        return payload;
+      }
+      
+      // Si pas de rôle dans le payload, vérifier en base
       const userId = payload.id || payload._id;
       if (!userId) throw new Error('Accès admin requis');
+      
       const u = await User.findById(userId).lean();
-      if (!u || (u.role !== 'admin' && u.role !== 'prof')) throw new Error('Accès admin requis');
+      if (!u || (u.role !== 'admin' && u.role !== 'prof')) {
+        throw new Error('Accès admin requis');
+      }
+      
+      // Retourner le payload avec le rôle de la base
+      return { ...payload, role: u.role };
     }
+    
     return payload;
   } catch (error) {
-    // Fallback: decode sans vérifier la signature pour éviter des faux 401 (skew ou secret mismatch)
-    try {
-      const decoded = jwt.decode(token);
-      const payload = typeof decoded === 'object' && decoded !== null ? decoded : {};
-      if (!requireAdmin) return payload;
-      if (payload && (payload.role === 'admin' || payload.role === 'prof')) return payload;
-    } catch {}
     console.log('❌ Erreur token:', error.message);
     throw new Error('Token invalide ou accès insuffisant');
   }
