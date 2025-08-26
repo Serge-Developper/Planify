@@ -2329,6 +2329,9 @@ const classicBorderStyle = computed(() => {
 const getAvatarBorderStyle = (user) => {
   // Si Discord, Galaxie, Coeur, Alpha ou Admin Planify est équipé, pas de bordure
   const equippedItem = getUserEquippedItemData(user)
+  const equippedId = user?.equippedItemId
+  
+  // Si certains items spéciaux sont équipés, pas de bordure
   if (equippedItem && (equippedItem.displayType === 'discord' || 
       equippedItem.name === 'Galaxie' || 
       equippedItem.name === 'Coeur' || 
@@ -2337,32 +2340,41 @@ const getAvatarBorderStyle = (user) => {
     return { border: '3px solid transparent', background: 'transparent' }
   }
   
-  // Si l'utilisateur a équipé la bordure classique (id: 0) et a une couleur sélectionnée
-  if (user && user.equippedItemId === 0 && user.selectedBorderColor) {
-    // Initialiser les bordures si nécessaire
-    if (!coinsStore.borderColors || coinsStore.borderColors.length === 0) {
-      coinsStore.initializeBorderColors()
-    }
-    
-    // Extraire l'id de base si encodé avec variantes (ex: "red|dv=1|jv=0")
-    const raw = String(user.selectedBorderColor)
-    const baseId = raw.split('|')[0] || 'default'
-    const selected = coinsStore.borderColors.find(c => c.id === baseId)
-    
-    if (selected) {
-      if (selected.gradient) {
-        return {
-          border: '3px solid transparent',
-          background: `linear-gradient(white, white) padding-box, ${selected.gradient} border-box`
-        }
-      }
-      if (selected.color) {
-        return { border: `3px solid ${selected.color}` }
-      }
+  // Si l'item équipé est spécifiquement ces IDs, pas de bordure
+  if (equippedId == 25 || equippedId == 26 || equippedId == 27 || equippedId == 28) {
+    return { border: '3px solid transparent', background: 'transparent' }
+  }
+  
+  // Si pas de couleur sélectionnée, bordure noire par défaut
+  if (!user || !user.selectedBorderColor || user.selectedBorderColor === 'default') {
+    return { border: '3px solid #000000' }
+  }
+  
+  // Initialiser les bordures si nécessaire
+  if (!coinsStore.borderColors || coinsStore.borderColors.length === 0) {
+    coinsStore.initializeBorderColors()
+  }
+  
+  // Extraire l'id de base si encodé avec variantes (ex: "red|dv=1|jv=0")
+  const raw = String(user.selectedBorderColor)
+  const baseId = raw.split('|')[0] || 'default'
+  const selected = coinsStore.borderColors.find(c => c.id === baseId)
+  
+  if (!selected) {
+    return { border: '3px solid #000000' }
+  }
+  
+  if (selected.gradient) {
+    return {
+      border: '3px solid transparent',
+      background: `linear-gradient(white, white) padding-box, ${selected.gradient} border-box`
     }
   }
   
-  // Bordure noire par défaut
+  if (selected.color) {
+    return { border: `3px solid ${selected.color}` }
+  }
+  
   return { border: '3px solid #000000' }
 }
 
