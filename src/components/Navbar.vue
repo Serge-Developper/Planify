@@ -1079,8 +1079,22 @@ function getDynVariantAssetsForNavbar(item) {
     const itemId = item.legacyId !== undefined ? item.legacyId : item.id
     const variantIndex = coinsStore.getDynamicItemVariant(itemId)
     
+    console.log('🔍 getDynVariantAssetsForNavbar:', { 
+      itemName: item.name, 
+      itemId, 
+      legacyId: item.legacyId, 
+      id: item.id, 
+      variantIndex,
+      variantsCount: item.variants.length 
+    })
+    
     const variant = item.variants[variantIndex]
-    if (!variant) return []
+    if (!variant) {
+      console.log('❌ Variante non trouvée pour index:', variantIndex)
+      return []
+    }
+    
+    console.log('✅ Variante trouvée:', variant.name, 'avec', variant.assets?.length || 0, 'assets')
     
     // Si c'est un style texte uniquement, retourner les assets de la base avec les styles de la variante
     if (variant.textOnly) {
