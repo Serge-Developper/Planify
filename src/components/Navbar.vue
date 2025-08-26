@@ -42,7 +42,7 @@
                 <template v-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
                   <img
                     v-for="(a, ai) in equippedDynItem.assets"
-                    v-if="a && a.meta && a.meta.navbarPlacement === 'below'"
+                    v-if="!a || !a.meta || a.meta.navbarPlacement === 'below'"
                     :key="'dyn-nb-below-'+ai"
                     :src="resolveDynSrc(a.src)"
                     :style="getDynNavbarAssetStyle(a)"
@@ -132,7 +132,7 @@
             <template v-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
               <img
                 v-for="(a, ai) in equippedDynItem.assets"
-                v-if="!a || !a.meta || a.meta.navbarPlacement === 'above'"
+                v-if="a && a.meta && a.meta.navbarPlacement === 'above'"
                 :key="'dyn-nb-above-'+ai"
                 :src="resolveDynSrc(a.src)"
                 :style="getDynNavbarOverlayStyle(a)"

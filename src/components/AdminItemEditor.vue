@@ -471,7 +471,7 @@ function sanitizeStyle(s) {
 }
 
 function sanitizeAsset(a) {
-  if (!a) return { src: '', style: sanitizeStyle(null), collectionStyle: sanitizeStyle(null), collectionStyleMobile: sanitizeStyle(null), leaderboardStyle: sanitizeStyle(null), leaderboardStyleMobile: sanitizeStyle(null), avatarStyle: sanitizeStyle(null), avatarStyleMobile: sanitizeStyle(null), navbarStyle: sanitizeStyle(null), navbarStyleMobile: sanitizeStyle(null), popupStyleStyle: sanitizeStyle(null) }
+  if (!a) return { src: '', style: sanitizeStyle(null), collectionStyle: sanitizeStyle(null), collectionStyleMobile: sanitizeStyle(null), leaderboardStyle: sanitizeStyle(null), leaderboardStyleMobile: sanitizeStyle(null), avatarStyle: sanitizeStyle(null), avatarStyleMobile: sanitizeStyle(null), navbarStyle: sanitizeStyle(null), navbarStyleMobile: sanitizeStyle(null), popupStyleStyle: sanitizeStyle(null), meta: {} }
   return {
     src: a.src || '',
     style: sanitizeStyle(a.style),
@@ -483,7 +483,8 @@ function sanitizeAsset(a) {
     avatarStyleMobile: sanitizeStyle(a.avatarStyleMobile),
     navbarStyle: sanitizeStyle(a.navbarStyle),
     navbarStyleMobile: sanitizeStyle(a.navbarStyleMobile),
-    popupStyleStyle: sanitizeStyle(a.popupStyleStyle)
+    popupStyleStyle: sanitizeStyle(a.popupStyleStyle),
+    meta: a.meta && typeof a.meta === 'object' ? { ...a.meta } : {}
   }
 }
 
