@@ -1869,13 +1869,13 @@ const shopItems = [
   {
     id: 3,
     name: 'Cash',
-    price: 50,
+    price: 70,
     img: cash,
   },
   {
     id: 4,
     name: 'Cible',
-    price: 70,
+    price: 100,
     img: target,
   },
   {

@@ -47,7 +47,7 @@ const shopItems = [
   {
     id: 1,
     name: 'Oreillettes de chat',
-    price: 50,
+    price: 150,
     img: catEars,
   },
   {
