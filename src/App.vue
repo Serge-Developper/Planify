@@ -144,13 +144,23 @@ async function closeItemReceivedPopup() {
 onMounted(() => {
   // Vérifier les nouveaux items après le chargement initial
   setTimeout(async () => {
-    // S’assurer que la palette de couleurs est prête pour le rendu des pastilles
+    // S'assurer que la palette de couleurs est prête pour le rendu des pastilles
     try { if (!coinsStore.borderColors || coinsStore.borderColors.length === 0) coinsStore.initializeBorderColors() } catch {}
-    await checkForNewItemsWithMessages();
-    await fetchGiftsFromServer();
+    
+    // Ne vérifier les nouveaux items et gifts que si l'utilisateur est connecté
+    if (authStore.user && authStore.user.token) {
+      await checkForNewItemsWithMessages();
+      await fetchGiftsFromServer();
+    }
   }, 1000);
-  // Polling léger toutes les 30 secondes
-  try { giftsIntervalId = setInterval(fetchGiftsFromServer, 30000) } catch {}
+  // Polling léger toutes les 30 secondes (seulement si connecté)
+  try { 
+    giftsIntervalId = setInterval(() => {
+      if (authStore.user && authStore.user.token) {
+        fetchGiftsFromServer();
+      }
+    }, 30000);
+  } catch {}
 });
 </script>
 

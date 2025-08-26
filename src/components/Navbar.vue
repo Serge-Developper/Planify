@@ -1167,6 +1167,26 @@ const isAdmin = computed(() => auth.isAdmin)
 
 const passwordValue = ref('');
 
+// Fonction pour corriger les data URLs corrompues
+function fixCorruptedDataUrl(dataUrl) {
+  if (!dataUrl || !dataUrl.startsWith('data:image/')) return dataUrl;
+  
+  // Extraire le base64
+  const base64Match = dataUrl.match(/base64,(.+)/);
+  if (!base64Match) return dataUrl;
+  
+  let base64 = base64Match[1];
+  
+  // Si le base64 commence par /, le remplacer par i (correction commune pour PNG)
+  if (base64.startsWith('/VBORw0KGg')) {
+    console.log('🔧 Correction d\'une data URL PNG corrompue');
+    base64 = 'i' + base64.substring(1);
+    return `data:image/png;base64,${base64}`;
+  }
+  
+  return dataUrl;
+}
+
 // Fonction pour charger l'avatar de l'utilisateur
 async function loadUserAvatar() {
   if (!user.value || !user.value.id) {
@@ -1176,9 +1196,9 @@ async function loadUserAvatar() {
 
   try {
     if (user.value.avatar && typeof user.value.avatar === 'string') {
-      // Si c'est une data URL, l'utiliser directement
+      // Si c'est une data URL, la corriger si nécessaire et l'utiliser
       if (user.value.avatar.startsWith('data:')) {
-        userAvatar.value = user.value.avatar;
+        userAvatar.value = fixCorruptedDataUrl(user.value.avatar);
       } else if (user.value.avatar.startsWith('/')) {
         // Si c'est un chemin, construire l'URL complète
         userAvatar.value = `${baseUrl}${user.value.avatar}`;
@@ -1833,9 +1853,9 @@ onMounted(async () => {
   
   // Charger l'avatar depuis le store auth au montage
   if (user.value && user.value.avatar && typeof user.value.avatar === 'string') {
-    // Si c'est une data URL, l'utiliser directement
+    // Si c'est une data URL, la corriger si nécessaire
     if (user.value.avatar.startsWith('data:')) {
-      userAvatar.value = user.value.avatar;
+      userAvatar.value = fixCorruptedDataUrl(user.value.avatar);
       console.log('🖼️ Avatar data URL chargé au montage');
     } else if (user.value.avatar.startsWith('/')) {
       // Si c'est un chemin, construire l'URL complète
@@ -1868,9 +1888,9 @@ watch(user, async (newUser, oldUser) => {
   if (newUser) {
     // Gérer l'avatar
     if (newUser.avatar && typeof newUser.avatar === 'string') {
-      // Si c'est une data URL, l'utiliser directement
+      // Si c'est une data URL, la corriger si nécessaire
       if (newUser.avatar.startsWith('data:')) {
-        userAvatar.value = newUser.avatar;
+        userAvatar.value = fixCorruptedDataUrl(newUser.avatar);
       } else if (newUser.avatar.startsWith('/')) {
         // Si c'est un chemin, construire l'URL complète
         userAvatar.value = `${baseUrl}${newUser.avatar}`;

@@ -2453,6 +2453,12 @@ const getAvatarBorderStyle = (user) => {
  }
 
  const loadWeeklyItems = async () => {
+   // Ne pas charger si pas connecté
+   if (!authStore.isLoggedIn || !authStore.user?.token) {
+     console.log('⚠️ Pas d\'utilisateur connecté, skip loadWeeklyItems')
+     return
+   }
+   
    try {
      console.log('🔄 Chargement des items hebdomadaires...')
              const response = await secureApiCall('/coins/weekly-items')
@@ -2583,6 +2589,12 @@ const sortedLeaderboardUsers = computed(() => {
  })
 
  const loadLeaderboardUsers = async () => {
+   // Ne pas charger si pas connecté
+   if (!authStore.isLoggedIn || !authStore.user?.token) {
+     console.log('⚠️ Pas d\'utilisateur connecté, skip loadLeaderboardUsers')
+     return
+   }
+   
    try {
      console.log('🔄 Chargement du leaderboard...')
      const response = await secureApiCall('/users')
