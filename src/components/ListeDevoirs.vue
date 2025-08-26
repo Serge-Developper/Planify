@@ -987,7 +987,35 @@ function handleNotifClick(type) {
 }
 
 function canDelete(event) {
-  return user.value && (user.value.role === 'delegue' || user.value.role === 'prof') && event.createdBy && String(event.createdBy) === String(user.value.id || user.value._id);
+  if (!user.value) return false;
+  
+  // Debug logs (à retirer plus tard)
+  console.log('Checking canDelete:', {
+    userRole: user.value.role,
+    userId: user.value.id || user.value._id,
+    eventCreatedBy: event.createdBy,
+    eventTitle: event.titre
+  });
+  
+  // Vérifier le rôle
+  const hasRole = user.value.role === 'delegue' || user.value.role === 'prof' || user.value.role === 'admin';
+  if (!hasRole) return false;
+  
+  // Les admins peuvent tout supprimer
+  if (user.value.role === 'admin') return true;
+  
+  // Si le devoir n'a pas de createdBy (ancien devoir), permettre aux profs et délégués de le supprimer
+  if (!event.createdBy) {
+    console.log('Ancien devoir sans createdBy, suppression autorisée pour profs/délégués');
+    return true;
+  }
+  
+  // Pour les nouveaux devoirs, seul le créateur peut supprimer
+  const userId = user.value.id || user.value._id;
+  const isOwner = String(event.createdBy) === String(userId);
+  
+  console.log('isOwner:', isOwner);
+  return isOwner;
 }
 
 const showDeletePopup = ref(false);
