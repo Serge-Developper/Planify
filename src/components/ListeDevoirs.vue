@@ -417,8 +417,15 @@ const selectedMatiere = ref('');
 const hoveredCheck = ref(null);
 const hoverCloseAdd = ref(false);
 const user = ref(null);
-if (localStorage.getItem('user')) {
-  user.value = JSON.parse(localStorage.getItem('user'));
+try {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    const stored = localStorage.getItem('user');
+    if (stored) {
+      user.value = JSON.parse(stored);
+    }
+  }
+} catch (error) {
+  console.error('Erreur lors de la lecture du localStorage:', error);
 }
 const isAdmin = computed(() => user.value && user.value.role === 'admin');
 const matiereArchive = ref('');
@@ -910,8 +917,15 @@ async function submitAddTask() {
 function isNewTask(event) {
   if (!event || !event._id) return false;
   if (event.type !== 'devoir' && event.type !== 'exam') return false;
-  const seen = localStorage.getItem('seenTask_' + event._id);
-  return !seen;
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const seen = localStorage.getItem('seenTask_' + event._id);
+      return !seen;
+    }
+  } catch (error) {
+    console.error('Erreur localStorage:', error);
+  }
+  return false;
 }
 
 // Marquer comme vu dès affichage
@@ -921,7 +935,13 @@ watch(
     if (!Array.isArray(events)) return;
     events.forEach(event => {
       if (isNewTask(event)) {
-        localStorage.setItem('seenTask_' + event._id, '1');
+        try {
+          if (typeof window !== 'undefined' && window.localStorage) {
+            localStorage.setItem('seenTask_' + event._id, '1');
+          }
+        } catch (error) {
+          console.error('Erreur localStorage:', error);
+        }
       }
     });
   },
@@ -944,7 +964,13 @@ watch(
 
 function markTaskAsSeen(event) {
   if (event && event._id) {
-    localStorage.setItem('seenTask_' + event._id, '1');
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem('seenTask_' + event._id, '1');
+      }
+    } catch (error) {
+      console.error('Erreur localStorage:', error);
+    }
   }
 }
 
@@ -953,10 +979,23 @@ function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 function getLastSeen(type) {
-  return localStorage.getItem('lastSeen' + capitalize(type));
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return localStorage.getItem('lastSeen' + capitalize(type));
+    }
+  } catch (error) {
+    console.error('Erreur localStorage:', error);
+  }
+  return null;
 }
 function setLastSeen(type, date) {
-  localStorage.setItem('lastSeen' + capitalize(type), date);
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem('lastSeen' + capitalize(type), date);
+    }
+  } catch (error) {
+    console.error('Erreur localStorage:', error);
+  }
 }
 function getLatestDate(events) {
   if (!events.length) return null;

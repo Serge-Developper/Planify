@@ -822,8 +822,14 @@ export const useCoinsStore = defineStore('coins', {
         this.dynamicItemVariants.set(itemId, variantIndex);
         
         // Sauvegarder la variante dans localStorage pour persistance locale
-        const variantsObj = Object.fromEntries(this.dynamicItemVariants);
-        localStorage.setItem('dynamicItemVariants', JSON.stringify(variantsObj));
+        try {
+          if (typeof window !== 'undefined' && window.localStorage) {
+            const variantsObj = Object.fromEntries(this.dynamicItemVariants);
+            localStorage.setItem('dynamicItemVariants', JSON.stringify(variantsObj));
+          }
+        } catch (error) {
+          console.error('Erreur lors de la sauvegarde dans localStorage:', error);
+        }
         
         // TODO: Appeler l'API backend pour persister la variante
         // Pour l'instant, on garde juste en local
@@ -841,11 +847,13 @@ export const useCoinsStore = defineStore('coins', {
     // Charger les variantes depuis localStorage au démarrage
     loadDynamicItemVariants() {
       try {
-        const saved = localStorage.getItem('dynamicItemVariants');
-        if (saved) {
-          const variantsObj = JSON.parse(saved);
-          this.dynamicItemVariants = new Map(Object.entries(variantsObj).map(([k, v]) => [Number(k), Number(v)]));
-          console.log('📦 Variantes dynamiques chargées:', this.dynamicItemVariants);
+        if (typeof window !== 'undefined' && window.localStorage) {
+          const saved = localStorage.getItem('dynamicItemVariants');
+          if (saved) {
+            const variantsObj = JSON.parse(saved);
+            this.dynamicItemVariants = new Map(Object.entries(variantsObj).map(([k, v]) => [Number(k), Number(v)]));
+            console.log('📦 Variantes dynamiques chargées:', this.dynamicItemVariants);
+          }
         }
       } catch (error) {
         console.error('Erreur lors du chargement des variantes:', error);

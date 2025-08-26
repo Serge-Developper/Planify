@@ -3,8 +3,18 @@ export const API_URL = import.meta.env.VITE_API_URL || 'https://planify-snowy.ve
 
 // Headers de sécurité par défaut
 export const getAuthHeaders = () => {
-  const user = localStorage.getItem('user');
-  const token = user ? JSON.parse(user).token : null;
+  let token = null;
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const user = localStorage.getItem('user');
+      if (user) {
+        const parsed = JSON.parse(user);
+        token = parsed?.token || null;
+      }
+    }
+  } catch (error) {
+    console.error('Erreur lors de la lecture du token:', error);
+  }
   
   return {
     'Content-Type': 'application/json',
@@ -31,7 +41,13 @@ export const secureApiCall = async (url: string, options: RequestInit = {}) => {
     if (!response.ok) {
       if (response.status === 401) {
         // Token expiré ou invalide
-        localStorage.removeItem('user');
+        try {
+          if (typeof window !== 'undefined' && window.localStorage) {
+            localStorage.removeItem('user');
+          }
+        } catch (error) {
+          console.error('Erreur lors de la suppression du localStorage:', error);
+        }
         // Ne pas rediriger automatiquement si on est déjà sur la page d'accueil
         // ou si l'URL contient '/items' (appel API public)
         const currentPath = window.location.pathname;

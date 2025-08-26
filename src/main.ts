@@ -17,12 +17,18 @@ if (import.meta.env && (import.meta.env.PROD || import.meta.env.MODE === 'produc
 
 // Intercepteur pour ajouter le token JWT à chaque requête
 axios.interceptors.request.use(config => {
-  const user = localStorage.getItem('user');
-  if (user) {
-    const token = JSON.parse(user).token;
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const user = localStorage.getItem('user');
+      if (user) {
+        const parsed = JSON.parse(user);
+        if (parsed?.token) {
+          config.headers.Authorization = `Bearer ${parsed.token}`;
+        }
+      }
     }
+  } catch (error) {
+    console.error('Erreur lors de la configuration du token:', error);
   }
   return config;
 }, error => {

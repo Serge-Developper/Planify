@@ -1,9 +1,20 @@
 import { defineStore } from 'pinia';
 
 export const useAuthStore = defineStore('auth', {
-  state: () => ({
-    user: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!) : null,
-  }),
+  state: () => {
+    let user = null;
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const stored = localStorage.getItem('user');
+        if (stored) {
+          user = JSON.parse(stored);
+        }
+      }
+    } catch (error) {
+      console.error('Erreur lors de la lecture du localStorage:', error);
+    }
+    return { user };
+  },
   getters: {
     isLoggedIn: (state) => !!state.user,
     isAdmin: (state) => state.user && state.user.role === 'admin',
