@@ -2337,36 +2337,32 @@ const getAvatarBorderStyle = (user) => {
     return { border: '3px solid transparent', background: 'transparent' }
   }
   
-  // Si pas de couleur sélectionnée, bordure par défaut
-  if (!user || !user.selectedBorderColor) {
-    return { border: '3px solid #000000' }
-  }
-  
-  // Initialiser les bordures si nécessaire
-  if (!coinsStore.borderColors || coinsStore.borderColors.length === 0) {
-    coinsStore.initializeBorderColors()
-  }
-  
-  // Extraire l'id de base si encodé avec variantes (ex: "red|dv=1|jv=0")
-  const raw = String(user.selectedBorderColor)
-  const baseId = raw.split('|')[0] || 'default'
-  const selected = coinsStore.borderColors.find(c => c.id === baseId)
-  
-  if (!selected) {
-    return { border: '3px solid #000000' } // Bordure noire par défaut
-  }
-  
-  if (selected.gradient) {
-    return {
-      border: '3px solid transparent',
-      background: `linear-gradient(white, white) padding-box, ${selected.gradient} border-box`
+  // Si l'utilisateur a équipé la bordure classique (id: 0) et a une couleur sélectionnée
+  if (user && user.equippedItemId === 0 && user.selectedBorderColor) {
+    // Initialiser les bordures si nécessaire
+    if (!coinsStore.borderColors || coinsStore.borderColors.length === 0) {
+      coinsStore.initializeBorderColors()
+    }
+    
+    // Extraire l'id de base si encodé avec variantes (ex: "red|dv=1|jv=0")
+    const raw = String(user.selectedBorderColor)
+    const baseId = raw.split('|')[0] || 'default'
+    const selected = coinsStore.borderColors.find(c => c.id === baseId)
+    
+    if (selected) {
+      if (selected.gradient) {
+        return {
+          border: '3px solid transparent',
+          background: `linear-gradient(white, white) padding-box, ${selected.gradient} border-box`
+        }
+      }
+      if (selected.color) {
+        return { border: `3px solid ${selected.color}` }
+      }
     }
   }
   
-  if (selected.color) {
-    return { border: `3px solid ${selected.color}` }
-  }
-  
+  // Bordure noire par défaut
   return { border: '3px solid #000000' }
 }
 
