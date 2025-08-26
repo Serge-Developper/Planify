@@ -920,7 +920,8 @@ function resolveDynSrc(src) {
 }
 
 function getDynNavbarAssetStyle(asset) {
-  const s = (asset && asset.navbarStyle) || asset?.style || {}
+  const s = (asset && (isMobile.value ? (asset.navbarStyleMobile || asset.navbarStyle) : asset.navbarStyle))
+    || asset?.style || {}
   const style = { position: 'absolute', objectFit: s.objectFit || 'contain', zIndex: typeof s.zIndex === 'number' ? s.zIndex : 1 }
   if (typeof s.top === 'number') style.top = s.top + 'px'
   if (typeof s.left === 'number') style.left = s.left + 'px'
@@ -3359,8 +3360,8 @@ body, html {
 
 .avatar-image-container-mobile {
   position: relative;
-  width: 51px;
-  height: 51px;
+  width: 57px;
+  height: 57px;
 }
 .avatar-image-container-mobile.jojo-sepia .avatar-img { animation: jojo-sepia-cycle 4.7s steps(1, end) infinite; }
 
