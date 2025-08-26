@@ -1725,14 +1725,10 @@ const getColorSwatchStyle = (c) => {
 }
 
 // Obtenir le prix courant d'un item
-// - Collection: toujours le prix de base défini dans shopItems
-// - Boutique quotidienne: applique l'override renvoyé par l'API hebdo s'il existe
+// Priorité: prix hebdomadaire s'il existe (appliqué à tous les onglets)
 const getItemPrice = (item) => {
-  if (activeTab.value === 'weekly') {
-    const override = weeklyPriceMap.value.get(item.id)
-    return typeof override !== 'undefined' ? override : item.price
-  }
-  return item.price
+  const override = weeklyPriceMap.value.get(item.id)
+  return typeof override !== 'undefined' ? override : item.price
 }
 
 // Style pour le cercle d'aperçu dans les variantes hebdomadaires
