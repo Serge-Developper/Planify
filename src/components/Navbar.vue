@@ -1002,6 +1002,10 @@ const equippedDynItem = computed(() => {
     legacyId: dynItem.id
   }
   
+  // Forcer la réactivité en accédant aux variantes du store
+  const itemId = transformedItem.legacyId !== undefined ? transformedItem.legacyId : transformedItem.id
+  coinsStore.getDynamicItemVariant(itemId)
+  
   return transformedItem
 })
 
@@ -1079,22 +1083,8 @@ function getDynVariantAssetsForNavbar(item) {
     const itemId = item.legacyId !== undefined ? item.legacyId : item.id
     const variantIndex = coinsStore.getDynamicItemVariant(itemId)
     
-    console.log('🔍 getDynVariantAssetsForNavbar:', { 
-      itemName: item.name, 
-      itemId, 
-      legacyId: item.legacyId, 
-      id: item.id, 
-      variantIndex,
-      variantsCount: item.variants.length 
-    })
-    
     const variant = item.variants[variantIndex]
-    if (!variant) {
-      console.log('❌ Variante non trouvée pour index:', variantIndex)
-      return []
-    }
-    
-    console.log('✅ Variante trouvée:', variant.name, 'avec', variant.assets?.length || 0, 'assets')
+    if (!variant) return []
     
     // Si c'est un style texte uniquement, retourner les assets de la base avec les styles de la variante
     if (variant.textOnly) {
@@ -1125,16 +1115,18 @@ onMounted(() => {
     window.addEventListener('items-changed', loadDynamicItems)
     // Écouter les changements de variantes
     window.addEventListener('dynamic-variant-changed', (event) => {
-      console.log('📡 Navbar: Événement dynamic-variant-changed reçu:', event.detail)
-      console.log('🔄 Rechargement des items dynamiques...')
       // Forcer la mise à jour du computed equippedDynItem en rechargeant les items dynamiques
       loadDynamicItems()
       // Incrémenter la clé pour forcer la mise à jour des templates
       variantUpdateKey.value++
-      console.log('🔄 Clé de mise à jour incrémentée:', variantUpdateKey.value)
     })
   } catch {}
 })
+
+// Watcher pour forcer la mise à jour quand les variantes changent
+watch(() => coinsStore.dynamicItemVariants, () => {
+  variantUpdateKey.value++
+}, { deep: true })
 onUnmounted(() => { 
   try { 
     window.removeEventListener('items-changed', loadDynamicItems)
