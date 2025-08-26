@@ -940,8 +940,18 @@ const equippedDynItem = computed(() => {
   const dynItem = dynamicInfoById.value.get(equippedId)
   if (!dynItem) return null
 
-  const firstAsset = dynItem.assets && dynItem.assets[0]
-  const img = firstAsset && firstAsset.src ? resolveAssetSrc(firstAsset.src) : (dynItem.img || '')
+  // Image prioritaire: premier asset de la VARIANTE active; sinon premier asset de base; sinon dynItem.img
+  let img = ''
+  try {
+    const variantIndex = coinsStore.getDynamicItemVariant(dynItem.id)
+    const v = Array.isArray(dynItem.variants) ? dynItem.variants[variantIndex] : null
+    const va = v && Array.isArray(v.assets) && v.assets[0] ? v.assets[0] : null
+    if (va && va.src) img = resolveAssetSrc(va.src)
+  } catch {}
+  if (!img) {
+    const firstAsset = dynItem.assets && dynItem.assets[0]
+    img = firstAsset && firstAsset.src ? resolveAssetSrc(firstAsset.src) : (dynItem.img || '')
+  }
 
   return {
     id: dynItem.id,
