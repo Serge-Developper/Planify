@@ -42,7 +42,14 @@
                 <template v-if="equippedDynItem">
                   <img
                     v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
-                    v-if="a && a.src && ((a.meta && (a.meta.navbarPlacement === 'below' || a.meta.avatarPlacement === 'below')) || (!a.meta && a.navbarPlacement === 'below'))"
+                    v-if="a && a.src && (
+                      (a.meta && (
+                        a.meta.navbarPlacement === 'below' ||
+                        a.meta.avatarPlacement === 'below' ||
+                        a.meta.leaderboardPlacement === 'below'
+                      )) ||
+                      (!a.meta && a.navbarPlacement === 'below')
+                    )"
                     :key="'dyn-variant-nb-below-'+ai+'-'+variantUpdateKey"
                     :src="resolveAssetSrc(a.src)"
                     :style="getDynNavbarAssetStyle(a)"
@@ -63,7 +70,11 @@
                   <img
                     v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
                     v-if="a && a.src && (
-                      (a.meta && (a.meta.navbarPlacement === 'inside' || a.meta.avatarPlacement === 'inside')) ||
+                      (a.meta && (
+                        a.meta.navbarPlacement === 'inside' ||
+                        a.meta.avatarPlacement === 'inside' ||
+                        a.meta.leaderboardPlacement === 'inside'
+                      )) ||
                       (!a.meta) ||
                       (a.meta && !a.meta.navbarPlacement && !a.meta.avatarPlacement && (!a.navbarPlacement || a.navbarPlacement === 'inside')) ||
                       (!a.meta && (!a.navbarPlacement || a.navbarPlacement === 'inside'))
@@ -137,7 +148,7 @@
             <template v-if="equippedDynItem">
               <img
                 v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
-                v-if="a && a.src && (a.meta?.navbarPlacement === 'above' || a.meta?.avatarPlacement === 'above' || a.navbarPlacement === 'above')"
+                v-if="a && a.src && (a.meta?.navbarPlacement === 'above' || a.meta?.avatarPlacement === 'above' || a.meta?.leaderboardPlacement === 'above' || a.navbarPlacement === 'above')"
                 :key="'dyn-variant-nb-above-'+ai+'-'+variantUpdateKey"
                 :src="resolveAssetSrc(a.src)"
                 :style="getDynNavbarOverlayStyle(a)"
@@ -1001,8 +1012,21 @@ function getDynNavbarAssetStyle(asset) {
   const isMob = !!isMobile && !!isMobile.value
   const s = asset
     ? (isMob
-        ? (asset.navbarStyleMobile || asset.avatarStyleMobile || asset.style || {})
-        : (asset.navbarStyle || asset.avatarStyle || asset.style || {}))
+        ? (
+            asset.navbarStyleMobile ||
+            asset.avatarStyleMobile ||
+            asset.collectionStyleMobile ||
+            asset.collectionStyle ||
+            asset.style ||
+            {}
+          )
+        : (
+            asset.navbarStyle ||
+            asset.avatarStyle ||
+            asset.collectionStyle ||
+            asset.style ||
+            {}
+          ))
     : {}
   const style = { position: 'absolute', objectFit: s.objectFit || 'contain', zIndex: typeof s.zIndex === 'number' ? s.zIndex : 1 }
   if (typeof s.top === 'number') style.top = s.top + 'px'
