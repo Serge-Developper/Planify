@@ -6,7 +6,6 @@ const bcrypt = require('bcryptjs');
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  email: { type: String, required: false, unique: false },
   role: { type: String, default: 'user' },
   year: String,
   groupe: String,
@@ -148,7 +147,7 @@ const handleLogin = async (event) => {
 const handleRegister = async (event) => {
   try {
     const body = JSON.parse(event.body || '{}');
-    const { username, email, password, year, groupe, role: requestedRole } = body;
+    const { username, password, year, groupe, role: requestedRole } = body;
 
     if (!username || !password) {
       return {
@@ -176,7 +175,7 @@ const handleRegister = async (event) => {
       }
     } catch {}
 
-    // Email retiré du modèle logique: si fourni on l'ignore, on ne le stocke pas
+    // Email retiré du modèle logique: si fourni on l'ignore (non stocké)
     const emailToUse = undefined;
 
     // Vérifier si l'utilisateur existe déjà (par username ou email final)
@@ -188,7 +187,7 @@ const handleRegister = async (event) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           success: false, 
-          message: 'Nom d\'utilisateur ou email déjà utilisé' 
+          message: 'Nom d\'utilisateur déjà utilisé' 
         })
       };
     }
@@ -240,7 +239,7 @@ const handleRegister = async (event) => {
           _id: newUser._id,
           id: newUser._id,
           username: newUser.username,
-          email: newUser.email,
+          // email supprimé
           role: newUser.role,
           year: newUser.year,
           groupe: newUser.groupe,
