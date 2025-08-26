@@ -516,19 +516,19 @@ const handleWeeklyItems = async (event) => {
       weeklyItems = weeklyItems.slice(0, 3);
     }
 
-    // Couleurs de bordure hebdo (existant)
+    // Couleurs de bordure hebdo (prix unifié)
     const borderColors = [
-      { id: 100, name: 'Rouge', price: 50, type: 'border-color', colorId: 'red', img: 'border-red' },
-      { id: 101, name: 'Bleu', price: 50, type: 'border-color', colorId: 'blue', img: 'border-blue' },
-      { id: 102, name: 'Vert', price: 50, type: 'border-color', colorId: 'green', img: 'border-green' },
-      { id: 103, name: 'Jaune', price: 50, type: 'border-color', colorId: 'yellow', img: 'border-yellow' },
-      { id: 104, name: 'Violet', price: 50, type: 'border-color', colorId: 'purple', img: 'border-purple' },
-      { id: 105, name: 'Orange', price: 50, type: 'border-color', colorId: 'orange', img: 'border-orange' },
-      { id: 106, name: 'Rose', price: 50, type: 'border-color', colorId: 'pink', img: 'border-pink' },
-      { id: 107, name: 'Cyan', price: 50, type: 'border-color', colorId: 'cyan', img: 'border-cyan' },
-      { id: 108, name: 'Or', price: 100, type: 'border-color', colorId: 'gold', img: 'border-gold' },
-      { id: 109, name: 'Argent', price: 100, type: 'border-color', colorId: 'silver', img: 'border-silver' },
-      { id: 110, name: 'Arc-en-ciel', price: 150, type: 'border-color', colorId: 'rainbow', img: 'border-rainbow' }
+      { id: 100, name: 'Rouge', price: 40, type: 'border-color', colorId: 'red', img: 'border-red' },
+      { id: 101, name: 'Bleu', price: 40, type: 'border-color', colorId: 'blue', img: 'border-blue' },
+      { id: 102, name: 'Vert', price: 40, type: 'border-color', colorId: 'green', img: 'border-green' },
+      { id: 103, name: 'Jaune', price: 40, type: 'border-color', colorId: 'yellow', img: 'border-yellow' },
+      { id: 104, name: 'Violet', price: 40, type: 'border-color', colorId: 'purple', img: 'border-purple' },
+      { id: 105, name: 'Orange', price: 40, type: 'border-color', colorId: 'orange', img: 'border-orange' },
+      { id: 106, name: 'Rose', price: 40, type: 'border-color', colorId: 'pink', img: 'border-pink' },
+      { id: 107, name: 'Cyan', price: 40, type: 'border-color', colorId: 'cyan', img: 'border-cyan' },
+      { id: 108, name: 'Or', price: 40, type: 'border-color', colorId: 'gold', img: 'border-gold' },
+      { id: 109, name: 'Argent', price: 40, type: 'border-color', colorId: 'silver', img: 'border-silver' },
+      { id: 110, name: 'Arc-en-ciel', price: 40, type: 'border-color', colorId: 'rainbow', img: 'border-rainbow' }
     ];
 
     // Seed pour mélanger les couleurs
