@@ -240,12 +240,20 @@ exports.handler = async (event, context) => {
         };
         
         // Mettre à jour l'utilisateur dans la base de données avec l'image en base64
-        await User.findByIdAndUpdate(user.userId, { 
+        const userId = user.id || user.userId || user._id;
+        if (!userId) {
+          return {
+            statusCode: 401,
+            headers: { ...headers, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ success: false, message: 'Utilisateur non authentifié' })
+          };
+        }
+        const updated = await User.findByIdAndUpdate(userId, { 
           avatar: imageData,
           avatarFilename: filename
-        });
+        }, { new: true });
         
-        console.log('✅ Avatar uploadé avec succès:', filename);
+        console.log('✅ Avatar uploadé avec succès pour utilisateur:', String(userId), '->', filename);
         
         return {
           statusCode: 200,

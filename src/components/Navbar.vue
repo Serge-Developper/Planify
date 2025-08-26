@@ -1411,12 +1411,14 @@ async function handleAvatarUpload(event) {
       }
       if (newAvatarUrl) {
         console.log('🖼️ Avatar normalisé:', newAvatarUrl.substring(0, 80))
-        // Bust cache uniquement pour les URL non-data
-        const withTs = newAvatarUrl.startsWith('data:')
-          ? newAvatarUrl
-          : newAvatarUrl + (newAvatarUrl.includes('?') ? '&' : '?') + 't=' + Date.now()
-        userAvatar.value = withTs
-        // Re-synchroniser le profil complet depuis la base (forme canonique)
+        // Utiliser directement la data URL: affichage immédiat
+        userAvatar.value = newAvatarUrl
+        // Persister pour les prochaines sessions (en parallèle)
+        if (user.value) {
+          const updatedUser = { ...user.value, avatar: newAvatarUrl }
+          auth.login(updatedUser)
+        }
+        // Puis recharger le profil canonique (évite toute incohérence)
         try {
           const prof = await secureApiCall('/users/profile')
           if (prof && (prof.user || prof._id)) {
@@ -1424,20 +1426,9 @@ async function handleAvatarUpload(event) {
             const fresh = prof.user || prof
             const mergedUser = { ...current, ...fresh, token: current.token || current?.user?.token }
             auth.login(mergedUser)
-            // recalcul de l'avatar selon le profil canonique
             await loadUserAvatar()
-          } else {
-            if (user.value) {
-              const updatedUser = { ...user.value, avatar: withTs }
-              auth.login(updatedUser)
-            }
           }
-        } catch (e) {
-          if (user.value) {
-            const updatedUser = { ...user.value, avatar: withTs }
-            auth.login(updatedUser)
-          }
-        }
+        } catch (e) {}
       }
       alert('Avatar mis à jour avec succès !');
     }
