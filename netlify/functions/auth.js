@@ -6,7 +6,7 @@ const bcrypt = require('bcryptjs');
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
+  email: { type: String, required: false, unique: false },
   role: { type: String, default: 'user' },
   year: String,
   groupe: String,
@@ -121,7 +121,7 @@ const handleLogin = async (event) => {
           _id: user._id,
           id: user._id,
           username: user.username,
-          email: user.email,
+          // email supprimé
           role: user.role,
           year: user.year,
           groupe: user.groupe,
@@ -176,22 +176,11 @@ const handleRegister = async (event) => {
       }
     } catch {}
 
-    // Email optionnel: si absent, générer un alias interne unique
-    let emailToUse = (email || '').trim();
-    if (!emailToUse) {
-      const base = `${String(username).trim()}@planify.local`;
-      emailToUse = base;
-      // S'assurer de l'unicité si collision
-      const existsEmail = await User.findOne({ email: emailToUse }).lean();
-      if (existsEmail) {
-        emailToUse = `${String(username).trim()}+${Date.now()}@planify.local`;
-      }
-    }
+    // Email retiré du modèle logique: si fourni on l'ignore, on ne le stocke pas
+    const emailToUse = undefined;
 
     // Vérifier si l'utilisateur existe déjà (par username ou email final)
-    const existingUser = await User.findOne({ 
-      $or: [{ username }, { email: emailToUse }] 
-    });
+    const existingUser = await User.findOne({ username });
     
     if (existingUser) {
       return {
@@ -219,7 +208,7 @@ const handleRegister = async (event) => {
 
     const newUser = new User({
       username,
-      email: emailToUse,
+      // pas de champ email
       password: hashedPassword,
       year: year || '',
       groupe: groupe || '',
@@ -329,7 +318,7 @@ const handleVerifyToken = async (event) => {
           _id: user._id,
           id: user._id,
           username: user.username,
-          email: user.email,
+          // email supprimé
           role: user.role,
           year: user.year,
           groupe: user.groupe,
