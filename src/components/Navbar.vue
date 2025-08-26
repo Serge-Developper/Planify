@@ -1392,13 +1392,16 @@ async function handleAvatarUpload(event) {
       }
     });
 
-    console.log('📤 Réponse upload:', response.data);
+    console.log('📤 Réponse upload complète:', response.data);
+    console.log('📤 Type de response.data:', typeof response.data);
+    console.log('📤 Clés de response.data:', Object.keys(response.data));
 
-    if (response.data.avatar) {
+    if (response.data && response.data.avatar) {
       // Mettre à jour l'avatar affiché
       // response.data.avatar est maintenant une data URL complète (data:image/jpeg;base64,...)
       const newAvatarUrl = response.data.avatar;
       console.log('🖼️ Avatar reçu (data URL):', newAvatarUrl.substring(0, 50) + '...');
+      console.log('🖼️ Longueur de l\'avatar:', newAvatarUrl.length);
       userAvatar.value = newAvatarUrl;
       
       // Mettre à jour les données utilisateur dans le store et localStorage
@@ -1406,6 +1409,8 @@ async function handleAvatarUpload(event) {
         const updatedUser = { ...user.value, avatar: response.data.avatar };
         auth.login(updatedUser); // Met à jour le store et localStorage
         console.log('✅ Données utilisateur mises à jour avec l\'avatar');
+        console.log('✅ Nouvel avatar dans le store:', updatedUser.avatar ? updatedUser.avatar.substring(0, 50) + '...' : 'AUCUN');
+        console.log('✅ userAvatar.value après mise à jour:', userAvatar.value ? userAvatar.value.substring(0, 50) + '...' : 'AUCUN');
       } else {
         console.log('⚠️ Pas d\'utilisateur dans le store, mais avatar uploadé avec succès');
       }
@@ -1646,6 +1651,11 @@ onMounted(async () => {
   }
   
   setInterval(updateSpinTimer, 60000);
+});
+
+// Watcher pour surveiller les changements de userAvatar
+watch(userAvatar, (newAvatar) => {
+  console.log('🔄 userAvatar a changé:', newAvatar ? newAvatar.substring(0, 50) + '...' : 'AUCUN');
 });
 
 // Watcher pour surveiller les changements de l'utilisateur
