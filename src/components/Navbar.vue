@@ -1436,70 +1436,37 @@ async function handleAvatarUpload(event) {
       if (user.value) {
         const updatedUser = { 
           ...user.value, 
-          avatar: response.data.avatar,
+          avatar: newAvatarUrl,
           avatarFilename: response.data.filename 
         };
-        auth.login(updatedUser); // Met à jour le store et localStorage
-      }
-      
-      // Recharger les données utilisateur depuis le backend pour s'assurer de la synchronisation
-      try {
-        const userResponse = await axios.get(`${API_URL}/auth/verify`, {
-          headers: {
-            'Authorization': `Bearer ${user.value.token}`
-          }
-        });
+        console.log('💾 Mise à jour du user avec nouvel avatar:', updatedUser);
         
-        if (userResponse.data && userResponse.data.user) {
-          // Mettre à jour avec les données fraîches du serveur
-          const serverUser = userResponse.data.user;
-          console.log('🔄 Données utilisateur reçues du serveur:', serverUser);
-          
-          // Si le serveur retourne un avatar, l'utiliser, sinon garder celui qu'on vient d'uploader
-          const finalAvatar = serverUser.avatar && serverUser.avatar.startsWith('data:') 
-            ? serverUser.avatar 
-            : response.data.avatar;
-            
-          const finalUser = {
-            ...serverUser,
-            avatar: finalAvatar,
-            avatarFilename: response.data.filename,
-            token: user.value.token // Préserver le token
-          };
-          
-          console.log('💾 Sauvegarde finale de l\'utilisateur avec avatar:', {
-            hasAvatar: !!finalUser.avatar,
-            avatarStart: finalUser.avatar ? finalUser.avatar.substring(0, 50) : null,
-            avatarFilename: finalUser.avatarFilename
-          });
-          
-          auth.login(finalUser);
-          
-          // S'assurer que l'avatar est bien affiché
-          userAvatar.value = finalAvatar;
-        }
-      } catch (verifyError) {
-        console.warn('Impossible de vérifier les données utilisateur:', verifyError);
-        // En cas d'erreur, sauvegarder quand même l'avatar uploadé
-        const updatedUser = { 
-          ...user.value, 
-          avatar: response.data.avatar,
-          avatarFilename: response.data.filename 
-        };
+        // D'abord sauvegarder dans le store/localStorage
         auth.login(updatedUser);
+        
+        // Ensuite afficher l'alerte et réinitialiser le flag après un délai plus long
+        alert('Avatar mis à jour avec succès !');
+        
+        // Attendre plus longtemps avant de réinitialiser le flag
+        // pour s'assurer que l'alerte est fermée et que le watcher ne va pas interférer
+        setTimeout(() => {
+          justUploadedAvatar.value = false;
+          console.log('✅ Flag justUploadedAvatar réinitialisé après délai de sécurité');
+        }, 3000); // Augmenté à 3 secondes
       }
-      
-      alert('Avatar mis à jour avec succès !');
+    } catch (error) {
+      console.error('❌ Erreur upload avatar:', error);
+      alert('Erreur lors de l\'upload de l\'avatar');
     }
-  } catch (error) {
-    console.error('❌ Erreur upload avatar:', error);
-    alert('Erreur lors de l\'upload de l\'avatar');
-  }
 
-  // Réinitialiser les inputs
-  event.target.value = '';
-  if (fileInput.value) fileInput.value.value = '';
-  if (fileInputMobile.value) fileInputMobile.value.value = '';
+    // Réinitialiser les inputs
+    event.target.value = '';
+    if (fileInput.value) fileInput.value.value = '';
+    if (fileInputMobile.value) fileInputMobile.value.value = '';
+  } else {
+    console.error('❌ Aucun avatar dans la réponse:', response.data);
+    alert('Erreur : aucun avatar reçu du serveur');
+  }
 }
 
 function openLogin() {
@@ -1742,7 +1709,13 @@ onMounted(async () => {
   if (user.value) {
     console.log('👤 User au montage:', user.value);
     
-    // Toujours récupérer les données fraîches depuis le backend au montage
+    // D'abord charger l'avatar depuis les données locales immédiatement
+    if (user.value.avatar && user.value.avatar.startsWith('data:')) {
+      userAvatar.value = user.value.avatar;
+      console.log('🖼️ Avatar data URL chargé immédiatement depuis localStorage');
+    }
+    
+    // Ensuite récupérer les données fraîches depuis le backend
     try {
       const token = auth.token || user.value.token;
       if (token) {
@@ -1763,11 +1736,11 @@ onMounted(async () => {
           // Mettre à jour le store et localStorage
           auth.login(freshUser);
           
-          // Charger l'avatar depuis les données fraîches
+          // Charger l'avatar depuis les données fraîches (si différent)
           if (freshUser.avatar) {
             if (freshUser.avatar.startsWith('data:')) {
               userAvatar.value = freshUser.avatar;
-              console.log('🖼️ Avatar data URL chargé depuis les données fraîches');
+              console.log('🖼️ Avatar data URL mis à jour depuis les données fraîches');
             } else if (freshUser.avatar.startsWith('/uploads/')) {
               const avatarUrl = `${baseUrl}${freshUser.avatar}`;
               userAvatar.value = avatarUrl;
@@ -1780,11 +1753,10 @@ onMounted(async () => {
           }
         }
       } else {
-        // Si pas de token, charger depuis les données locales
+        // Si pas de token mais avatar local, le charger quand même
         if (user.value.avatar) {
           if (user.value.avatar.startsWith('data:')) {
-            userAvatar.value = user.value.avatar;
-            console.log('🖼️ Avatar data URL chargé au montage (local)');
+            console.log('🖼️ Avatar data URL déjà chargé (pas de token)');
           } else if (user.value.avatar.startsWith('/uploads/')) {
             const avatarUrl = `${baseUrl}${user.value.avatar}`;
             userAvatar.value = avatarUrl;
@@ -1862,10 +1834,9 @@ watch(user, async (newUser, oldUser) => {
         userAvatar.value = accountIcon;
       }
     } else {
-      justUploadedAvatar.value = false; // Réinitialiser le flag après un court délai
-      setTimeout(() => {
-        justUploadedAvatar.value = false;
-      }, 1000);
+      // Ne pas réinitialiser immédiatement le flag
+      // Il sera réinitialisé par le setTimeout dans handleAvatarUpload
+      console.log('🚫 Upload en cours, le watcher n\'intervient pas');
     }
     
     await coinsStore.initialize();
