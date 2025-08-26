@@ -701,7 +701,14 @@ async function addUser() {
       }
     }
     
-    await secureApiCall('/auth/register', { method: 'POST', body: JSON.stringify(userForm.value) })
+    // L'API rend l'email optionnel; on n'envoie pas d'email depuis l'admin
+    await secureApiCall('/auth/register', { method: 'POST', body: JSON.stringify({
+      username: userForm.value.username,
+      password: userForm.value.password,
+      role: userForm.value.role,
+      groupe: userForm.value.groupe,
+      year: userForm.value.year
+    }) })
     
     userFormMessage.value = 'Utilisateur ajouté avec succès !';
     userForm.value = { username: '', password: '', role: 'eleve', groupe: 'A', year: 'BUT1' };

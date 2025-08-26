@@ -144,26 +144,53 @@ const handleLogin = async (event) => {
   }
 };
 
-// Handler pour l'inscription
+// Handler pour l'inscription (email optionnel si créé par un admin/prof)
 const handleRegister = async (event) => {
   try {
     const body = JSON.parse(event.body || '{}');
-    const { username, email, password, year, groupe } = body;
+    const { username, email, password, year, groupe, role: requestedRole } = body;
 
-    if (!username || !email || !password) {
+    if (!username || !password) {
       return {
         statusCode: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           success: false, 
-          message: 'Tous les champs sont requis' 
+          message: 'Nom d\'utilisateur et mot de passe requis' 
         })
       };
     }
 
-    // Vérifier si l'utilisateur existe déjà
+    // Tenter de décoder le token si fourni pour connaître le rôle du créateur
+    let creatorRole = null;
+    try {
+      const authHeader = event.headers && (event.headers.authorization || event.headers.Authorization);
+      if (authHeader) {
+        const parts = String(authHeader).split(' ');
+        const token = parts.length === 2 ? parts[1] : parts[0];
+        const decoded = jwt.verify(
+          token,
+          process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production'
+        );
+        if (decoded && typeof decoded === 'object') creatorRole = decoded.role || null;
+      }
+    } catch {}
+
+    // Email optionnel: si absent, générer un alias interne unique
+    let emailToUse = (email || '').trim();
+    if (!emailToUse) {
+      const base = `${String(username).trim()}@planify.local`;
+      emailToUse = base;
+      // S'assurer de l'unicité si collision
+      const existsEmail = await User.findOne({ email: emailToUse }).lean();
+      if (existsEmail) {
+        emailToUse = `${String(username).trim()}+${Date.now()}@planify.local`;
+      }
+    }
+
+    // Vérifier si l'utilisateur existe déjà (par username ou email final)
     const existingUser = await User.findOne({ 
-      $or: [{ username }, { email }] 
+      $or: [{ username }, { email: emailToUse }] 
     });
     
     if (existingUser) {
@@ -181,14 +208,23 @@ const handleRegister = async (event) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Créer le nouvel utilisateur
+    let roleToAssign = 'user';
+    const allowedRoles = ['admin', 'prof', 'delegue', 'eleve', 'etudiant', 'user'];
+    if (creatorRole === 'admin') {
+      if (requestedRole && allowedRoles.includes(requestedRole)) roleToAssign = requestedRole;
+    } else if (creatorRole === 'prof') {
+      // Un prof peut créer uniquement des comptes eleve/delegue
+      if (requestedRole && ['eleve', 'delegue'].includes(requestedRole)) roleToAssign = requestedRole; else roleToAssign = 'eleve';
+    }
+
     const newUser = new User({
       username,
-      email,
+      email: emailToUse,
       password: hashedPassword,
       year: year || '',
       groupe: groupe || '',
       coins: 1000, // Bonus de bienvenue
-      role: 'user'
+      role: roleToAssign
     });
 
     await newUser.save();
