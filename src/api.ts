@@ -32,7 +32,12 @@ export const secureApiCall = async (url: string, options: RequestInit = {}) => {
       if (response.status === 401) {
         // Token expiré ou invalide
         localStorage.removeItem('user');
-        if (!hasRedirectedFor401) {
+        // Ne pas rediriger automatiquement si on est déjà sur la page d'accueil
+        // ou si l'URL contient '/items' (appel API public)
+        const currentPath = window.location.pathname;
+        const isPublicItemsCall = url.includes('/items') && !url.includes('/weekly');
+        
+        if (!hasRedirectedFor401 && currentPath !== '/' && !isPublicItemsCall) {
           hasRedirectedFor401 = true;
           // éviter la boucle de refresh si le backend est down
           try { window.location.href = '/'; } catch { /* noop */ }

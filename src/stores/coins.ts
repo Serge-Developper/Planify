@@ -582,14 +582,46 @@ export const useCoinsStore = defineStore('coins', {
 
     // Initialiser le store
     async initialize() {
-      // Réinitialiser le store avant de charger les nouvelles données
-      this.reset();
-      // Charger séquentiellement pour éviter les erreurs 429
-      this.initializeBorderColors();
-      this.loadDynamicItemVariants(); // Charger les variantes sauvegardées
-      await this.loadBalance();
-      await this.loadSpinStatus();
-      await this.loadInventory();
+      try {
+        // Réinitialiser le store avant de charger les nouvelles données
+        this.reset();
+        // Charger séquentiellement pour éviter les erreurs 429
+        this.initializeBorderColors();
+        this.loadDynamicItemVariants(); // Charger les variantes sauvegardées
+        
+        // Gérer les erreurs 401 sans faire crasher l'initialisation
+        try {
+          await this.loadBalance();
+        } catch (error: any) {
+          if (error?.message?.includes('Session expirée')) {
+            console.log('⚠️ Session expirée lors du chargement du solde');
+            return; // Arrêter l'initialisation si pas authentifié
+          }
+          console.error('Erreur loadBalance:', error);
+        }
+        
+        try {
+          await this.loadSpinStatus();
+        } catch (error: any) {
+          if (error?.message?.includes('Session expirée')) {
+            console.log('⚠️ Session expirée lors du chargement du statut de spin');
+            return;
+          }
+          console.error('Erreur loadSpinStatus:', error);
+        }
+        
+        try {
+          await this.loadInventory();
+        } catch (error: any) {
+          if (error?.message?.includes('Session expirée')) {
+            console.log('⚠️ Session expirée lors du chargement de l\'inventaire');
+            return;
+          }
+          console.error('Erreur loadInventory:', error);
+        }
+      } catch (error) {
+        console.error('Erreur lors de l\'initialisation du store coins:', error);
+      }
     },
 
     // Initialiser les couleurs de bordures

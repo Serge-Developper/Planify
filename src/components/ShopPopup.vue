@@ -1285,6 +1285,12 @@ function getApiOrigin() {
 
 async function loadDynamicItems() {
   try {
+    // Ne pas appeler l'API si l'utilisateur n'est pas connecté
+    if (!authStore.isLoggedIn) {
+      console.log('⚠️ Pas d\'utilisateur connecté, skip loadDynamicItems dans ShopPopup')
+      return
+    }
+    
     const res = await secureApiCall('/items')
     if (res && res.success && Array.isArray(res.items)) {
       const normalized = res.items.map((it) => ({
@@ -1395,7 +1401,14 @@ onMounted(() => {
   updateIsMobile()
   try { window.addEventListener('resize', updateIsMobile) } catch {}
   // recharger les items dynamiques quand l'éditeur sauvegarde
-  try { window.addEventListener('items-changed', loadDynamicItems) } catch {}
+  try { 
+    window.addEventListener('items-changed', () => {
+      // Ne recharger que si l'utilisateur est connecté
+      if (authStore.isLoggedIn) {
+        loadDynamicItems()
+      }
+    }) 
+  } catch {}
   // Charger les variantes dynamiques depuis le store
   try { coinsStore.loadDynamicItemVariants() } catch {}
   // Écouter les changements de variantes pour forcer la mise à jour du leaderboard

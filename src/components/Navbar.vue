@@ -1061,6 +1061,12 @@ function getDynNavbarOverlayStyle(asset) {
 const dynamicInfoById = ref(new Map())
 async function loadDynamicItems() {
   try {
+    // Ne pas appeler l'API si l'utilisateur n'est pas connecté
+    if (!user.value || !user.value.token) {
+      console.log('⚠️ Pas d\'utilisateur connecté, skip loadDynamicItems')
+      return
+    }
+    
     const res = await secureApiCall('/items')
     if (res && res.success && Array.isArray(res.items)) {
       const map = new Map()
@@ -1083,7 +1089,8 @@ async function loadDynamicItems() {
     } else {
       dynamicInfoById.value = new Map()
     }
-  } catch {
+  } catch (error) {
+    console.error('❌ Erreur lors du chargement des items dynamiques:', error)
     dynamicInfoById.value = new Map()
   }
 }
@@ -1134,9 +1141,17 @@ function getDynVariantAssetsForNavbar(item) {
 }
 
 onMounted(() => {
-  loadDynamicItems()
+  // Ne charger les items dynamiques que si l'utilisateur est connecté
+  if (user.value && user.value.token) {
+    loadDynamicItems()
+  }
   try { 
-    window.addEventListener('items-changed', loadDynamicItems)
+    window.addEventListener('items-changed', () => {
+      // Ne recharger que si l'utilisateur est connecté
+      if (user.value && user.value.token) {
+        loadDynamicItems()
+      }
+    })
     // Écouter les changements de variantes
     window.addEventListener('dynamic-variant-changed', (event) => {
       console.log('📡 Navbar: Événement dynamic-variant-changed reçu:', event.detail)
@@ -1878,7 +1893,7 @@ onMounted(async () => {
 
 
 // Watcher pour surveiller les changements de l'utilisateur
-watch(user, async (newUser) => {
+watch(user, async (newUser, oldUser) => {
   if (newUser && newUser.avatar && typeof newUser.avatar === 'string') {
     // Si c'est une data URL, l'utiliser directement
     if (newUser.avatar.startsWith('data:')) {
@@ -1890,10 +1905,17 @@ watch(user, async (newUser) => {
     
     await coinsStore.initialize();
     checkSpinAvailability();
+    
+    // Charger les items dynamiques si l'utilisateur vient de se connecter
+    if (!oldUser && newUser.token) {
+      loadDynamicItems();
+    }
   } else {
     userAvatar.value = accountIcon;
     if (!newUser) {
       coinsStore.reset();
+      // Réinitialiser les items dynamiques quand l'utilisateur se déconnecte
+      dynamicInfoById.value = new Map();
     }
   }
 }, { immediate: true });
