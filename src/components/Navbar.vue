@@ -48,13 +48,6 @@
                     :style="getDynNavbarAssetStyle(a)"
                   />
                 </template>
-                <!-- Fallback universel: image de base de l'item dynamique par-dessus l'avatar -->
-                <img
-                  v-if="equippedDynItem && equippedDynItem.img"
-                  :src="equippedDynItem.img"
-                  alt="dyn"
-                  style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:contain; z-index: 10; pointer-events:none;"
-                />
                 <img class="avatar-img"
                   :src="userAvatar" 
                   alt="Compte" 
@@ -69,7 +62,7 @@
                 <template v-if="equippedDynItem">
                   <img
                     v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
-                    v-if="a && a.src && ((a.meta && (a.meta.navbarPlacement === 'inside' || a.meta.avatarPlacement === 'inside' || (!a.meta.navbarPlacement && !a.meta.avatarPlacement))) || (!a.meta && (!a.navbarPlacement || a.navbarPlacement === 'inside')))"
+                    v-if="a && a.src && ((a.meta && (a.meta.navbarPlacement === 'inside' || a.meta.avatarPlacement === 'inside' || a.meta.navbarPlacement === undefined)) || (!a.meta && (!a.navbarPlacement || a.navbarPlacement === 'inside')))"
                     :key="'dyn-variant-nb-inside-'+ai+'-'+variantUpdateKey"
                     :src="resolveAssetSrc(a.src)"
                     :style="getDynNavbarAssetStyle(a)"
@@ -990,6 +983,11 @@ function getDynNavbarAssetStyle(asset) {
   if (typeof s.width === 'number') style.width = s.width + 'px'
   if (typeof s.height === 'number') style.height = s.height + 'px'
   if (typeof s.rotate === 'number') style.transform = `rotate(${s.rotate}deg)`
+  // Support des pourcentages (Admin Editor peut enregistrer strings)
+  if (typeof s.top === 'string') style.top = s.top
+  if (typeof s.left === 'string') style.left = s.left
+  if (typeof s.width === 'string') style.width = s.width
+  if (typeof s.height === 'string') style.height = s.height
   return style
 }
 function getDynNavbarOverlayStyle(asset) {
