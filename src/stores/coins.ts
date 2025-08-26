@@ -99,7 +99,9 @@ export const useCoinsStore = defineStore('coins', {
     jojoImgPos: { top: 50, left: 87, width: 90 } as { top: number; left: number; width: number },
     jojoTextPos: { top: -5, left: 10, width: 72 } as { top: number; left: number; width: number },
     // Variantes sélectionnées pour les items dynamiques (Map<itemId, variantIndex>)
-    dynamicItemVariants: new Map<number, number>() as Map<number, number>
+    dynamicItemVariants: new Map<number, number>() as Map<number, number>,
+    // Ajustements d'affichage par utilisateur pour la Navbar (Map<itemId, styleDelta>)
+    dynamicItemAdjustments: new Map<number, { top?: number; left?: number; width?: number; height?: number; rotate?: number; zIndex?: number }>() as Map<number, { top?: number; left?: number; width?: number; height?: number; rotate?: number; zIndex?: number }>
   }),
 
   getters: {
@@ -855,6 +857,25 @@ export const useCoinsStore = defineStore('coins', {
       }
     },
 
+    // Définir un ajustement manuel pour l'affichage Navbar d'un item dynamique
+    async setDynamicItemAdjustment(itemId: number, adjustment: { top?: number; left?: number; width?: number; height?: number; rotate?: number; zIndex?: number }) {
+      try {
+        this.dynamicItemAdjustments.set(itemId, { ...adjustment });
+        // Persister en localStorage
+        try {
+          if (typeof window !== 'undefined' && window.localStorage) {
+            const raw = Object.fromEntries(this.dynamicItemAdjustments);
+            localStorage.setItem('dynamicItemAdjustments', JSON.stringify(raw));
+          }
+        } catch {}
+        // Notifier la Navbar
+        try { window.dispatchEvent(new CustomEvent('dynamic-variant-changed', { detail: { itemId, variantIndex: this.getDynamicItemVariant(itemId) } })) } catch {}
+        return { success: true }
+      } catch (e) {
+        return { success: false }
+      }
+    },
+
     // Charger les variantes depuis localStorage au démarrage
     loadDynamicItemVariants() {
       try {
@@ -868,6 +889,21 @@ export const useCoinsStore = defineStore('coins', {
         }
       } catch (error) {
         console.error('Erreur lors du chargement des variantes:', error);
+      }
+    },
+
+    // Charger les ajustements utilisateur depuis localStorage
+    loadDynamicItemAdjustments() {
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          const saved = localStorage.getItem('dynamicItemAdjustments');
+          if (saved) {
+            const obj = JSON.parse(saved);
+            this.dynamicItemAdjustments = new Map(Object.entries(obj).map(([k, v]) => [Number(k), v as any]));
+          }
+        }
+      } catch (e) {
+        // noop
       }
     }
   }

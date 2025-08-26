@@ -990,6 +990,18 @@ function getDynNavbarAssetStyle(asset) {
   if (typeof s.width === 'number') style.width = s.width + 'px'
   if (typeof s.height === 'number') style.height = s.height + 'px'
   if (typeof s.rotate === 'number') style.transform = `rotate(${s.rotate}deg)`
+  // Appliquer un éventuel ajustement utilisateur enregistré
+  try {
+    const adj = coinsStore.dynamicItemAdjustments.get(Number(equippedDynItem.value?.id))
+    if (adj) {
+      if (typeof adj.top === 'number') style.top = (adj.top) + 'px'
+      if (typeof adj.left === 'number') style.left = (adj.left) + 'px'
+      if (typeof adj.width === 'number') style.width = (adj.width) + 'px'
+      if (typeof adj.height === 'number') style.height = (adj.height) + 'px'
+      if (typeof adj.rotate === 'number') style.transform = `rotate(${adj.rotate}deg)`
+      if (typeof adj.zIndex === 'number') style.zIndex = adj.zIndex
+    }
+  } catch {}
   return style
 }
 function getDynNavbarOverlayStyle(asset) {

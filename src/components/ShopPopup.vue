@@ -281,6 +281,16 @@
             <button v-if="coinsStore.hasItem(item.id)" class="equip-btn" :class="{ 'equipped': coinsStore.isItemEquipped(item.id) }" @click="equipItem(item)">
               {{ coinsStore.isItemEquipped(item.id) ? 'Déséquiper' : 'Équiper' }}
             </button>
+            <!-- Bouton Ajuster (Navbar) pour items dynamiques possédés -->
+            <button 
+              v-if="item.isDynamic && coinsStore.hasItem(item.id)"
+              class="palette-icon"
+              type="button"
+              title="Ajuster l'affichage Navbar"
+              @click.stop="openNavbarAdjuster(item)"
+            >
+              ⚙️
+            </button>
           </div>
           
           <!-- Rendu spécial pour Bordure classique -->
@@ -955,6 +965,35 @@
         </div>
       </transition>
 
+      <!-- Popup d'ajustement Navbar pour items dynamiques -->
+      <transition name="fade">
+        <div v-if="isAdjusterOpen" class="color-picker-overlay" @click.self="closeNavbarAdjuster">
+          <div class="color-picker-modal">
+            <div class="color-picker-header">
+              <span>Ajuster l'affichage Navbar — {{ adjusterItem?.name }}</span>
+              <button class="close-btn-small" @click="closeNavbarAdjuster" @mouseover="hoverCloseStyle = true" @mouseleave="hoverCloseStyle = false">
+                <img :src="hoverCloseStyle ? closeHoverImg : closeImg" alt="Fermer" class="close-img" />
+              </button>
+            </div>
+            <div style="display:flex; gap:10px; padding:12px; align-items:flex-end;">
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <label>Top (px)<input type="number" v-model.number="adjustForm.top" style="width:100px;" /></label>
+                <label>Left (px)<input type="number" v-model.number="adjustForm.left" style="width:100px;" /></label>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <label>Width (px)<input type="number" v-model.number="adjustForm.width" style="width:100px;" /></label>
+                <label>Height (px)<input type="number" v-model.number="adjustForm.height" style="width:100px;" /></label>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <label>Rotate (deg)<input type="number" v-model.number="adjustForm.rotate" style="width:100px;" /></label>
+                <label>zIndex<input type="number" v-model.number="adjustForm.zIndex" style="width:100px;" /></label>
+              </div>
+              <button class="equip-btn" @click="saveNavbarAdjuster">Sauvegarder</button>
+            </div>
+          </div>
+        </div>
+      </transition>
+
       <!-- Popup profil depuis le leaderboard -->
       <transition name="fade">
         <div v-if="activeTab === 'leaderboard' && showUserProfile" class="profile-popup-overlay" @click.self="closeLeaderboardProfile">
@@ -1422,6 +1461,8 @@ onMounted(() => {
       console.log('📡 ShopPopup: Événement dynamic-variant-changed reçu pour leaderboard:', event.detail)
     }) 
   } catch {}
+  // Charger aussi les ajustements utilisateur
+  try { coinsStore.loadDynamicItemAdjustments() } catch {}
 })
 // Recharger les items dynamiques à l'ouverture de la popup
 watch(() => props.show, (v) => { if (v && authStore.isLoggedIn) loadDynamicItems() })
