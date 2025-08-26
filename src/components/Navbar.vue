@@ -67,6 +67,13 @@
                     :src="resolveAssetSrc(a.src)"
                     :style="getDynNavbarAssetStyle(a)"
                   />
+                  <!-- Fallback: si aucune asset de variante n'est disponible, afficher l'image de base -->
+                  <img
+                    v-if="equippedDynItem && equippedDynItem.img && getDynVariantAssetsForNavbar(equippedDynItem).length === 0"
+                    :src="equippedDynItem.img"
+                    alt="dyn"
+                    style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:contain; z-index: 10; pointer-events:none;"
+                  />
                 </template>
                 <!-- Animation Matrix à l'intérieur de l'avatar -->
                 <div v-if="equippedItem && equippedItem.displayType === 'matrix'" class="matrix-rain-inside">
