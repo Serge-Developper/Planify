@@ -1451,17 +1451,42 @@ async function handleAvatarUpload(event) {
         });
         
         if (userResponse.data && userResponse.data.user) {
-          // Mettre à jour avec les données fraîches du serveur, mais garder l'avatar qu'on vient d'uploader
+          // Mettre à jour avec les données fraîches du serveur
           const serverUser = userResponse.data.user;
+          console.log('🔄 Données utilisateur reçues du serveur:', serverUser);
+          
+          // Si le serveur retourne un avatar, l'utiliser, sinon garder celui qu'on vient d'uploader
+          const finalAvatar = serverUser.avatar && serverUser.avatar.startsWith('data:') 
+            ? serverUser.avatar 
+            : response.data.avatar;
+            
           const finalUser = {
             ...serverUser,
-            avatar: response.data.avatar, // Garder la data URL qu'on vient de recevoir
+            avatar: finalAvatar,
+            avatarFilename: response.data.filename,
             token: user.value.token // Préserver le token
           };
+          
+          console.log('💾 Sauvegarde finale de l\'utilisateur avec avatar:', {
+            hasAvatar: !!finalUser.avatar,
+            avatarStart: finalUser.avatar ? finalUser.avatar.substring(0, 50) : null,
+            avatarFilename: finalUser.avatarFilename
+          });
+          
           auth.login(finalUser);
+          
+          // S'assurer que l'avatar est bien affiché
+          userAvatar.value = finalAvatar;
         }
       } catch (verifyError) {
         console.warn('Impossible de vérifier les données utilisateur:', verifyError);
+        // En cas d'erreur, sauvegarder quand même l'avatar uploadé
+        const updatedUser = { 
+          ...user.value, 
+          avatar: response.data.avatar,
+          avatarFilename: response.data.filename 
+        };
+        auth.login(updatedUser);
       }
       
       alert('Avatar mis à jour avec succès !');
@@ -1514,7 +1539,7 @@ function handleLoginSuccess(payload) {
   loadUserCoins();
   checkSpinAvailability();
   
-  window.location.reload(); // Ajout pour refresh global après connexion
+  // window.location.reload(); // Commenté car cela peut causer des problèmes avec l'avatar
 }
 function logout() {
   auth.logout();
@@ -1713,11 +1738,30 @@ onMounted(async () => {
   handleResize();
   window.addEventListener('resize', handleResize);
   
-  if (user.value && user.value.id) {
-    loadUserAvatar();
-  }
-  
+  // Charger l'avatar depuis le store auth au montage
   if (user.value) {
+    console.log('👤 User au montage:', user.value);
+    
+    if (user.value.avatar) {
+      if (user.value.avatar.startsWith('data:')) {
+        userAvatar.value = user.value.avatar;
+        console.log('🖼️ Avatar data URL chargé au montage');
+      } else if (user.value.avatar.startsWith('/uploads/')) {
+        const avatarUrl = `${baseUrl}${user.value.avatar}`;
+        userAvatar.value = avatarUrl;
+        console.log('🖼️ Avatar URL chargé au montage:', avatarUrl);
+      } else if (user.value.avatarFilename) {
+        const avatarUrl = `${baseUrl}/uploads/avatars/${user.value.avatarFilename}`;
+        userAvatar.value = avatarUrl;
+        console.log('🖼️ Avatar filename chargé au montage:', avatarUrl);
+      } else {
+        // Fallback: essayer de charger depuis la DB
+        loadUserAvatar();
+      }
+    } else if (user.value.id || user.value._id) {
+      loadUserAvatar();
+    }
+    
     await coinsStore.initialize();
     checkSpinAvailability();
   }

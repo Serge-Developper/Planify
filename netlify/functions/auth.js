@@ -75,6 +75,16 @@ const handleLogin = async (event) => {
         })
       };
     }
+    
+    // Log pour débugger l'avatar
+    console.log('🔍 Login - User avatar data:', {
+      hasAvatar: !!user.avatar,
+      hasAvatarData: !!(user.avatar && user.avatar.data),
+      avatarType: user.avatar ? typeof user.avatar : 'undefined',
+      avatarKeys: user.avatar && typeof user.avatar === 'object' ? Object.keys(user.avatar) : [],
+      avatarFilename: user.avatarFilename,
+      dataLength: user.avatar && user.avatar.data ? user.avatar.data.length : 0
+    });
 
     // Vérifier le mot de passe
     const isValidPassword = await bcrypt.compare(password, user.password);
@@ -118,6 +128,7 @@ const handleLogin = async (event) => {
           avatar: user.avatar && user.avatar.data ? 
             `data:${user.avatar.mimetype};base64,${user.avatar.data}` : 
             user.avatar, // Fallback pour l'ancien format
+          avatarFilename: user.avatarFilename,
           hasSecretQuestions: user.secretQuestions && user.secretQuestions.length >= 3 && user.secretQuestions.every(q => q.question && q.answer)
         }
       })
@@ -262,6 +273,17 @@ const handleVerifyToken = async (event) => {
         })
       };
     }
+    
+    // Log pour débugger l'avatar lors de la vérification
+    console.log('🔍 Verify - User avatar data:', {
+      userId: userId,
+      hasAvatar: !!user.avatar,
+      hasAvatarData: !!(user.avatar && user.avatar.data),
+      avatarType: user.avatar ? typeof user.avatar : 'undefined',
+      avatarKeys: user.avatar && typeof user.avatar === 'object' ? Object.keys(user.avatar) : [],
+      avatarFilename: user.avatarFilename,
+      dataLength: user.avatar && user.avatar.data ? user.avatar.data.length : 0
+    });
 
     return {
       statusCode: 200,
