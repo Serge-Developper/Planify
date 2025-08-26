@@ -1669,86 +1669,18 @@ onMounted(async () => {
     }
   }
     
-    // Ensuite récupérer les données fraîches depuis le backend
-    try {
-      const token = auth.token || user.value.token;
-      if (token) {
-        console.log('🔄 Récupération des données utilisateur fraîches au montage...');
-        const response = await axios.get(`${API_URL}/auth/verify`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        if (response.data.success && response.data.user) {
-          console.log('✅ Données utilisateur fraîches récupérées:', response.data.user);
-          console.log('🔍 Avatar dans response:', {
-            hasAvatar: !!response.data.user.avatar,
-            avatarType: typeof response.data.user.avatar,
-            avatarStart: response.data.user.avatar ? response.data.user.avatar.substring(0, 100) : null,
-            avatarFilename: response.data.user.avatarFilename
-          });
-          
-          // Fusionner avec le token existant
-          const freshUser = {
-            ...response.data.user,
-            token: token
-          };
-          
-          // Mettre à jour le store et localStorage
-          auth.login(freshUser);
-          
-          // Charger l'avatar depuis les données fraîches (si différent)
-          if (freshUser.avatar) {
-            if (typeof freshUser.avatar === 'string' && freshUser.avatar.startsWith('data:')) {
-              userAvatar.value = freshUser.avatar;
-              console.log('🖼️ Avatar data URL mis à jour depuis les données fraîches');
-              console.log('📏 Longueur avatar:', freshUser.avatar.length);
-            } else if (typeof freshUser.avatar === 'string' && freshUser.avatar.startsWith('/uploads/')) {
-              const avatarUrl = `${baseUrl}${freshUser.avatar}`;
-              userAvatar.value = avatarUrl;
-              console.log('🖼️ Avatar URL chargé depuis les données fraîches:', avatarUrl);
-            } else {
-              console.log('⚠️ Format avatar non reconnu:', freshUser.avatar);
-            }
-          } else if (freshUser.avatarFilename) {
-            const avatarUrl = `${baseUrl}/uploads/avatars/${freshUser.avatarFilename}`;
-            userAvatar.value = avatarUrl;
-            console.log('🖼️ Avatar filename chargé depuis les données fraîches:', avatarUrl);
-          } else {
-            console.log('❌ Aucun avatar trouvé dans les données fraîches');
-            // Utiliser loadUserAvatar pour gérer le chargement depuis avatarFilename
-            await loadUserAvatar();
-          }
-        }
-      } else {
-        // Si pas de token, utiliser loadUserAvatar pour charger depuis les données locales
-        console.log('⚠️ Pas de token, chargement depuis les données locales');
-        await loadUserAvatar();
-      }
-    } catch (error) {
-      console.error('❌ Erreur lors de la récupération des données utilisateur:', error);
-      // En cas d'erreur, utiliser les données locales
-      if (user.value.avatar) {
-        if (user.value.avatar.startsWith('data:')) {
-          userAvatar.value = user.value.avatar;
-        } else if (user.value.avatar.startsWith('/uploads/')) {
-          userAvatar.value = `${baseUrl}${user.value.avatar}`;
-        } else if (user.value.avatarFilename) {
-          userAvatar.value = `${baseUrl}/uploads/avatars/${user.value.avatarFilename}`;
-        }
-      }
-    }
-    
+
+  
+  if (user.value) {
     await coinsStore.initialize();
     checkSpinAvailability();
   }
   
   setInterval(updateSpinTimer, 60000);
   
-  // Exposer la fonction de test pour le débogage [[memory:4174769]]
+  // Exposer l'avatar pour le débogage [[memory:4174769]]
   if (typeof window !== 'undefined') {
-    window.testAvatarDisplay = testAvatarDisplay;
     window.userAvatar = userAvatar;
-    console.log('🧪 Fonctions de débogage disponibles: window.testAvatarDisplay() et window.userAvatar');
   }
 });
 
