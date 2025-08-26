@@ -1400,18 +1400,17 @@ async function handleAvatarUpload(event) {
       const raw = response.data.avatar
       const filename = response.data.filename
       let newAvatarUrl = ''
-      if (typeof raw === 'string' && raw.startsWith('data:')) {
-        newAvatarUrl = raw
-      } else if (filename && typeof filename === 'string') {
+      if (filename && typeof filename === 'string') {
         newAvatarUrl = `${baseUrl}/api/uploads/avatars/${filename}`
+      } else if (typeof raw === 'string' && raw.startsWith('data:')) {
+        newAvatarUrl = raw
       } else if (typeof raw === 'string' && raw.startsWith('/uploads/avatars/')) {
         newAvatarUrl = `${baseUrl}/api/uploads/avatars/${raw.split('/').pop()}`
       } else if (typeof raw === 'string') {
         newAvatarUrl = raw
       }
       if (newAvatarUrl) {
-        console.log('🖼️ Avatar normalisé:', newAvatarUrl.substring(0, 80))
-        // Utiliser directement la data URL: affichage immédiat
+        console.log('🖼️ Avatar normalisé (préférence filename):', newAvatarUrl.substring(0, 120))
         userAvatar.value = newAvatarUrl
         // Persister pour les prochaines sessions (en parallèle)
         if (user.value) {
