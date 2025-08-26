@@ -97,6 +97,9 @@ export const useCoinsStore = defineStore('coins', {
     // Positionnement/tailles pour l'aperçu Jojo dans l'onglet Collection
     jojoImgPos: { top: 50, left: 87, width: 90 } as { top: number; left: number; width: number },
     jojoTextPos: { top: -5, left: 10, width: 72 } as { top: number; left: number; width: number }
+    ,
+    // Variantes choisies pour les items dynamiques (clé = legacyId/itemId, valeur = index de variante)
+    dynamicItemVariants: {} as Record<number, number>
   }),
 
   getters: {
@@ -185,18 +188,27 @@ export const useCoinsStore = defineStore('coins', {
 
     // Getter pour obtenir l'index de variante dynamique d'un item
     getDynamicItemVariant: (state) => (itemId: number) => {
-      // Pour Discord (itemId 23), retourner l'index de variante stocké
-      if (itemId === 23) {
-        return state.discordVariantIndex || 0;
-      }
-      // Pour Jojo (itemId 24), retourner l'index de variante stocké
-      if (itemId === 24) {
-        return state.jojoVariantIndex || 0;
-      }
-      // Pour les autres items, retourner 0 par défaut (première variante)
-      return 0;
+      // Spécifiques Discord/Jojo (compat historique)
+      if (itemId === 23) return state.discordVariantIndex || 0;
+      if (itemId === 24) return state.jojoVariantIndex || 0;
+      // Autres items dynamiques: lire la variante choisie sinon 0
+      const idx = state.dynamicItemVariants[itemId]
+      return typeof idx === 'number' ? idx : 0;
     }
   },
+    // Définir la variante dynamique choisie pour un item (et persister)
+    setDynamicItemVariant(itemId: number, index: number) {
+      if (typeof itemId !== 'number' || typeof index !== 'number') return;
+      this.dynamicItemVariants = { ...this.dynamicItemVariants, [itemId]: index };
+      // Persistance locale par utilisateur
+      try {
+        const uRaw = localStorage.getItem('user');
+        const uid = uRaw ? (JSON.parse(uRaw).id || JSON.parse(uRaw)._id || 'anon') : 'anon';
+        const key = `div:${uid}`;
+        localStorage.setItem(key, JSON.stringify(this.dynamicItemVariants));
+      } catch {}
+    },
+
 
   actions: {
     // Helper: construit un colorId avec les suffixes de variantes (Discord et Jojo)
@@ -583,6 +595,19 @@ export const useCoinsStore = defineStore('coins', {
       await this.loadBalance();
       await this.loadSpinStatus();
       await this.loadInventory();
+      // Charger les variantes dynamiques persistées pour l'utilisateur courant
+      try {
+        const uRaw = localStorage.getItem('user');
+        const uid = uRaw ? (JSON.parse(uRaw).id || JSON.parse(uRaw)._id || 'anon') : 'anon';
+        const key = `div:${uid}`;
+        const saved = localStorage.getItem(key);
+        if (saved) {
+          const obj = JSON.parse(saved);
+          if (obj && typeof obj === 'object') {
+            this.dynamicItemVariants = obj;
+          }
+        }
+      } catch {}
     },
 
     // Initialiser les couleurs de bordures
@@ -717,6 +742,7 @@ export const useCoinsStore = defineStore('coins', {
       this.jojoVariantIndex = 0;
       this.jojoImgPos = { top: 50, left: 87, width: 90 };
       this.jojoTextPos = { top: -5, left: 10, width: 72 };
+      this.dynamicItemVariants = {};
     },
 
     // Détecter les nouveaux items avec des messages admin
