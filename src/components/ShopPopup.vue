@@ -2345,21 +2345,25 @@ const getAvatarBorderStyle = (user) => {
     return { border: '3px solid transparent', background: 'transparent' }
   }
   
-  // Si pas de couleur sélectionnée, bordure noire par défaut
-  if (!user || !user.selectedBorderColor || user.selectedBorderColor === 'default') {
-    return { border: '3px solid #000000' }
-  }
-  
   // Initialiser les bordures si nécessaire
   if (!coinsStore.borderColors || coinsStore.borderColors.length === 0) {
     coinsStore.initializeBorderColors()
   }
   
-  // Extraire l'id de base si encodé avec variantes (ex: "red|dv=1|jv=0")
-  const raw = String(user.selectedBorderColor)
-  const baseId = raw.split('|')[0] || 'default'
-  const selected = coinsStore.borderColors.find(c => c.id === baseId)
+  // Déterminer l'id de couleur à utiliser
+  const rawFromUser = String(user?.selectedBorderColor || '')
+  let baseId = rawFromUser.split('|')[0] || ''
+  const isCurrentUser = !!(authStore?.user && (authStore.user?.username === user?.username || String(authStore.user?.id || authStore.user?._id) === String(user?.id || user?._id)))
+  if (!baseId || baseId === 'default') {
+    const storeBase = String(coinsStore.selectedBorderColor || '').split('|')[0]
+    if (isCurrentUser && storeBase) baseId = storeBase
+  }
   
+  if (!baseId || baseId === 'default') {
+    return { border: '3px solid #000000' }
+  }
+  
+  const selected = coinsStore.borderColors.find(c => c.id === baseId)
   if (!selected) {
     return { border: '3px solid #000000' }
   }
