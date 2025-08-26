@@ -48,6 +48,13 @@
                     :style="getDynNavbarAssetStyle(a)"
                   />
                 </template>
+                <!-- Fallback universel: image de base de l'item dynamique par-dessus l'avatar -->
+                <img
+                  v-if="equippedDynItem && equippedDynItem.img"
+                  :src="equippedDynItem.img"
+                  alt="dyn"
+                  style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:contain; z-index: 10; pointer-events:none;"
+                />
                 <img class="avatar-img"
                   :src="userAvatar" 
                   alt="Compte" 
