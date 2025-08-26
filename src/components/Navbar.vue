@@ -62,7 +62,7 @@
                 <template v-if="equippedDynItem">
                   <img
                     v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
-                    v-if="a && a.src && ((a.meta && (a.meta.navbarPlacement === 'inside' || a.meta.avatarPlacement === 'inside')) || (!a.meta && (!a.navbarPlacement || a.navbarPlacement === 'inside')))"
+                    v-if="a && a.src && ((a.meta && (a.meta.navbarPlacement === 'inside' || a.meta.avatarPlacement === 'inside' || (!a.meta.navbarPlacement && !a.meta.avatarPlacement))) || (!a.meta && (!a.navbarPlacement || a.navbarPlacement === 'inside')))"
                     :key="'dyn-variant-nb-inside-'+ai+'-'+variantUpdateKey"
                     :src="resolveAssetSrc(a.src)"
                     :style="getDynNavbarAssetStyle(a)"
@@ -929,20 +929,21 @@ const equippedDynItem = computed(() => {
   const equippedId = Number(coinsStore.equippedItemId)
   if (!equippedId || equippedId === 0) return null
 
-  // Attendre que les items dynamiques soient chargés
-  if (dynamicInfoById.value.size === 0) return null
-
+  // Utiliser dyn d'abord, fallback à une image par défaut si nécessaire
   const dynItem = dynamicInfoById.value.get(equippedId)
   if (!dynItem) return null
+
+  const firstAsset = dynItem.assets && dynItem.assets[0]
+  const img = firstAsset && firstAsset.src ? resolveAssetSrc(firstAsset.src) : (dynItem.img || '')
 
   return {
     id: dynItem.id,
     name: dynItem.name,
-    img: dynItem.assets && dynItem.assets[0] ? resolveAssetSrc(dynItem.assets[0].src) : '',
+    img,
     isDynamic: true,
-    assets: dynItem.assets || [],
+    assets: Array.isArray(dynItem.assets) ? dynItem.assets : [],
     backgrounds: dynItem.backgrounds || {},
-    variants: dynItem.variants || [],
+    variants: Array.isArray(dynItem.variants) ? dynItem.variants : [],
     legacyId: dynItem.id
   }
 })
