@@ -1019,6 +1019,8 @@ function normalizeAvatarToUrl(av) {
 
     // Data URL → direct
     if (av.startsWith('data:')) return av;
+    // Blob URL → direct (prévisualisation locale)
+    if (av.startsWith('blob:')) return av;
 
     // Already absolute (http/https) → return as is
     if (/^https?:\/\//i.test(av)) return av;
@@ -1431,6 +1433,12 @@ async function handleAvatarUpload(event) {
   }
 
   try {
+    // Prévisualisation immédiate
+    try {
+      const previewUrl = URL.createObjectURL(file);
+      userAvatar.value = previewUrl;
+    } catch {}
+
     const formData = new FormData();
     formData.append('avatar', file);
 
@@ -1665,7 +1673,13 @@ function afficherAnnee(year) {
 
 // Fonction pour gérer les erreurs de chargement d'image
 function handleImageError(event) {
-  console.log('❌ Erreur de chargement de l\'image:', event.target.src);
+  const src = String(event?.target?.src || '');
+  console.log('❌ Erreur de chargement de l\'image:', src);
+  // Si l\'erreur concerne une URL blob: (prévisualisation), ne pas fallback
+  if (src.startsWith('blob:')) {
+    console.log('⏭️ Ignorer l\'erreur sur blob:, en attente de l\'URL finale');
+    return;
+  }
   console.log('🔄 Retour à l\'icône par défaut');
   userAvatar.value = accountIcon;
 }
