@@ -926,48 +926,25 @@ onUnmounted(() => document.removeEventListener('click', handleGlobalClick, true)
 // Variables pour les items équipés
 const equippedItem = computed(() => coinsStore.equippedItem)
 const equippedDynItem = computed(() => {
-  // Utiliser user.equippedItemId comme dans ShopPopup
-  if (!user.value || !user.value.token || user.value.equippedItemId === null || user.value.equippedItemId === undefined || user.value.equippedItemId === 0) {
-    return null
-  }
-  
-  // Attendre que les items soient chargés
-  if (dynamicInfoById.value.size === 0) {
-    console.log('⏳ En attente du chargement des items dynamiques...')
-    return null
-  }
-  
-  const equippedId = Number(user.value.equippedItemId)
-  console.log('🔎 Recherche item équipé - equippedId:', equippedId, 'user:', user.value?.username)
-  console.log('🗺️ Items disponibles dans la Map:', Array.from(dynamicInfoById.value.keys()))
-  
-  // Chercher directement dans les items dynamiques
-  // (Dans la navbar on ne gère que les items dynamiques)
+  const equippedId = Number(coinsStore.equippedItemId)
+  if (!equippedId || equippedId === 0) return null
+
+  // Attendre que les items dynamiques soient chargés
+  if (dynamicInfoById.value.size === 0) return null
+
   const dynItem = dynamicInfoById.value.get(equippedId)
-  if (!dynItem) {
-    console.log('❌ Item non trouvé dans dynamicInfoById avec id:', equippedId)
-    return null
+  if (!dynItem) return null
+
+  return {
+    id: dynItem.id,
+    name: dynItem.name,
+    img: dynItem.assets && dynItem.assets[0] ? resolveAssetSrc(dynItem.assets[0].src) : '',
+    isDynamic: true,
+    assets: dynItem.assets || [],
+    backgrounds: dynItem.backgrounds || {},
+    variants: dynItem.variants || [],
+    legacyId: dynItem.id
   }
-  
-  // Transformer l'item comme dans ShopPopup
-  const item = {
-      id: dynItem.id,
-      name: dynItem.name,
-      img: dynItem.assets && dynItem.assets[0] ? resolveAssetSrc(dynItem.assets[0].src) : '',
-      isDynamic: true,
-      assets: dynItem.assets || [],
-      backgrounds: dynItem.backgrounds || {},
-      variants: dynItem.variants || [],
-      legacyId: dynItem.id
-    }
-  
-  console.log('✅ Item équipé trouvé:', item.name)
-  
-  // Forcer la réactivité avec la clé de mise à jour
-  const updateKey = variantUpdateKey.value
-  console.log('🔄 Update key:', updateKey)
-  
-  return item
 })
 
 function resolveAssetSrc(path) {
