@@ -1416,11 +1416,27 @@ async function handleAvatarUpload(event) {
           ? newAvatarUrl
           : newAvatarUrl + (newAvatarUrl.includes('?') ? '&' : '?') + 't=' + Date.now()
         userAvatar.value = withTs
-        // Mettre à jour les données utilisateur dans le store et localStorage
-        if (user.value) {
-          const updatedUser = { ...user.value, avatar: withTs }
-          auth.login(updatedUser)
-          console.log('✅ Données utilisateur mises à jour avec l\'avatar')
+        // Re-synchroniser le profil complet depuis la base (forme canonique)
+        try {
+          const prof = await secureApiCall('/users/profile')
+          if (prof && (prof.user || prof._id)) {
+            const current = auth.user || {}
+            const fresh = prof.user || prof
+            const mergedUser = { ...current, ...fresh, token: current.token || current?.user?.token }
+            auth.login(mergedUser)
+            // recalcul de l'avatar selon le profil canonique
+            await loadUserAvatar()
+          } else {
+            if (user.value) {
+              const updatedUser = { ...user.value, avatar: withTs }
+              auth.login(updatedUser)
+            }
+          }
+        } catch (e) {
+          if (user.value) {
+            const updatedUser = { ...user.value, avatar: withTs }
+            auth.login(updatedUser)
+          }
         }
       }
       alert('Avatar mis à jour avec succès !');
