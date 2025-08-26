@@ -1724,10 +1724,9 @@ const getColorSwatchStyle = (c) => {
   return style
 }
 
-// Obtenir le prix courant d'un item (priorité au prix hebdomadaire s'il existe)
+// Obtenir le prix courant d'un item: prix de base uniforme (Collection = Weekly)
 const getItemPrice = (item) => {
-  const override = weeklyPriceMap.value.get(item.id)
-  return typeof override !== 'undefined' ? override : item.price
+  return item.price
 }
 
 // Style pour le cercle d'aperçu dans les variantes hebdomadaires
