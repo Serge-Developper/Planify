@@ -1742,24 +1742,72 @@ onMounted(async () => {
   if (user.value) {
     console.log('👤 User au montage:', user.value);
     
-    if (user.value.avatar) {
-      if (user.value.avatar.startsWith('data:')) {
-        userAvatar.value = user.value.avatar;
-        console.log('🖼️ Avatar data URL chargé au montage');
-      } else if (user.value.avatar.startsWith('/uploads/')) {
-        const avatarUrl = `${baseUrl}${user.value.avatar}`;
-        userAvatar.value = avatarUrl;
-        console.log('🖼️ Avatar URL chargé au montage:', avatarUrl);
-      } else if (user.value.avatarFilename) {
-        const avatarUrl = `${baseUrl}/uploads/avatars/${user.value.avatarFilename}`;
-        userAvatar.value = avatarUrl;
-        console.log('🖼️ Avatar filename chargé au montage:', avatarUrl);
+    // Toujours récupérer les données fraîches depuis le backend au montage
+    try {
+      const token = auth.token || user.value.token;
+      if (token) {
+        console.log('🔄 Récupération des données utilisateur fraîches au montage...');
+        const response = await axios.get(`${API_URL}/auth/verify`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (response.data.success && response.data.user) {
+          console.log('✅ Données utilisateur fraîches récupérées:', response.data.user);
+          
+          // Fusionner avec le token existant
+          const freshUser = {
+            ...response.data.user,
+            token: token
+          };
+          
+          // Mettre à jour le store et localStorage
+          auth.login(freshUser);
+          
+          // Charger l'avatar depuis les données fraîches
+          if (freshUser.avatar) {
+            if (freshUser.avatar.startsWith('data:')) {
+              userAvatar.value = freshUser.avatar;
+              console.log('🖼️ Avatar data URL chargé depuis les données fraîches');
+            } else if (freshUser.avatar.startsWith('/uploads/')) {
+              const avatarUrl = `${baseUrl}${freshUser.avatar}`;
+              userAvatar.value = avatarUrl;
+              console.log('🖼️ Avatar URL chargé depuis les données fraîches:', avatarUrl);
+            } else if (freshUser.avatarFilename) {
+              const avatarUrl = `${baseUrl}/uploads/avatars/${freshUser.avatarFilename}`;
+              userAvatar.value = avatarUrl;
+              console.log('🖼️ Avatar filename chargé depuis les données fraîches:', avatarUrl);
+            }
+          }
+        }
       } else {
-        // Fallback: essayer de charger depuis la DB
-        loadUserAvatar();
+        // Si pas de token, charger depuis les données locales
+        if (user.value.avatar) {
+          if (user.value.avatar.startsWith('data:')) {
+            userAvatar.value = user.value.avatar;
+            console.log('🖼️ Avatar data URL chargé au montage (local)');
+          } else if (user.value.avatar.startsWith('/uploads/')) {
+            const avatarUrl = `${baseUrl}${user.value.avatar}`;
+            userAvatar.value = avatarUrl;
+            console.log('🖼️ Avatar URL chargé au montage (local):', avatarUrl);
+          } else if (user.value.avatarFilename) {
+            const avatarUrl = `${baseUrl}/uploads/avatars/${user.value.avatarFilename}`;
+            userAvatar.value = avatarUrl;
+            console.log('🖼️ Avatar filename chargé au montage (local):', avatarUrl);
+          }
+        }
       }
-    } else if (user.value.id || user.value._id) {
-      loadUserAvatar();
+    } catch (error) {
+      console.error('❌ Erreur lors de la récupération des données utilisateur:', error);
+      // En cas d'erreur, utiliser les données locales
+      if (user.value.avatar) {
+        if (user.value.avatar.startsWith('data:')) {
+          userAvatar.value = user.value.avatar;
+        } else if (user.value.avatar.startsWith('/uploads/')) {
+          userAvatar.value = `${baseUrl}${user.value.avatar}`;
+        } else if (user.value.avatarFilename) {
+          userAvatar.value = `${baseUrl}/uploads/avatars/${user.value.avatarFilename}`;
+        }
+      }
     }
     
     await coinsStore.initialize();

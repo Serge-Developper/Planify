@@ -86,6 +86,18 @@ const handleLogin = async (event) => {
       dataLength: user.avatar && user.avatar.data ? user.avatar.data.length : 0
     });
 
+    // Construction correcte de l'avatar pour le retour
+    let avatarUrl = null;
+    if (user.avatar && typeof user.avatar === 'object' && user.avatar.data && user.avatar.mimetype) {
+      // Format avec data et mimetype (nouveau format)
+      avatarUrl = `data:${user.avatar.mimetype};base64,${user.avatar.data}`;
+      console.log('✅ Avatar data URL construit depuis la DB (login):', avatarUrl.substring(0, 100) + '...');
+    } else if (user.avatarFilename) {
+      // Format avec filename seulement (fallback)
+      avatarUrl = `/uploads/avatars/${user.avatarFilename}`;
+      console.log('📁 Avatar filename utilisé (login):', user.avatarFilename);
+    }
+
     // Vérifier le mot de passe
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
@@ -125,9 +137,7 @@ const handleLogin = async (event) => {
           year: user.year,
           groupe: user.groupe,
           coins: user.coins,
-          avatar: user.avatar && user.avatar.data ? 
-            `data:${user.avatar.mimetype};base64,${user.avatar.data}` : 
-            user.avatar, // Fallback pour l'ancien format
+          avatar: avatarUrl,
           avatarFilename: user.avatarFilename,
           hasSecretQuestions: user.secretQuestions && user.secretQuestions.length >= 3 && user.secretQuestions.every(q => q.question && q.answer)
         }
@@ -285,6 +295,18 @@ const handleVerifyToken = async (event) => {
       dataLength: user.avatar && user.avatar.data ? user.avatar.data.length : 0
     });
 
+    // Construction correcte de l'avatar pour le retour
+    let avatarUrl = null;
+    if (user.avatar && typeof user.avatar === 'object' && user.avatar.data && user.avatar.mimetype) {
+      // Format avec data et mimetype (nouveau format)
+      avatarUrl = `data:${user.avatar.mimetype};base64,${user.avatar.data}`;
+      console.log('✅ Avatar data URL construit depuis la DB:', avatarUrl.substring(0, 100) + '...');
+    } else if (user.avatarFilename) {
+      // Format avec filename seulement (fallback)
+      avatarUrl = `/uploads/avatars/${user.avatarFilename}`;
+      console.log('📁 Avatar filename utilisé:', user.avatarFilename);
+    }
+
     return {
       statusCode: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -298,9 +320,7 @@ const handleVerifyToken = async (event) => {
           year: user.year,
           groupe: user.groupe,
           coins: user.coins,
-          avatar: user.avatar && user.avatar.data ? 
-            `data:${user.avatar.mimetype};base64,${user.avatar.data}` : 
-            (user.avatar || user.avatarFilename),
+          avatar: avatarUrl,
           avatarFilename: user.avatarFilename,
           hasSecretQuestions: user.secretQuestions && user.secretQuestions.length >= 3 && user.secretQuestions.every(q => q.question && q.answer)
         }
