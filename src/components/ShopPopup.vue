@@ -2139,7 +2139,19 @@ function applyDynamicVariant(idx) {
   
   // Sauvegarder la variante sélectionnée dans le store
   try {
-    coinsStore.setDynamicItemVariant(item.id, idx)
+    if (typeof coinsStore.setDynamicItemVariant === 'function') {
+      coinsStore.setDynamicItemVariant(item.id, idx)
+    } else {
+      // Fallback: persister localement si la méthode n'est pas encore disponible (hot reload)
+      try {
+        const u = authStore?.user || JSON.parse(localStorage.getItem('user') || '{}')
+        const uid = u?.id || u?._id || 'anon'
+        const key = `div:${uid}`
+        const current = JSON.parse(localStorage.getItem(key) || '{}')
+        current[item.id] = idx
+        localStorage.setItem(key, JSON.stringify(current))
+      } catch {}
+    }
     console.log('✅ Variante sauvegardée dans le store')
     // Forcer la mise à jour en incrémentant la clé
     variantUpdateKey.value++
