@@ -2252,16 +2252,16 @@ const getUserEquippedItemData = (user) => {
 
  const getUserAvatar = (user) => {
   const av = user && user.avatar
-  if (typeof av === 'string' && av.startsWith('/uploads/')) {
-    // Utiliser les nouvelles APIs pour servir les images depuis la base de données
-    if (av.startsWith('/uploads/avatars/')) {
-      const avatarUrl = `${baseUrl}/api/uploads/avatars/${av.split('/').pop()}`
-      console.log('🖼️ URL avatar:', avatarUrl)
+  if (typeof av === 'string') {
+    // Si c'est une data URL, l'utiliser directement
+    if (av.startsWith('data:')) {
+      return av
+    }
+    // Si c'est un chemin d'upload
+    if (av.startsWith('/uploads/')) {
+      const avatarUrl = `${baseUrl}${av}`
       return avatarUrl
     }
-    const avatarUrl = `${baseUrl}${av}`
-    console.log('🖼️ URL avatar:', avatarUrl)
-    return avatarUrl
   }
   return accountIcon
 }
