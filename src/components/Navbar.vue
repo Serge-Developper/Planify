@@ -927,7 +927,13 @@ onUnmounted(() => document.removeEventListener('click', handleGlobalClick, true)
 const equippedItem = computed(() => coinsStore.equippedItem)
 const equippedDynItem = computed(() => {
   // Utiliser user.equippedItemId comme dans ShopPopup
-  if (!user.value || user.value.equippedItemId === null || user.value.equippedItemId === undefined || user.value.equippedItemId === 0) {
+  if (!user.value || !user.value.token || user.value.equippedItemId === null || user.value.equippedItemId === undefined || user.value.equippedItemId === 0) {
+    return null
+  }
+  
+  // Attendre que les items soient chargés
+  if (dynamicInfoById.value.size === 0) {
+    console.log('⏳ En attente du chargement des items dynamiques...')
     return null
   }
   
@@ -1911,8 +1917,8 @@ watch(user, async (newUser, oldUser) => {
       checkSpinAvailability();
       
       // Charger les items dynamiques si l'utilisateur vient de se connecter
-      if (!oldUser) {
-        loadDynamicItems();
+      if (!oldUser && newUser.token) {
+        await loadDynamicItems();
       }
     }
   } else {
