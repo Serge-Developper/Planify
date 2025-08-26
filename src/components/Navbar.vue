@@ -953,8 +953,8 @@ function resolveDynSrc(src) {
       // Utiliser le bon chemin pour les items dynamiques
       const orig = API_URL || ''
       const base = orig.endsWith('/api') ? orig.slice(0, -4) : orig.replace('/api','')
-      // Remplacer /uploads/ par /api/items/uploads/ pour les items dynamiques
-      const correctedSrc = src.replace('/uploads/', '/api/items/uploads/')
+      // Remplacer /uploads/ par /api/uploads/items/ pour les items dynamiques
+      const correctedSrc = src.replace('/uploads/', '/api/uploads/items/')
       return base + correctedSrc
     }
   } catch {}
