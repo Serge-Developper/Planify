@@ -922,9 +922,10 @@ const equippedDynAssets = computed(() => {
     const assets = (variant && Array.isArray(variant.assets) && variant.assets.length)
       ? variant.assets
       : (Array.isArray(item.assets) ? item.assets : [])
-    return assets
+    // Filtrer les entrées falsy/invalides pour éviter a.meta sur undefined
+    return Array.isArray(assets) ? assets.filter((a) => a && typeof a === 'object') : []
   } catch {
-    return Array.isArray(item.assets) ? item.assets : []
+    return Array.isArray(item.assets) ? item.assets.filter((a) => a && typeof a === 'object') : []
   }
 })
 
