@@ -6,7 +6,6 @@ const bcrypt = require('bcryptjs');
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
   role: { type: String, default: 'user' },
   year: String,
   groupe: String,
@@ -110,7 +109,6 @@ const handleLogin = async (event) => {
         user: {
           id: user._id,
           username: user.username,
-          email: user.email,
           role: user.role,
           year: user.year,
           groupe: user.groupe,
@@ -139,23 +137,21 @@ const handleLogin = async (event) => {
 const handleRegister = async (event) => {
   try {
     const body = JSON.parse(event.body || '{}');
-    const { username, email, password, year, groupe } = body;
+    const { username, password, year, groupe, role } = body;
 
-    if (!username || !email || !password) {
+    if (!username || !password) {
       return {
         statusCode: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           success: false, 
-          message: 'Tous les champs sont requis' 
+          message: 'Nom d\'utilisateur et mot de passe requis' 
         })
       };
     }
 
     // Vérifier si l'utilisateur existe déjà
-    const existingUser = await User.findOne({ 
-      $or: [{ username }, { email }] 
-    });
+    const existingUser = await User.findOne({ username });
     
     if (existingUser) {
       return {
@@ -163,7 +159,7 @@ const handleRegister = async (event) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           success: false, 
-          message: 'Nom d\'utilisateur ou email déjà utilisé' 
+          message: 'Nom d\'utilisateur déjà utilisé' 
         })
       };
     }
@@ -174,12 +170,11 @@ const handleRegister = async (event) => {
     // Créer le nouvel utilisateur
     const newUser = new User({
       username,
-      email,
       password: hashedPassword,
       year: year || '',
       groupe: groupe || '',
       coins: 1000, // Bonus de bienvenue
-      role: 'user'
+      role: role || 'user' // Utiliser le rôle passé ou 'user' par défaut
     });
 
     await newUser.save();
@@ -205,13 +200,12 @@ const handleRegister = async (event) => {
         user: {
           id: newUser._id,
           username: newUser.username,
-          email: newUser.email,
           role: newUser.role,
-          year: newUser.year,
-          groupe: newUser.groupe,
+          year: newUser.year || '',
+          groupe: newUser.groupe || '',
           coins: newUser.coins,
-          avatar: newUser.avatar,
-          hasSecretQuestions: newUser.hasSecretQuestions
+          // Les nouveaux utilisateurs n'ont pas encore de questions secrètes
+          hasSecretQuestions: false
         }
       })
     };
@@ -271,13 +265,11 @@ const handleVerifyToken = async (event) => {
         user: {
           id: user._id,
           username: user.username,
-          email: user.email,
           role: user.role,
           year: user.year,
           groupe: user.groupe,
           coins: user.coins,
-          avatar: user.avatar,
-          hasSecretQuestions: user.secretQuestions && user.secretQuestions.length >= 3 && user.secretQuestions.every(q => q.question && q.answer)
+          avatar: user.avatar
         }
       })
     };
