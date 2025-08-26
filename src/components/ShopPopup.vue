@@ -2126,38 +2126,63 @@ function closeDynamicStylePicker() {
 
 // Appliquer une variante pour les items dynamiques
 async function applyDynamicVariant(idx) {
-  if (!dynamicPickerItem.value) return
-  const item = dynamicPickerItem.value
+  console.log('🔍 applyDynamicVariant appelé avec idx:', idx, typeof idx)
   
-  // Vérifier que la variante existe
-  if (!item.variants || !item.variants[idx]) {
-    console.error('❌ Variante invalide:', idx, 'pour item', item.id)
+  if (!dynamicPickerItem.value) {
+    console.error('❌ Pas d\'item sélectionné')
     return
   }
   
-  console.log('🎨 Application de la variante', idx, 'pour item', item.id)
+  const item = dynamicPickerItem.value
+  console.log('📦 Item sélectionné:', item)
+  
+  // Vérifier que la variante existe
+  if (!item.variants || !Array.isArray(item.variants)) {
+    console.error('❌ Pas de variantes pour cet item')
+    return
+  }
+  
+  if (!item.variants[idx]) {
+    console.error('❌ Variante invalide:', idx, 'pour item', item.id, 'nombre de variantes:', item.variants.length)
+    return
+  }
+  
+  // S'assurer que l'ID est un nombre
+  const itemId = typeof item.id === 'string' ? parseInt(item.id, 10) : item.id
+  const variantIndex = typeof idx === 'string' ? parseInt(idx, 10) : idx
+  
+  console.log('🎨 Application de la variante', variantIndex, 'pour item', itemId)
+  console.log('📊 Types:', { itemId: typeof itemId, variantIndex: typeof variantIndex })
+  
+  // Vérifier que coinsStore existe et a la méthode
+  if (!coinsStore || typeof coinsStore.setDynamicItemVariant !== 'function') {
+    console.error('❌ coinsStore.setDynamicItemVariant n\'est pas disponible')
+    alert('Erreur: Le système de variantes n\'est pas disponible.')
+    return
+  }
   
   // Sauvegarder la variante sélectionnée dans le store
   try {
-    const result = await coinsStore.setDynamicItemVariant(item.id, idx)
-    if (result.success) {
+    const result = await coinsStore.setDynamicItemVariant(itemId, variantIndex)
+    if (result && result.success) {
       console.log('✅ Variante sauvegardée dans le store')
       // Forcer la mise à jour en incrémentant la clé
       variantUpdateKey.value++
       console.log('🔄 Clé de mise à jour incrémentée:', variantUpdateKey.value)
       // Déclencher l'événement pour notifier la navbar
       window.dispatchEvent(new CustomEvent('dynamic-variant-changed', { 
-        detail: { itemId: item.id, variantIndex: idx } 
+        detail: { itemId, variantIndex } 
       }))
       console.log('📡 Événement dynamic-variant-changed déclenché')
     } else {
-      console.error('❌ Erreur lors de la sauvegarde de la variante:', result.error)
+      console.error('❌ Erreur lors de la sauvegarde de la variante:', result?.error)
       // Afficher un message d'erreur à l'utilisateur
       alert('Impossible de sauvegarder la variante. Veuillez réessayer.')
     }
   } catch (e) {
     console.error('❌ Exception lors de la sauvegarde de la variante:', e)
-    alert('Une erreur est survenue. Veuillez réessayer.')
+    console.error('📦 Stack trace:', e.stack)
+    alert('Une erreur est survenue: ' + (e.message || 'Erreur inconnue'))
   }
   
   // Fermer la popup

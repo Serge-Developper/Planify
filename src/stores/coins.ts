@@ -785,26 +785,24 @@ export const useCoinsStore = defineStore('coins', {
     async setDynamicItemVariant(itemId: number, variantIndex: number) {
       console.log('🎨 setDynamicItemVariant appelé:', { itemId, variantIndex });
       
-      // Mettre à jour la Map locale
-      this.dynamicItemVariants.set(itemId, variantIndex);
-      
-      // Sauvegarder la variante dans localStorage pour persistance locale
-      const variantsObj = Object.fromEntries(this.dynamicItemVariants);
-      localStorage.setItem('dynamicItemVariants', JSON.stringify(variantsObj));
-      
-      // TODO: Appeler l'API backend pour persister la variante
-      // Pour l'instant, on garde juste en local
       try {
-        // Exemple d'appel API (à implémenter côté backend)
-        // await secureApiCall('/coins/dynamic-variant', {
-        //   method: 'POST',
-        //   body: JSON.stringify({ itemId, variantIndex })
-        // });
+        // Mettre à jour la Map locale
+        this.dynamicItemVariants.set(itemId, variantIndex);
+        
+        // Sauvegarder la variante dans localStorage pour persistance locale
+        const variantsObj = Object.fromEntries(this.dynamicItemVariants);
+        localStorage.setItem('dynamicItemVariants', JSON.stringify(variantsObj));
+        
+        // TODO: Appeler l'API backend pour persister la variante
+        // Pour l'instant, on garde juste en local
+        
         console.log('✅ Variante sauvegardée localement');
+        console.log('📦 État actuel des variantes:', this.dynamicItemVariants);
         return { success: true };
       } catch (error) {
         console.error('❌ Erreur lors de la sauvegarde de la variante:', error);
-        return { success: false, error };
+        console.error('📦 Stack trace:', error.stack);
+        return { success: false, error: error.message || 'Erreur inconnue' };
       }
     },
 
