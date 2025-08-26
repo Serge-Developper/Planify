@@ -137,6 +137,14 @@
                 :src="resolveAssetSrc(a.src)"
                 :style="getDynNavbarOverlayStyle(a)"
               />
+              <!-- Fallback si aucun asset n'est trouvé mais l'item existe -->
+              <img
+                v-if="equippedDynItem.img && getDynVariantAssetsForNavbar(equippedDynItem).length === 0"
+                :src="resolveAssetSrc(equippedDynItem.img)"
+                :alt="equippedDynItem.name"
+                class="equipped-dynamic-item-overlay"
+                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 15;"
+              />
             </template>
 
             <!-- Item équipé générique (rendu seulement si une image est définie et pas d'item dynamique) -->
@@ -493,25 +501,17 @@
                 :src="resolveAssetSrc(a.src)"
                 :style="getDynNavbarOverlayStyle(a)"
               />
-            </template>
-            <!-- Fallback pour les items dynamiques sans placement spécifique (mobile) -->
-            <template v-if="equippedDynItem && equippedDynItem.img && (!equippedDynItem.assets || !Array.isArray(equippedDynItem.assets) || equippedDynItem.assets.length === 0)">
+              <!-- Fallback mobile si aucun asset n'est trouvé mais l'item existe -->
               <img
+                v-if="equippedDynItem.img && getDynVariantAssetsForNavbar(equippedDynItem).length === 0"
                 :src="resolveAssetSrc(equippedDynItem.img)"
                 :alt="equippedDynItem.name"
                 class="equipped-dynamic-item-overlay-mobile"
                 style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 15;"
               />
             </template>
-            <!-- Fallback simple pour tous les items dynamiques (mobile) -->
-            <template v-if="equippedDynItem && equippedDynItem.img">
-              <img
-                :src="resolveAssetSrc(equippedDynItem.img)"
-                :alt="equippedDynItem.name"
-                class="equipped-dynamic-item-overlay-mobile"
-                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 15;"
-              />
-            </template>
+
+
             <img 
               v-if="equippedItem && (equippedItem.name === 'Coeur' || equippedItem.displayType === 'coeur')" 
               :src="coeur" 
@@ -1051,10 +1051,16 @@ function getDynVariantAssetsForNavbar(item) {
   try {
     if (!item) return []
     
+    // Si pas d'assets du tout, retourner tableau vide (le fallback affichera l'image de base)
+    if (!item.assets || !Array.isArray(item.assets) || item.assets.length === 0) {
+      console.log('📋 Navbar: Pas d\'assets sur l\'item, le fallback sera utilisé')
+      return []
+    }
+    
     // Si pas de variantes, retourner les assets de base
     if (!item.variants || !Array.isArray(item.variants) || item.variants.length === 0) {
       console.log('📋 Navbar: Pas de variantes, utilisation des assets de base')
-      return item.assets || []
+      return item.assets
     }
     
     // Utiliser id directement (comme dans ShopPopup)
