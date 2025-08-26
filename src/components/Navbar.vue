@@ -868,6 +868,7 @@ const showUserDropdown = ref(false)
 const showProfilePopup = ref(false)
 const showPassword = ref(false)
 const userAvatar = ref(accountIcon)
+const lastGoodAvatar = ref(accountIcon)
 const fileInput = ref(null)
 const fileInputMobile = ref(null)
 const lastSpinResult = ref(null)
@@ -1067,7 +1068,8 @@ async function loadUserAvatar() {
   }
 
   try {
-    userAvatar.value = normalizeAvatarToUrl(user.value.avatar);
+    const normalized = normalizeAvatarToUrl(user.value.avatar);
+    userAvatar.value = normalized || lastGoodAvatar.value || accountIcon;
   } catch (error) {
     console.error('Erreur lors du chargement de l\'avatar:', error);
     userAvatar.value = accountIcon;
@@ -1686,7 +1688,11 @@ function handleImageError(event) {
 
 // Fonction pour gérer le chargement réussi d'image
 function handleImageLoad(event) {
-  console.log('✅ Image chargée avec succès:', event.target.src);
+  const src = String(event?.target?.src || '');
+  console.log('✅ Image chargée avec succès:', src);
+  if (src && src !== accountIcon) {
+    lastGoodAvatar.value = src;
+  }
 }
 
 // Fonction pour obtenir le style de bordure selon l'item équipé
@@ -1731,14 +1737,15 @@ onMounted(async () => {
 
 // Watcher pour surveiller les changements de l'utilisateur
 watch(user, async (newUser) => {
-  if (newUser) {
-    if (newUser.avatar) {
-      userAvatar.value = normalizeAvatarToUrl(newUser.avatar);
-    } else if (newUser.id || newUser._id) {
-      loadUserAvatar();
-    } else {
-      userAvatar.value = accountIcon;
-    }
+      if (newUser) {
+      if (newUser.avatar) {
+        const normalized = normalizeAvatarToUrl(newUser.avatar);
+        userAvatar.value = normalized || lastGoodAvatar.value || accountIcon;
+      } else if (newUser.id || newUser._id) {
+        loadUserAvatar();
+      } else {
+        userAvatar.value = accountIcon;
+      }
     
     await coinsStore.initialize();
     checkSpinAvailability();
