@@ -138,6 +138,15 @@
                 :style="getDynNavbarOverlayStyle(a)"
               />
             </template>
+            <!-- Fallback pour les items dynamiques sans placement spécifique -->
+            <template v-if="equippedDynItem && equippedDynItem.img && (!equippedDynItem.assets || !Array.isArray(equippedDynItem.assets) || equippedDynItem.assets.length === 0)">
+              <img
+                :src="resolveDynSrc(equippedDynItem.img)"
+                :alt="equippedDynItem.name"
+                class="equipped-dynamic-item-overlay"
+                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 15;"
+              />
+            </template>
             <!-- Item équipé générique (rendu seulement si une image est définie et pas d'item dynamique) -->
             <img 
               v-if="equippedItem && equippedItem.displayType === 'generic' && equippedItem.img && !equippedDynItem && equippedItem.name !== 'Galaxie' && equippedItem.name !== 'Coeur' && equippedItem.name !== 'Étoiles'" 
@@ -491,6 +500,15 @@
                 :key="'dyn-m-above-'+ai"
                 :src="resolveDynSrc(a.src)"
                 :style="getDynNavbarOverlayStyle(a)"
+              />
+            </template>
+            <!-- Fallback pour les items dynamiques sans placement spécifique (mobile) -->
+            <template v-if="equippedDynItem && equippedDynItem.img && (!equippedDynItem.assets || !Array.isArray(equippedDynItem.assets) || equippedDynItem.assets.length === 0)">
+              <img
+                :src="resolveDynSrc(equippedDynItem.img)"
+                :alt="equippedDynItem.name"
+                class="equipped-dynamic-item-overlay-mobile"
+                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 15;"
               />
             </template>
             <img 
@@ -3622,4 +3640,27 @@ body, html {
 .profile-popup .close-btn { position: absolute !important; top: 12px !important; right: 16px !important; background: transparent !important; border: none !important; width: 40px !important; height: 40px !important; padding: 0 !important; cursor: pointer !important; }
 .profile-popup .close-img { width: 32px; height: 32px; display:block; filter: grayscale(0.5) brightness(0.95); transition: transform 0.25s, filter 0.25s; }
 .profile-popup .close-btn:hover .close-img { transform: scale(1.18); filter: grayscale(0) brightness(1.1); }
+
+/* Styles pour les items dynamiques fallback */
+.equipped-dynamic-item-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  z-index: 15;
+  pointer-events: none;
+}
+
+.equipped-dynamic-item-overlay-mobile {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  z-index: 15;
+  pointer-events: none;
+}
 </style>
