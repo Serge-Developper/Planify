@@ -993,33 +993,60 @@ const isAdmin = computed(() => auth.isAdmin)
 
 const passwordValue = ref('');
 
+function normalizeAvatarToUrl(av) {
+  try {
+    if (!av) return accountIcon;
+    if (typeof av === 'object' && av !== null) {
+      if (typeof av.data === 'string' && typeof av.mimetype === 'string') {
+        return `data:${av.mimetype};base64,${av.data}`;
+      }
+      if (typeof av.url === 'string') {
+        av = av.url;
+      } else if (typeof av.filename === 'string') {
+        av = `/uploads/avatars/${av.filename}`;
+      }
+    }
+    if (typeof av !== 'string') return accountIcon;
+    // Corrige les URLs mal formées sans ':'
+    if (av.startsWith('https//')) {
+      av = 'https://' + av.slice(7);
+    }
+    // Data URL → direct
+    if (av.startsWith('data:')) return av;
+    // URL absolue → ne pas préfixer
+    if (/^https?:\/\//i.test(av)) return av;
+    // Déjà route API complète
+    if (av.startsWith('/api/uploads/avatars/')) {
+      return `${baseUrl}${av}`;
+    }
+    // Chemin brut d'upload d'avatars → router via la lambda
+    if (av.startsWith('/uploads/avatars/')) {
+      const filename = av.split('/').pop();
+      return `${baseUrl}/api/uploads/avatars/${filename}`;
+    }
+    // Nom de fichier seul
+    if (/^avatar-[\w.-]+\.(png|jpe?g|gif|webp)$/i.test(av)) {
+      return `${baseUrl}/api/uploads/avatars/${av}`;
+    }
+    if (av.startsWith('/uploads/')) return `${baseUrl}${av}`;
+    return `${baseUrl}${av}`;
+  } catch {
+    return accountIcon;
+  }
+}
+
 // Fonction pour charger l'avatar de l'utilisateur
 async function loadUserAvatar() {
-  try {
-    const av = user.value?.avatar
-    if (!av) { userAvatar.value = accountIcon; return }
+  if (!user.value || !user.value.id) {
+    userAvatar.value = accountIcon;
+    return;
+  }
 
-    if (typeof av === 'string') {
-      if (av.startsWith('data:')) {
-        userAvatar.value = av
-      } else if (/^https?:\/\//.test(av)) {
-        // URL absolue fournie par le backend
-        userAvatar.value = av
-      } else if (av.startsWith('/uploads/avatars/')) {
-        const filename = av.split('/').pop()
-        userAvatar.value = `${baseUrl}/api/uploads/avatars/${filename}`
-      } else {
-        userAvatar.value = `${baseUrl}${av}`
-      }
-    } else if (typeof av === 'object' && typeof av.data === 'string') {
-      const mt = typeof av.mimetype === 'string' ? av.mimetype : 'image/jpeg'
-      userAvatar.value = `data:${mt};base64,${av.data}`
-    } else {
-      userAvatar.value = accountIcon
-    }
+  try {
+    userAvatar.value = normalizeAvatarToUrl(user.value.avatar);
   } catch (error) {
     console.error('Erreur lors du chargement de l\'avatar:', error);
-    userAvatar.value = accountIcon
+    userAvatar.value = accountIcon;
   }
 }
 
@@ -1399,39 +1426,21 @@ async function handleAvatarUpload(event) {
     console.log('📤 Réponse upload:', response.data);
 
     if (response.data.avatar) {
-      // Normaliser la source avatar retournée par l'API (data URL, chemin, ou filename)
-      const raw = response.data.avatar
-      const filename = response.data.filename
-      let newAvatarUrl = ''
-      if (filename && typeof filename === 'string') {
-        newAvatarUrl = `${baseUrl}/api/uploads/avatars/${filename}`
-      } else if (typeof raw === 'string' && raw.startsWith('data:')) {
-        newAvatarUrl = raw
-      } else if (typeof raw === 'string' && raw.startsWith('/uploads/avatars/')) {
-        newAvatarUrl = `${baseUrl}/api/uploads/avatars/${raw.split('/').pop()}`
-      } else if (typeof raw === 'string') {
-        newAvatarUrl = raw
+      // Mettre à jour l'avatar affiché
+      const stored = response.data.filename || response.data.avatar;
+      const newAvatarUrl = normalizeAvatarToUrl(stored);
+      console.log('🖼️ Avatar reçu (normalisé):', typeof newAvatarUrl === 'string' ? newAvatarUrl.substring(0, 80) + '...' : newAvatarUrl);
+      userAvatar.value = newAvatarUrl;
+      
+      // Mettre à jour les données utilisateur dans le store et localStorage
+      if (user.value) {
+        const updatedUser = { ...user.value, avatar: stored };
+        auth.login(updatedUser); // Met à jour le store et localStorage
+        console.log('✅ Données utilisateur mises à jour avec l\'avatar');
+      } else {
+        console.log('⚠️ Pas d\'utilisateur dans le store, mais avatar uploadé avec succès');
       }
-      if (newAvatarUrl) {
-        console.log('🖼️ Avatar normalisé (préférence filename):', newAvatarUrl.substring(0, 120))
-        userAvatar.value = newAvatarUrl
-        // Persister pour les prochaines sessions (en parallèle)
-        if (user.value) {
-          const updatedUser = { ...user.value, avatar: newAvatarUrl }
-          auth.login(updatedUser)
-        }
-        // Puis recharger le profil canonique (évite toute incohérence)
-        try {
-          const prof = await secureApiCall('/users/profile')
-          if (prof && (prof.user || prof._id)) {
-            const current = auth.user || {}
-            const fresh = prof.user || prof
-            const mergedUser = { ...current, ...fresh, token: current.token || current?.user?.token }
-            auth.login(mergedUser)
-            await loadUserAvatar()
-          }
-        } catch (e) {}
-      }
+      
       alert('Avatar mis à jour avec succès !');
     }
   } catch (error) {
@@ -1456,23 +1465,7 @@ function handleLoginSuccess(payload) {
   // Charger l'avatar après connexion
   if (payload.user.avatar) {
     console.log('✅ Avatar trouvé lors de la connexion:', payload.user.avatar);
-    
-    // Normaliser en URL affichable
-    const av = payload.user?.avatar || payload?.user?.user?.avatar;
-    if (typeof av === 'string' && av.startsWith('data:')) {
-      userAvatar.value = av;
-    } else if (typeof av === 'string' && av.startsWith('/uploads/avatars/')) {
-      const filename = av.split('/').pop();
-      userAvatar.value = `${baseUrl}/api/uploads/avatars/${filename}`;
-    } else if (typeof av === 'object' && av !== null && typeof av.data === 'string') {
-      const mt = typeof av.mimetype === 'string' ? av.mimetype : 'image/jpeg';
-      userAvatar.value = `data:${mt};base64,${av.data}`;
-    } else if (typeof av === 'string') {
-      const avatarUrl = `${baseUrl}${av}`;
-      userAvatar.value = avatarUrl;
-    } else {
-      userAvatar.value = accountIcon;
-    }
+    userAvatar.value = normalizeAvatarToUrl(payload.user.avatar);
   } else {
     console.log('❌ Pas d\'avatar lors de la connexion, chargement depuis la DB...');
     loadUserAvatar();
@@ -1694,21 +1687,7 @@ onMounted(async () => {
 watch(user, async (newUser) => {
   if (newUser) {
     if (newUser.avatar) {
-      const av = newUser.avatar
-      if (typeof av === 'string' && av.startsWith('data:')) {
-        userAvatar.value = av
-      } else if (typeof av === 'string' && av.startsWith('/uploads/avatars/')) {
-        const filename = av.split('/').pop()
-        userAvatar.value = `${baseUrl}/api/uploads/avatars/${filename}`
-      } else if (typeof av === 'object' && av !== null && typeof av.data === 'string') {
-        const mt = typeof av.mimetype === 'string' ? av.mimetype : 'image/jpeg'
-        userAvatar.value = `data:${mt};base64,${av.data}`
-      } else if (typeof av === 'string') {
-        const avatarUrl = `${baseUrl}${av}`
-        userAvatar.value = avatarUrl
-      } else {
-        userAvatar.value = accountIcon
-      }
+      userAvatar.value = normalizeAvatarToUrl(newUser.avatar);
     } else if (newUser.id || newUser._id) {
       loadUserAvatar();
     } else {
