@@ -1027,7 +1027,7 @@ async function loadUserAvatar() {
   }
 
   try {
-    if (user.value.avatar) {
+    if (user.value.avatar && typeof user.value.avatar === 'string') {
       // Si c'est une data URL, l'utiliser directement
       if (user.value.avatar.startsWith('data:')) {
         userAvatar.value = user.value.avatar;
@@ -1459,7 +1459,7 @@ function handleLoginSuccess(payload) {
   passwordValue.value = payload.password;
   
   // Charger l'avatar après connexion
-  if (payload.user.avatar) {
+  if (payload.user.avatar && typeof payload.user.avatar === 'string') {
     console.log('✅ Avatar trouvé lors de la connexion:', payload.user.avatar);
     
     // Vérifier si c'est une data URL ou un chemin relatif
@@ -1684,7 +1684,7 @@ onMounted(async () => {
   window.addEventListener('resize', handleResize);
   
   // Charger l'avatar depuis le store auth au montage
-  if (user.value && user.value.avatar) {
+  if (user.value && user.value.avatar && typeof user.value.avatar === 'string') {
     // Si c'est une data URL, l'utiliser directement
     if (user.value.avatar.startsWith('data:')) {
       userAvatar.value = user.value.avatar;
@@ -1716,7 +1716,7 @@ onMounted(async () => {
 
 // Watcher pour surveiller les changements de l'utilisateur
 watch(user, async (newUser) => {
-  if (newUser && newUser.avatar) {
+  if (newUser && newUser.avatar && typeof newUser.avatar === 'string') {
     // Si c'est une data URL, l'utiliser directement
     if (newUser.avatar.startsWith('data:')) {
       userAvatar.value = newUser.avatar;

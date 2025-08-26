@@ -2251,7 +2251,7 @@ const getUserEquippedItemData = (user) => {
  }
 
  const getUserAvatar = (user) => {
-  if (user.avatar && user.avatar.startsWith('/uploads/')) {
+  if (user.avatar && typeof user.avatar === 'string' && user.avatar.startsWith('/uploads/')) {
     // Utiliser les nouvelles APIs pour servir les images depuis la base de données
     if (user.avatar.startsWith('/uploads/avatars/')) {
       const avatarUrl = `${baseUrl}/api/uploads/avatars/${user.avatar.split('/').pop()}`
