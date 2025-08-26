@@ -179,9 +179,9 @@ const handleRegister = async (event) => {
     } catch (_) {}
 
 
-    // Vérifier si l'utilisateur existe déjà
+    // Vérifier si l'utilisateur existe déjà (sur username ou email effectif)
     const existingUser = await User.findOne({ 
-      $or: [{ username }, { email }] 
+      $or: [{ username }, { email: effectiveEmail }] 
     });
     
     if (existingUser) {
