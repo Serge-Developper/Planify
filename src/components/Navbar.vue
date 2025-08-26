@@ -929,9 +929,15 @@ const equippedDynItem = computed(() => {
   const it = coinsStore.equippedItem
   if (it && it.isDynamic) return it
   const id = coinsStore.equippedItemId || it?.id
+  console.log('🔎 Recherche item équipé - id:', id, 'type:', typeof id)
+  console.log('🗺️ Items disponibles dans la Map:', Array.from(dynamicInfoById.value.keys()))
+  
   if (!id) return null
   const dynItem = dynamicInfoById.value.get(Number(id))
-  if (!dynItem) return null
+  if (!dynItem) {
+    console.log('❌ Item non trouvé dans dynamicInfoById avec id:', id)
+    return null
+  }
   
   // Transformer l'item comme dans getUserEquippedItemData du ShopPopup
   const transformedItem = {
@@ -1032,6 +1038,7 @@ async function loadDynamicItems() {
             assets: Array.isArray(it.assets) ? it.assets : [],
             backgrounds: it.backgrounds || {}
           }
+          // Utiliser l'id comme clé (comme dans ShopPopup)
           map.set(Number(it.legacyId), normalizedItem)
         }
       }
@@ -1105,10 +1112,10 @@ function getDynVariantAssetsForNavbar(item) {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   // Ne charger les items dynamiques que si l'utilisateur est connecté
   if (user.value && user.value.token) {
-    loadDynamicItems()
+    await loadDynamicItems()
   }
   try { 
     window.addEventListener('items-changed', () => {
