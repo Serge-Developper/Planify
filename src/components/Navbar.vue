@@ -72,7 +72,7 @@
                     v-if="equippedDynItem && equippedDynItem.img"
                     :src="equippedDynItem.img"
                     alt="dyn"
-                    style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:contain; z-index: 10; pointer-events:none;"
+                    :style="getDynFallbackNavbarStyle(equippedDynItem)"
                   />
                 </template>
                 <!-- Animation Matrix à l'intérieur de l'avatar -->
@@ -1011,6 +1011,30 @@ function getDynNavbarOverlayStyle(asset) {
   const style = getDynNavbarAssetStyle(asset)
   // Respecte le z-index défini dans l'éditeur; défaut = 15 si non spécifié
   if (typeof style.zIndex !== 'number') style.zIndex = 15
+  return style
+}
+
+// Style fallback pour l'image de base: appliquer navbarStyle/avatarStyle de la VARIANTE active si disponible
+function getDynFallbackNavbarStyle(item) {
+  const isMob = !!isMobile && !!isMobile.value
+  let s = {}
+  try {
+    const itemId = item.id || item.legacyId
+    const variantIndex = coinsStore.getDynamicItemVariant(itemId)
+    const v = Array.isArray(item.variants) ? item.variants[variantIndex] : null
+    const va = v && Array.isArray(v.assets) && v.assets[0] ? v.assets[0] : null
+    if (va) {
+      s = isMob
+        ? (va.navbarStyleMobile || va.avatarStyleMobile || va.style || {})
+        : (va.navbarStyle || va.avatarStyle || va.style || {})
+    }
+  } catch {}
+  const style = { position: 'absolute', objectFit: (s && s.objectFit) || 'contain', zIndex: typeof s.zIndex === 'number' ? s.zIndex : 10, pointerEvents: 'none' }
+  if (typeof s.top === 'number') style.top = s.top + 'px'; else if (typeof s.top === 'string') style.top = s.top
+  if (typeof s.left === 'number') style.left = s.left + 'px'; else if (typeof s.left === 'string') style.left = s.left
+  if (typeof s.width === 'number') style.width = s.width + 'px'; else if (typeof s.width === 'string') style.width = s.width; else style.width = '100%'
+  if (typeof s.height === 'number') style.height = s.height + 'px'; else if (typeof s.height === 'string') style.height = s.height; else style.height = '100%'
+  if (typeof s.rotate === 'number') style.transform = `rotate(${s.rotate}deg)`
   return style
 }
 
