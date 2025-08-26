@@ -799,10 +799,10 @@ export const useCoinsStore = defineStore('coins', {
         console.log('✅ Variante sauvegardée localement');
         console.log('📦 État actuel des variantes:', this.dynamicItemVariants);
         return { success: true };
-      } catch (error) {
+      } catch (error: any) {
         console.error('❌ Erreur lors de la sauvegarde de la variante:', error);
-        console.error('📦 Stack trace:', error.stack);
-        return { success: false, error: error.message || 'Erreur inconnue' };
+        console.error('📦 Stack trace:', error?.stack);
+        return { success: false, error: error?.message || 'Erreur inconnue' };
       }
     },
 
