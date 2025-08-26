@@ -18,8 +18,13 @@
 
 # Redirection spécifique pour les avatars
 [[redirects]]
+  from = "/uploads/avatars/*"
+  to = "/.netlify/functions/serve-avatar/:splat"
+  status = 200
+
+[[redirects]]
   from = "/api/uploads/avatars/*"
-  to = "/.netlify/functions/avatars/:splat"
+  to = "/.netlify/functions/serve-avatar/:splat"
   status = 200
 
 # Redirections pour les API endpoints (DOIT être en premier)

@@ -62,7 +62,7 @@ const verifyToken = (event) => {
 exports.handler = async (event, context) => {
   // Configuration CORS
   const headers = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGINS || '*',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Methods': 'POST, OPTIONS'
   };
@@ -76,315 +76,95 @@ exports.handler = async (event, context) => {
     };
   }
 
-  try {
-    console.log('🚀 Fonction upload-avatar appelée');
-    console.log('Méthode:', event.httpMethod);
-    console.log('Path:', event.path);
-    
-    // Connexion à MongoDB
-    await mongoose.connect(process.env.MONGODB_URI || '', {
-      bufferCommands: false
-    });
-
-    // Route POST /api/upload-avatar - Upload d'avatar
-    if (event.httpMethod === 'POST') {
-      try {
-        // Vérifier l'authentification
-        const user = verifyToken(event);
-        
-        // Vérifier que le contenu est multipart/form-data
-        if (!event.headers['content-type'] || !event.headers['content-type'].includes('multipart/form-data')) {
-          return {
-            statusCode: 400,
-            headers: {
-              ...headers,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              success: false,
-              message: 'Le contenu doit être multipart/form-data'
-            })
-          };
-        }
-
-        // Parser le body multipart manuellement
-        const boundary = event.headers['content-type'].split('boundary=')[1];
-        
-        // Netlify encode toujours le body en base64 pour les requêtes binaires
-        const isBase64 = event.isBase64Encoded !== false; // Par défaut true
-        console.log('📦 Body encoding:', isBase64 ? 'base64' : 'utf8');
-        console.log('📦 Raw body length:', event.body.length);
-        
-        const bodyBuffer = Buffer.from(event.body, isBase64 ? 'base64' : 'utf8');
-        
-        console.log('📦 Decoded body length:', bodyBuffer.length);
-        console.log('📦 Boundary:', boundary);
-        
-        // Extraire le fichier du body multipart - méthode plus robuste
-        // Chercher directement dans le buffer sans conversion en string
-        const boundaryBuffer = Buffer.from('--' + boundary, 'utf8');
-        const boundaryEndBuffer = Buffer.from('--' + boundary + '--', 'utf8');
-        
-        let avatarFile = null;
-        let currentPos = 0;
-        
-        while (currentPos < bodyBuffer.length) {
-          // Chercher le prochain boundary
-          const boundaryPos = bodyBuffer.indexOf(boundaryBuffer, currentPos);
-          if (boundaryPos === -1) break;
-          
-          // Passer le boundary et le CRLF
-          currentPos = boundaryPos + boundaryBuffer.length;
-          if (bodyBuffer[currentPos] === 0x0d && bodyBuffer[currentPos + 1] === 0x0a) {
-            currentPos += 2;
-          }
-          
-          // Lire les headers jusqu'à la double ligne vide
-          const headersEnd = bodyBuffer.indexOf('\r\n\r\n', currentPos);
-          if (headersEnd === -1) continue;
-          
-          const headersBuffer = bodyBuffer.slice(currentPos, headersEnd);
-          const headers = headersBuffer.toString('utf8');
-          
-          // Vérifier si c'est le champ avatar
-          if (!headers.includes('name="avatar"')) {
-            currentPos = headersEnd + 4;
-            continue;
-          }
-          
-          // Extraire le nom de fichier et le type
-          let filename = 'avatar.png';
-          let contentType = 'image/png';
-          
-          const filenameMatch = headers.match(/filename="([^"]+)"/);
-          if (filenameMatch) {
-            filename = filenameMatch[1];
-          }
-          
-          const contentTypeMatch = headers.match(/Content-Type:\s*(.+)/i);
-          if (contentTypeMatch) {
-            contentType = contentTypeMatch[1].trim();
-          }
-          
-          console.log('📄 Found avatar field');
-          console.log('📄 Filename:', filename);
-          console.log('📄 Content-Type:', contentType);
-          
-          // Le contenu commence après la double ligne vide
-          const contentStart = headersEnd + 4;
-          
-          // Chercher la fin du contenu (prochain boundary)
-          const nextBoundarySearch = Buffer.from('\r\n--' + boundary, 'utf8');
-          let contentEnd = bodyBuffer.indexOf(nextBoundarySearch, contentStart);
-          
-          if (contentEnd === -1) {
-            // Pas de boundary suivant, chercher le boundary de fin
-            const endBoundarySearch = Buffer.from('\r\n--' + boundary + '--', 'utf8');
-            contentEnd = bodyBuffer.indexOf(endBoundarySearch, contentStart);
-            
-            if (contentEnd === -1) {
-              console.log('❌ Impossible de trouver la fin du contenu');
-              break;
-            }
-          }
-          
-          // Extraire le contenu binaire
-          const fileBuffer = bodyBuffer.slice(contentStart, contentEnd);
-          
-          avatarFile = {
-            originalname: filename,
-            mimetype: contentType,
-            buffer: fileBuffer
-          };
-          
-          console.log('📄 File buffer extracted, length:', fileBuffer.length);
-          break;
-        }
-
-        if (!avatarFile) {
-          return {
-            statusCode: 400,
-            headers: {
-              ...headers,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              success: false,
-              message: 'Aucun fichier avatar trouvé'
-            })
-          };
-        }
-
-        // Vérifier le type de fichier
-        if (!avatarFile.mimetype.startsWith('image/')) {
-          return {
-            statusCode: 400,
-            headers: {
-              ...headers,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              success: false,
-              message: 'Seules les images sont autorisées'
-            })
-          };
-        }
-
-        // Vérifier la taille (5MB max)
-        if (avatarFile.buffer.length > 5 * 1024 * 1024) {
-          return {
-            statusCode: 400,
-            headers: {
-              ...headers,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              success: false,
-              message: 'Le fichier est trop volumineux (max 5MB)'
-            })
-          };
-        }
-
-        // Générer un nom de fichier unique
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const fileExtension = path.extname(avatarFile.originalname);
-        const filename = 'avatar-' + uniqueSuffix + fileExtension;
-        
-        // Vérifier que l'image est valide en essayant de la décoder
-        console.log('🔍 Vérification de l\'image avant stockage...');
-        console.log('🔍 Buffer length:', avatarFile.buffer.length);
-        console.log('🔍 First bytes:', avatarFile.buffer.slice(0, 20).toString('hex'));
-        
-        // Vérifier la signature du fichier
-        const isPNG = avatarFile.buffer[0] === 0x89 && avatarFile.buffer[1] === 0x50;
-        const isJPEG = avatarFile.buffer[0] === 0xFF && avatarFile.buffer[1] === 0xD8;
-        const isGIF = avatarFile.buffer[0] === 0x47 && avatarFile.buffer[1] === 0x49;
-        
-        console.log('🔍 Type détecté - PNG:', isPNG, 'JPEG:', isJPEG, 'GIF:', isGIF);
-        
-        if (!isPNG && !isJPEG && !isGIF) {
-          console.error('❌ Format d\'image non reconnu');
-          return {
-            statusCode: 400,
-            headers: {
-              ...headers,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              success: false,
-              message: 'Format d\'image non reconnu. Utilisez PNG, JPEG ou GIF.'
-            })
-          };
-        }
-        
-        // Dans Netlify Functions, on ne peut pas écrire sur le système de fichiers
-        // On va stocker l'image en base64 dans la base de données
-        const base64Image = avatarFile.buffer.toString('base64');
-        const imageData = {
-          filename: filename,
-          mimetype: avatarFile.mimetype,
-          data: base64Image,
-          size: avatarFile.buffer.length
-        };
-        
-        // Mettre à jour l'utilisateur dans la base de données avec l'image en base64
-        await User.findByIdAndUpdate(user.userId, { 
-          avatar: imageData,
-          avatarFilename: filename
-        });
-        
-        console.log('✅ Avatar uploadé avec succès:', filename);
-        console.log('📏 Taille base64:', base64Image.length);
-        
-        // Vérifier que l'encodage base64 est valide
-        try {
-          const testDecode = Buffer.from(base64Image, 'base64');
-          console.log('✅ Base64 valide, taille décodée:', testDecode.length);
-        } catch (e) {
-          console.error('❌ Erreur de validation base64:', e);
-        }
-        
-        // S'assurer que le mimetype est correct
-        const cleanMimetype = avatarFile.mimetype.trim();
-        const dataUrl = `data:${cleanMimetype};base64,${base64Image}`;
-        
-        console.log('🖼️ Data URL prefix:', dataUrl.substring(0, 100));
-        
-        return {
-          statusCode: 200,
-          headers: {
-            ...headers,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            success: true,
-            avatar: dataUrl,
-            filename: filename,
-            message: 'Avatar mis à jour avec succès'
-          })
-        };
-        
-      } catch (error) {
-        console.error('❌ Erreur détaillée upload avatar:', error);
-        
-        if (error.message === 'Token manquant' || error.message === 'Token invalide') {
-          return {
-            statusCode: 401,
-            headers: {
-              ...headers,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              success: false,
-              message: 'Token invalide ou manquant'
-            })
-          };
-        } else {
-          return {
-            statusCode: 500,
-            headers: {
-              ...headers,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              success: false,
-              message: 'Erreur lors de l\'upload de l\'avatar: ' + error.message
-            })
-          };
-        }
-      }
-    }
-
-    // Méthode non supportée
+  if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
-      headers: {
-        ...headers,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        success: false,
-        message: 'Méthode non autorisée'
+      headers,
+      body: JSON.stringify({ error: 'Method not allowed' })
+    };
+  }
+
+  try {
+    // Vérifier l'authentification
+    const { userId } = verifyToken(event);
+    
+    // Parser le multipart form data
+    const boundary = event.headers['content-type'].split('boundary=')[1];
+    const buffer = Buffer.from(event.body, event.isBase64Encoded ? 'base64' : 'utf8');
+    
+    // Extraire le fichier
+    const boundaryBuffer = Buffer.from(`--${boundary}`);
+    const parts = [];
+    let start = 0;
+    
+    while (start < buffer.length) {
+      const boundaryIndex = buffer.indexOf(boundaryBuffer, start);
+      if (boundaryIndex === -1) break;
+      
+      const nextBoundaryIndex = buffer.indexOf(boundaryBuffer, boundaryIndex + boundaryBuffer.length);
+      if (nextBoundaryIndex === -1) break;
+      
+      const part = buffer.slice(boundaryIndex + boundaryBuffer.length, nextBoundaryIndex);
+      parts.push(part);
+      start = nextBoundaryIndex;
+    }
+    
+    // Trouver la partie avec le fichier
+    let fileBuffer = null;
+    let filename = null;
+    let mimetype = null;
+    
+    for (const part of parts) {
+      const headerEndIndex = part.indexOf('\r\n\r\n');
+      if (headerEndIndex === -1) continue;
+      
+      const headers = part.slice(0, headerEndIndex).toString();
+      if (headers.includes('filename=')) {
+        const filenameMatch = headers.match(/filename="(.+?)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+          const ext = filename.split('.').pop().toLowerCase();
+          mimetype = `image/${ext === 'jpg' ? 'jpeg' : ext}`;
+        }
+        fileBuffer = part.slice(headerEndIndex + 4);
+        break;
+      }
+    }
+    
+    if (!fileBuffer || !filename) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Aucun fichier trouvé' })
+      };
+    }
+    
+    // Convertir en base64
+    const base64Data = fileBuffer.toString('base64');
+    const dataUrl = `data:${mimetype};base64,${base64Data}`;
+    
+    // Sauvegarder directement la data URL dans user.avatar
+    await User.findByIdAndUpdate(userId, { 
+      avatar: dataUrl
+    });
+    
+    console.log('✅ Avatar uploadé en base64');
+    
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ 
+        success: true,
+        avatar: dataUrl
       })
     };
-
+    
   } catch (error) {
-    console.error('❌ Erreur upload-avatar:', error);
+    console.error('Erreur upload avatar:', error);
     return {
       statusCode: 500,
-      headers: {
-        ...headers,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        success: false,
-        message: 'Erreur serveur interne'
-      })
+      headers,
+      body: JSON.stringify({ error: 'Erreur serveur' })
     };
-  } finally {
-    // Fermer la connexion MongoDB
-    if (mongoose.connection.readyState === 1) {
-      await mongoose.connection.close();
-    }
   }
 };

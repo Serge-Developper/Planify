@@ -80,26 +80,11 @@ const handleLogin = async (event) => {
     console.log('🔍 Login - User avatar data:', {
       username: user.username,
       hasAvatar: !!user.avatar,
-      hasAvatarData: !!(user.avatar && user.avatar.data),
-      avatarType: user.avatar ? typeof user.avatar : 'undefined',
-      avatarKeys: user.avatar && typeof user.avatar === 'object' ? Object.keys(user.avatar) : [],
-      avatarFilename: user.avatarFilename,
-      dataLength: user.avatar && user.avatar.data ? user.avatar.data.length : 0,
-      dataPreview: user.avatar && user.avatar.data ? user.avatar.data.substring(0, 50) + '...' : null,
-      mimetype: user.avatar && user.avatar.mimetype ? user.avatar.mimetype : null
+      avatarLength: user.avatar ? user.avatar.length : 0
     });
 
-    // Construction correcte de l'avatar pour le retour
-    let avatarUrl = null;
-    if (user.avatar && typeof user.avatar === 'object' && user.avatar.data && user.avatar.mimetype) {
-      // Format avec data et mimetype (nouveau format)
-      avatarUrl = `data:${user.avatar.mimetype};base64,${user.avatar.data}`;
-      console.log('✅ Avatar data URL construit depuis la DB (login):', avatarUrl.substring(0, 100) + '...');
-    } else if (user.avatarFilename) {
-      // Format avec filename seulement (fallback)
-      avatarUrl = `/uploads/avatars/${user.avatarFilename}`;
-      console.log('📁 Avatar filename utilisé (login):', user.avatarFilename);
-    }
+    // L'avatar est maintenant directement une data URL string
+    const avatarUrl = user.avatar || null;
 
     // Vérifier le mot de passe
     const isValidPassword = await bcrypt.compare(password, user.password);
@@ -133,6 +118,7 @@ const handleLogin = async (event) => {
         message: 'Connexion réussie',
         token,
         user: {
+          _id: user._id,
           id: user._id,
           username: user.username,
           email: user.email,
@@ -141,7 +127,6 @@ const handleLogin = async (event) => {
           groupe: user.groupe,
           coins: user.coins,
           avatar: avatarUrl,
-          avatarFilename: user.avatarFilename,
           hasSecretQuestions: user.secretQuestions && user.secretQuestions.length >= 3 && user.secretQuestions.every(q => q.question && q.answer)
         }
       })
@@ -227,6 +212,7 @@ const handleRegister = async (event) => {
         message: 'Inscription réussie',
         token,
         user: {
+          _id: newUser._id,
           id: newUser._id,
           username: newUser.username,
           email: newUser.email,
@@ -292,26 +278,11 @@ const handleVerifyToken = async (event) => {
       userId: userId,
       username: user.username,
       hasAvatar: !!user.avatar,
-      hasAvatarData: !!(user.avatar && user.avatar.data),
-      avatarType: user.avatar ? typeof user.avatar : 'undefined',
-      avatarKeys: user.avatar && typeof user.avatar === 'object' ? Object.keys(user.avatar) : [],
-      avatarFilename: user.avatarFilename,
-      dataLength: user.avatar && user.avatar.data ? user.avatar.data.length : 0,
-      dataPreview: user.avatar && user.avatar.data ? user.avatar.data.substring(0, 50) + '...' : null,
-      mimetype: user.avatar && user.avatar.mimetype ? user.avatar.mimetype : null
+      avatarLength: user.avatar ? user.avatar.length : 0
     });
 
-    // Construction correcte de l'avatar pour le retour
-    let avatarUrl = null;
-    if (user.avatar && typeof user.avatar === 'object' && user.avatar.data && user.avatar.mimetype) {
-      // Format avec data et mimetype (nouveau format)
-      avatarUrl = `data:${user.avatar.mimetype};base64,${user.avatar.data}`;
-      console.log('✅ Avatar data URL construit depuis la DB:', avatarUrl.substring(0, 100) + '...');
-    } else if (user.avatarFilename) {
-      // Format avec filename seulement (fallback)
-      avatarUrl = `/uploads/avatars/${user.avatarFilename}`;
-      console.log('📁 Avatar filename utilisé:', user.avatarFilename);
-    }
+    // L'avatar est maintenant directement une data URL string
+    const avatarUrl = user.avatar || null;
 
     return {
       statusCode: 200,
@@ -319,6 +290,7 @@ const handleVerifyToken = async (event) => {
       body: JSON.stringify({
         success: true,
         user: {
+          _id: user._id,
           id: user._id,
           username: user.username,
           email: user.email,
@@ -327,7 +299,6 @@ const handleVerifyToken = async (event) => {
           groupe: user.groupe,
           coins: user.coins,
           avatar: avatarUrl,
-          avatarFilename: user.avatarFilename,
           hasSecretQuestions: user.secretQuestions && user.secretQuestions.length >= 3 && user.secretQuestions.every(q => q.question && q.answer)
         }
       })
