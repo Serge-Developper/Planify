@@ -39,9 +39,9 @@
             }" :style="getAccountBorderStyle()" @click="handleDropdown">
               <div class="avatar-image-container" :class="{ 'jojo-sepia': equippedItem && equippedItem.displayType === 'jojo' }" :key="'aic-'+coinsStore.jojoVariantIndex">
                 <!-- Items dynamiques: "below" à l'intérieur (sous l'avatar) -->
-                <template v-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
+                <template v-if="equippedDynItem">
                   <img
-                    v-for="(a, ai) in equippedDynItem.assets"
+                    v-for="(a, ai) in getEquippedDynAssets()"
                     v-if="a && a.meta && a.meta.navbarPlacement === 'below'"
                     :key="'dyn-nb-below-'+ai"
                     :src="resolveDynSrc(a.src)"
@@ -59,9 +59,9 @@
                   @load="handleImageLoad"
                 />
                 <!-- Items dynamiques: "inside" à l'intérieur (au-dessus de l'avatar) -->
-                <template v-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
+                <template v-if="equippedDynItem">
                   <img
-                    v-for="(a, ai) in equippedDynItem.assets"
+                    v-for="(a, ai) in getEquippedDynAssets()"
                     v-if="a && a.meta && a.meta.navbarPlacement === 'inside'"
                     :key="'dyn-nb-inside-'+ai"
                     :src="resolveDynSrc(a.src)"
@@ -129,9 +129,9 @@
               </div>
             </button>
             <!-- Items dynamiques: "above" au-dessus du bouton account -->
-            <template v-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
+            <template v-if="equippedDynItem">
               <img
-                v-for="(a, ai) in equippedDynItem.assets"
+                v-for="(a, ai) in getEquippedDynAssets()"
                 v-if="!a || !a.meta || a.meta.navbarPlacement === 'above'"
                 :key="'dyn-nb-above-'+ai"
                 :src="resolveDynSrc(a.src)"
@@ -380,9 +380,9 @@
               <button class="account-btn" :class="{ 'stars-equipped': equippedItem && equippedItem.name === 'Étoiles', 'rainbow-equipped': equippedItem && equippedItem.name === 'Roses', 'discord-equipped': equippedItem && equippedItem.displayType === 'discord', 'galaxie-equipped': equippedItem && equippedItem.name === 'Galaxie', 'alpha-equipped': equippedItem && (equippedItem.name === 'Alpha' || equippedItem.displayType === 'alpha') }" :style="getAccountBorderStyle()" @click="handleDropdown">
                 <div class="avatar-image-container-mobile" :class="{ 'jojo-sepia': equippedItem && equippedItem.displayType === 'jojo' }" :key="'aicm-'+coinsStore.jojoVariantIndex">
                   <!-- Dyn (mobile): below -->
-                  <template v-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
+                  <template v-if="equippedDynItem">
                     <img
-                      v-for="(a, ai) in equippedDynItem.assets"
+                      v-for="(a, ai) in getEquippedDynAssets()"
                       v-if="a && a.meta && a.meta.navbarPlacement === 'below'"
                       :key="'dyn-m-below-'+ai"
                       :src="resolveDynSrc(a.src)"
@@ -400,9 +400,9 @@
                     @load="handleImageLoad"
                   />
                   <!-- Dyn (mobile): inside -->
-                  <template v-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
+                  <template v-if="equippedDynItem">
                     <img
-                      v-for="(a, ai) in equippedDynItem.assets"
+                      v-for="(a, ai) in getEquippedDynAssets()"
                       v-if="a && a.meta && a.meta.navbarPlacement === 'inside'"
                       :key="'dyn-m-inside-'+ai"
                       :src="resolveDynSrc(a.src)"
@@ -484,9 +484,9 @@
               </div>
             </button>
             <!-- Dyn (mobile): above -->
-            <template v-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
+            <template v-if="equippedDynItem">
               <img
-                v-for="(a, ai) in equippedDynItem.assets"
+                v-for="(a, ai) in getEquippedDynAssets()"
                 v-if="!a || !a.meta || a.meta.navbarPlacement === 'above'"
                 :key="'dyn-m-above-'+ai"
                 :src="resolveDynSrc(a.src)"
@@ -1763,6 +1763,21 @@ async function loadAvatarFromFilename(filename) {
     console.error('❌ Erreur lors du chargement de l\'avatar:', error);
     return null;
   }
+}
+
+// Nouveau: retourner les assets de la variante sélectionnée si présente
+function getEquippedDynAssets() {
+  const dyn = equippedDynItem && equippedDynItem.value ? equippedDynItem.value : equippedDynItem
+  if (!dyn) return []
+  // Si des variantes existent et qu'une variante est marquée showText/textOnly/etc.,
+  // choisir la première variante (ou selon un index plus tard si on ajoute un sélecteur navbar)
+  try {
+    if (Array.isArray(dyn.variants) && dyn.variants.length > 0) {
+      const v = dyn.variants[0]
+      if (v && Array.isArray(v.assets) && v.assets.length > 0) return v.assets
+    }
+  } catch {}
+  return Array.isArray(dyn.assets) ? dyn.assets : []
 }
 </script>
 
