@@ -148,9 +148,9 @@ const handleLogin = async (event) => {
 const handleRegister = async (event) => {
   try {
     const body = JSON.parse(event.body || '{}');
-    const { username, email, password, year, groupe, role } = body;
+    const { username, password, year, groupe, role } = body;
 
-    // Pour l'admin, l'email est optionnel. Si absent, on en génère un basé sur le username.
+    // Email supprimé: uniquement username + password requis
     if (!username || !password) {
       return {
         statusCode: 400,
@@ -161,11 +161,6 @@ const handleRegister = async (event) => {
         })
       };
     }
-
-    const baseUser = String(username).toLowerCase().replace(/[^a-z0-9._-]/g, '') || 'user';
-    const effectiveEmail = (typeof email === 'string' && email.includes('@')) 
-      ? email 
-      : `${baseUser}@planify.local`;
 
     // Si un token admin est fourni, il pourra définir le rôle; sinon on forcera 'user'
     let requesterRole = 'user';
@@ -179,10 +174,8 @@ const handleRegister = async (event) => {
     } catch (_) {}
 
 
-    // Vérifier si l'utilisateur existe déjà (sur username ou email effectif)
-    const existingUser = await User.findOne({ 
-      $or: [{ username }, { email: effectiveEmail }] 
-    });
+    // Vérifier si l'utilisateur existe déjà (uniquement par username)
+    const existingUser = await User.findOne({ username });
     
     if (existingUser) {
       return {
@@ -190,7 +183,7 @@ const handleRegister = async (event) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           success: false, 
-          message: 'Nom d\'utilisateur ou email déjà utilisé' 
+          message: 'Nom d\'utilisateur déjà utilisé' 
         })
       };
     }
@@ -201,7 +194,6 @@ const handleRegister = async (event) => {
     // Créer le nouvel utilisateur
     const newUser = new User({
       username,
-      email: effectiveEmail,
       password: hashedPassword,
       year: year || '',
       groupe: groupe || '',
