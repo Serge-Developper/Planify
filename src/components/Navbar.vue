@@ -1403,8 +1403,16 @@ async function handleAvatarUpload(event) {
       // Mettre à jour l'avatar affiché
       // response.data.avatar est maintenant une data URL complète (data:image/jpeg;base64,...)
       const newAvatarUrl = response.data.avatar;
-      console.log('🖼️ Avatar reçu (data URL):', newAvatarUrl.substring(0, 50) + '...');
+      console.log('🖼️ Avatar reçu (data URL):', newAvatarUrl.substring(0, 100) + '...');
       console.log('🖼️ Longueur de l\'avatar:', newAvatarUrl.length);
+      console.log('🖼️ Type MIME détecté:', newAvatarUrl.substring(5, newAvatarUrl.indexOf(';')));
+      
+      // Vérifier que c'est bien une data URL valide
+      if (!newAvatarUrl.startsWith('data:image/')) {
+        console.error('❌ La réponse n\'est pas une data URL d\'image valide');
+        alert('Erreur: format d\'image invalide reçu du serveur');
+        return;
+      }
       
       // Mettre à jour l'avatar affiché
       justUploadedAvatar.value = true; // Marquer qu'on vient d'uploader
@@ -1630,14 +1638,37 @@ function afficherAnnee(year) {
 
 // Fonction pour gérer les erreurs de chargement d'image
 function handleImageError(event) {
-  console.log('❌ Erreur de chargement de l\'image:', event.target.src);
-  console.log('🔄 Retour à l\'icône par défaut');
-  userAvatar.value = accountIcon;
+  console.error('❌ Erreur de chargement de l\'image:', event.target.src);
+  console.error('Type de src actuel:', typeof event.target.src);
+  console.error('Longueur de la src:', event.target.src.length);
+  console.error('Début de la src:', event.target.src.substring(0, 100));
+  
+  // Ne pas revenir automatiquement à l'icône par défaut si c'est une data URL
+  if (event.target.src && event.target.src.startsWith('data:')) {
+    console.error('C\'est une data URL qui a échoué, vérifier le format');
+    // Ne pas changer userAvatar ici pour permettre le débogage
+  } else {
+    console.log('🔄 Retour à l\'icône par défaut car ce n\'est pas une data URL');
+    userAvatar.value = accountIcon;
+  }
 }
 
 // Fonction pour gérer le chargement réussi d'image
 function handleImageLoad(event) {
-  console.log('✅ Image chargée avec succès:', event.target.src);
+  console.log('✅ Image chargée avec succès:', event.target.src.substring(0, 100));
+  console.log('✅ Dimensions de l\'image:', event.target.naturalWidth, 'x', event.target.naturalHeight);
+}
+
+// Fonction de test pour débugger l'affichage de l'avatar
+function testAvatarDisplay() {
+  // Créer une petite image de test en data URL (un carré rouge 10x10)
+  const testDataUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8/5+hnoEIwDiqkL4KAcT9GO0U4BxoAAAAAElFTkSuQmCC';
+  console.log('🧪 Test avec une data URL simple');
+  userAvatar.value = testDataUrl;
+  
+  setTimeout(() => {
+    console.log('🧪 userAvatar actuel:', userAvatar.value.substring(0, 100));
+  }, 100);
 }
 
 // Fonction pour obtenir le style de bordure selon l'item équipé
@@ -1678,6 +1709,13 @@ onMounted(async () => {
   }
   
   setInterval(updateSpinTimer, 60000);
+  
+  // Exposer la fonction de test pour le débogage [[memory:4174769]]
+  if (typeof window !== 'undefined') {
+    window.testAvatarDisplay = testAvatarDisplay;
+    window.userAvatar = userAvatar;
+    console.log('🧪 Fonctions de débogage disponibles: window.testAvatarDisplay() et window.userAvatar');
+  }
 });
 
 

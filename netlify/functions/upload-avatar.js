@@ -109,10 +109,19 @@ exports.handler = async (event, context) => {
 
         // Parser le body multipart manuellement
         const boundary = event.headers['content-type'].split('boundary=')[1];
-        const body = Buffer.from(event.body, 'base64');
+        
+        // Netlify encode toujours le body en base64 pour les requêtes binaires
+        const isBase64 = event.isBase64Encoded !== false; // Par défaut true
+        console.log('📦 Body encoding:', isBase64 ? 'base64' : 'utf8');
+        console.log('📦 Raw body length:', event.body.length);
+        
+        const bodyBuffer = Buffer.from(event.body, isBase64 ? 'base64' : 'utf8');
+        
+        console.log('📦 Decoded body length:', bodyBuffer.length);
+        console.log('📦 Boundary:', boundary);
         
         // Extraire le fichier du body multipart
-        const parts = body.toString().split('--' + boundary);
+        const parts = bodyBuffer.toString('binary').split('--' + boundary);
         let avatarFile = null;
         
         for (const part of parts) {
@@ -122,17 +131,38 @@ exports.handler = async (event, context) => {
             if (filenameMatch) {
               const filename = filenameMatch.split('filename=')[1].replace(/"/g, '');
               const contentTypeMatch = lines.find(line => line.includes('Content-Type:'));
-              const contentType = contentTypeMatch ? contentTypeMatch.split(': ')[1] : 'image/jpeg';
+              const contentType = contentTypeMatch ? contentTypeMatch.split(': ')[1] : 'image/png';
               
-              // Extraire le contenu du fichier
-              const fileContentStart = part.indexOf('\r\n\r\n') + 4;
-              const fileContent = part.substring(fileContentStart, part.lastIndexOf('\r\n'));
+              console.log('📄 Filename:', filename);
+              console.log('📄 Content-Type:', contentType);
+              
+              // Extraire le contenu du fichier - attention au parsing binaire
+              const headerEndIndex = part.indexOf('\r\n\r\n');
+              if (headerEndIndex === -1) {
+                console.log('❌ Impossible de trouver la fin des headers');
+                continue;
+              }
+              
+              const fileContentStart = headerEndIndex + 4;
+              // Chercher la fin du contenu (avant le prochain boundary ou la fin)
+              let fileContentEnd = part.lastIndexOf('\r\n--');
+              if (fileContentEnd === -1 || fileContentEnd < fileContentStart) {
+                fileContentEnd = part.length;
+                // Enlever les retours à la ligne finaux
+                while (fileContentEnd > fileContentStart && (part[fileContentEnd - 1] === '\r' || part[fileContentEnd - 1] === '\n')) {
+                  fileContentEnd--;
+                }
+              }
+              
+              const fileContent = part.substring(fileContentStart, fileContentEnd);
               
               avatarFile = {
                 originalname: filename,
                 mimetype: contentType,
                 buffer: Buffer.from(fileContent, 'binary')
               };
+              
+              console.log('📄 File buffer length:', avatarFile.buffer.length);
               break;
             }
           }
@@ -187,6 +217,33 @@ exports.handler = async (event, context) => {
         const fileExtension = path.extname(avatarFile.originalname);
         const filename = 'avatar-' + uniqueSuffix + fileExtension;
         
+        // Vérifier que l'image est valide en essayant de la décoder
+        console.log('🔍 Vérification de l\'image avant stockage...');
+        console.log('🔍 Buffer length:', avatarFile.buffer.length);
+        console.log('🔍 First bytes:', avatarFile.buffer.slice(0, 20).toString('hex'));
+        
+        // Vérifier la signature du fichier
+        const isPNG = avatarFile.buffer[0] === 0x89 && avatarFile.buffer[1] === 0x50;
+        const isJPEG = avatarFile.buffer[0] === 0xFF && avatarFile.buffer[1] === 0xD8;
+        const isGIF = avatarFile.buffer[0] === 0x47 && avatarFile.buffer[1] === 0x49;
+        
+        console.log('🔍 Type détecté - PNG:', isPNG, 'JPEG:', isJPEG, 'GIF:', isGIF);
+        
+        if (!isPNG && !isJPEG && !isGIF) {
+          console.error('❌ Format d\'image non reconnu');
+          return {
+            statusCode: 400,
+            headers: {
+              ...headers,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              success: false,
+              message: 'Format d\'image non reconnu. Utilisez PNG, JPEG ou GIF.'
+            })
+          };
+        }
+        
         // Dans Netlify Functions, on ne peut pas écrire sur le système de fichiers
         // On va stocker l'image en base64 dans la base de données
         const base64Image = avatarFile.buffer.toString('base64');
@@ -204,6 +261,21 @@ exports.handler = async (event, context) => {
         });
         
         console.log('✅ Avatar uploadé avec succès:', filename);
+        console.log('📏 Taille base64:', base64Image.length);
+        
+        // Vérifier que l'encodage base64 est valide
+        try {
+          const testDecode = Buffer.from(base64Image, 'base64');
+          console.log('✅ Base64 valide, taille décodée:', testDecode.length);
+        } catch (e) {
+          console.error('❌ Erreur de validation base64:', e);
+        }
+        
+        // S'assurer que le mimetype est correct
+        const cleanMimetype = avatarFile.mimetype.trim();
+        const dataUrl = `data:${cleanMimetype};base64,${base64Image}`;
+        
+        console.log('🖼️ Data URL prefix:', dataUrl.substring(0, 100));
         
         return {
           statusCode: 200,
@@ -213,7 +285,7 @@ exports.handler = async (event, context) => {
           },
           body: JSON.stringify({
             success: true,
-            avatar: `data:${avatarFile.mimetype};base64,${base64Image}`,
+            avatar: dataUrl,
             filename: filename,
             message: 'Avatar mis à jour avec succès'
           })
