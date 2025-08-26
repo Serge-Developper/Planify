@@ -1856,13 +1856,13 @@ const shopItems = [
   {
     id: 1,
     name: 'Oreilles de chat',
-    price: 50,
+    price: 150,
     img: oreilleschat,
   },
   {
     id: 2,
     name: 'Clown',
-    price: 80,
+    price: 120,
     img: clowncheveux,
     displayType: 'clown',
   },
