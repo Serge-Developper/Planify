@@ -469,7 +469,7 @@
         <div class="weekly-section">
           <h3 class="section-title">Variantes de Bordures Classiques</h3>
           <div class="shop-grid">
-            <div v-for="item in borderWeeklyItems" :key="item.id" class="shop-item weekly-item border-item" :class="{ 'equipped': coinsStore.selectedBorderColor === coinsStore.getBorderColorIdFromItem(item) }">
+            <div v-for="item in borderWeeklyItems" :key="item.id" class="shop-item weekly-item border-item" :class="{ 'equipped': coinsStore.selectedBorderColor === coinsStore.getBorderColorIdFromWeeklyItem(item) }">
               <!-- Icônes comme dans la Collection -->
               <div v-if="coinsStore.hasItem(item.id)" class="checkmark-icon">✓</div>
               <div v-if="!coinsStore.hasItem(item.id)" class="lock-icon">🔒</div>
@@ -496,7 +496,7 @@
                   Acheter
                 </button>
                 <button 
-                  v-else-if="coinsStore.selectedBorderColor !== coinsStore.getBorderColorIdFromItem(item)" 
+                  v-else-if="coinsStore.selectedBorderColor !== coinsStore.getBorderColorIdFromWeeklyItem(item)" 
                   class="equip-btn" 
                   :class="{ 'equipped': false }" 
                   @click="handleEquipWeeklyBorder(item)"
@@ -1361,7 +1361,7 @@ function resolveAssetSrc(path) {
     if (path.startsWith('/uploads/avatars/')) {
       return getApiOrigin() + '/api/uploads/avatars/' + path.split('/').pop()
     } else if (path.startsWith('/uploads/items/')) {
-      return getApiOrigin() + '/api/uploads/items/' + path.split('/').pop()
+      return getApiOrigin() + '/api/items/uploads/' + path.split('/').pop()
     }
     return getApiOrigin() + path
   }
@@ -1747,7 +1747,7 @@ const getWeeklyBorderStyle = (item) => {
 
 // Équiper une variante de bordure via la boutique hebdomadaire avec son
 const handleEquipWeeklyBorder = (item) => {
-  const colorId = coinsStore.getBorderColorIdFromItem(item)
+  const colorId = coinsStore.getBorderColorIdFromWeeklyItem(item)
   if (!colorId) return
   const wasSelected = coinsStore.selectedBorderColor === colorId
   coinsStore.selectBorderColor(colorId)
@@ -1759,7 +1759,7 @@ const handleEquipWeeklyBorder = (item) => {
   // Remplissage interne (le disque) pour refléter exactement la couleur/dégradé défini côté site
   const getWeeklyClassicFillStyle = (item) => {
     try {
-      const colorId = coinsStore.getBorderColorIdFromItem(item)
+      const colorId = coinsStore.getBorderColorIdFromWeeklyItem(item)
       const color = coinsStore.borderColors.find(c => c.id === colorId)
       if (color) {
         const style = { width: '100%', height: '100%' }
@@ -1782,7 +1782,7 @@ const handleEquipWeeklyBorder = (item) => {
 const getWeeklyColorName = (item) => {
   try {
     if (item && item.type === 'border-color') {
-      const colorId = coinsStore.getBorderColorIdFromItem(item)
+      const colorId = coinsStore.getBorderColorIdFromWeeklyItem(item)
       const color = coinsStore.borderColors.find(c => c.id === colorId)
       if (color && color.name) {
         return `Bordure ${color.name}`
@@ -2251,14 +2251,15 @@ const getUserEquippedItemData = (user) => {
  }
 
  const getUserAvatar = (user) => {
-  if (user.avatar && user.avatar.startsWith('/uploads/')) {
+  const av = user && user.avatar
+  if (typeof av === 'string' && av.startsWith('/uploads/')) {
     // Utiliser les nouvelles APIs pour servir les images depuis la base de données
-    if (user.avatar.startsWith('/uploads/avatars/')) {
-      const avatarUrl = `${baseUrl}/api/uploads/avatars/${user.avatar.split('/').pop()}`
+    if (av.startsWith('/uploads/avatars/')) {
+      const avatarUrl = `${baseUrl}/api/uploads/avatars/${av.split('/').pop()}`
       console.log('🖼️ URL avatar:', avatarUrl)
       return avatarUrl
     }
-    const avatarUrl = `${baseUrl}${user.avatar}`
+    const avatarUrl = `${baseUrl}${av}`
     console.log('🖼️ URL avatar:', avatarUrl)
     return avatarUrl
   }

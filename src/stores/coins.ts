@@ -173,8 +173,10 @@ export const useCoinsStore = defineStore('coins', {
       return state.borderColors.filter(color => color.unlocked);
     },
 
-    // Getter pour extraire l'ID de couleur de bordure depuis un item weekly
-    getBorderColorIdFromItem: (state) => (item: any) => {
+    // Getter pour extraire l'ID de couleur de bordure depuis un item hebdo (payload shop)
+    // NOTE: l'action du même store nommée getBorderColorIdFromItem fait le mapping id->colorId.
+    // Ce getter est renommé pour éviter tout conflit.
+    getBorderColorIdFromWeeklyItem: (state) => (item: any) => {
       if (item && item.type === 'border-color' && item.colorId) {
         return item.colorId;
       }
@@ -408,7 +410,9 @@ export const useCoinsStore = defineStore('coins', {
     syncUnlockedBorderColorsFromInventory() {
       if (!Array.isArray(this.purchasedItems)) return;
       for (const invItem of this.purchasedItems) {
-        const colorId = this.getBorderColorIdFromItem({ id: invItem.itemId, name: invItem.itemName });
+        const id = typeof invItem === 'number' ? invItem : (typeof invItem === 'string' ? Number(invItem) : Number(invItem?.itemId ?? invItem?.id))
+        const name = (invItem && typeof invItem === 'object') ? invItem.itemName : undefined
+        const colorId = this.getBorderColorIdFromItem({ id, name } as any);
         if (colorId) {
           this.unlockBorderColor(colorId);
         }
@@ -606,7 +610,7 @@ export const useCoinsStore = defineStore('coins', {
         { id: 'rainbow', name: 'Arc-en-ciel', gradient: 'linear-gradient(90deg, #ff0000, #ffa500, #ffff00, #00ff00, #00ffff, #0000ff, #8b00ff)', color: '#ffffff', unlocked: false },
         { id: 'fire', name: 'Feu', color: '#FF4D00', unlocked: false },
         { id: 'ice', name: 'Glace', color: '#A7E8FF', unlocked: false },
-        // { id: 'sunset', name: 'Coucher de soleil', color: '#FF7A00', unlocked: false },
+        { id: 'sunset', name: 'Coucher de soleil', color: '#FF7A00', unlocked: false },
         { id: 'ocean', name: 'Océan', color: '#0077BE', unlocked: false },
         { id: 'forest', name: 'Forêt', color: '#228B22', unlocked: false },
         { id: 'desert', name: 'Désert', color: '#C2B280', unlocked: false },
@@ -614,6 +618,7 @@ export const useCoinsStore = defineStore('coins', {
         { id: 'aurora', name: 'Aurore', gradient: 'linear-gradient(90deg,#26ffb2,#00c1ff,#7a1fff)', color: '#26ffb2', unlocked: false },
         { id: 'volcano', name: 'Volcan', color: '#8B0000', unlocked: false },
         { id: 'crystal', name: 'Cristal', color: '#9AD9FF', unlocked: false },
+        { id: 'midnight', name: 'Minuit', color: '#1A1036', unlocked: false },
         { id: 'dawn', name: 'Aube', color: '#FFDAB9', unlocked: false },
         { id: 'dusk', name: 'Crépuscule', color: '#5B4B8A', unlocked: false },
         { id: 'storm', name: 'Tempête', color: '#708090', unlocked: false },

@@ -28,10 +28,20 @@ const userSchema = new mongoose.Schema({
   spinCount: { type: Number, default: 0 },
   weeklySpinCount: { type: Number, default: 0 },
   lastWeeklyReset: Date,
-  password: String
+  password: String,
+  secretQuestions: [{ question: String, answer: String }],
+  pendingGifts: [{ id: Number, name: String, adminMessage: String, date: Date }]
 });
 
 const User = mongoose.model('User', userSchema);
+
+// Ajout des gifts utilisateur pour les popups
+// Schéma étendu si absent
+try {
+  if (!User.schema.path('pendingGifts')) {
+    User.schema.add({ pendingGifts: [{ id: Number, name: String, adminMessage: String, date: Date }] });
+  }
+} catch {}
 
 // Fonction utilitaire pour créer le dossier d'upload
 function ensureUploadDirectory() {
@@ -91,6 +101,62 @@ exports.handler = async (event, context) => {
       bufferCommands: false
       // bufferMaxEntries n'est plus supporté dans les versions récentes de Mongoose/MongoDB
     });
+
+    const path = event.path || event.rawPath || '';
+
+    // POST /api/users/secret-questions
+    if (event.httpMethod === 'POST' && /\/users\/secret-questions$/.test(path)) {
+      try {
+        const body = JSON.parse(event.body || '{}')
+        const { username, secretQuestions } = body || {}
+        if (!username || !Array.isArray(secretQuestions) || secretQuestions.length === 0) {
+          return { statusCode: 400, headers, body: JSON.stringify({ success: false, message: 'username et secretQuestions requis' }) }
+        }
+        const safe = secretQuestions
+          .filter((q) => q && typeof q.question === 'string' && typeof q.answer === 'string' && q.question.trim() && q.answer.trim())
+          .slice(0, 3)
+          .map((q) => ({ question: String(q.question).trim(), answer: String(q.answer).trim() }))
+        if (safe.length === 0) {
+          return { statusCode: 400, headers, body: JSON.stringify({ success: false, message: 'Aucune entrée valide' }) }
+        }
+        const userDoc = await User.findOne({ username: String(username) })
+        if (!userDoc) {
+          return { statusCode: 404, headers, body: JSON.stringify({ success: false, message: 'Utilisateur non trouvé' }) }
+        }
+        userDoc.secretQuestions = safe
+        await userDoc.save()
+        return { statusCode: 200, headers, body: JSON.stringify({ success: true }) }
+      } catch (e) {
+        return { statusCode: 500, headers, body: JSON.stringify({ success: false, message: 'Erreur serveur', details: String(e && e.message || e) }) }
+      }
+    }
+
+    // GET /api/users/gifts
+    if (event.httpMethod === 'GET' && /\/users\/gifts$/.test(path)) {
+      const authHeader = event.headers && (event.headers.authorization || event.headers.Authorization);
+      if (!authHeader) return { statusCode: 401, headers: headers, body: JSON.stringify({ success: false }) };
+      const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || '');
+      const userId = typeof decoded === 'object' ? decoded.id : decoded;
+      const u = await User.findById(userId).lean();
+      const gifts = Array.isArray(u?.pendingGifts) ? u.pendingGifts : [];
+      return { statusCode: 200, headers: headers, body: JSON.stringify({ success: true, gifts }) };
+    }
+
+    // POST /api/users/ack-gift/:id
+    if (event.httpMethod === 'POST' && /\/users\/ack-gift\//.test(path)) {
+      const authHeader = event.headers && (event.headers.authorization || event.headers.Authorization);
+      if (!authHeader) return { statusCode: 401, headers: headers, body: JSON.stringify({ success: false }) };
+      const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || '');
+      const userId = typeof decoded === 'object' ? decoded.id : decoded;
+      const giftId = (path.match(/ack-gift\/(\d+)/) || [])[1];
+      const doc = await User.findById(userId);
+      if (!doc) return { statusCode: 404, headers: headers, body: JSON.stringify({ success: false }) };
+      doc.pendingGifts = (doc.pendingGifts || []).filter(g => String(g.id) !== String(giftId));
+      await doc.save();
+      return { statusCode: 200, headers: headers, body: JSON.stringify({ success: true }) };
+    }
 
     // Route GET /api/users - Récupérer la liste des utilisateurs pour le leaderboard
     if (event.httpMethod === 'GET' && !event.path.includes('/profile')) {

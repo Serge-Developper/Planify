@@ -61,7 +61,7 @@ onUnmounted(() => {
 async function handleLogin() {
   loading.value = true;
   error.value = '';
-  // Version corrigée pour questions secrètes - Force déploiement
+  // Version corrigée pour questions secrètes
   try {
     const res = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
@@ -78,23 +78,20 @@ async function handleLogin() {
       throw new Error('Erreur réseau');
     }
     
-                if (res.ok && data && data.user) {
-      userData = data; // Stocke temporairement les données
-      // Force deploy - Test questions secrètes
-      console.log('Login response:', { 
-        hasSecretQuestions: data.user.hasSecretQuestions, 
-        userData: data.user 
-      });
+    if (res.ok && data && data.user) {
+      // Normaliser l'objet utilisateur: {...user, token}
+      const normalizedUser = { ...(data.user || {}), token: data.token };
+      userData = normalizedUser; // Stocke la version normalisée
+      // Debug minimal
+      console.log('Login response (hasSecretQuestions):', data.user.hasSecretQuestions);
       
       if (data.user.hasSecretQuestions === false) {
-        console.log('Opening secret questions setup - user has no secret questions');
         showSecretQuestionsSetup.value = true;
         // NE PAS stocker dans localStorage ici - attendre que les questions soient définies
       } else {
-        console.log('User has secret questions, proceeding with login');
-        // Seulement stocker dans localStorage si l'utilisateur a déjà des questions secrètes
-        localStorage.setItem('user', JSON.stringify(data));
-        emit('login-success', { user: data, password: password.value });
+        // Seulement stocker si l'utilisateur a déjà des questions secrètes
+        localStorage.setItem('user', JSON.stringify(normalizedUser));
+        emit('login-success', { user: normalizedUser, password: password.value });
         close();
       }
     } else if (res.ok && (!data || !data.user)) {
@@ -236,4 +233,4 @@ function handleSecretQuestionsClose() {
 .forgot-password-link a:hover {
   color: #1d4ed8;
 }
-</style> 
+</style>

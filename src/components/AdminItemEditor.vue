@@ -438,7 +438,8 @@ function resolveSrc(src) {
     if (src.startsWith('/uploads/avatars/')) {
       return baseUrl + '/api/uploads/avatars/' + src.split('/').pop()
     } else if (src.startsWith('/uploads/items/')) {
-      return baseUrl + '/api/uploads/items/' + src.split('/').pop()
+      // Servir en binaire base64 via la route items/uploads
+      return baseUrl + '/api/items/uploads/' + src.split('/').pop()
     }
     return baseUrl + src
   }
@@ -470,7 +471,7 @@ function sanitizeStyle(s) {
 }
 
 function sanitizeAsset(a) {
-  if (!a) return { src: '', style: sanitizeStyle(null), collectionStyle: sanitizeStyle(null), collectionStyleMobile: sanitizeStyle(null), leaderboardStyle: sanitizeStyle(null), leaderboardStyleMobile: sanitizeStyle(null), avatarStyle: sanitizeStyle(null), avatarStyleMobile: sanitizeStyle(null), navbarStyle: sanitizeStyle(null), navbarStyleMobile: sanitizeStyle(null), popupStyleStyle: sanitizeStyle(null) }
+  if (!a) return { src: '', style: sanitizeStyle(null), collectionStyle: sanitizeStyle(null), collectionStyleMobile: sanitizeStyle(null), leaderboardStyle: sanitizeStyle(null), leaderboardStyleMobile: sanitizeStyle(null), avatarStyle: sanitizeStyle(null), avatarStyleMobile: sanitizeStyle(null), navbarStyle: sanitizeStyle(null), navbarStyleMobile: sanitizeStyle(null), popupStyleStyle: sanitizeStyle(null), meta: {} }
   return {
     src: a.src || '',
     style: sanitizeStyle(a.style),
@@ -482,7 +483,8 @@ function sanitizeAsset(a) {
     avatarStyleMobile: sanitizeStyle(a.avatarStyleMobile),
     navbarStyle: sanitizeStyle(a.navbarStyle),
     navbarStyleMobile: sanitizeStyle(a.navbarStyleMobile),
-    popupStyleStyle: sanitizeStyle(a.popupStyleStyle)
+    popupStyleStyle: sanitizeStyle(a.popupStyleStyle),
+    meta: a.meta && typeof a.meta === 'object' ? { ...a.meta } : {}
   }
 }
 
@@ -707,6 +709,8 @@ async function uploadAssets() {
   if (data.success) {
     const target = editingVariantIndex.value === -1 ? form.value.assets : ((form.value.variants[editingVariantIndex.value].assets ||= []))
     for (const file of data.files) target.push(sanitizeAsset({ src: file.url, style: { top: 0, left: 0, width: 100, height: 100 } }))
+    // Sélectionner automatiquement le dernier asset ajouté
+    try { selectedIndex.value = target.length - 1 } catch {}
   } else {
     alert('Upload échoué')
   }
@@ -717,6 +721,8 @@ function addAssetFromUrl() {
   if (!url) return
   const target = editingVariantIndex.value === -1 ? form.value.assets : ((form.value.variants[editingVariantIndex.value].assets ||= []))
   target.push(sanitizeAsset({ src: url, style: { top: 0, left: 0, width: 100 } }))
+  // Sélectionner automatiquement le dernier asset ajouté
+  try { selectedIndex.value = target.length - 1 } catch {}
 }
 
 async function saveItem() {
@@ -736,7 +742,7 @@ async function saveItem() {
         existingItems.value = [res.item, ...existingItems.value]
       }
     } catch {}
-    form.value = { legacyId: null, name: '', price: 0, type: 'generic', infoOnly: false, infoDescription: '', hasDefaultText: false, defaultText: '', availableInDailyShop: false, assets: [], backgrounds: { collection: null, leaderboard: null, avatar: null, navbar: null, 'popup-style': null }, variants: [] }
+    form.value = { legacyId: null, name: '', price: 0, type: 'generic', infoOnly: false, infoDescription: '', availableInDailyShop: false, assets: [], backgrounds: { collection: null, leaderboard: null, avatar: null, navbar: null, 'popup-style': null }, variants: [] }
     isEditing.value = false
     editingId.value = null
     selectedIndex.value = null
@@ -782,11 +788,14 @@ function editItem(it) {
       const src = (res && res.success && res.item) ? res.item : it
       form.value = sanitizeItem(src)
       editingVariantIndex.value = -1
+      // Auto-sélection du premier asset si présent
+      try { if (Array.isArray(form.value.assets) && form.value.assets.length > 0) selectedIndex.value = 0 } catch {}
     })
     .catch(() => {
       // Fallback en cas d'erreur réseau
       form.value = sanitizeItem(it)
       editingVariantIndex.value = -1
+      try { if (Array.isArray(form.value.assets) && form.value.assets.length > 0) selectedIndex.value = 0 } catch {}
     })
 }
 

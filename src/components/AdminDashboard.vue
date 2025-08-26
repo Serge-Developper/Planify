@@ -163,7 +163,7 @@
            <h3 style="color: #000000; margin-bottom: 20px;">Items de {{ viewingUserItems?.username }}</h3>
            
                        <div v-if="viewingUserItems?.purchasedItems && viewingUserItems.purchasedItems.length > 0" class="items-list">
-              <div v-for="item in viewingUserItems.purchasedItems" :key="item.itemId" class="item-card">
+              <div v-for="item in viewingUserItems.purchasedItems.map(it => (typeof it === 'number' ? { itemId: it, itemName: (itemsCatalog.find(x=>x.id===it)?.name || String(it)) } : it))" :key="item.itemId" class="item-card">
                 <div class="item-info">
                   <h4>{{ item.itemName }}</h4>
                   <p class="item-details">
@@ -418,7 +418,7 @@ function getAvailableQuestions(index) {
     { id: 110, name: 'Bordure Arc-en-ciel (couleur)' },
     { id: 111, name: 'Bordure Feu (couleur)' },
     { id: 112, name: 'Bordure Glace (couleur)' },
-    // { id: 113, name: 'Bordure Coucher de soleil (couleur)' },
+    { id: 113, name: 'Bordure Coucher de soleil (couleur)' },
     { id: 114, name: 'Bordure Océan (couleur)' },
     { id: 115, name: 'Bordure Forêt (couleur)' },
     { id: 116, name: 'Bordure Désert (couleur)' },
@@ -527,8 +527,27 @@ const showEmploi = ref(false);
 
 onMounted(async () => {
   try {
-    const res = await axios.get(`${API_URL}/events`);
-    events.value = Array.isArray(res.data) ? res.data : (Array.isArray(res.data.events) ? res.data.events : []);
+    // Utiliser l'appel sécurisé (ajoute le Bearer token)
+    const res = await secureApiCall('/events');
+    const raw = Array.isArray(res) ? res : (Array.isArray(res?.events) ? res.events : []);
+    // Normaliser les propriétés en français attendues par l'UI admin
+    events.value = raw.map(ev => ({
+      _id: ev._id,
+      titre: ev.titre ?? ev.title ?? '',
+      description: ev.description ?? '',
+      type: (() => {
+        const t = (ev.type ?? '').toLowerCase();
+        if (t === 'exam' || t === 'examen') return 'exam';
+        if (t === 'devoir') return 'devoir';
+        return t || 'devoir';
+      })(),
+      matiere: ev.matiere ?? ev.subject ?? '',
+      date: ev.date ?? (ev.dueDate ? new Date(ev.dueDate).toISOString().slice(0,10) : ''),
+      heure: ev.heure ?? '',
+      groupe: ev.groupe ?? 'Promo',
+      year: ev.year ?? '',
+      groupes: Array.isArray(ev.groupes) ? ev.groupes : [],
+    }));
   } catch (e) {
     events.value = [];
   }
@@ -555,13 +574,11 @@ function handleEditRoleChange() {
   }
 }
 
-const filteredEvents = computed(() =>
-  Array.isArray(events.value)
-    ? selectedMatiere.value === 'Toutes'
-      ? events.value
-      : events.value.filter(e => e.matiere === selectedMatiere.value)
-    : []
-);
+const filteredEvents = computed(() => {
+  if (!Array.isArray(events.value)) return [];
+  if (selectedMatiere.value === 'Toutes') return events.value;
+  return events.value.filter(e => (e.matiere || e.subject) === selectedMatiere.value);
+});
 
 function formatDate(dateStr) {
   if (!dateStr) return '';
@@ -921,12 +938,13 @@ async function openUserSecrets(user) {
     };
     const res = await fetch(`${API_URL}/users-admin?userId=${user._id}`, { method: 'GET', headers, credentials: token ? 'include' : 'same-origin' });
     if (!res.ok) throw new Error('Erreur de récupération utilisateur');
-    const fullUser = await res.json();
+    const payload = await res.json();
+    const fullUser = (payload && typeof payload === 'object' && payload.user) ? payload.user : payload;
     // Mettre à jour le nom si on ne l'avait pas
     if (!secretsUser.value?.username && fullUser?.username) {
       secretsUser.value = { _id: fullUser._id, username: fullUser.username };
     }
-    const sq = Array.isArray(fullUser.secretQuestions) ? fullUser.secretQuestions : [];
+    const sq = Array.isArray(fullUser?.secretQuestions) ? fullUser.secretQuestions : [];
     if (sq.length >= 3) {
       // Pré-remplir questions et réponses existantes
       secretsForm.value = sq.slice(0, 3).map(q => ({ question: q.question || '', answer: q.answer || '' }));

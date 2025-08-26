@@ -97,7 +97,7 @@
                   <div v-else-if="(it as any).name === 'Planify'" class="admin-planify-item-shop">
                     <img :src="adminPlanify" alt="Planify" class="admin-planify-img-shop" />
                   </div>
-                  <!-- Variantes de bordure: disque rempli couleur/dégradé -->
+                  <!-- Variantes de bordure: pastille couleur/dégradé (comme Collection) -->
                   <div v-else-if="isBorderVariant(it as any)" class="classic-border-preview" :style="getBorderFillStyle(it as any)"></div>
                   <!-- Items dynamiques (créés via AdminItemEditor) -->
                   <template v-else-if="isDynamic(it as any)">
@@ -136,6 +136,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useCoinsStore } from '@/stores/coins'
 
 // Types pour les items
 interface Item {
@@ -216,6 +217,8 @@ const props = defineProps<{
   adminMessage?: string
 }>()
 
+const coinsStore = useCoinsStore()
+
 const mapImg: Record<string, string> = {
   'Oreilles de chat': oreilleschat,
   'Oreillettes de chat': oreilleschat,
@@ -264,6 +267,12 @@ function resolveAssetSrc(path: string | undefined): string {
     if (typeof path === 'string' && path.startsWith('/uploads/')) {
       const api = (import.meta as any).env?.VITE_API_URL ? (import.meta as any).env.VITE_API_URL : '/api'
       const base = api.endsWith('/api') ? api.slice(0, -4) : api.replace('/api','')
+      if (path.startsWith('/uploads/avatars/')) {
+        return base + '/api/uploads/avatars/' + path.split('/').pop()
+      }
+      if (path.startsWith('/uploads/items/')) {
+        return base + '/api/items/uploads/' + path.split('/').pop()
+      }
       return base + path
     }
   } catch {}
@@ -314,6 +323,11 @@ function displayName(item: Item): string {
 function isBorderVariant(it: Item): boolean {
   if (!it) return false
   try {
+    // Utiliser la table du store pour savoir si l'ID correspond à une couleur/gradient
+    const idNum = Number((it as any).id)
+    const colorId = coinsStore.getBorderColorIdFromItem({ id: idNum, name: String((it as any).name || '') } as any)
+    if (colorId) return true
+    // Fallback par nom si un ancien item texte arrive
     if (String(it.name || '').toLowerCase().startsWith('bordure ')) return true
     return false
   } catch {
@@ -323,8 +337,15 @@ function isBorderVariant(it: Item): boolean {
 
 function getBorderFillStyle(it: Item): Record<string, string> {
   try {
-    // Style par défaut pour les bordures
-    return { background: '#000', width: '100%', height: '100%' }
+    const idNum = Number((it as any).id)
+    const colorId = coinsStore.getBorderColorIdFromItem({ id: idNum, name: String((it as any).name || '') } as any)
+    let bg = '#000'
+    if (colorId) {
+      const c = coinsStore.borderColors.find(c => c.id === colorId)
+      if (c && c.gradient) bg = c.gradient as string
+      else if (c && c.color) bg = c.color as string
+    }
+    return { background: bg, width: '100%', height: '100%' }
   } catch {
     return { background: '#000', width: '100%', height: '100%' }
   }
