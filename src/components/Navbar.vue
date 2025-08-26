@@ -1026,10 +1026,17 @@ async function loadUserAvatar() {
         userAvatar.value = accountIcon;
       }
     } else if (user.value.avatarFilename) {
-      // Fallback sur avatarFilename
-      const avatarUrl = `${baseUrl}/uploads/avatars/${user.value.avatarFilename}`;
-      userAvatar.value = avatarUrl;
-      console.log('🖼️ Avatar construit depuis avatarFilename:', avatarUrl);
+      // Utiliser la fonction loadAvatarFromFilename
+      console.log('🔄 Tentative de chargement via avatarFilename:', user.value.avatarFilename);
+      const avatarUrl = await loadAvatarFromFilename(user.value.avatarFilename);
+      if (avatarUrl) {
+        userAvatar.value = avatarUrl;
+      } else {
+        // Fallback sur construction directe de l'URL
+        const fallbackUrl = `${baseUrl}/uploads/avatars/${user.value.avatarFilename}`;
+        userAvatar.value = fallbackUrl;
+        console.log('🖼️ Avatar construit depuis avatarFilename (fallback):', fallbackUrl);
+      }
     } else {
       console.log('❌ Aucun avatar trouvé');
       userAvatar.value = accountIcon;
@@ -1776,23 +1783,14 @@ onMounted(async () => {
             console.log('🖼️ Avatar filename chargé depuis les données fraîches:', avatarUrl);
           } else {
             console.log('❌ Aucun avatar trouvé dans les données fraîches');
+            // Utiliser loadUserAvatar pour gérer le chargement depuis avatarFilename
+            await loadUserAvatar();
           }
         }
       } else {
-        // Si pas de token mais avatar local, le charger quand même
-        if (user.value.avatar) {
-          if (user.value.avatar.startsWith('data:')) {
-            console.log('🖼️ Avatar data URL déjà chargé (pas de token)');
-          } else if (user.value.avatar.startsWith('/uploads/')) {
-            const avatarUrl = `${baseUrl}${user.value.avatar}`;
-            userAvatar.value = avatarUrl;
-            console.log('🖼️ Avatar URL chargé au montage (local):', avatarUrl);
-          } else if (user.value.avatarFilename) {
-            const avatarUrl = `${baseUrl}/uploads/avatars/${user.value.avatarFilename}`;
-            userAvatar.value = avatarUrl;
-            console.log('🖼️ Avatar filename chargé au montage (local):', avatarUrl);
-          }
-        }
+        // Si pas de token, utiliser loadUserAvatar pour charger depuis les données locales
+        console.log('⚠️ Pas de token, chargement depuis les données locales');
+        await loadUserAvatar();
       }
     } catch (error) {
       console.error('❌ Erreur lors de la récupération des données utilisateur:', error);
@@ -1875,6 +1873,33 @@ watch(user, async (newUser, oldUser) => {
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
 });
+
+// ... existing code ...
+async function loadAvatarFromFilename(filename) {
+  if (!filename) return null;
+  
+  try {
+    console.log('📥 Chargement de l\'avatar depuis le filename:', filename);
+    const avatarUrl = `${API_URL.replace('/api', '')}/api/uploads/avatars/${filename}`;
+    
+    // Essayer de charger l'image pour vérifier qu'elle existe
+    const testImg = new Image();
+    return new Promise((resolve) => {
+      testImg.onload = () => {
+        console.log('✅ Avatar chargé avec succès depuis:', avatarUrl);
+        resolve(avatarUrl);
+      };
+      testImg.onerror = () => {
+        console.error('❌ Impossible de charger l\'avatar depuis:', avatarUrl);
+        resolve(null);
+      };
+      testImg.src = avatarUrl;
+    });
+  } catch (error) {
+    console.error('❌ Erreur lors du chargement de l\'avatar:', error);
+    return null;
+  }
+}
 </script>
 
 <style>
