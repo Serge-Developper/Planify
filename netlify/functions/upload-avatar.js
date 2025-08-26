@@ -64,7 +64,7 @@ exports.handler = async (event, context) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+    'Access-Control-Allow-Methods': 'POST, GET, OPTIONS'
   };
 
   // Gérer les requêtes OPTIONS (preflight)
@@ -85,6 +85,48 @@ exports.handler = async (event, context) => {
     await mongoose.connect(process.env.MONGODB_URI || '', {
       bufferCommands: false
     });
+
+    // GET /api/uploads/avatars/:filename -> renvoyer le binaire depuis la base (ou fallback public)
+    if (event.httpMethod === 'GET' && /\/uploads\/avatars\//.test(event.path || '')) {
+      try {
+        const p = event.path || '';
+        const m = p.match(/uploads\/avatars\/([^\/]+)$/);
+        const filename = m && m[1] ? m[1] : null;
+        if (!filename) {
+          return { statusCode: 404, headers, body: 'Not Found' };
+        }
+        // Rechercher un utilisateur dont l'avatar correspond
+        const userDoc = await User.findOne({ $or: [ { 'avatar.filename': filename }, { avatarFilename: filename } ] }, 'avatar').lean();
+        if (userDoc && userDoc.avatar && userDoc.avatar.data) {
+          const mimetype = userDoc.avatar.mimetype || 'image/jpeg';
+          return {
+            statusCode: 200,
+            headers: { ...headers, 'Content-Type': mimetype, 'Cache-Control': 'public, max-age=31536000, immutable' },
+            body: userDoc.avatar.data,
+            isBase64Encoded: true
+          };
+        }
+        // Fallback sur le dossier public si présent
+        try {
+          const filePath = path.join(__dirname, '../../public/uploads/avatars', filename);
+          if (fs.existsSync(filePath)) {
+            const buf = fs.readFileSync(filePath);
+            const ext = (path.extname(filename) || '').toLowerCase();
+            const mime = ext === '.png' ? 'image/png' : (ext === '.webp' ? 'image/webp' : (ext === '.gif' ? 'image/gif' : 'image/jpeg'));
+            return {
+              statusCode: 200,
+              headers: { ...headers, 'Content-Type': mime, 'Cache-Control': 'public, max-age=31536000, immutable' },
+              body: buf.toString('base64'),
+              isBase64Encoded: true
+            };
+          }
+        } catch {}
+        return { statusCode: 404, headers, body: 'Not Found' };
+      } catch (e) {
+        console.error('❌ Erreur GET avatar:', e);
+        return { statusCode: 500, headers, body: 'Server Error' };
+      }
+    }
 
     // Route POST /api/upload-avatar - Upload d'avatar
     if (event.httpMethod === 'POST') {
@@ -198,12 +240,20 @@ exports.handler = async (event, context) => {
         };
         
         // Mettre à jour l'utilisateur dans la base de données avec l'image en base64
-        await User.findByIdAndUpdate(user.userId, { 
+        const userId = user.id || user.userId || user._id;
+        if (!userId) {
+          return {
+            statusCode: 401,
+            headers: { ...headers, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ success: false, message: 'Utilisateur non authentifié' })
+          };
+        }
+        const updated = await User.findByIdAndUpdate(userId, { 
           avatar: imageData,
           avatarFilename: filename
-        });
+        }, { new: true });
         
-        console.log('✅ Avatar uploadé avec succès:', filename);
+        console.log('✅ Avatar uploadé avec succès pour utilisateur:', String(userId), '->', filename);
         
         return {
           statusCode: 200,

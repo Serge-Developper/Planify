@@ -23,7 +23,12 @@ const userSchema = new mongoose.Schema({
     price: Number,
     purchaseDate: { type: Date, default: Date.now }
   }],
-  equippedItemId: String,
+  // Normaliser en Number (Mongoose castera les anciennes valeurs string au besoin)
+  equippedItemId: { type: Number, default: null },
+  // Couleur de bordure sélectionnée (même champ que dans coins.js)
+  selectedBorderColor: { type: String, default: 'default' },
+  // Compteur de tâches complétées (utilisé pour le leaderboard)
+  completedTasks: { type: Number, default: 0 },
   lastSpinDate: Date,
   spinCount: { type: Number, default: 0 },
   weeklySpinCount: { type: Number, default: 0 },
@@ -104,6 +109,24 @@ exports.handler = async (event, context) => {
 
     const path = event.path || event.rawPath || '';
 
+    // GET /api/users/:id (profil minimal pour le leaderboard)
+    if (event.httpMethod === 'GET' && /\/users\/[a-fA-F0-9]{24}$/.test(path)) {
+      try {
+        verifyToken(event);
+        const userId = (path.match(/\/users\/([a-fA-F0-9]{24})$/) || [])[1];
+        if (!userId) {
+          return { statusCode: 400, headers, body: JSON.stringify({ success: false, message: 'ID invalide' }) };
+        }
+        const u = await User.findById(userId, 'username coins role year groupe avatar equippedItemId selectedBorderColor completedTasks').lean();
+        if (!u) {
+          return { statusCode: 404, headers, body: JSON.stringify({ success: false, message: 'Utilisateur non trouvé' }) };
+        }
+        return { statusCode: 200, headers, body: JSON.stringify(u) };
+      } catch (e) {
+        return { statusCode: 401, headers, body: JSON.stringify({ success: false, message: 'Token invalide ou manquant' }) };
+      }
+    }
+
     // POST /api/users/secret-questions
     if (event.httpMethod === 'POST' && /\/users\/secret-questions$/.test(path)) {
       try {
@@ -164,10 +187,11 @@ exports.handler = async (event, context) => {
         // Vérifier l'authentification
         const user = verifyToken(event);
         
-        // Récupérer tous les utilisateurs avec leurs coins pour le leaderboard
-        const users = await User.find({}, 'username coins role year groupe')
+        // Récupérer tous les utilisateurs avec leurs infos pour le leaderboard
+        const users = await User.find({}, 'username coins role year groupe avatar equippedItemId selectedBorderColor completedTasks')
           .sort({ coins: -1 })
-          .limit(50); // Limiter à 50 utilisateurs
+          .limit(50) // Limiter à 50 utilisateurs
+          .lean();
 
         return {
           statusCode: 200,
@@ -182,7 +206,11 @@ exports.handler = async (event, context) => {
               coins: u.coins || 0,
               role: u.role,
               year: u.year,
-              groupe: u.groupe
+              groupe: u.groupe,
+              avatar: u.avatar,
+              equippedItemId: typeof u.equippedItemId === 'number' ? u.equippedItemId : (u.equippedItemId ? Number(u.equippedItemId) : null),
+              selectedBorderColor: u.selectedBorderColor || 'default',
+              completedTasks: u.completedTasks || 0
             }))
           })
         };
@@ -253,6 +281,8 @@ exports.handler = async (event, context) => {
                 user.avatar, // Fallback pour l'ancien format
               purchasedItems: user.purchasedItems || [],
               equippedItemId: user.equippedItemId,
+              selectedBorderColor: user.selectedBorderColor || 'default',
+              completedTasks: user.completedTasks || 0,
               lastSpinDate: user.lastSpinDate,
               spinCount: user.spinCount || 0,
               weeklySpinCount: user.weeklySpinCount || 0,

@@ -50,6 +50,7 @@
                 </template>
                 <img class="avatar-img"
                   :src="userAvatar" 
+                  :key="'avatar-'+userAvatar"
                   alt="Compte" 
                   :style="equippedItem && equippedItem.name === '8-Bit' 
                     ? 'width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; image-rendering: -moz-crisp-edges; image-rendering: crisp-edges; filter: contrast(1.2) brightness(1.1) saturate(1.1);' 
@@ -926,19 +927,13 @@ function resolveDynSrc(src) {
 }
 
 function getDynNavbarAssetStyle(asset) {
-  const s = (asset && (isMobile.value ? asset.navbarStyleMobile : asset.navbarStyle))
-    || (asset && (isMobile.value ? asset.collectionStyleMobile : asset.collectionStyle))
-    || asset?.style || {}
-  const num = (v) => {
-    const n = Number(v)
-    return Number.isFinite(n) ? n : null
-  }
-  const style = { position: 'absolute', objectFit: s.objectFit || 'contain', zIndex: num(s.zIndex) ?? 1 }
-  const top = num(s.top); if (top !== null) style.top = top + 'px'
-  const left = num(s.left); if (left !== null) style.left = left + 'px'
-  const w = num(s.width); if (w !== null) style.width = w + 'px'
-  const h = num(s.height); if (h !== null) style.height = h + 'px'
-  const r = num(s.rotate); if (r !== null) style.transform = `rotate(${r}deg)`
+  const s = (asset && asset.navbarStyle) || asset?.style || {}
+  const style = { position: 'absolute', objectFit: s.objectFit || 'contain', zIndex: typeof s.zIndex === 'number' ? s.zIndex : 1 }
+  if (typeof s.top === 'number') style.top = s.top + 'px'
+  if (typeof s.left === 'number') style.left = s.left + 'px'
+  if (typeof s.width === 'number') style.width = s.width + 'px'
+  if (typeof s.height === 'number') style.height = s.height + 'px'
+  if (typeof s.rotate === 'number') style.transform = `rotate(${s.rotate}deg)`
   return style
 }
 function getDynNavbarOverlayStyle(asset) {
@@ -998,6 +993,48 @@ const isAdmin = computed(() => auth.isAdmin)
 
 const passwordValue = ref('');
 
+function normalizeAvatarToUrl(av) {
+  try {
+    if (!av) return accountIcon;
+    if (typeof av === 'object' && av !== null) {
+      if (typeof av.data === 'string' && typeof av.mimetype === 'string') {
+        return `data:${av.mimetype};base64,${av.data}`;
+      }
+      if (typeof av.url === 'string') {
+        av = av.url;
+      } else if (typeof av.filename === 'string') {
+        av = `/uploads/avatars/${av.filename}`;
+      }
+    }
+    if (typeof av !== 'string') return accountIcon;
+    // Corrige les URLs mal formées sans ':'
+    if (av.startsWith('https//')) {
+      av = 'https://' + av.slice(7);
+    }
+    // Data URL → direct
+    if (av.startsWith('data:')) return av;
+    // URL absolue → ne pas préfixer
+    if (/^https?:\/\//i.test(av)) return av;
+    // Déjà route API complète
+    if (av.startsWith('/api/uploads/avatars/')) {
+      return `${baseUrl}${av}`;
+    }
+    // Chemin brut d'upload d'avatars → router via la lambda
+    if (av.startsWith('/uploads/avatars/')) {
+      const filename = av.split('/').pop();
+      return `${baseUrl}/api/uploads/avatars/${filename}`;
+    }
+    // Nom de fichier seul
+    if (/^avatar-[\w.-]+\.(png|jpe?g|gif|webp)$/i.test(av)) {
+      return `${baseUrl}/api/uploads/avatars/${av}`;
+    }
+    if (av.startsWith('/uploads/')) return `${baseUrl}${av}`;
+    return `${baseUrl}${av}`;
+  } catch {
+    return accountIcon;
+  }
+}
+
 // Fonction pour charger l'avatar de l'utilisateur
 async function loadUserAvatar() {
   if (!user.value || !user.value.id) {
@@ -1006,29 +1043,7 @@ async function loadUserAvatar() {
   }
 
   try {
-    // Vérifier si l'avatar existe et son format
-    if (user.value.avatar) {
-      const av = user.value.avatar;
-      if (typeof av === 'string') {
-        if (av.startsWith('data:')) {
-          // C'est une data URL (nouveau format)
-          userAvatar.value = av;
-          console.log('🖼️ Avatar data URL chargé depuis loadUserAvatar');
-        } else {
-          // C'est un chemin relatif (ancien format)
-          const avatarUrl = `${baseUrl}${av}`;
-          userAvatar.value = avatarUrl;
-          console.log('🖼️ Avatar URL chargé depuis loadUserAvatar:', avatarUrl);
-        }
-      } else if (typeof av === 'object' && av !== null && typeof av.data === 'string' && typeof av.mimetype === 'string') {
-        // Objet avatar (ancien format DB) → reconstruire la data URL
-        userAvatar.value = `data:${av.mimetype};base64,${av.data}`;
-      } else {
-        userAvatar.value = accountIcon;
-      }
-    } else {
-      userAvatar.value = accountIcon;
-    }
+    userAvatar.value = normalizeAvatarToUrl(user.value.avatar);
   } catch (error) {
     console.error('Erreur lors du chargement de l\'avatar:', error);
     userAvatar.value = accountIcon;
@@ -1371,6 +1386,7 @@ function changeAvatar() {
     fileInput.value.click();
   }
   showUserDropdown.value = false;
+  // rien ici: pas de cache-buster sur data URL
 }
 
 // Fonction pour gérer l'upload d'avatar
@@ -1411,14 +1427,14 @@ async function handleAvatarUpload(event) {
 
     if (response.data.avatar) {
       // Mettre à jour l'avatar affiché
-      // response.data.avatar est maintenant une data URL complète (data:image/jpeg;base64,...)
-      const newAvatarUrl = response.data.avatar;
-      console.log('🖼️ Avatar reçu (data URL):', newAvatarUrl.substring(0, 50) + '...');
+      const stored = response.data.filename || response.data.avatar;
+      const newAvatarUrl = normalizeAvatarToUrl(stored);
+      console.log('🖼️ Avatar reçu (normalisé):', typeof newAvatarUrl === 'string' ? newAvatarUrl.substring(0, 80) + '...' : newAvatarUrl);
       userAvatar.value = newAvatarUrl;
       
       // Mettre à jour les données utilisateur dans le store et localStorage
       if (user.value) {
-        const updatedUser = { ...user.value, avatar: response.data.avatar };
+        const updatedUser = { ...user.value, avatar: stored };
         auth.login(updatedUser); // Met à jour le store et localStorage
         console.log('✅ Données utilisateur mises à jour avec l\'avatar');
       } else {
@@ -1449,25 +1465,7 @@ function handleLoginSuccess(payload) {
   // Charger l'avatar après connexion
   if (payload.user.avatar) {
     console.log('✅ Avatar trouvé lors de la connexion:', payload.user.avatar);
-    
-    // Vérifier si c'est une data URL, un chemin relatif ou un objet avatar
-    const av = payload.user.avatar;
-    if (typeof av === 'string') {
-      if (av.startsWith('data:')) {
-        // C'est une data URL (nouveau format)
-        userAvatar.value = av;
-        console.log('🖼️ Avatar data URL chargé');
-      } else {
-        // C'est un chemin relatif (ancien format)
-        const avatarUrl = `${baseUrl}${av}`;
-        console.log('🖼️ URL avatar construite:', avatarUrl);
-        userAvatar.value = avatarUrl;
-      }
-    } else if (typeof av === 'object' && av !== null && typeof av.data === 'string' && typeof av.mimetype === 'string') {
-      userAvatar.value = `data:${av.mimetype};base64,${av.data}`;
-    } else {
-      userAvatar.value = accountIcon;
-    }
+    userAvatar.value = normalizeAvatarToUrl(payload.user.avatar);
   } else {
     console.log('❌ Pas d\'avatar lors de la connexion, chargement depuis la DB...');
     loadUserAvatar();
@@ -1689,14 +1687,7 @@ onMounted(async () => {
 watch(user, async (newUser) => {
   if (newUser) {
     if (newUser.avatar) {
-      if (typeof newUser.avatar === 'string' && newUser.avatar.startsWith('data:')) {
-        // Data URL (nouveau format) → utiliser tel quel
-        userAvatar.value = newUser.avatar;
-      } else {
-        // Ancien format (chemin relatif) → préfixer par baseUrl
-        const avatarUrl = `${baseUrl}${newUser.avatar}`;
-        userAvatar.value = avatarUrl;
-      }
+      userAvatar.value = normalizeAvatarToUrl(newUser.avatar);
     } else if (newUser.id || newUser._id) {
       loadUserAvatar();
     } else {
@@ -3371,8 +3362,8 @@ body, html {
 
 .avatar-image-container-mobile {
   position: relative;
-  width: 51px;
-  height: 51px;
+  width: 57px;
+  height: 57px;
 }
 .avatar-image-container-mobile.jojo-sepia .avatar-img { animation: jojo-sepia-cycle 4.7s steps(1, end) infinite; }
 
