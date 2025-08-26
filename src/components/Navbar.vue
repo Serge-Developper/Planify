@@ -1018,18 +1018,22 @@ function getDynNavbarOverlayStyle(asset) {
 function getDynFallbackNavbarStyle(item) {
   const isMob = !!isMobile && !!isMobile.value
   let s = {}
+  let variantAssetsCount = 0
   try {
     const itemId = item.id || item.legacyId
     const variantIndex = coinsStore.getDynamicItemVariant(itemId)
     const v = Array.isArray(item.variants) ? item.variants[variantIndex] : null
     const va = v && Array.isArray(v.assets) && v.assets[0] ? v.assets[0] : null
+    variantAssetsCount = v && Array.isArray(v.assets) ? v.assets.length : 0
     if (va) {
       s = isMob
         ? (va.navbarStyleMobile || va.avatarStyleMobile || va.style || {})
         : (va.navbarStyle || va.avatarStyle || va.style || {})
     }
   } catch {}
-  const style = { position: 'absolute', objectFit: (s && s.objectFit) || 'contain', zIndex: typeof s.zIndex === 'number' ? s.zIndex : 10, pointerEvents: 'none' }
+  // Si la variante a des assets rendus, placer le fallback en dessous (zIndex très bas)
+  const defaultZ = variantAssetsCount > 0 ? -1 : 10
+  const style = { position: 'absolute', objectFit: (s && s.objectFit) || 'contain', zIndex: typeof s.zIndex === 'number' ? s.zIndex : defaultZ, pointerEvents: 'none' }
   if (typeof s.top === 'number') style.top = s.top + 'px'; else if (typeof s.top === 'string') style.top = s.top
   if (typeof s.left === 'number') style.left = s.left + 'px'; else if (typeof s.left === 'string') style.left = s.left
   if (typeof s.width === 'number') style.width = s.width + 'px'; else if (typeof s.width === 'string') style.width = s.width; else style.width = '100%'
