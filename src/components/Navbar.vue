@@ -1000,11 +1000,16 @@ async function loadUserAvatar() {
         // C'est une data URL (nouveau format)
         userAvatar.value = user.value.avatar;
         console.log('🖼️ Avatar data URL chargé depuis loadUserAvatar');
-      } else {
-        // C'est un chemin relatif (ancien format)
+      } else if (user.value.avatar.startsWith('/uploads/')) {
+        // C'est un chemin relatif vers les uploads (ancien format)
         const avatarUrl = `${baseUrl}${user.value.avatar}`;
         userAvatar.value = avatarUrl;
         console.log('🖼️ Avatar URL chargé depuis loadUserAvatar:', avatarUrl);
+      } else {
+        // C'est peut-être un nom de fichier simple, essayer de construire l'URL
+        const avatarUrl = `${baseUrl}/uploads/avatars/${user.value.avatar}`;
+        userAvatar.value = avatarUrl;
+        console.log('🖼️ Avatar URL construite depuis loadUserAvatar:', avatarUrl);
       }
     } else {
       userAvatar.value = accountIcon;
@@ -1435,9 +1440,14 @@ function handleLoginSuccess(payload) {
       // C'est une data URL (nouveau format)
       userAvatar.value = payload.user.avatar;
       console.log('🖼️ Avatar data URL chargé');
-    } else {
-      // C'est un chemin relatif (ancien format)
+    } else if (payload.user.avatar.startsWith('/uploads/')) {
+      // C'est un chemin relatif vers les uploads (ancien format)
       const avatarUrl = `${baseUrl}${payload.user.avatar}`;
+      console.log('🖼️ URL avatar construite:', avatarUrl);
+      userAvatar.value = avatarUrl;
+    } else {
+      // C'est peut-être un nom de fichier simple, essayer de construire l'URL
+      const avatarUrl = `${baseUrl}/uploads/avatars/${payload.user.avatar}`;
       console.log('🖼️ URL avatar construite:', avatarUrl);
       userAvatar.value = avatarUrl;
     }
@@ -1466,10 +1476,10 @@ function logout() {
 }
 async function handleProfile() {
   // Récupérer les données utilisateur complètes depuis la base de données
-  if (user.value && user.value.id) {
+  if (user.value && (user.value.id || user.value._id)) {
     try {
       console.log('🔄 Récupération des données utilisateur complètes...');
-      const response = await secureApiCall('GET', '/users/profile');
+      const response = await secureApiCall('/users/profile');
       
       if (response.success && response.user) {
         console.log('✅ Données utilisateur récupérées:', response.user);
@@ -1642,8 +1652,18 @@ onMounted(async () => {
 watch(user, async (newUser) => {
   if (newUser) {
     if (newUser.avatar) {
-      const avatarUrl = `${baseUrl}${newUser.avatar}`;
-      userAvatar.value = avatarUrl;
+      if (newUser.avatar.startsWith('data:')) {
+        // C'est une data URL (nouveau format)
+        userAvatar.value = newUser.avatar;
+      } else if (newUser.avatar.startsWith('/uploads/')) {
+        // C'est un chemin relatif vers les uploads (ancien format)
+        const avatarUrl = `${baseUrl}${newUser.avatar}`;
+        userAvatar.value = avatarUrl;
+      } else {
+        // C'est peut-être un nom de fichier simple, essayer de construire l'URL
+        const avatarUrl = `${baseUrl}/uploads/avatars/${newUser.avatar}`;
+        userAvatar.value = avatarUrl;
+      }
     } else if (newUser.id || newUser._id) {
       loadUserAvatar();
     } else {
