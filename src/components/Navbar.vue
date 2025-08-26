@@ -926,48 +926,42 @@ onUnmounted(() => document.removeEventListener('click', handleGlobalClick, true)
 // Variables pour les items équipés
 const equippedItem = computed(() => coinsStore.equippedItem)
 const equippedDynItem = computed(() => {
-  const it = coinsStore.equippedItem
-  if (it && it.isDynamic) return it
-  const id = coinsStore.equippedItemId || it?.id
-  console.log('🔎 Recherche item équipé - id:', id, 'type:', typeof id)
-  console.log('🗺️ Items disponibles dans la Map:', Array.from(dynamicInfoById.value.keys()))
-  
-  if (!id) return null
-  const dynItem = dynamicInfoById.value.get(Number(id))
-  if (!dynItem) {
-    console.log('❌ Item non trouvé dans dynamicInfoById avec id:', id)
+  // Utiliser user.equippedItemId comme dans ShopPopup
+  if (!user.value || user.value.equippedItemId === null || user.value.equippedItemId === undefined || user.value.equippedItemId === 0) {
     return null
   }
   
-  // Transformer l'item comme dans getUserEquippedItemData du ShopPopup
-  const transformedItem = {
-    id: dynItem.legacyId || dynItem.id,  // Utiliser legacyId comme id principal
-    name: dynItem.name,
-    img: dynItem.assets && dynItem.assets[0] ? resolveAssetSrc(dynItem.assets[0].src) : '',
-    isDynamic: true,
-    assets: dynItem.assets || [],
-    backgrounds: dynItem.backgrounds || {},
-    variants: dynItem.variants || [],
-    legacyId: dynItem.legacyId
+  const equippedId = Number(user.value.equippedItemId)
+  console.log('🔎 Recherche item équipé - equippedId:', equippedId, 'user:', user.value?.username)
+  console.log('🗺️ Items disponibles dans la Map:', Array.from(dynamicInfoById.value.keys()))
+  
+  // Chercher directement dans les items dynamiques
+  // (Dans la navbar on ne gère que les items dynamiques)
+  const dynItem = dynamicInfoById.value.get(equippedId)
+  if (!dynItem) {
+    console.log('❌ Item non trouvé dans dynamicInfoById avec id:', equippedId)
+    return null
   }
   
-  // Forcer la réactivité en accédant aux variantes du store et à la clé de mise à jour
-  const itemId = transformedItem.legacyId !== undefined ? transformedItem.legacyId : transformedItem.id
-  const currentVariant = coinsStore.getDynamicItemVariant(itemId)
-  // Accéder à variantUpdateKey pour forcer la réactivité
+  // Transformer l'item comme dans ShopPopup
+  const item = {
+      id: dynItem.id,
+      name: dynItem.name,
+      img: dynItem.assets && dynItem.assets[0] ? resolveAssetSrc(dynItem.assets[0].src) : '',
+      isDynamic: true,
+      assets: dynItem.assets || [],
+      backgrounds: dynItem.backgrounds || {},
+      variants: dynItem.variants || [],
+      legacyId: dynItem.id
+    }
+  
+  console.log('✅ Item équipé trouvé:', item.name)
+  
+  // Forcer la réactivité avec la clé de mise à jour
   const updateKey = variantUpdateKey.value
+  console.log('🔄 Update key:', updateKey)
   
-  console.log('🔄 equippedDynItem computed - itemId:', itemId, 'currentVariant:', currentVariant, 'updateKey:', updateKey)
-  console.log('📦 Item transformé:', {
-    name: transformedItem.name,
-    id: transformedItem.id,
-    legacyId: transformedItem.legacyId,
-    hasAssets: transformedItem.assets?.length > 0,
-    hasVariants: transformedItem.variants?.length > 0,
-    variantsCount: transformedItem.variants?.length
-  })
-  
-  return transformedItem
+  return item
 })
 
 function resolveAssetSrc(path) {
@@ -1171,6 +1165,7 @@ const user = computed(() => {
     year: currentUser?.year,
     groupe: currentUser?.groupe,
     avatar: currentUser?.avatar,
+    equippedItemId: currentUser?.equippedItemId,
     hasToken: !!currentUser?.token
   });
   return currentUser;
