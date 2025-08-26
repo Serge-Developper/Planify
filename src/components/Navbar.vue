@@ -995,45 +995,28 @@ const passwordValue = ref('');
 
 // Fonction pour charger l'avatar de l'utilisateur
 async function loadUserAvatar() {
-  if (!user.value || !user.value.id) {
-    userAvatar.value = accountIcon;
-    return;
-  }
-
   try {
-    // Vérifier si l'avatar existe et son format
-    if (user.value.avatar) {
-      const av = user.value.avatar;
-      if (typeof av === 'string') {
-        if (av.startsWith('data:')) {
-          // Data URL
-          userAvatar.value = av;
-          console.log('🖼️ Avatar data URL chargé depuis loadUserAvatar');
-        } else if (av.startsWith('/uploads/avatars/')) {
-          // Fichier servi par la fonction
-          const filename = av.split('/').pop();
-          const avatarUrl = `${baseUrl}/api/uploads/avatars/${filename}`;
-          userAvatar.value = avatarUrl;
-          console.log('🖼️ Avatar URL (fonction) chargé:', avatarUrl);
-        } else {
-          // Autre chemin relatif
-          const avatarUrl = `${baseUrl}${av}`;
-          userAvatar.value = avatarUrl;
-          console.log('🖼️ Avatar URL chargé depuis loadUserAvatar:', avatarUrl);
-        }
-      } else if (typeof av === 'object' && av !== null && typeof av.data === 'string') {
-        // Objet avatar (ancien format DB) → reconstruire la data URL
-        const mt = typeof av.mimetype === 'string' ? av.mimetype : 'image/jpeg';
-        userAvatar.value = `data:${mt};base64,${av.data}`;
+    const av = user.value?.avatar
+    if (!av) { userAvatar.value = accountIcon; return }
+
+    if (typeof av === 'string') {
+      if (av.startsWith('data:')) {
+        userAvatar.value = av
+      } else if (av.startsWith('/uploads/avatars/')) {
+        const filename = av.split('/').pop()
+        userAvatar.value = `${baseUrl}/api/uploads/avatars/${filename}`
       } else {
-        userAvatar.value = accountIcon;
+        userAvatar.value = `${baseUrl}${av}`
       }
+    } else if (typeof av === 'object' && typeof av.data === 'string') {
+      const mt = typeof av.mimetype === 'string' ? av.mimetype : 'image/jpeg'
+      userAvatar.value = `data:${mt};base64,${av.data}`
     } else {
-      userAvatar.value = accountIcon;
+      userAvatar.value = accountIcon
     }
   } catch (error) {
     console.error('Erreur lors du chargement de l\'avatar:', error);
-    userAvatar.value = accountIcon;
+    userAvatar.value = accountIcon
   }
 }
 
