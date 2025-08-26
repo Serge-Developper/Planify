@@ -62,7 +62,7 @@
                 <template v-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
                   <img
                     v-for="(a, ai) in equippedDynItem.assets"
-                    v-if="(a && a.meta && (a.meta.navbarPlacement === 'inside' || a.meta.avatarPlacement === 'inside')) || (!a.meta && a.navbarPlacement === 'inside')"
+                    v-if="(a && a.meta && (a.meta.navbarPlacement === 'inside' || a.meta.avatarPlacement === 'inside')) || (!a.meta && (!a.navbarPlacement || a.navbarPlacement === 'inside'))"
                     :key="'dyn-nb-inside-'+ai"
                     :src="resolveDynSrc(a.src)"
                     :style="getDynNavbarAssetStyle(a)"
@@ -403,7 +403,7 @@
                   <template v-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
                     <img
                       v-for="(a, ai) in equippedDynItem.assets"
-                      v-if="(a && a.meta && (a.meta.navbarPlacement === 'inside' || a.meta.avatarPlacement === 'inside')) || (!a.meta && a.navbarPlacement === 'inside')"
+                      v-if="(a && a.meta && (a.meta.navbarPlacement === 'inside' || a.meta.avatarPlacement === 'inside')) || (!a.meta && (!a.navbarPlacement || a.navbarPlacement === 'inside'))"
                       :key="'dyn-m-inside-'+ai"
                       :src="resolveDynSrc(a.src)"
                       :style="getDynNavbarAssetStyle(a)"
@@ -941,7 +941,12 @@ function resolveDynSrc(src) {
 }
 
 function getDynNavbarAssetStyle(asset) {
-  const s = (asset && asset.navbarStyle) || asset?.style || {}
+  const isMob = !!isMobile && !!isMobile.value
+  const s = asset
+    ? (isMob
+        ? (asset.navbarStyleMobile || asset.avatarStyleMobile || asset.style || {})
+        : (asset.navbarStyle || asset.avatarStyle || asset.style || {}))
+    : {}
   const style = { position: 'absolute', objectFit: s.objectFit || 'contain', zIndex: typeof s.zIndex === 'number' ? s.zIndex : 1 }
   if (typeof s.top === 'number') style.top = s.top + 'px'
   if (typeof s.left === 'number') style.left = s.left + 'px'
