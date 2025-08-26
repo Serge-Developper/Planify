@@ -987,7 +987,12 @@ function handleNotifClick(type) {
 }
 
 function canDelete(event) {
-  return user.value && (user.value.role === 'delegue' || user.value.role === 'prof') && event.createdBy === user.value._id;
+  if (!user.value) return false;
+  const role = user.value.role;
+  if (!(role === 'delegue' || role === 'prof')) return false;
+  const uid = user.value._id || user.value.id || user.value.userId;
+  const created = event && (event.createdBy || event.userId);
+  return !!(uid && created) && String(created) === String(uid);
 }
 
 const showDeletePopup = ref(false);
