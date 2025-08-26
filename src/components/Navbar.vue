@@ -62,7 +62,14 @@
                 <template v-if="equippedDynItem">
                   <img
                     v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
-                    v-if="a && a.src && ((a.meta && (a.meta.navbarPlacement === 'inside' || a.meta.avatarPlacement === 'inside' || a.meta.navbarPlacement === undefined)) || (!a.meta && (!a.navbarPlacement || a.navbarPlacement === 'inside')))"
+                    v-if="a && a.src && (
+                      // Par défaut: inside quand aucun placement explicite
+                      (!a.meta || (!a.meta.navbarPlacement && !a.meta.avatarPlacement)) ||
+                      // Placements explicitement inside
+                      (a.meta && (a.meta.navbarPlacement === 'inside' || a.meta.avatarPlacement === 'inside')) ||
+                      // Ancien schéma éventuel: pas de meta mais pas 'above'/'below'
+                      (!a.meta && (!a.navbarPlacement || a.navbarPlacement === 'inside'))
+                    )"
                     :key="'dyn-variant-nb-inside-'+ai+'-'+variantUpdateKey"
                     :src="resolveAssetSrc(a.src)"
                     :style="getDynNavbarAssetStyle(a)"
@@ -1005,6 +1012,12 @@ function getDynNavbarAssetStyle(asset) {
   if (typeof s.left === 'string') style.left = s.left
   if (typeof s.width === 'string') style.width = s.width
   if (typeof s.height === 'string') style.height = s.height
+  // z-index par défaut renforcé si meta demande au-dessus
+  try {
+    if (asset.meta && (asset.meta.navbarPlacement === 'above' || asset.meta.avatarPlacement === 'above')) {
+      if (typeof style.zIndex !== 'number' || style.zIndex < 15) style.zIndex = 15
+    }
+  } catch {}
   return style
 }
 function getDynNavbarOverlayStyle(asset) {
