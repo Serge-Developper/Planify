@@ -1456,7 +1456,7 @@ function handleLoginSuccess(payload) {
     console.log('✅ Avatar trouvé lors de la connexion:', payload.user.avatar);
     
     // Normaliser en URL affichable
-    const av = payload.user.avatar;
+    const av = payload.user?.avatar || payload?.user?.user?.avatar;
     if (typeof av === 'string' && av.startsWith('data:')) {
       userAvatar.value = av;
     } else if (typeof av === 'string' && av.startsWith('/uploads/avatars/')) {
