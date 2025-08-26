@@ -25,7 +25,6 @@ const connectDB = async () => {
 // User Schema
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
-  email: { type: String, required: false, unique: false },
   password: { type: String, required: true },
   coins: { type: Number, default: 0 },
   avatar: { type: String, default: null },
@@ -314,7 +313,7 @@ exports.handler = async (event, context) => {
       try {
         const url = new URL(event.rawUrl || `http://localhost${event.path}${event.queryStringParameters ? '?' + new URLSearchParams(event.queryStringParameters).toString() : ''}`);
         const userIdFromQuery = url.searchParams.get('userId');
-        const { userId: userIdFromBody, username, email, coins, role, password, newPassword, secretQuestions } = JSON.parse(event.body || '{}');
+        const { userId: userIdFromBody, username, coins, role, password, newPassword, secretQuestions } = JSON.parse(event.body || '{}');
         const userId = userIdFromQuery || userIdFromBody;
 
         if (!userId) return { statusCode: 400, headers, body: JSON.stringify({ error: 'UserId requis' }) };
@@ -324,7 +323,6 @@ exports.handler = async (event, context) => {
 
         // Mettre à jour uniquement les champs explicitement autorisés
         if (username !== undefined) targetUser.username = username;
-        if (email !== undefined) targetUser.email = email;
         if (typeof coins === 'number') targetUser.coins = Math.max(0, coins);
         if (role && ['admin','prof','delegue','eleve','etudiant','user'].includes(role)) targetUser.role = role;
         if (Array.isArray(secretQuestions)) {
