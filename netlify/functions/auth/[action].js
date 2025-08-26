@@ -25,7 +25,7 @@ const connectDB = async () => {
 // User Schema
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
-  email: { type: String, required: true, unique: true },
+  email: { type: String, required: false, unique: false },
   password: { type: String, required: true },
   coins: { type: Number, default: 0 },
   avatar: { type: String, default: null },
@@ -134,12 +134,12 @@ exports.handler = async (event, context) => {
 
     // REGISTER
     if (action === 'register' && event.httpMethod === 'POST') {
-      const { username, email, password } = JSON.parse(event.body || '{}');
+      const { username, password, role, year, groupe } = JSON.parse(event.body || '{}');
 
-      if (!username || !email || !password) {
+      if (!username || !password) {
         return { statusCode: 400, headers, body: JSON.stringify({ 
           success: false, 
-          message: 'Nom d\'utilisateur, email et mot de passe requis' 
+          message: 'Nom d\'utilisateur et mot de passe requis' 
         }) };
       }
 
@@ -150,9 +150,7 @@ exports.handler = async (event, context) => {
         }) };
       }
 
-      const existingUser = await User.findOne({ 
-        $or: [{ username }, { email }] 
-      });
+      const existingUser = await User.findOne({ username });
 
       if (existingUser) {
         return { statusCode: 409, headers, body: JSON.stringify({ 
@@ -166,11 +164,13 @@ exports.handler = async (event, context) => {
 
       const newUser = new User({
         username,
-        email,
         password: hashedPassword,
         coins: 100,
         purchasedItems: [0],
-        equippedItemId: 0
+        equippedItemId: 0,
+        role: role || 'eleve',
+        year: year || null,
+        groupe: groupe || null
       });
 
       const savedUser = await newUser.save();
