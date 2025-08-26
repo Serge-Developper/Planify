@@ -62,6 +62,7 @@ const loadEvents = async () => {
         checked,
         archived,
         hidden,
+        createdBy: e.createdBy // Ajouter le createdBy pour la suppression
       }
     })
 
