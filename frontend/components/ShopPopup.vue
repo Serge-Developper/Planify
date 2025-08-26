@@ -1097,9 +1097,9 @@
 
 <script setup>
  import { ref, defineProps, defineEmits, computed, watch, onMounted, onUnmounted } from 'vue'
-import { useCoinsStore } from '@/stores/coins'
-import { useAuthStore } from '@/stores/auth'
-import { secureApiCall, API_URL } from '@/api'
+import { useCoinsStore } from '../../src/stores/coins'
+import { useAuthStore } from '../../src/stores/auth'
+import { secureApiCall, API_URL } from '../../src/api'
 // Icône remplacée par planicoins.png
 import catEars from '@/assets/accounttt.svg' // Utilisé comme placeholder
 import accountIcon from '@/assets/accounttt.svg' // Icône par défaut pour les avatars
@@ -1185,6 +1185,15 @@ const emit = defineEmits(['close', 'equip-item'])
 
 const coinsStore = useCoinsStore()
 const authStore = useAuthStore()
+
+// Vérification que le store est correctement initialisé
+if (!coinsStore) {
+  console.error('❌ coinsStore n\'est pas initialisé')
+}
+if (typeof coinsStore.setDynamicItemVariant !== 'function') {
+  console.error('❌ coinsStore.setDynamicItemVariant n\'est pas disponible')
+}
+
 const userCoins = computed(() => coinsStore.balance)
 const hoverCloseShop = ref(false)
 watch(() => props.show, (v) => { if (v === true) hoverCloseShop.value = false })
@@ -2132,16 +2141,25 @@ function applyDynamicVariant(idx) {
   
   // Sauvegarder la variante sélectionnée dans le store
   try {
-    coinsStore.setDynamicItemVariant(item.id, idx)
-    console.log('✅ Variante sauvegardée dans le store')
-    // Forcer la mise à jour en incrémentant la clé
-    variantUpdateKey.value++
-    console.log('🔄 Clé de mise à jour incrémentée:', variantUpdateKey.value)
-    // Déclencher l'événement pour notifier la navbar
-    window.dispatchEvent(new CustomEvent('dynamic-variant-changed', { 
-      detail: { itemId: item.id, variantIndex: idx } 
-    }))
-    console.log('📡 Événement dynamic-variant-changed déclenché')
+    if (!coinsStore || typeof coinsStore.setDynamicItemVariant !== 'function') {
+      console.error('❌ coinsStore.setDynamicItemVariant n\'est pas disponible')
+      return
+    }
+    
+    const result = await coinsStore.setDynamicItemVariant(item.id, idx)
+    if (result && result.success) {
+      console.log('✅ Variante sauvegardée dans le store')
+      // Forcer la mise à jour en incrémentant la clé
+      variantUpdateKey.value++
+      console.log('🔄 Clé de mise à jour incrémentée:', variantUpdateKey.value)
+      // Déclencher l'événement pour notifier la navbar
+      window.dispatchEvent(new CustomEvent('dynamic-variant-changed', { 
+        detail: { itemId: item.id, variantIndex: idx } 
+      }))
+      console.log('📡 Événement dynamic-variant-changed déclenché')
+    } else {
+      console.error('❌ Échec de la sauvegarde de la variante:', result)
+    }
   } catch (e) {
     console.warn('❌ Impossible de sauvegarder la variante:', e)
   }

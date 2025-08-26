@@ -1185,6 +1185,17 @@ const emit = defineEmits(['close', 'equip-item'])
 
 const coinsStore = useCoinsStore()
 const authStore = useAuthStore()
+
+// Initialiser le store au montage du composant
+onMounted(async () => {
+  try {
+    await coinsStore.initialize()
+    console.log('✅ Store coins initialisé dans ShopPopup')
+  } catch (error) {
+    console.error('❌ Erreur lors de l\'initialisation du store:', error)
+  }
+})
+
 const userCoins = computed(() => coinsStore.balance)
 const hoverCloseShop = ref(false)
 watch(() => props.show, (v) => { if (v === true) hoverCloseShop.value = false })
