@@ -2252,16 +2252,22 @@ const getUserEquippedItemData = (user) => {
 
  const getUserAvatar = (user) => {
   const av = user && user.avatar
+  // 1) Data URL directe
+  if (typeof av === 'string' && av.startsWith('data:')) {
+    return av
+  }
+  // 2) Chemin relatif vers /uploads/avatars
+  if (typeof av === 'string' && av.startsWith('/uploads/avatars/')) {
+    return `${baseUrl}/api/uploads/avatars/${av.split('/').pop()}`
+  }
+  // 3) Ancien format: objet avec { data, mimetype }
+  if (av && typeof av === 'object' && typeof av.data === 'string') {
+    const mt = typeof av.mimetype === 'string' ? av.mimetype : 'image/jpeg'
+    return `data:${mt};base64,${av.data}`
+  }
+  // 4) Autres chemins relatifs (fallback)
   if (typeof av === 'string' && av.startsWith('/uploads/')) {
-    // Utiliser les nouvelles APIs pour servir les images depuis la base de données
-    if (av.startsWith('/uploads/avatars/')) {
-      const avatarUrl = `${baseUrl}/api/uploads/avatars/${av.split('/').pop()}`
-      console.log('🖼️ URL avatar:', avatarUrl)
-      return avatarUrl
-    }
-    const avatarUrl = `${baseUrl}${av}`
-    console.log('🖼️ URL avatar:', avatarUrl)
-    return avatarUrl
+    return `${baseUrl}${av}`
   }
   return accountIcon
 }
