@@ -1,5 +1,6 @@
-// Configuration sécurisée de l'API pour Vercel
-export const API_URL = import.meta.env.VITE_API_URL || 'https://planify-snowy.vercel.app/api';
+// Configuration sécurisée de l'API
+// Par défaut, utilise l'API interne Netlify/Vite sous "/api" (redirigée vers les fonctions)
+export const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 // Headers de sécurité par défaut
 export const getAuthHeaders = () => {
