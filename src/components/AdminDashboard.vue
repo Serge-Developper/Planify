@@ -643,11 +643,16 @@ async function fetchUsers() {
     // Récupérer le token d'authentification
     let token = auth.token || auth.user?.token
     
+    console.log('🔐 Admin fetchUsers - auth.token:', auth.token)
+    console.log('🔐 Admin fetchUsers - auth.user:', auth.user)
+    console.log('🔐 Admin fetchUsers - token final:', token)
+    
     if (!token) {
       const userFromStorage = localStorage.getItem('user')
       if (userFromStorage) {
         const userData = JSON.parse(userFromStorage)
         token = userData.token
+        console.log('🔐 Token récupéré du localStorage:', token)
       }
     }
     
@@ -661,6 +666,9 @@ async function fetchUsers() {
       'X-Requested-With': 'XMLHttpRequest',
       'Authorization': `Bearer ${token}`
     }
+    
+    console.log('🔐 Headers envoyés:', headers)
+    console.log('🔐 URL:', `${API_URL}/users-admin`)
     
          const response = await fetch(`${API_URL}/users-admin`, {
       method: 'GET',
@@ -889,8 +897,10 @@ async function deleteUser(userId) {
 }
 
 // Charger les utilisateurs quand on ouvre la gestion
-function openUserManagement() {
+async function openUserManagement() {
   showUserManagement.value = true;
+  // Attendre un tick pour s'assurer que le store est prêt
+  await nextTick();
   fetchUsers();
 }
 
