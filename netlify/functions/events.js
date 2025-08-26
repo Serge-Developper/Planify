@@ -277,7 +277,7 @@ const handleDeleteEvent = async (event) => {
       };
     }
 
-    // Autorisation: seul le créateur ou un admin/prof peut supprimer globalement
+    // Autorisation: seul le créateur ou un admin peut supprimer
     const userId = decoded.id || decoded._id || decoded.userId;
     const isOwner = eventDoc.createdBy && (String(eventDoc.createdBy) === String(userId));
     // Récupérer le rôle de l'utilisateur si besoin
@@ -289,8 +289,10 @@ const handleDeleteEvent = async (event) => {
         role = u?.role;
       } catch {}
     }
-    const isPrivileged = role === 'admin' || role === 'prof';
-    if (!isOwner && !isPrivileged) {
+    // Seuls les admins peuvent supprimer n'importe quel devoir
+    // Les profs et délégués ne peuvent supprimer que leurs propres devoirs
+    const isAdmin = role === 'admin';
+    if (!isOwner && !isAdmin) {
       return {
         statusCode: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
