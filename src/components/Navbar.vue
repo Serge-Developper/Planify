@@ -1000,12 +1000,18 @@ async function loadUserAvatar() {
 
   try {
     if (user.value.avatar) {
-      // Si c'est une data URL, l'utiliser directement
-      if (user.value.avatar.startsWith('data:')) {
-        userAvatar.value = user.value.avatar;
-      } else if (user.value.avatar.startsWith('/')) {
-        // Si c'est un chemin, construire l'URL complète
-        userAvatar.value = `${baseUrl}${user.value.avatar}`;
+      const av = user.value.avatar;
+      if (typeof av === 'string') {
+        // Si c'est une data URL, l'utiliser directement
+        if (av.startsWith('data:')) {
+          userAvatar.value = av;
+        } else if (av.startsWith('/')) {
+          // Si c'est un chemin, construire l'URL complète
+          userAvatar.value = `${baseUrl}${av}`;
+        } else {
+          // Nom de fichier simple probable
+          userAvatar.value = `${baseUrl}/uploads/avatars/${av}`;
+        }
       } else {
         userAvatar.value = accountIcon;
       }
@@ -1433,22 +1439,30 @@ function handleLoginSuccess(payload) {
   // Charger l'avatar après connexion
   if (payload.user.avatar) {
     console.log('✅ Avatar trouvé lors de la connexion:', payload.user.avatar);
-    
-    // Vérifier si c'est une data URL ou un chemin relatif
-    if (payload.user.avatar.startsWith('data:')) {
-      // C'est une data URL (nouveau format)
-      userAvatar.value = payload.user.avatar;
-      console.log('🖼️ Avatar data URL chargé');
-    } else if (payload.user.avatar.startsWith('/uploads/')) {
-      // C'est un chemin relatif vers les uploads (ancien format)
-      const avatarUrl = `${baseUrl}${payload.user.avatar}`;
-      console.log('🖼️ URL avatar construite:', avatarUrl);
-      userAvatar.value = avatarUrl;
+    const av = payload.user.avatar;
+    if (typeof av === 'string') {
+      // Vérifier si c'est une data URL ou un chemin relatif
+      if (av.startsWith('data:')) {
+        // C'est une data URL (nouveau format)
+        userAvatar.value = av;
+        console.log('🖼️ Avatar data URL chargé');
+      } else if (av.startsWith('/uploads/')) {
+        // C'est un chemin relatif vers les uploads (ancien format)
+        const avatarUrl = `${baseUrl}${av}`;
+        console.log('🖼️ URL avatar construite:', avatarUrl);
+        userAvatar.value = avatarUrl;
+      } else if (av.startsWith('/')) {
+        const avatarUrl = `${baseUrl}${av}`;
+        console.log('🖼️ URL avatar construite:', avatarUrl);
+        userAvatar.value = avatarUrl;
+      } else {
+        // C'est peut-être un nom de fichier simple, essayer de construire l'URL
+        const avatarUrl = `${baseUrl}/uploads/avatars/${av}`;
+        console.log('🖼️ URL avatar construite:', avatarUrl);
+        userAvatar.value = avatarUrl;
+      }
     } else {
-      // C'est peut-être un nom de fichier simple, essayer de construire l'URL
-      const avatarUrl = `${baseUrl}/uploads/avatars/${payload.user.avatar}`;
-      console.log('🖼️ URL avatar construite:', avatarUrl);
-      userAvatar.value = avatarUrl;
+      userAvatar.value = accountIcon;
     }
   } else {
     console.log('❌ Pas d\'avatar lors de la connexion, chargement depuis la DB...');
@@ -1657,15 +1671,20 @@ onMounted(async () => {
   
   // Charger l'avatar depuis le store auth au montage
   if (user.value && user.value.avatar) {
-    // Si c'est une data URL, l'utiliser directement
-    if (user.value.avatar.startsWith('data:')) {
-      userAvatar.value = user.value.avatar;
-      console.log('🖼️ Avatar data URL chargé au montage');
-    } else if (user.value.avatar.startsWith('/')) {
-      // Si c'est un chemin, construire l'URL complète
-      const avatarUrl = `${baseUrl}${user.value.avatar}`;
-      userAvatar.value = avatarUrl;
-      console.log('🖼️ Avatar URL chargé au montage:', avatarUrl);
+    const av = user.value.avatar;
+    if (typeof av === 'string') {
+      // Si c'est une data URL, l'utiliser directement
+      if (av.startsWith('data:')) {
+        userAvatar.value = av;
+        console.log('🖼️ Avatar data URL chargé au montage');
+      } else if (av.startsWith('/')) {
+        // Si c'est un chemin, construire l'URL complète
+        const avatarUrl = `${baseUrl}${av}`;
+        userAvatar.value = avatarUrl;
+        console.log('🖼️ Avatar URL chargé au montage:', avatarUrl);
+      } else {
+        userAvatar.value = `${baseUrl}/uploads/avatars/${av}`;
+      }
     }
   }
     
@@ -1689,12 +1708,19 @@ onMounted(async () => {
 // Watcher pour surveiller les changements de l'utilisateur
 watch(user, async (newUser) => {
   if (newUser && newUser.avatar) {
-    // Si c'est une data URL, l'utiliser directement
-    if (newUser.avatar.startsWith('data:')) {
-      userAvatar.value = newUser.avatar;
-    } else if (newUser.avatar.startsWith('/')) {
-      // Si c'est un chemin, construire l'URL complète
-      userAvatar.value = `${baseUrl}${newUser.avatar}`;
+    const av = newUser.avatar;
+    if (typeof av === 'string') {
+      // Si c'est une data URL, l'utiliser directement
+      if (av.startsWith('data:')) {
+        userAvatar.value = av;
+      } else if (av.startsWith('/')) {
+        // Si c'est un chemin, construire l'URL complète
+        userAvatar.value = `${baseUrl}${av}`;
+      } else {
+        userAvatar.value = `${baseUrl}/uploads/avatars/${av}`;
+      }
+    } else {
+      userAvatar.value = accountIcon;
     }
     
     await coinsStore.initialize();
