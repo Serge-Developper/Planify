@@ -1404,21 +1404,29 @@ async function handleAvatarUpload(event) {
     console.log('📤 Réponse upload:', response.data);
 
     if (response.data.avatar) {
-      // Mettre à jour l'avatar affiché
-      // response.data.avatar est maintenant une data URL complète (data:image/jpeg;base64,...)
-      const newAvatarUrl = response.data.avatar;
-      console.log('🖼️ Avatar reçu (data URL):', newAvatarUrl.substring(0, 50) + '...');
-      userAvatar.value = newAvatarUrl;
-      
-      // Mettre à jour les données utilisateur dans le store et localStorage
-      if (user.value) {
-        const updatedUser = { ...user.value, avatar: response.data.avatar };
-        auth.login(updatedUser); // Met à jour le store et localStorage
-        console.log('✅ Données utilisateur mises à jour avec l\'avatar');
-      } else {
-        console.log('⚠️ Pas d\'utilisateur dans le store, mais avatar uploadé avec succès');
+      // Normaliser la source avatar retournée par l'API (data URL, chemin, ou filename)
+      const raw = response.data.avatar
+      const filename = response.data.filename
+      let newAvatarUrl = ''
+      if (typeof raw === 'string' && raw.startsWith('data:')) {
+        newAvatarUrl = raw
+      } else if (filename && typeof filename === 'string') {
+        newAvatarUrl = `${baseUrl}/api/uploads/avatars/${filename}`
+      } else if (typeof raw === 'string' && raw.startsWith('/uploads/avatars/')) {
+        newAvatarUrl = `${baseUrl}/api/uploads/avatars/${raw.split('/').pop()}`
+      } else if (typeof raw === 'string') {
+        newAvatarUrl = raw
       }
-      
+      if (newAvatarUrl) {
+        console.log('🖼️ Avatar normalisé:', newAvatarUrl.substring(0, 80))
+        userAvatar.value = newAvatarUrl
+        // Mettre à jour les données utilisateur dans le store et localStorage
+        if (user.value) {
+          const updatedUser = { ...user.value, avatar: newAvatarUrl }
+          auth.login(updatedUser)
+          console.log('✅ Données utilisateur mises à jour avec l\'avatar')
+        }
+      }
       alert('Avatar mis à jour avec succès !');
     }
   } catch (error) {
@@ -1444,21 +1452,19 @@ function handleLoginSuccess(payload) {
   if (payload.user.avatar) {
     console.log('✅ Avatar trouvé lors de la connexion:', payload.user.avatar);
     
-    // Vérifier si c'est une data URL, un chemin relatif ou un objet avatar
+    // Normaliser en URL affichable
     const av = payload.user.avatar;
-    if (typeof av === 'string') {
-      if (av.startsWith('data:')) {
-        // C'est une data URL (nouveau format)
-        userAvatar.value = av;
-        console.log('🖼️ Avatar data URL chargé');
-      } else {
-        // C'est un chemin relatif (ancien format)
-        const avatarUrl = `${baseUrl}${av}`;
-        console.log('🖼️ URL avatar construite:', avatarUrl);
-        userAvatar.value = avatarUrl;
-      }
-    } else if (typeof av === 'object' && av !== null && typeof av.data === 'string' && typeof av.mimetype === 'string') {
-      userAvatar.value = `data:${av.mimetype};base64,${av.data}`;
+    if (typeof av === 'string' && av.startsWith('data:')) {
+      userAvatar.value = av;
+    } else if (typeof av === 'string' && av.startsWith('/uploads/avatars/')) {
+      const filename = av.split('/').pop();
+      userAvatar.value = `${baseUrl}/api/uploads/avatars/${filename}`;
+    } else if (typeof av === 'object' && av !== null && typeof av.data === 'string') {
+      const mt = typeof av.mimetype === 'string' ? av.mimetype : 'image/jpeg';
+      userAvatar.value = `data:${mt};base64,${av.data}`;
+    } else if (typeof av === 'string') {
+      const avatarUrl = `${baseUrl}${av}`;
+      userAvatar.value = avatarUrl;
     } else {
       userAvatar.value = accountIcon;
     }
@@ -1683,13 +1689,20 @@ onMounted(async () => {
 watch(user, async (newUser) => {
   if (newUser) {
     if (newUser.avatar) {
-      if (typeof newUser.avatar === 'string' && newUser.avatar.startsWith('data:')) {
-        // Data URL (nouveau format) → utiliser tel quel
-        userAvatar.value = newUser.avatar;
+      const av = newUser.avatar
+      if (typeof av === 'string' && av.startsWith('data:')) {
+        userAvatar.value = av
+      } else if (typeof av === 'string' && av.startsWith('/uploads/avatars/')) {
+        const filename = av.split('/').pop()
+        userAvatar.value = `${baseUrl}/api/uploads/avatars/${filename}`
+      } else if (typeof av === 'object' && av !== null && typeof av.data === 'string') {
+        const mt = typeof av.mimetype === 'string' ? av.mimetype : 'image/jpeg'
+        userAvatar.value = `data:${mt};base64,${av.data}`
+      } else if (typeof av === 'string') {
+        const avatarUrl = `${baseUrl}${av}`
+        userAvatar.value = avatarUrl
       } else {
-        // Ancien format (chemin relatif) → préfixer par baseUrl
-        const avatarUrl = `${baseUrl}${newUser.avatar}`;
-        userAvatar.value = avatarUrl;
+        userAvatar.value = accountIcon
       }
     } else if (newUser.id || newUser._id) {
       loadUserAvatar();
