@@ -147,6 +147,15 @@
                 style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 15;"
               />
             </template>
+            <!-- Fallback général pour les items dynamiques qui ne passent pas les conditions spécifiques -->
+            <template v-if="equippedDynItem && equippedDynItem.img && equippedDynItem.assets && Array.isArray(equippedDynItem.assets) && equippedDynItem.assets.length > 0">
+              <img
+                :src="resolveDynSrc(equippedDynItem.img)"
+                :alt="equippedDynItem.name"
+                class="equipped-dynamic-item-overlay"
+                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 15;"
+              />
+            </template>
             <!-- Item équipé générique (rendu seulement si une image est définie et pas d'item dynamique) -->
             <img 
               v-if="equippedItem && equippedItem.displayType === 'generic' && equippedItem.img && !equippedDynItem && equippedItem.name !== 'Galaxie' && equippedItem.name !== 'Coeur' && equippedItem.name !== 'Étoiles'" 
@@ -504,6 +513,15 @@
             </template>
             <!-- Fallback pour les items dynamiques sans placement spécifique (mobile) -->
             <template v-if="equippedDynItem && equippedDynItem.img && (!equippedDynItem.assets || !Array.isArray(equippedDynItem.assets) || equippedDynItem.assets.length === 0)">
+              <img
+                :src="resolveDynSrc(equippedDynItem.img)"
+                :alt="equippedDynItem.name"
+                class="equipped-dynamic-item-overlay-mobile"
+                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 15;"
+              />
+            </template>
+            <!-- Fallback général pour les items dynamiques qui ne passent pas les conditions spécifiques (mobile) -->
+            <template v-if="equippedDynItem && equippedDynItem.img && equippedDynItem.assets && Array.isArray(equippedDynItem.assets) && equippedDynItem.assets.length > 0">
               <img
                 :src="resolveDynSrc(equippedDynItem.img)"
                 :alt="equippedDynItem.name"
