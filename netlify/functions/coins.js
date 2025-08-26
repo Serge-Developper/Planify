@@ -422,9 +422,9 @@ const handleWeeklyItems = async (event) => {
     
     // Tous les items disponibles pour la boutique hebdomadaire
     const allWeeklyItems = [
-  { id: 1, name: 'Oreilles de chat', price: 50, img: 'oreilleschat' },
-  { id: 2, name: 'Clown', price: 80, img: 'clowncheveux' },
-  { id: 3, name: 'Cash', price: 60, img: 'cash' },
+  { id: 1, name: 'Oreilles de chat', price: 150, img: 'oreilleschat' },
+  { id: 2, name: 'Clown', price: 120, img: 'clowncheveux' },
+  { id: 3, name: 'Cash', price: 70, img: 'cash' },
   { id: 4, name: 'Cible', price: 100, img: 'target' },
   { id: 6, name: 'Roi', price: 90, img: 'roi' },
   { id: 7, name: 'Matrix', price: 110, img: 'matrix' },
