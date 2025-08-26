@@ -148,18 +148,36 @@ const handleLogin = async (event) => {
 const handleRegister = async (event) => {
   try {
     const body = JSON.parse(event.body || '{}');
-    const { username, email, password, year, groupe } = body;
+    const { username, email, password, year, groupe, role } = body;
 
-    if (!username || !email || !password) {
+    // Pour l'admin, l'email est optionnel. Si absent, on en génère un basé sur le username.
+    if (!username || !password) {
       return {
         statusCode: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           success: false, 
-          message: 'Tous les champs sont requis' 
+          message: 'Nom d\'utilisateur et mot de passe requis' 
         })
       };
     }
+
+    const baseUser = String(username).toLowerCase().replace(/[^a-z0-9._-]/g, '') || 'user';
+    const effectiveEmail = (typeof email === 'string' && email.includes('@')) 
+      ? email 
+      : `${baseUser}@planify.local`;
+
+    // Si un token admin est fourni, il pourra définir le rôle; sinon on forcera 'user'
+    let requesterRole = 'user';
+    try {
+      const authHeader = event.headers?.authorization || event.headers?.Authorization || '';
+      const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
+      if (token) {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production');
+        requesterRole = decoded && decoded.role ? decoded.role : 'user';
+      }
+    } catch (_) {}
+
 
     // Vérifier si l'utilisateur existe déjà
     const existingUser = await User.findOne({ 
@@ -183,12 +201,12 @@ const handleRegister = async (event) => {
     // Créer le nouvel utilisateur
     const newUser = new User({
       username,
-      email,
+      email: effectiveEmail,
       password: hashedPassword,
       year: year || '',
       groupe: groupe || '',
       coins: 1000, // Bonus de bienvenue
-      role: 'user'
+      role: (requesterRole === 'admin' && typeof role === 'string' ? role : 'user')
     });
 
     await newUser.save();
