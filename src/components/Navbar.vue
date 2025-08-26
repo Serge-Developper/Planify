@@ -344,6 +344,12 @@
               style="display:none;" 
               @change="handleAvatarUpload" 
             />
+            
+            <!-- TEST: Affichage temporaire de l'avatar uploadé -->
+            <div v-if="userAvatar && userAvatar !== accountIcon" style="position: absolute; top: -100px; right: 0; width: 100px; height: 100px; border: 3px solid red; background: white; z-index: 9999;">
+              <img :src="userAvatar" alt="TEST AVATAR" style="width: 100%; height: 100%; object-fit: cover;" />
+              <div style="position: absolute; top: -20px; left: 0; background: red; color: white; padding: 2px 4px; font-size: 10px;">TEST AVATAR</div>
+            </div>
             <div v-if="showUserDropdown" class="user-dropdown" @click.stop>
               <button class="dropdown-item" @click="handleProfile">Profil</button>
               <button class="dropdown-item" @click="changeAvatar">Changer l'avatar</button>
@@ -682,6 +688,12 @@
                 style="display:none;" 
                 @change="handleAvatarUpload" 
               />
+              
+              <!-- TEST MOBILE: Affichage temporaire de l'avatar uploadé -->
+              <div v-if="userAvatar && userAvatar !== accountIcon" style="position: absolute; top: -100px; right: 0; width: 80px; height: 80px; border: 3px solid blue; background: white; z-index: 9999;">
+                <img :src="userAvatar" alt="TEST AVATAR MOBILE" style="width: 100%; height: 100%; object-fit: cover;" />
+                <div style="position: absolute; top: -20px; left: 0; background: blue; color: white; padding: 2px 4px; font-size: 8px;">TEST MOBILE</div>
+              </div>
               <div v-if="showUserDropdown" class="user-dropdown" @click.stop>
                 <button class="dropdown-item" @click="handleProfile">Profil</button>
                 <button class="dropdown-item" @click="changeAvatar">Changer l'avatar</button>
@@ -1402,7 +1414,10 @@ async function handleAvatarUpload(event) {
       const newAvatarUrl = response.data.avatar;
       console.log('🖼️ Avatar reçu (data URL):', newAvatarUrl.substring(0, 50) + '...');
       console.log('🖼️ Longueur de l\'avatar:', newAvatarUrl.length);
+      
+      // FORCER l'affichage de l'avatar
       userAvatar.value = newAvatarUrl;
+      console.log('🔥 FORCÉ userAvatar.value =', userAvatar.value.substring(0, 50) + '...');
       
       // Mettre à jour les données utilisateur dans le store et localStorage
       if (user.value) {
@@ -1414,6 +1429,11 @@ async function handleAvatarUpload(event) {
       } else {
         console.log('⚠️ Pas d\'utilisateur dans le store, mais avatar uploadé avec succès');
       }
+      
+      // FORCER le rafraîchissement de l'affichage
+      setTimeout(() => {
+        console.log('🔄 Vérification après timeout - userAvatar.value:', userAvatar.value ? userAvatar.value.substring(0, 50) + '...' : 'AUCUN');
+      }, 100);
       
       alert('Avatar mis à jour avec succès !');
     }
