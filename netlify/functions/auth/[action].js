@@ -165,7 +165,7 @@ exports.handler = async (event, context) => {
       const newUser = new User({
         username,
         password: hashedPassword,
-        coins: 100,
+        coins: 0,
         purchasedItems: [0],
         equippedItemId: 0,
         role: role || 'eleve',

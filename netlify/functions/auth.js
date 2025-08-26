@@ -197,7 +197,7 @@ const handleRegister = async (event) => {
       password: hashedPassword,
       year: year || '',
       groupe: groupe || '',
-      coins: 1000, // Bonus de bienvenue
+      coins: 0, // Solde initial
       role: (requesterRole === 'admin' && typeof role === 'string' ? role : 'user')
     });
 
