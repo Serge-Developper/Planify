@@ -993,6 +993,16 @@ const passwordValue = ref('');
 
 // Fonction pour charger l'avatar de l'utilisateur
 async function loadUserAvatar() {
+  console.log('📥 loadUserAvatar appelé');
+  console.log('👤 User dans loadUserAvatar:', {
+    hasUser: !!user.value,
+    userId: user.value?.id,
+    hasAvatar: !!user.value?.avatar,
+    avatarType: typeof user.value?.avatar,
+    avatarStart: user.value?.avatar ? String(user.value.avatar).substring(0, 100) : null,
+    avatarFilename: user.value?.avatarFilename
+  });
+  
   if (!user.value || !user.value.id) {
     userAvatar.value = accountIcon;
     return;
@@ -1001,22 +1011,27 @@ async function loadUserAvatar() {
   try {
     // Vérifier si l'avatar existe et son format
     if (user.value.avatar) {
-      if (user.value.avatar.startsWith('data:')) {
+      if (typeof user.value.avatar === 'string' && user.value.avatar.startsWith('data:')) {
         // C'est une data URL (nouveau format)
         userAvatar.value = user.value.avatar;
         console.log('🖼️ Avatar data URL chargé depuis loadUserAvatar');
-      } else if (user.value.avatar.startsWith('/uploads/')) {
+        console.log('📏 Longueur:', user.value.avatar.length);
+      } else if (typeof user.value.avatar === 'string' && user.value.avatar.startsWith('/uploads/')) {
         // C'est un chemin relatif vers les uploads (ancien format)
         const avatarUrl = `${baseUrl}${user.value.avatar}`;
         userAvatar.value = avatarUrl;
         console.log('🖼️ Avatar URL chargé depuis loadUserAvatar:', avatarUrl);
       } else {
-        // C'est peut-être un nom de fichier simple, essayer de construire l'URL
-        const avatarUrl = `${baseUrl}/uploads/avatars/${user.value.avatar}`;
-        userAvatar.value = avatarUrl;
-        console.log('🖼️ Avatar URL construite depuis loadUserAvatar:', avatarUrl);
+        console.log('⚠️ Format avatar non reconnu dans loadUserAvatar:', user.value.avatar);
+        userAvatar.value = accountIcon;
       }
+    } else if (user.value.avatarFilename) {
+      // Fallback sur avatarFilename
+      const avatarUrl = `${baseUrl}/uploads/avatars/${user.value.avatarFilename}`;
+      userAvatar.value = avatarUrl;
+      console.log('🖼️ Avatar construit depuis avatarFilename:', avatarUrl);
     } else {
+      console.log('❌ Aucun avatar trouvé');
       userAvatar.value = accountIcon;
     }
   } catch (error) {
@@ -1726,6 +1741,12 @@ onMounted(async () => {
         
         if (response.data.success && response.data.user) {
           console.log('✅ Données utilisateur fraîches récupérées:', response.data.user);
+          console.log('🔍 Avatar dans response:', {
+            hasAvatar: !!response.data.user.avatar,
+            avatarType: typeof response.data.user.avatar,
+            avatarStart: response.data.user.avatar ? response.data.user.avatar.substring(0, 100) : null,
+            avatarFilename: response.data.user.avatarFilename
+          });
           
           // Fusionner avec le token existant
           const freshUser = {
@@ -1738,18 +1759,23 @@ onMounted(async () => {
           
           // Charger l'avatar depuis les données fraîches (si différent)
           if (freshUser.avatar) {
-            if (freshUser.avatar.startsWith('data:')) {
+            if (typeof freshUser.avatar === 'string' && freshUser.avatar.startsWith('data:')) {
               userAvatar.value = freshUser.avatar;
               console.log('🖼️ Avatar data URL mis à jour depuis les données fraîches');
-            } else if (freshUser.avatar.startsWith('/uploads/')) {
+              console.log('📏 Longueur avatar:', freshUser.avatar.length);
+            } else if (typeof freshUser.avatar === 'string' && freshUser.avatar.startsWith('/uploads/')) {
               const avatarUrl = `${baseUrl}${freshUser.avatar}`;
               userAvatar.value = avatarUrl;
               console.log('🖼️ Avatar URL chargé depuis les données fraîches:', avatarUrl);
-            } else if (freshUser.avatarFilename) {
-              const avatarUrl = `${baseUrl}/uploads/avatars/${freshUser.avatarFilename}`;
-              userAvatar.value = avatarUrl;
-              console.log('🖼️ Avatar filename chargé depuis les données fraîches:', avatarUrl);
+            } else {
+              console.log('⚠️ Format avatar non reconnu:', freshUser.avatar);
             }
+          } else if (freshUser.avatarFilename) {
+            const avatarUrl = `${baseUrl}/uploads/avatars/${freshUser.avatarFilename}`;
+            userAvatar.value = avatarUrl;
+            console.log('🖼️ Avatar filename chargé depuis les données fraîches:', avatarUrl);
+          } else {
+            console.log('❌ Aucun avatar trouvé dans les données fraîches');
           }
         }
       } else {

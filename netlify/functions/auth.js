@@ -78,12 +78,15 @@ const handleLogin = async (event) => {
     
     // Log pour débugger l'avatar
     console.log('🔍 Login - User avatar data:', {
+      username: user.username,
       hasAvatar: !!user.avatar,
       hasAvatarData: !!(user.avatar && user.avatar.data),
       avatarType: user.avatar ? typeof user.avatar : 'undefined',
       avatarKeys: user.avatar && typeof user.avatar === 'object' ? Object.keys(user.avatar) : [],
       avatarFilename: user.avatarFilename,
-      dataLength: user.avatar && user.avatar.data ? user.avatar.data.length : 0
+      dataLength: user.avatar && user.avatar.data ? user.avatar.data.length : 0,
+      dataPreview: user.avatar && user.avatar.data ? user.avatar.data.substring(0, 50) + '...' : null,
+      mimetype: user.avatar && user.avatar.mimetype ? user.avatar.mimetype : null
     });
 
     // Construction correcte de l'avatar pour le retour
@@ -287,12 +290,15 @@ const handleVerifyToken = async (event) => {
     // Log pour débugger l'avatar lors de la vérification
     console.log('🔍 Verify - User avatar data:', {
       userId: userId,
+      username: user.username,
       hasAvatar: !!user.avatar,
       hasAvatarData: !!(user.avatar && user.avatar.data),
       avatarType: user.avatar ? typeof user.avatar : 'undefined',
       avatarKeys: user.avatar && typeof user.avatar === 'object' ? Object.keys(user.avatar) : [],
       avatarFilename: user.avatarFilename,
-      dataLength: user.avatar && user.avatar.data ? user.avatar.data.length : 0
+      dataLength: user.avatar && user.avatar.data ? user.avatar.data.length : 0,
+      dataPreview: user.avatar && user.avatar.data ? user.avatar.data.substring(0, 50) + '...' : null,
+      mimetype: user.avatar && user.avatar.mimetype ? user.avatar.mimetype : null
     });
 
     // Construction correcte de l'avatar pour le retour
