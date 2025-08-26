@@ -1001,7 +1001,13 @@ function getDynNavbarAssetStyle(asset) {
         ? (asset.navbarStyleMobile || asset.avatarStyleMobile || asset.style || asset.collectionStyleMobile || asset.collectionStyle || {})
         : (asset.navbarStyle || asset.avatarStyle || asset.style || asset.collectionStyle || {}))
     : {}
-  const style = { position: 'absolute', objectFit: s.objectFit || 'contain', zIndex: typeof s.zIndex === 'number' ? s.zIndex : 1 }
+  // Définir un z-index par défaut en fonction du placement
+  let defaultZ = 12
+  try {
+    if (asset.meta && (asset.meta.navbarPlacement === 'below' || asset.meta.avatarPlacement === 'below')) defaultZ = 0
+    if (asset.meta && (asset.meta.navbarPlacement === 'above' || asset.meta.avatarPlacement === 'above')) defaultZ = 15
+  } catch {}
+  const style = { position: 'absolute', objectFit: s.objectFit || 'contain', zIndex: typeof s.zIndex === 'number' ? s.zIndex : defaultZ }
   if (typeof s.top === 'number') style.top = s.top + 'px'
   if (typeof s.left === 'number') style.left = s.left + 'px'
   if (typeof s.width === 'number') style.width = s.width + 'px'
