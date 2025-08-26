@@ -422,10 +422,10 @@ const handleWeeklyItems = async (event) => {
     
     // Tous les items disponibles pour la boutique hebdomadaire
     const allWeeklyItems = [
-  { id: 1, name: 'Oreilles de chat', price: 50, img: 'oreilleschat' },
-  { id: 2, name: 'Clown', price: 80, img: 'clowncheveux' },
-  { id: 3, name: 'Cash', price: 60, img: 'cash' },
-  { id: 4, name: 'Cible', price: 100, img: 'target' },
+  { id: 1, name: 'Oreilles de chat', price: 150, img: 'oreilleschat' },
+  { id: 2, name: 'Clown', price: 120, img: 'clowncheveux' },
+  { id: 3, name: 'Cash', price: 50, img: 'cash' },
+  { id: 4, name: 'Cible', price: 70, img: 'target' },
   { id: 6, name: 'Roi', price: 90, img: 'roi' },
   { id: 7, name: 'Matrix', price: 110, img: 'matrix' },
   { id: 8, name: 'Ange', price: 120, img: 'angelwings' },
@@ -439,7 +439,7 @@ const handleWeeklyItems = async (event) => {
   { id: 16, name: 'Espace', price: 155, img: 'spacestars' },
   { id: 17, name: 'Absolute Cinema', price: 165, img: 'bras' },
   { id: 18, name: 'Flash', price: 175, img: 'flash' },
-  { id: 19, name: 'Miaou', price: 185, img: 'chat' },
+  { id: 19, name: 'Miaou', price: 200, img: 'chat' },
   { id: 20, name: 'DVD', price: 195, img: 'dvd' },
   { id: 21, name: 'Lunettes pixel', price: 205, img: 'mlglunette' },
   { id: 22, name: '2000', price: 215, img: 'nokia' }

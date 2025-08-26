@@ -1299,6 +1299,13 @@ async function loadDynamicItems() {
       dynamicInfoByName.value = byName
       // éviter les doublons d'id avec le catalogue statique
       const staticIds = new Set(shopItems.map(s => s.id))
+      // MAJ: mettre à jour les prix des items statiques si présents dans l'API
+      for (const dynItem of normalized) {
+        const staticItem = shopItems.find(s => s.id === dynItem.id)
+        if (staticItem && typeof dynItem.price === 'number') {
+          staticItem.price = dynItem.price
+        }
+      }
       dynamicItems.value = normalized.filter(n => !staticIds.has(n.id))
       
       // Nettoyer la map des computed properties pour les nouveaux items
