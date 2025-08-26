@@ -120,52 +120,85 @@ exports.handler = async (event, context) => {
         console.log('📦 Decoded body length:', bodyBuffer.length);
         console.log('📦 Boundary:', boundary);
         
-        // Extraire le fichier du body multipart
-        const parts = bodyBuffer.toString('binary').split('--' + boundary);
-        let avatarFile = null;
+        // Extraire le fichier du body multipart - méthode plus robuste
+        // Chercher directement dans le buffer sans conversion en string
+        const boundaryBuffer = Buffer.from('--' + boundary, 'utf8');
+        const boundaryEndBuffer = Buffer.from('--' + boundary + '--', 'utf8');
         
-        for (const part of parts) {
-          if (part.includes('Content-Disposition: form-data; name="avatar"')) {
-            const lines = part.split('\r\n');
-            const filenameMatch = lines.find(line => line.includes('filename='));
-            if (filenameMatch) {
-              const filename = filenameMatch.split('filename=')[1].replace(/"/g, '');
-              const contentTypeMatch = lines.find(line => line.includes('Content-Type:'));
-              const contentType = contentTypeMatch ? contentTypeMatch.split(': ')[1] : 'image/png';
-              
-              console.log('📄 Filename:', filename);
-              console.log('📄 Content-Type:', contentType);
-              
-              // Extraire le contenu du fichier - attention au parsing binaire
-              const headerEndIndex = part.indexOf('\r\n\r\n');
-              if (headerEndIndex === -1) {
-                console.log('❌ Impossible de trouver la fin des headers');
-                continue;
-              }
-              
-              const fileContentStart = headerEndIndex + 4;
-              // Chercher la fin du contenu (avant le prochain boundary ou la fin)
-              let fileContentEnd = part.lastIndexOf('\r\n--');
-              if (fileContentEnd === -1 || fileContentEnd < fileContentStart) {
-                fileContentEnd = part.length;
-                // Enlever les retours à la ligne finaux
-                while (fileContentEnd > fileContentStart && (part[fileContentEnd - 1] === '\r' || part[fileContentEnd - 1] === '\n')) {
-                  fileContentEnd--;
-                }
-              }
-              
-              const fileContent = part.substring(fileContentStart, fileContentEnd);
-              
-              avatarFile = {
-                originalname: filename,
-                mimetype: contentType,
-                buffer: Buffer.from(fileContent, 'binary')
-              };
-              
-              console.log('📄 File buffer length:', avatarFile.buffer.length);
+        let avatarFile = null;
+        let currentPos = 0;
+        
+        while (currentPos < bodyBuffer.length) {
+          // Chercher le prochain boundary
+          const boundaryPos = bodyBuffer.indexOf(boundaryBuffer, currentPos);
+          if (boundaryPos === -1) break;
+          
+          // Passer le boundary et le CRLF
+          currentPos = boundaryPos + boundaryBuffer.length;
+          if (bodyBuffer[currentPos] === 0x0d && bodyBuffer[currentPos + 1] === 0x0a) {
+            currentPos += 2;
+          }
+          
+          // Lire les headers jusqu'à la double ligne vide
+          const headersEnd = bodyBuffer.indexOf('\r\n\r\n', currentPos);
+          if (headersEnd === -1) continue;
+          
+          const headersBuffer = bodyBuffer.slice(currentPos, headersEnd);
+          const headers = headersBuffer.toString('utf8');
+          
+          // Vérifier si c'est le champ avatar
+          if (!headers.includes('name="avatar"')) {
+            currentPos = headersEnd + 4;
+            continue;
+          }
+          
+          // Extraire le nom de fichier et le type
+          let filename = 'avatar.png';
+          let contentType = 'image/png';
+          
+          const filenameMatch = headers.match(/filename="([^"]+)"/);
+          if (filenameMatch) {
+            filename = filenameMatch[1];
+          }
+          
+          const contentTypeMatch = headers.match(/Content-Type:\s*(.+)/i);
+          if (contentTypeMatch) {
+            contentType = contentTypeMatch[1].trim();
+          }
+          
+          console.log('📄 Found avatar field');
+          console.log('📄 Filename:', filename);
+          console.log('📄 Content-Type:', contentType);
+          
+          // Le contenu commence après la double ligne vide
+          const contentStart = headersEnd + 4;
+          
+          // Chercher la fin du contenu (prochain boundary)
+          const nextBoundarySearch = Buffer.from('\r\n--' + boundary, 'utf8');
+          let contentEnd = bodyBuffer.indexOf(nextBoundarySearch, contentStart);
+          
+          if (contentEnd === -1) {
+            // Pas de boundary suivant, chercher le boundary de fin
+            const endBoundarySearch = Buffer.from('\r\n--' + boundary + '--', 'utf8');
+            contentEnd = bodyBuffer.indexOf(endBoundarySearch, contentStart);
+            
+            if (contentEnd === -1) {
+              console.log('❌ Impossible de trouver la fin du contenu');
               break;
             }
           }
+          
+          // Extraire le contenu binaire
+          const fileBuffer = bodyBuffer.slice(contentStart, contentEnd);
+          
+          avatarFile = {
+            originalname: filename,
+            mimetype: contentType,
+            buffer: fileBuffer
+          };
+          
+          console.log('📄 File buffer extracted, length:', fileBuffer.length);
+          break;
         }
 
         if (!avatarFile) {

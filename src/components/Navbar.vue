@@ -1410,9 +1410,23 @@ async function handleAvatarUpload(event) {
       // Vérifier que c'est bien une data URL valide
       if (!newAvatarUrl.startsWith('data:image/')) {
         console.error('❌ La réponse n\'est pas une data URL d\'image valide');
+        console.error('Début de la réponse:', newAvatarUrl.substring(0, 200));
         alert('Erreur: format d\'image invalide reçu du serveur');
         return;
       }
+      
+      // Créer une image de test pour vérifier que la data URL est valide
+      const testImg = new Image();
+      testImg.onload = () => {
+        console.log('✅ Data URL valide, image chargée:', testImg.width, 'x', testImg.height);
+      };
+      testImg.onerror = (e) => {
+        console.error('❌ Data URL invalide, impossible de charger l\'image');
+        console.error('Erreur:', e);
+        console.error('Les 500 premiers caractères:', newAvatarUrl.substring(0, 500));
+        console.error('Les 500 derniers caractères:', newAvatarUrl.substring(newAvatarUrl.length - 500));
+      };
+      testImg.src = newAvatarUrl;
       
       // Mettre à jour l'avatar affiché
       justUploadedAvatar.value = true; // Marquer qu'on vient d'uploader
