@@ -999,12 +999,16 @@ const equippedDynItem = computed(() => {
     assets: dynItem.assets || [],
     backgrounds: dynItem.backgrounds || {},
     variants: dynItem.variants || [],
-    legacyId: dynItem.id
+    legacyId: dynItem.id || dynItem.legacyId
   }
   
-  // Forcer la réactivité en accédant aux variantes du store
+  // Forcer la réactivité en accédant aux variantes du store et à la clé de mise à jour
   const itemId = transformedItem.legacyId !== undefined ? transformedItem.legacyId : transformedItem.id
-  coinsStore.getDynamicItemVariant(itemId)
+  const currentVariant = coinsStore.getDynamicItemVariant(itemId)
+  // Accéder à variantUpdateKey pour forcer la réactivité
+  const updateKey = variantUpdateKey.value
+  
+  console.log('🔄 equippedDynItem computed - itemId:', itemId, 'currentVariant:', currentVariant, 'updateKey:', updateKey)
   
   return transformedItem
 })
@@ -1062,10 +1066,20 @@ async function loadDynamicItems() {
       const map = new Map()
       for (const it of res.items) {
         if (typeof it.legacyId !== 'undefined') {
-          map.set(Number(it.legacyId), it)
+          // S'assurer que l'item a toutes les propriétés nécessaires
+          const normalizedItem = {
+            ...it,
+            id: it.legacyId,
+            legacyId: it.legacyId,
+            variants: Array.isArray(it.variants) ? it.variants : [],
+            assets: Array.isArray(it.assets) ? it.assets : [],
+            backgrounds: it.backgrounds || {}
+          }
+          map.set(Number(it.legacyId), normalizedItem)
         }
       }
       dynamicInfoById.value = map
+      console.log('✅ Items dynamiques chargés dans la Navbar:', map.size, 'items')
     } else {
       dynamicInfoById.value = new Map()
     }
@@ -1083,8 +1097,13 @@ function getDynVariantAssetsForNavbar(item) {
     const itemId = item.legacyId !== undefined ? item.legacyId : item.id
     const variantIndex = coinsStore.getDynamicItemVariant(itemId)
     
+    console.log('🎨 Navbar getDynVariantAssets - itemId:', itemId, 'variantIndex:', variantIndex, 'item.variants:', item.variants)
+    
     const variant = item.variants[variantIndex]
-    if (!variant) return []
+    if (!variant) {
+      console.log('❌ Pas de variante trouvée à l\'index', variantIndex)
+      return []
+    }
     
     // Si c'est un style texte uniquement, retourner les assets de la base avec les styles de la variante
     if (variant.textOnly) {
@@ -1097,11 +1116,16 @@ function getDynVariantAssetsForNavbar(item) {
         navbarStyle: variant.assets && variant.assets[0] && variant.assets[0].navbarStyle ? variant.assets[0].navbarStyle : asset.navbarStyle,
         navbarStyleMobile: variant.assets && variant.assets[0] && variant.assets[0].navbarStyleMobile ? variant.assets[0].navbarStyleMobile : asset.navbarStyleMobile,
         avatarStyle: variant.assets && variant.assets[0] && variant.assets[0].avatarStyle ? variant.assets[0].avatarStyle : asset.avatarStyle,
-        avatarStyleMobile: variant.assets && variant.assets[0] && variant.assets[0].avatarStyleMobile ? variant.assets[0].avatarStyleMobile : asset.avatarStyleMobile
+        avatarStyleMobile: variant.assets && variant.assets[0] && variant.assets[0].avatarStyleMobile ? variant.assets[0].avatarStyleMobile : asset.avatarStyleMobile,
+        meta: variant.assets && variant.assets[0] && variant.assets[0].meta ? variant.assets[0].meta : asset.meta
       }))
     }
     
-    if (!Array.isArray(variant.assets)) return []
+    if (!Array.isArray(variant.assets)) {
+      console.log('❌ Pas d\'assets pour la variante')
+      return []
+    }
+    console.log('✅ Assets trouvés pour la variante:', variant.assets.length, 'assets')
     return variant.assets
   } catch (e) {
     console.error('❌ Erreur dans getDynVariantAssetsForNavbar:', e)
@@ -1115,18 +1139,19 @@ onMounted(() => {
     window.addEventListener('items-changed', loadDynamicItems)
     // Écouter les changements de variantes
     window.addEventListener('dynamic-variant-changed', (event) => {
-      // Forcer la mise à jour du computed equippedDynItem en rechargeant les items dynamiques
-      loadDynamicItems()
+      console.log('📡 Navbar: Événement dynamic-variant-changed reçu:', event.detail)
       // Incrémenter la clé pour forcer la mise à jour des templates
+      // Ne pas recharger tous les items, juste forcer le re-render
       variantUpdateKey.value++
     })
   } catch {}
 })
 
 // Watcher pour forcer la mise à jour quand les variantes changent
-watch(() => coinsStore.dynamicItemVariants, () => {
-  variantUpdateKey.value++
-}, { deep: true })
+// Désactivé car créait une boucle infinie - on utilise l'événement dynamic-variant-changed à la place
+// watch(() => coinsStore.dynamicItemVariants, () => {
+//   variantUpdateKey.value++
+// }, { deep: true })
 onUnmounted(() => { 
   try { 
     window.removeEventListener('items-changed', loadDynamicItems)
