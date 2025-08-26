@@ -31,7 +31,17 @@ const userSchema = new mongoose.Schema({
   password: String
 });
 
-const User = mongoose.model('User', userSchema);
+const User = mongoose.models.User || mongoose.model('User', userSchema);
+
+// Nouveau: collection dédiée aux avatars (compatibilité)
+const avatarStoreSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, index: true },
+  filename: { type: String, index: true, unique: true },
+  contentType: String,
+  data: String, // base64
+  createdAt: { type: Date, default: Date.now }
+});
+const AvatarStore = mongoose.models.AvatarStore || mongoose.model('AvatarStore', avatarStoreSchema, 'avatars');
 
 // Middleware d'authentification simplifié
 const verifyToken = (event) => {
@@ -103,6 +113,17 @@ exports.handler = async (event, context) => {
             statusCode: 200,
             headers: { ...headers, 'Content-Type': mimetype, 'Cache-Control': 'public, max-age=31536000, immutable' },
             body: userDoc.avatar.data,
+            isBase64Encoded: true
+          };
+        }
+        // Nouveau: chercher dans la collection avatars si non trouvé sur l'utilisateur
+        const avatarDoc = await AvatarStore.findOne({ filename }, 'data contentType').lean();
+        if (avatarDoc && avatarDoc.data) {
+          const mimetype = avatarDoc.contentType || 'image/jpeg';
+          return {
+            statusCode: 200,
+            headers: { ...headers, 'Content-Type': mimetype, 'Cache-Control': 'public, max-age=31536000, immutable' },
+            body: avatarDoc.data,
             isBase64Encoded: true
           };
         }
@@ -252,6 +273,17 @@ exports.handler = async (event, context) => {
           avatar: imageData,
           avatarFilename: filename
         }, { new: true });
+        
+        // Nouveau: conserver aussi dans la collection avatars (compatibilité leaderboard)
+        try {
+          await AvatarStore.findOneAndUpdate(
+            { userId: updated?._id || userId },
+            { userId: updated?._id || userId, filename, contentType: avatarFile.mimetype, data: base64Image, createdAt: new Date() },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+          );
+        } catch (e) {
+          console.warn('⚠️ Impossible d\'upserter dans avatars:', e && e.message);
+        }
         
         console.log('✅ Avatar uploadé avec succès pour utilisateur:', String(userId), '->', filename);
         
