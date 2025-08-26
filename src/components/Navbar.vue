@@ -1373,8 +1373,7 @@ function changeAvatar() {
     fileInput.value.click();
   }
   showUserDropdown.value = false;
-  // Prévenir cache: invalider la clé visuelle
-  try { userAvatar.value = userAvatar.value + (userAvatar.value.includes('?') ? '&' : '?') + 't=' + Date.now() } catch(e) {}
+  // rien ici: pas de cache-buster sur data URL
 }
 
 // Fonction pour gérer l'upload d'avatar
@@ -1429,8 +1428,10 @@ async function handleAvatarUpload(event) {
       }
       if (newAvatarUrl) {
         console.log('🖼️ Avatar normalisé:', newAvatarUrl.substring(0, 80))
-        // Bust cache et forcer re-render
-        const withTs = newAvatarUrl + (newAvatarUrl.includes('?') ? '&' : '?') + 't=' + Date.now()
+        // Bust cache uniquement pour les URL non-data
+        const withTs = newAvatarUrl.startsWith('data:')
+          ? newAvatarUrl
+          : newAvatarUrl + (newAvatarUrl.includes('?') ? '&' : '?') + 't=' + Date.now()
         userAvatar.value = withTs
         // Mettre à jour les données utilisateur dans le store et localStorage
         if (user.value) {
