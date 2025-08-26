@@ -1005,18 +1005,25 @@ async function loadUserAvatar() {
       const av = user.value.avatar;
       if (typeof av === 'string') {
         if (av.startsWith('data:')) {
-          // C'est une data URL (nouveau format)
+          // Data URL
           userAvatar.value = av;
           console.log('🖼️ Avatar data URL chargé depuis loadUserAvatar');
+        } else if (av.startsWith('/uploads/avatars/')) {
+          // Fichier servi par la fonction
+          const filename = av.split('/').pop();
+          const avatarUrl = `${baseUrl}/api/uploads/avatars/${filename}`;
+          userAvatar.value = avatarUrl;
+          console.log('🖼️ Avatar URL (fonction) chargé:', avatarUrl);
         } else {
-          // C'est un chemin relatif (ancien format)
+          // Autre chemin relatif
           const avatarUrl = `${baseUrl}${av}`;
           userAvatar.value = avatarUrl;
           console.log('🖼️ Avatar URL chargé depuis loadUserAvatar:', avatarUrl);
         }
-      } else if (typeof av === 'object' && av !== null && typeof av.data === 'string' && typeof av.mimetype === 'string') {
+      } else if (typeof av === 'object' && av !== null && typeof av.data === 'string') {
         // Objet avatar (ancien format DB) → reconstruire la data URL
-        userAvatar.value = `data:${av.mimetype};base64,${av.data}`;
+        const mt = typeof av.mimetype === 'string' ? av.mimetype : 'image/jpeg';
+        userAvatar.value = `data:${mt};base64,${av.data}`;
       } else {
         userAvatar.value = accountIcon;
       }
