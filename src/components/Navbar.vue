@@ -949,13 +949,21 @@ const equippedDynItem = computed(() => {
 
 function resolveDynSrc(src) {
   try {
-    if (typeof src === 'string' && src.startsWith('/uploads/')) {
-      // Utiliser le bon chemin pour les items dynamiques
+    if (typeof src === 'string') {
       const orig = API_URL || ''
       const base = orig.endsWith('/api') ? orig.slice(0, -4) : orig.replace('/api','')
-      // Remplacer /uploads/ par /api/uploads/items/ pour les items dynamiques
-      const correctedSrc = src.replace('/uploads/', '/api/uploads/items/')
-      return base + correctedSrc
+      
+      // Si le chemin commence par /uploads/items/, utiliser directement /api/uploads/items/
+      if (src.startsWith('/uploads/items/')) {
+        const filename = src.split('/').pop()
+        return base + '/api/uploads/items/' + filename
+      }
+      
+      // Si le chemin commence par /uploads/, remplacer par /api/uploads/items/
+      if (src.startsWith('/uploads/')) {
+        const filename = src.split('/').pop()
+        return base + '/api/uploads/items/' + filename
+      }
     }
   } catch {}
   return src
