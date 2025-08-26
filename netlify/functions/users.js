@@ -165,7 +165,7 @@ exports.handler = async (event, context) => {
         const user = verifyToken(event);
         
         // Récupérer tous les utilisateurs avec leurs coins pour le leaderboard
-        const users = await User.find({}, 'username coins role year groupe')
+        const users = await User.find({}, 'username coins role year groupe avatar purchasedItems equippedItemId completedTasks selectedBorderColor')
           .sort({ coins: -1 })
           .limit(50); // Limiter à 50 utilisateurs
 
@@ -182,7 +182,12 @@ exports.handler = async (event, context) => {
               coins: u.coins || 0,
               role: u.role,
               year: u.year,
-              groupe: u.groupe
+              groupe: u.groupe,
+              avatar: u.avatar,
+              purchasedItems: u.purchasedItems || [],
+              equippedItemId: u.equippedItemId,
+              completedTasks: u.completedTasks || 0,
+              selectedBorderColor: u.selectedBorderColor
             }))
           })
         };

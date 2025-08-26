@@ -910,7 +910,23 @@ const equippedDynItem = computed(() => {
   if (it && it.isDynamic) return it
   const id = coinsStore.equippedItemId || it?.id
   if (!id) return null
-  return dynamicInfoById.value.get(Number(id)) || null
+  const dynItem = dynamicInfoById.value.get(Number(id))
+  if (!dynItem) return null
+  
+  // Si l'item a des variantes, récupérer la variante sélectionnée
+  if (dynItem.variants && Array.isArray(dynItem.variants)) {
+    const variantIndex = coinsStore.getDynamicItemVariant(Number(id))
+    const selectedVariant = dynItem.variants[variantIndex] || dynItem.variants[0]
+    
+    // Retourner l'item avec les assets de la variante sélectionnée
+    return {
+      ...dynItem,
+      assets: selectedVariant.assets || [],
+      backgrounds: selectedVariant.backgrounds || {}
+    }
+  }
+  
+  return dynItem
 })
 
 function resolveDynSrc(src) {
@@ -964,9 +980,21 @@ async function loadDynamicItems() {
 
 onMounted(() => {
   loadDynamicItems()
-  try { window.addEventListener('items-changed', loadDynamicItems) } catch {}
+  try { 
+    window.addEventListener('items-changed', loadDynamicItems)
+    // Écouter les changements de variantes
+    window.addEventListener('dynamic-variant-changed', (event) => {
+      console.log('📡 Navbar: Événement dynamic-variant-changed reçu:', event.detail)
+      // Forcer la mise à jour du computed equippedDynItem
+    })
+  } catch {}
 })
-onUnmounted(() => { try { window.removeEventListener('items-changed', loadDynamicItems) } catch {} })
+onUnmounted(() => { 
+  try { 
+    window.removeEventListener('items-changed', loadDynamicItems)
+    window.removeEventListener('dynamic-variant-changed', () => {})
+  } catch {} 
+})
 
 console.log('🔧 API_URL:', API_URL)
 console.log('🔧 baseUrl:', baseUrl)
@@ -999,22 +1027,15 @@ async function loadUserAvatar() {
   }
 
   try {
-    // Vérifier si l'avatar existe et son format
     if (user.value.avatar) {
+      // Si c'est une data URL, l'utiliser directement
       if (user.value.avatar.startsWith('data:')) {
-        // C'est une data URL (nouveau format)
         userAvatar.value = user.value.avatar;
-        console.log('🖼️ Avatar data URL chargé depuis loadUserAvatar');
-      } else if (user.value.avatar.startsWith('/uploads/')) {
-        // C'est un chemin relatif vers les uploads (ancien format)
-        const avatarUrl = `${baseUrl}${user.value.avatar}`;
-        userAvatar.value = avatarUrl;
-        console.log('🖼️ Avatar URL chargé depuis loadUserAvatar:', avatarUrl);
+      } else if (user.value.avatar.startsWith('/')) {
+        // Si c'est un chemin, construire l'URL complète
+        userAvatar.value = `${baseUrl}${user.value.avatar}`;
       } else {
-        // C'est peut-être un nom de fichier simple, essayer de construire l'URL
-        const avatarUrl = `${baseUrl}/uploads/avatars/${user.value.avatar}`;
-        userAvatar.value = avatarUrl;
-        console.log('🖼️ Avatar URL construite depuis loadUserAvatar:', avatarUrl);
+        userAvatar.value = accountIcon;
       }
     } else {
       userAvatar.value = accountIcon;
@@ -1400,23 +1421,23 @@ async function handleAvatarUpload(event) {
     console.log('📤 Réponse upload:', response.data);
 
     if (response.data && response.data.avatar) {
-      // Mettre à jour l'avatar affiché
-      // response.data.avatar est maintenant une data URL complète (data:image/jpeg;base64,...)
-      const newAvatarUrl = response.data.avatar;
-      console.log('🖼️ Avatar reçu (data URL):', newAvatarUrl.substring(0, 50) + '...');
-      console.log('🖼️ Longueur de l\'avatar:', newAvatarUrl.length);
-      
-      // Mettre à jour l'avatar affiché
-      justUploadedAvatar.value = true; // Marquer qu'on vient d'uploader
-      userAvatar.value = newAvatarUrl;
+      // L'avatar est maintenant une data URL directement
+      userAvatar.value = response.data.avatar;
+      console.log('🖼️ Avatar uploadé avec succès');
       
       // Mettre à jour les données utilisateur dans le store et localStorage
       if (user.value) {
-        const updatedUser = { ...user.value, avatar: response.data.avatar };
-        auth.login(updatedUser); // Met à jour le store et localStorage
+        const updatedUser = { 
+          ...user.value, 
+          avatar: response.data.avatar
+        };
+        auth.login(updatedUser);
+        
+        alert('Avatar mis à jour avec succès !');
       }
-      
-      alert('Avatar mis à jour avec succès !');
+    } else {
+      console.error('❌ Aucun avatar dans la réponse:', response.data);
+      alert('Erreur : aucun avatar reçu du serveur');
     }
   } catch (error) {
     console.error('❌ Erreur upload avatar:', error);
@@ -1466,7 +1487,7 @@ function handleLoginSuccess(payload) {
   loadUserCoins();
   checkSpinAvailability();
   
-  window.location.reload(); // Ajout pour refresh global après connexion
+  // window.location.reload(); // Commenté car cela peut causer des problèmes avec l'avatar
 }
 function logout() {
   auth.logout();
@@ -1474,9 +1495,6 @@ function logout() {
   showUserDropdown.value = false
   showProfilePopup.value = false
   userAvatar.value = accountIcon; // Remettre l'icône par défaut
-  
-  // Remettre l'icône par défaut
-  userAvatar.value = accountIcon;
   
   router.push('/')
 }
@@ -1604,14 +1622,37 @@ function afficherAnnee(year) {
 
 // Fonction pour gérer les erreurs de chargement d'image
 function handleImageError(event) {
-  console.log('❌ Erreur de chargement de l\'image:', event.target.src);
-  console.log('🔄 Retour à l\'icône par défaut');
-  userAvatar.value = accountIcon;
+  console.error('❌ Erreur de chargement de l\'image:', event.target.src);
+  console.error('Type de src actuel:', typeof event.target.src);
+  console.error('Longueur de la src:', event.target.src.length);
+  console.error('Début de la src:', event.target.src.substring(0, 100));
+  
+  // Ne pas revenir automatiquement à l'icône par défaut si c'est une data URL
+  if (event.target.src && event.target.src.startsWith('data:')) {
+    console.error('C\'est une data URL qui a échoué, vérifier le format');
+    // Ne pas changer userAvatar ici pour permettre le débogage
+  } else {
+    console.log('🔄 Retour à l\'icône par défaut car ce n\'est pas une data URL');
+    userAvatar.value = accountIcon;
+  }
 }
 
 // Fonction pour gérer le chargement réussi d'image
 function handleImageLoad(event) {
-  console.log('✅ Image chargée avec succès:', event.target.src);
+  console.log('✅ Image chargée avec succès:', event.target.src.substring(0, 100));
+  console.log('✅ Dimensions de l\'image:', event.target.naturalWidth, 'x', event.target.naturalHeight);
+}
+
+// Fonction de test pour débugger l'affichage de l'avatar
+function testAvatarDisplay() {
+  // Créer une petite image de test en data URL (un carré rouge 10x10)
+  const testDataUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mP8/5+hnoEIwDiqkL4KAcT9GO0U4BxoAAAAAElFTkSuQmCC';
+  console.log('🧪 Test avec une data URL simple');
+  userAvatar.value = testDataUrl;
+  
+  setTimeout(() => {
+    console.log('🧪 userAvatar actuel:', userAvatar.value.substring(0, 100));
+  }, 100);
 }
 
 // Fonction pour obtenir le style de bordure selon l'item équipé
@@ -1642,9 +1683,21 @@ onMounted(async () => {
   handleResize();
   window.addEventListener('resize', handleResize);
   
-  if (user.value && user.value.id) {
-    loadUserAvatar();
+  // Charger l'avatar depuis le store auth au montage
+  if (user.value && user.value.avatar) {
+    // Si c'est une data URL, l'utiliser directement
+    if (user.value.avatar.startsWith('data:')) {
+      userAvatar.value = user.value.avatar;
+      console.log('🖼️ Avatar data URL chargé au montage');
+    } else if (user.value.avatar.startsWith('/')) {
+      // Si c'est un chemin, construire l'URL complète
+      const avatarUrl = `${baseUrl}${user.value.avatar}`;
+      userAvatar.value = avatarUrl;
+      console.log('🖼️ Avatar URL chargé au montage:', avatarUrl);
+    }
   }
+    
+
   
   if (user.value) {
     await coinsStore.initialize();
@@ -1652,47 +1705,65 @@ onMounted(async () => {
   }
   
   setInterval(updateSpinTimer, 60000);
+  
+  // Exposer l'avatar pour le débogage [[memory:4174769]]
+  if (typeof window !== 'undefined') {
+    window.userAvatar = userAvatar;
+  }
 });
 
 
 
 // Watcher pour surveiller les changements de l'utilisateur
 watch(user, async (newUser) => {
-  if (newUser) {
-    // Ne pas réécrire l'avatar si on vient de l'uploader
-    if (!justUploadedAvatar.value) {
-      if (newUser.avatar) {
-        if (newUser.avatar.startsWith('data:')) {
-          // C'est une data URL (nouveau format)
-          userAvatar.value = newUser.avatar;
-        } else if (newUser.avatar.startsWith('/uploads/')) {
-          // C'est un chemin relatif vers les uploads (ancien format)
-          const avatarUrl = `${baseUrl}${newUser.avatar}`;
-          userAvatar.value = avatarUrl;
-        } else {
-          // C'est peut-être un nom de fichier simple, essayer de construire l'URL
-          const avatarUrl = `${baseUrl}/uploads/avatars/${newUser.avatar}`;
-          userAvatar.value = avatarUrl;
-        }
-      } else if (newUser.id || newUser._id) {
-        loadUserAvatar();
-      } else {
-        userAvatar.value = accountIcon;
-      }
-    } else {
-      justUploadedAvatar.value = false; // Réinitialiser le flag
+  if (newUser && newUser.avatar) {
+    // Si c'est une data URL, l'utiliser directement
+    if (newUser.avatar.startsWith('data:')) {
+      userAvatar.value = newUser.avatar;
+    } else if (newUser.avatar.startsWith('/')) {
+      // Si c'est un chemin, construire l'URL complète
+      userAvatar.value = `${baseUrl}${newUser.avatar}`;
     }
     
     await coinsStore.initialize();
     checkSpinAvailability();
   } else {
     userAvatar.value = accountIcon;
-    coinsStore.reset();
+    if (!newUser) {
+      coinsStore.reset();
+    }
   }
 }, { immediate: true });
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
 });
+
+// ... existing code ...
+async function loadAvatarFromFilename(filename) {
+  if (!filename) return null;
+  
+  try {
+    console.log('📥 Chargement de l\'avatar depuis le filename:', filename);
+    const avatarUrl = `${API_URL.replace('/api', '')}/api/uploads/avatars/${filename}`;
+    
+    // Essayer de charger l'image pour vérifier qu'elle existe
+    const testImg = new Image();
+    return new Promise((resolve) => {
+      testImg.onload = () => {
+        console.log('✅ Avatar chargé avec succès depuis:', avatarUrl);
+        resolve(avatarUrl);
+      };
+      testImg.onerror = () => {
+        console.error('❌ Impossible de charger l\'avatar depuis:', avatarUrl);
+        resolve(null);
+      };
+      testImg.src = avatarUrl;
+    });
+  } catch (error) {
+    console.error('❌ Erreur lors du chargement de l\'avatar:', error);
+    return null;
+  }
+}
 </script>
 
 <style>

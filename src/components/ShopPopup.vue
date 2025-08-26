@@ -1864,6 +1864,7 @@ const shopItems = [
     name: 'Clown',
     price: 120,
     img: clowncheveux,
+    displayType: 'clown',
   },
   {
     id: 3,
@@ -1924,6 +1925,7 @@ const shopItems = [
     name: 'Gentleman',
      price: 150,
      img: gentleman,
+     displayType: 'gentleman',
   },
   {
     id: 14,
@@ -1985,6 +1987,7 @@ const shopItems = [
     name: 'Discord',
     price: 150,
     img: discordon,
+    displayType: 'discord',
     variants: [discordon, discordnepasderange, discordderange],
     variantIndex: 0,
   }
@@ -1994,6 +1997,7 @@ const shopItems = [
     name: 'Jojo',
     price: 200,
     img: jojo,
+    displayType: 'jojo',
   }
   ,
   {
@@ -2121,29 +2125,64 @@ function closeDynamicStylePicker() {
 }
 
 // Appliquer une variante pour les items dynamiques
-function applyDynamicVariant(idx) {
-  if (!dynamicPickerItem.value) return
+async function applyDynamicVariant(idx) {
+  console.log('🔍 applyDynamicVariant appelé avec idx:', idx, typeof idx)
+  
+  if (!dynamicPickerItem.value) {
+    console.error('❌ Pas d\'item sélectionné')
+    return
+  }
+  
   const item = dynamicPickerItem.value
+  console.log('📦 Item sélectionné:', item)
   
   // Vérifier que la variante existe
-  if (!item.variants || !item.variants[idx]) return
+  if (!item.variants || !Array.isArray(item.variants)) {
+    console.error('❌ Pas de variantes pour cet item')
+    return
+  }
   
-  console.log('🎨 Application de la variante', idx, 'pour item', item.id)
+  if (!item.variants[idx]) {
+    console.error('❌ Variante invalide:', idx, 'pour item', item.id, 'nombre de variantes:', item.variants.length)
+    return
+  }
+  
+  // S'assurer que l'ID est un nombre
+  const itemId = typeof item.id === 'string' ? parseInt(item.id, 10) : item.id
+  const variantIndex = typeof idx === 'string' ? parseInt(idx, 10) : idx
+  
+  console.log('🎨 Application de la variante', variantIndex, 'pour item', itemId)
+  console.log('📊 Types:', { itemId: typeof itemId, variantIndex: typeof variantIndex })
+  
+  // Vérifier que coinsStore existe et a la méthode
+  if (!coinsStore || typeof coinsStore.setDynamicItemVariant !== 'function') {
+    console.error('❌ coinsStore.setDynamicItemVariant n\'est pas disponible')
+    alert('Erreur: Le système de variantes n\'est pas disponible.')
+    return
+  }
   
   // Sauvegarder la variante sélectionnée dans le store
   try {
-    coinsStore.setDynamicItemVariant(item.id, idx)
-    console.log('✅ Variante sauvegardée dans le store')
-    // Forcer la mise à jour en incrémentant la clé
-    variantUpdateKey.value++
-    console.log('🔄 Clé de mise à jour incrémentée:', variantUpdateKey.value)
-    // Déclencher l'événement pour notifier la navbar
-    window.dispatchEvent(new CustomEvent('dynamic-variant-changed', { 
-      detail: { itemId: item.id, variantIndex: idx } 
-    }))
-    console.log('📡 Événement dynamic-variant-changed déclenché')
+    const result = await coinsStore.setDynamicItemVariant(itemId, variantIndex)
+    if (result && result.success) {
+      console.log('✅ Variante sauvegardée dans le store')
+      // Forcer la mise à jour en incrémentant la clé
+      variantUpdateKey.value++
+      console.log('🔄 Clé de mise à jour incrémentée:', variantUpdateKey.value)
+      // Déclencher l'événement pour notifier la navbar
+      window.dispatchEvent(new CustomEvent('dynamic-variant-changed', { 
+        detail: { itemId, variantIndex } 
+      }))
+      console.log('📡 Événement dynamic-variant-changed déclenché')
+    } else {
+      console.error('❌ Erreur lors de la sauvegarde de la variante:', result?.error)
+      // Afficher un message d'erreur à l'utilisateur
+      alert('Impossible de sauvegarder la variante. Veuillez réessayer.')
+    }
   } catch (e) {
-    console.warn('❌ Impossible de sauvegarder la variante:', e)
+    console.error('❌ Exception lors de la sauvegarde de la variante:', e)
+    console.error('📦 Stack trace:', e.stack)
+    alert('Une erreur est survenue: ' + (e.message || 'Erreur inconnue'))
   }
   
   // Fermer la popup
@@ -2154,7 +2193,6 @@ function applyDynamicVariant(idx) {
 const getUserEquippedItemData = (user) => {
   // Tolérance si user est indéfini ou si aucun item n'est équipé
   if (!user || user.equippedItemId === null || user.equippedItemId === undefined || user.equippedItemId === 0) {
-    console.log('🔍 Utilisateur sans item équipé:', user?.username, 'equippedItemId:', user?.equippedItemId)
     return null
   }
   
@@ -2252,16 +2290,16 @@ const getUserEquippedItemData = (user) => {
 
  const getUserAvatar = (user) => {
   const av = user && user.avatar
-  if (typeof av === 'string' && av.startsWith('/uploads/')) {
-    // Utiliser les nouvelles APIs pour servir les images depuis la base de données
-    if (av.startsWith('/uploads/avatars/')) {
-      const avatarUrl = `${baseUrl}/api/uploads/avatars/${av.split('/').pop()}`
-      console.log('🖼️ URL avatar:', avatarUrl)
+  if (typeof av === 'string') {
+    // Si c'est une data URL, l'utiliser directement
+    if (av.startsWith('data:')) {
+      return av
+    }
+    // Si c'est un chemin d'upload
+    if (av.startsWith('/uploads/')) {
+      const avatarUrl = `${baseUrl}${av}`
       return avatarUrl
     }
-    const avatarUrl = `${baseUrl}${av}`
-    console.log('🖼️ URL avatar:', avatarUrl)
-    return avatarUrl
   }
   return accountIcon
 }
@@ -2324,25 +2362,55 @@ const classicBorderStyle = computed(() => {
 
 // Style de bordure pour l'avatar du leaderboard (appliqué aux utilisateurs listés)
 const getAvatarBorderStyle = (user) => {
-  // Si Discord est équipé, pas de bordure
-  if (getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'discord') {
-    return { border: 'none', background: 'transparent' }
+  // Si Discord, Galaxie, Coeur, Alpha ou Admin Planify est équipé, pas de bordure
+  const equippedItem = getUserEquippedItemData(user)
+  const equippedId = user?.equippedItemId
+  
+  // Si certains items spéciaux sont équipés, pas de bordure
+  if (equippedItem && (equippedItem.displayType === 'discord' || 
+      equippedItem.name === 'Galaxie' || 
+      equippedItem.name === 'Coeur' || 
+      equippedItem.name === 'Prestige' || 
+      equippedItem.name === 'Planify')) {
+    return { border: '3px solid transparent', background: 'transparent' }
   }
+  
+  // Si l'item équipé est spécifiquement ces IDs, pas de bordure
+  if (equippedId == 25 || equippedId == 26 || equippedId == 27 || equippedId == 28) {
+    return { border: '3px solid transparent', background: 'transparent' }
+  }
+  
+  // Si pas de couleur sélectionnée, bordure noire par défaut
+  if (!user || !user.selectedBorderColor || user.selectedBorderColor === 'default') {
+    return { border: '3px solid #000000' }
+  }
+  
+  // Initialiser les bordures si nécessaire
+  if (!coinsStore.borderColors || coinsStore.borderColors.length === 0) {
+    coinsStore.initializeBorderColors()
+  }
+  
   // Extraire l'id de base si encodé avec variantes (ex: "red|dv=1|jv=0")
-  const raw = user && user.selectedBorderColor ? String(user.selectedBorderColor) : ''
-  const baseId = raw.split('|')[0] || ''
+  const raw = String(user.selectedBorderColor)
+  const baseId = raw.split('|')[0] || 'default'
   const selected = coinsStore.borderColors.find(c => c.id === baseId)
-  if (!selected) return {}
+  
+  if (!selected) {
+    return { border: '3px solid #000000' }
+  }
+  
   if (selected.gradient) {
     return {
       border: '3px solid transparent',
       background: `linear-gradient(white, white) padding-box, ${selected.gradient} border-box`
     }
   }
+  
   if (selected.color) {
     return { border: `3px solid ${selected.color}` }
   }
-  return {}
+  
+  return { border: '3px solid #000000' }
 }
 
  // Fonctions pour la boutique hebdomadaire
@@ -2555,6 +2623,10 @@ const sortedLeaderboardUsers = computed(() => {
  // Lifecycle hooks
  onMounted(() => {
    if (authStore.isLoggedIn) {
+     // Initialiser les bordures si nécessaire
+     if (!coinsStore.borderColors || coinsStore.borderColors.length === 0) {
+       coinsStore.initializeBorderColors()
+     }
      loadWeeklyItems()
      loadLeaderboardUsers()
      updateWeeklyTimer()

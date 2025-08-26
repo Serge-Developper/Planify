@@ -96,7 +96,9 @@ export const useCoinsStore = defineStore('coins', {
     jojoVariantIndex: 0 as number,
     // Positionnement/tailles pour l'aperçu Jojo dans l'onglet Collection
     jojoImgPos: { top: 50, left: 87, width: 90 } as { top: number; left: number; width: number },
-    jojoTextPos: { top: -5, left: 10, width: 72 } as { top: number; left: number; width: number }
+    jojoTextPos: { top: -5, left: 10, width: 72 } as { top: number; left: number; width: number },
+    // Variantes sélectionnées pour les items dynamiques (Map<itemId, variantIndex>)
+    dynamicItemVariants: new Map<number, number>() as Map<number, number>
   }),
 
   getters: {
@@ -193,7 +195,11 @@ export const useCoinsStore = defineStore('coins', {
       if (itemId === 24) {
         return state.jojoVariantIndex || 0;
       }
-      // Pour les autres items, retourner 0 par défaut (première variante)
+      // Pour les autres items dynamiques, chercher dans la Map
+      if (state.dynamicItemVariants.has(itemId)) {
+        return state.dynamicItemVariants.get(itemId) || 0;
+      }
+      // Par défaut, retourner 0 (première variante)
       return 0;
     }
   },
@@ -580,6 +586,7 @@ export const useCoinsStore = defineStore('coins', {
       this.reset();
       // Charger séquentiellement pour éviter les erreurs 429
       this.initializeBorderColors();
+      this.loadDynamicItemVariants(); // Charger les variantes sauvegardées
       await this.loadBalance();
       await this.loadSpinStatus();
       await this.loadInventory();
@@ -717,6 +724,7 @@ export const useCoinsStore = defineStore('coins', {
       this.jojoVariantIndex = 0;
       this.jojoImgPos = { top: 50, left: 87, width: 90 };
       this.jojoTextPos = { top: -5, left: 10, width: 72 };
+      this.dynamicItemVariants = new Map<number, number>();
     },
 
     // Détecter les nouveaux items avec des messages admin
@@ -771,6 +779,45 @@ export const useCoinsStore = defineStore('coins', {
     },
     setJojoTextPos(pos: { top?: number; left?: number; width?: number }) {
       this.jojoTextPos = { ...this.jojoTextPos, ...pos }
+    },
+
+    // Définir la variante d'un item dynamique
+    async setDynamicItemVariant(itemId: number, variantIndex: number) {
+      console.log('🎨 setDynamicItemVariant appelé:', { itemId, variantIndex });
+      
+      try {
+        // Mettre à jour la Map locale
+        this.dynamicItemVariants.set(itemId, variantIndex);
+        
+        // Sauvegarder la variante dans localStorage pour persistance locale
+        const variantsObj = Object.fromEntries(this.dynamicItemVariants);
+        localStorage.setItem('dynamicItemVariants', JSON.stringify(variantsObj));
+        
+        // TODO: Appeler l'API backend pour persister la variante
+        // Pour l'instant, on garde juste en local
+        
+        console.log('✅ Variante sauvegardée localement');
+        console.log('📦 État actuel des variantes:', this.dynamicItemVariants);
+        return { success: true };
+      } catch (error: any) {
+        console.error('❌ Erreur lors de la sauvegarde de la variante:', error);
+        console.error('📦 Stack trace:', error?.stack);
+        return { success: false, error: error?.message || 'Erreur inconnue' };
+      }
+    },
+
+    // Charger les variantes depuis localStorage au démarrage
+    loadDynamicItemVariants() {
+      try {
+        const saved = localStorage.getItem('dynamicItemVariants');
+        if (saved) {
+          const variantsObj = JSON.parse(saved);
+          this.dynamicItemVariants = new Map(Object.entries(variantsObj).map(([k, v]) => [Number(k), Number(v)]));
+          console.log('📦 Variantes dynamiques chargées:', this.dynamicItemVariants);
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des variantes:', error);
+      }
     }
   }
 }); 

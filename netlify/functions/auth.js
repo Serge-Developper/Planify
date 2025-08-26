@@ -75,6 +75,16 @@ const handleLogin = async (event) => {
         })
       };
     }
+    
+    // Log pour débugger l'avatar
+    console.log('🔍 Login - User avatar data:', {
+      username: user.username,
+      hasAvatar: !!user.avatar,
+      avatarLength: user.avatar ? user.avatar.length : 0
+    });
+
+    // L'avatar est maintenant directement une data URL string
+    const avatarUrl = user.avatar || null;
 
     // Vérifier le mot de passe
     const isValidPassword = await bcrypt.compare(password, user.password);
@@ -108,6 +118,7 @@ const handleLogin = async (event) => {
         message: 'Connexion réussie',
         token,
         user: {
+          _id: user._id,
           id: user._id,
           username: user.username,
           email: user.email,
@@ -115,9 +126,7 @@ const handleLogin = async (event) => {
           year: user.year,
           groupe: user.groupe,
           coins: user.coins,
-          avatar: user.avatar && user.avatar.data ? 
-            `data:${user.avatar.mimetype};base64,${user.avatar.data}` : 
-            user.avatar, // Fallback pour l'ancien format
+          avatar: avatarUrl,
           hasSecretQuestions: user.secretQuestions && user.secretQuestions.length >= 3 && user.secretQuestions.every(q => q.question && q.answer)
         }
       })
@@ -203,6 +212,7 @@ const handleRegister = async (event) => {
         message: 'Inscription réussie',
         token,
         user: {
+          _id: newUser._id,
           id: newUser._id,
           username: newUser.username,
           email: newUser.email,
@@ -262,6 +272,17 @@ const handleVerifyToken = async (event) => {
         })
       };
     }
+    
+    // Log pour débugger l'avatar lors de la vérification
+    console.log('🔍 Verify - User avatar data:', {
+      userId: userId,
+      username: user.username,
+      hasAvatar: !!user.avatar,
+      avatarLength: user.avatar ? user.avatar.length : 0
+    });
+
+    // L'avatar est maintenant directement une data URL string
+    const avatarUrl = user.avatar || null;
 
     return {
       statusCode: 200,
@@ -269,6 +290,7 @@ const handleVerifyToken = async (event) => {
       body: JSON.stringify({
         success: true,
         user: {
+          _id: user._id,
           id: user._id,
           username: user.username,
           email: user.email,
@@ -276,7 +298,7 @@ const handleVerifyToken = async (event) => {
           year: user.year,
           groupe: user.groupe,
           coins: user.coins,
-          avatar: user.avatar,
+          avatar: avatarUrl,
           hasSecretQuestions: user.secretQuestions && user.secretQuestions.length >= 3 && user.secretQuestions.every(q => q.question && q.answer)
         }
       })

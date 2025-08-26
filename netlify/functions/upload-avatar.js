@@ -62,7 +62,7 @@ const verifyToken = (event) => {
 exports.handler = async (event, context) => {
   // Configuration CORS
   const headers = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGINS || '*',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Methods': 'POST, OPTIONS'
   };
@@ -76,205 +76,101 @@ exports.handler = async (event, context) => {
     };
   }
 
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      headers,
+      body: JSON.stringify({ error: 'Method not allowed' })
+    };
+  }
+
   try {
-    console.log('🚀 Fonction upload-avatar appelée');
-    console.log('Méthode:', event.httpMethod);
-    console.log('Path:', event.path);
-    
     // Connexion à MongoDB
     await mongoose.connect(process.env.MONGODB_URI || '', {
       bufferCommands: false
     });
-
-    // Route POST /api/upload-avatar - Upload d'avatar
-    if (event.httpMethod === 'POST') {
-      try {
-        // Vérifier l'authentification
-        const user = verifyToken(event);
-        
-        // Vérifier que le contenu est multipart/form-data
-        if (!event.headers['content-type'] || !event.headers['content-type'].includes('multipart/form-data')) {
-          return {
-            statusCode: 400,
-            headers: {
-              ...headers,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              success: false,
-              message: 'Le contenu doit être multipart/form-data'
-            })
-          };
+    
+    // Vérifier l'authentification
+    const decoded = verifyToken(event);
+    const userId = decoded.userId || decoded.id;
+    
+    // Parser le multipart form data
+    const boundary = event.headers['content-type'].split('boundary=')[1];
+    const buffer = Buffer.from(event.body, event.isBase64Encoded ? 'base64' : 'utf8');
+    
+    // Extraire le fichier
+    const boundaryBuffer = Buffer.from(`--${boundary}`);
+    const parts = [];
+    let start = 0;
+    
+    while (start < buffer.length) {
+      const boundaryIndex = buffer.indexOf(boundaryBuffer, start);
+      if (boundaryIndex === -1) break;
+      
+      const nextBoundaryIndex = buffer.indexOf(boundaryBuffer, boundaryIndex + boundaryBuffer.length);
+      if (nextBoundaryIndex === -1) break;
+      
+      const part = buffer.slice(boundaryIndex + boundaryBuffer.length, nextBoundaryIndex);
+      parts.push(part);
+      start = nextBoundaryIndex;
+    }
+    
+    // Trouver la partie avec le fichier
+    let fileBuffer = null;
+    let filename = null;
+    let mimetype = null;
+    
+    for (const part of parts) {
+      const headerEndIndex = part.indexOf('\r\n\r\n');
+      if (headerEndIndex === -1) continue;
+      
+      const headers = part.slice(0, headerEndIndex).toString();
+      if (headers.includes('filename=')) {
+        const filenameMatch = headers.match(/filename="(.+?)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+          const ext = filename.split('.').pop().toLowerCase();
+          mimetype = `image/${ext === 'jpg' ? 'jpeg' : ext}`;
         }
-
-        // Parser le body multipart manuellement
-        const boundary = event.headers['content-type'].split('boundary=')[1];
-        const body = Buffer.from(event.body, 'base64');
-        
-        // Extraire le fichier du body multipart
-        const parts = body.toString().split('--' + boundary);
-        let avatarFile = null;
-        
-        for (const part of parts) {
-          if (part.includes('Content-Disposition: form-data; name="avatar"')) {
-            const lines = part.split('\r\n');
-            const filenameMatch = lines.find(line => line.includes('filename='));
-            if (filenameMatch) {
-              const filename = filenameMatch.split('filename=')[1].replace(/"/g, '');
-              const contentTypeMatch = lines.find(line => line.includes('Content-Type:'));
-              const contentType = contentTypeMatch ? contentTypeMatch.split(': ')[1] : 'image/jpeg';
-              
-              // Extraire le contenu du fichier
-              const fileContentStart = part.indexOf('\r\n\r\n') + 4;
-              const fileContent = part.substring(fileContentStart, part.lastIndexOf('\r\n'));
-              
-              avatarFile = {
-                originalname: filename,
-                mimetype: contentType,
-                buffer: Buffer.from(fileContent, 'binary')
-              };
-              break;
-            }
-          }
-        }
-
-        if (!avatarFile) {
-          return {
-            statusCode: 400,
-            headers: {
-              ...headers,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              success: false,
-              message: 'Aucun fichier avatar trouvé'
-            })
-          };
-        }
-
-        // Vérifier le type de fichier
-        if (!avatarFile.mimetype.startsWith('image/')) {
-          return {
-            statusCode: 400,
-            headers: {
-              ...headers,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              success: false,
-              message: 'Seules les images sont autorisées'
-            })
-          };
-        }
-
-        // Vérifier la taille (5MB max)
-        if (avatarFile.buffer.length > 5 * 1024 * 1024) {
-          return {
-            statusCode: 400,
-            headers: {
-              ...headers,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              success: false,
-              message: 'Le fichier est trop volumineux (max 5MB)'
-            })
-          };
-        }
-
-        // Générer un nom de fichier unique
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const fileExtension = path.extname(avatarFile.originalname);
-        const filename = 'avatar-' + uniqueSuffix + fileExtension;
-        
-        // Dans Netlify Functions, on ne peut pas écrire sur le système de fichiers
-        // On va stocker l'image en base64 dans la base de données
-        const base64Image = avatarFile.buffer.toString('base64');
-        const imageData = {
-          filename: filename,
-          mimetype: avatarFile.mimetype,
-          data: base64Image,
-          size: avatarFile.buffer.length
-        };
-        
-        // Mettre à jour l'utilisateur dans la base de données avec l'image en base64
-        await User.findByIdAndUpdate(user.userId, { 
-          avatar: imageData,
-          avatarFilename: filename
-        });
-        
-        console.log('✅ Avatar uploadé avec succès:', filename);
-        
-        return {
-          statusCode: 200,
-          headers: {
-            ...headers,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            success: true,
-            avatar: `data:${avatarFile.mimetype};base64,${base64Image}`,
-            filename: filename,
-            message: 'Avatar mis à jour avec succès'
-          })
-        };
-        
-      } catch (error) {
-        console.error('❌ Erreur détaillée upload avatar:', error);
-        
-        if (error.message === 'Token manquant' || error.message === 'Token invalide') {
-          return {
-            statusCode: 401,
-            headers: {
-              ...headers,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              success: false,
-              message: 'Token invalide ou manquant'
-            })
-          };
-        } else {
-          return {
-            statusCode: 500,
-            headers: {
-              ...headers,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              success: false,
-              message: 'Erreur lors de l\'upload de l\'avatar: ' + error.message
-            })
-          };
-        }
+        fileBuffer = part.slice(headerEndIndex + 4);
+        break;
       }
     }
-
-    // Méthode non supportée
+    
+    if (!fileBuffer || !filename) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Aucun fichier trouvé' })
+      };
+    }
+    
+    // Convertir en base64
+    const base64Data = fileBuffer.toString('base64');
+    const dataUrl = `data:${mimetype};base64,${base64Data}`;
+    
+    // Sauvegarder directement la data URL dans user.avatar
+    await User.findByIdAndUpdate(userId, { 
+      avatar: dataUrl
+    });
+    
+    console.log('✅ Avatar uploadé en base64');
+    
     return {
-      statusCode: 405,
-      headers: {
-        ...headers,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        success: false,
-        message: 'Méthode non autorisée'
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ 
+        success: true,
+        avatar: dataUrl
       })
     };
-
+    
   } catch (error) {
-    console.error('❌ Erreur upload-avatar:', error);
+    console.error('Erreur upload avatar:', error);
     return {
       statusCode: 500,
-      headers: {
-        ...headers,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        success: false,
-        message: 'Erreur serveur interne'
-      })
+      headers,
+      body: JSON.stringify({ error: 'Erreur serveur: ' + error.message })
     };
   } finally {
     // Fermer la connexion MongoDB
