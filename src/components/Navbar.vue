@@ -145,8 +145,14 @@
                 :alt="equippedDynItem.name"
                 class="equipped-dynamic-item-overlay"
                 style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 15;"
+                @load="() => console.log('✅ Fallback dynamique chargé:', equippedDynItem.name)"
+                @error="() => console.error('❌ Erreur chargement fallback dynamique:', equippedDynItem.name)"
               />
             </template>
+            <!-- Debug info temporaire -->
+            <div v-if="equippedDynItem" style="position: absolute; top: -20px; left: 0; background: red; color: white; font-size: 10px; z-index: 1000; padding: 2px;">
+              Dyn: {{ equippedDynItem.name }} | Assets: {{ equippedDynItem.assets?.length || 0 }}
+            </div>
             <!-- Item équipé générique (rendu seulement si une image est définie et pas d'item dynamique) -->
             <img 
               v-if="equippedItem && equippedItem.displayType === 'generic' && equippedItem.img && !equippedDynItem && equippedItem.name !== 'Galaxie' && equippedItem.name !== 'Coeur' && equippedItem.name !== 'Étoiles'" 
@@ -925,16 +931,35 @@ onUnmounted(() => document.removeEventListener('click', handleGlobalClick, true)
 const equippedItem = computed(() => coinsStore.equippedItem)
 const equippedDynItem = computed(() => {
   const it = coinsStore.equippedItem
-  if (it && it.isDynamic) return it
+  console.log('🔍 equippedDynItem - equippedItem:', it)
+  
+  if (it && it.isDynamic) {
+    console.log('🔍 equippedDynItem - Item dynamique détecté:', it)
+    return it
+  }
+  
   const id = coinsStore.equippedItemId || it?.id
-  if (!id) return null
+  console.log('🔍 equippedDynItem - ID:', id)
+  
+  if (!id) {
+    console.log('🔍 equippedDynItem - Pas d\'ID trouvé')
+    return null
+  }
+  
   const dynItem = dynamicInfoById.value.get(Number(id))
-  if (!dynItem) return null
+  console.log('🔍 equippedDynItem - Item dynamique trouvé:', dynItem)
+  
+  if (!dynItem) {
+    console.log('🔍 equippedDynItem - Aucun item dynamique trouvé pour l\'ID:', id)
+    return null
+  }
   
   // Si l'item a des variantes, récupérer la variante sélectionnée
   if (dynItem.variants && Array.isArray(dynItem.variants)) {
     const variantIndex = coinsStore.getDynamicItemVariant(Number(id))
     const selectedVariant = dynItem.variants[variantIndex] || dynItem.variants[0]
+    
+    console.log('🔍 equippedDynItem - Variante sélectionnée:', selectedVariant)
     
     // Retourner l'item avec les assets de la variante sélectionnée
     return {
@@ -944,6 +969,7 @@ const equippedDynItem = computed(() => {
     }
   }
   
+  console.log('🔍 equippedDynItem - Retour de l\'item dynamique:', dynItem)
   return dynItem
 })
 
