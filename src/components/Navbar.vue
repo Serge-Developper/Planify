@@ -389,7 +389,8 @@
                     />
                   </template>
                   <img class="avatar-img"
-                    :src="userAvatar" 
+                    :src="userAvatar"
+                    :key="'avatar-m-'+userAvatar" 
                     alt="Compte" 
                     :style="equippedItem && equippedItem.name === '8-Bit' 
                       ? 'width: 51px; height: 51px; object-fit: cover; image-rendering: pixelated; image-rendering: -moz-crisp-edges; image-rendering: crisp-edges; filter: contrast(1.2) brightness(1.1) saturate(1.1);' 
@@ -996,6 +997,8 @@ const passwordValue = ref('');
 function normalizeAvatarToUrl(av) {
   try {
     if (!av) return accountIcon;
+
+    // Unwrap common shapes
     if (typeof av === 'object' && av !== null) {
       if (typeof av.data === 'string' && typeof av.mimetype === 'string') {
         return `data:${av.mimetype};base64,${av.data}`;
@@ -1006,30 +1009,49 @@ function normalizeAvatarToUrl(av) {
         av = `/uploads/avatars/${av.filename}`;
       }
     }
+
     if (typeof av !== 'string') return accountIcon;
-    // Corrige les URLs mal formées sans ':'
-    if (av.startsWith('https//')) {
-      av = 'https://' + av.slice(7);
-    }
+
+    // Normalize whitespace and common malformed schemes
+    av = av.trim();
+    // fix "https//" or "http//" missing colon at start
+    av = av.replace(/^https\/\/+/, 'https://').replace(/^http\/\/+/, 'http://');
+
     // Data URL → direct
     if (av.startsWith('data:')) return av;
-    // URL absolue → ne pas préfixer
+
+    // Already absolute (http/https) → return as is
     if (/^https?:\/\//i.test(av)) return av;
-    // Déjà route API complète
+
+    // Guard: already fully qualified with our base (without scheme)
+    if (av.startsWith(baseUrl + '/api/uploads/avatars/')) return av;
+    if (av.startsWith(baseUrl + '/')) return av;
+
+    // API avatars route (relative) → prefix with base
     if (av.startsWith('/api/uploads/avatars/')) {
       return `${baseUrl}${av}`;
     }
-    // Chemin brut d'upload d'avatars → router via la lambda
-    if (av.startsWith('/uploads/avatars/')) {
-      const filename = av.split('/').pop();
-      return `${baseUrl}/api/uploads/avatars/${filename}`;
+
+    // Raw uploads path for avatars (with or without leading slash)
+    const uploadsAvMatch = av.match(/(?:^|\/)uploads\/avatars\/([^\/]+)$/);
+    if (uploadsAvMatch && uploadsAvMatch[1]) {
+      return `${baseUrl}/api/uploads/avatars/${uploadsAvMatch[1]}`;
     }
-    // Nom de fichier seul
+
+    // Bare filename like avatar-*.png
     if (/^avatar-[\w.-]+\.(png|jpe?g|gif|webp)$/i.test(av)) {
       return `${baseUrl}/api/uploads/avatars/${av}`;
     }
+
+    // Generic uploads path
     if (av.startsWith('/uploads/')) return `${baseUrl}${av}`;
-    return `${baseUrl}${av}`;
+    if (av.startsWith('uploads/')) return `${baseUrl}/${av}`;
+
+    // If string begins with a single slash → join to base
+    if (av.startsWith('/')) return `${baseUrl}${av}`;
+
+    // Fallback: return as-is (avoid accidental double baseUrl)
+    return av;
   } catch {
     return accountIcon;
   }
