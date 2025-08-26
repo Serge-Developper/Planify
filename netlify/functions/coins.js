@@ -228,6 +228,10 @@ const handleCoinsRoute = async (event, path) => {
       return await handleUnequip(event);
     case 'weekly-items':
       return await handleWeeklyItems(event);
+    case 'weekly-items/test-add':
+      return await handleWeeklyTestAdd(event);
+    case 'weekly-items/test-remove':
+      return await handleWeeklyTestRemove(event);
     case 'border-color':
       return await handleBorderColor(event);
     default:
@@ -415,6 +419,9 @@ const handleEquip = async (event) => {
   }
 };
 
+// Mémoire simple en RAM pour forcer des items en boutique hebdo (test admin)
+const testWeeklyOverride = new Set();
+
 // Handler pour weekly-items
 const handleWeeklyItems = async (event) => {
   try {
@@ -436,45 +443,54 @@ const handleWeeklyItems = async (event) => {
   { id: 13, name: 'Gentleman', price: 115, img: 'moustache' },
   { id: 14, name: 'Vinyle', price: 135, img: 'vinyle' },
   { id: 15, name: 'Advisory', price: 145, img: 'advisory' },
-  { id: 16, name: 'Espace', price: 155, img: 'spacestars' },
-  { id: 17, name: 'Absolute Cinema', price: 165, img: 'bras' },
-  { id: 18, name: 'Flash', price: 175, img: 'flash' },
+  { id: 16, name: 'Espace', price: 160, img: 'spacestars' },
+  { id: 17, name: 'Absolute Cinema', price: 175, img: 'bras' },
+  { id: 18, name: 'Flash', price: 190, img: 'flash' },
   { id: 19, name: 'Miaou', price: 185, img: 'chat' },
-  { id: 20, name: 'DVD', price: 195, img: 'dvd' },
-  { id: 21, name: 'Lunettes pixel', price: 205, img: 'mlglunette' },
-  { id: 22, name: '2000', price: 215, img: 'nokia' }
+  { id: 20, name: 'DVD', price: 110, img: 'dvd' },
+  { id: 21, name: 'Lunettes pixel', price: 130, img: 'mlglunette' },
+  { id: 22, name: '2000', price: 250, img: 'nokia' },
+  { id: 23, name: 'Discord', price: 150, img: 'discord' },
+  { id: 24, name: 'Jojo', price: 200, img: 'jojo' }
 ];
 
-    // Fonction pour obtenir la seed du jour actuel
-    function getCurrentDaySeed() {
-  const now = new Date();
+    // Tirage du jour
+    const getCurrentDaySeed = () => {
+      const now = new Date();
       const dateString = now.toISOString().split('T')[0];
       return dateString;
     }
 
-    // Fonction pour générer des items aléatoires basés sur une seed
     function getRandomItemsFromSeed(seed, count = 3) {
-  let hash = 0;
-  for (let i = 0; i < seed.length; i++) {
-    const char = seed.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-        hash = hash & hash; // Convertir en 32-bit integer
-  }
-  
-      // Utiliser la seed pour mélanger le tableau
+      let hash = 0;
+      for (let i = 0; i < seed.length; i++) {
+        const char = seed.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32-bit
+      }
       const shuffled = [...allWeeklyItems].sort(() => {
-    hash = (hash * 9301 + 49297) % 233280;
-    return (hash / 233280) - 0.5;
-  });
-  
-  return shuffled.slice(0, count);
+        hash = (hash * 9301 + 49297) % 233280;
+        return (hash / 233280) - 0.5;
+      });
+      return shuffled.slice(0, 3);
     }
 
-    // Générer les items hebdomadaires pour aujourd'hui
-      const daySeed = getCurrentDaySeed();
+    const daySeed = getCurrentDaySeed();
     let weeklyItems = getRandomItemsFromSeed(daySeed, 3);
 
-    // Ajouter des couleurs de bordure hebdomadaires
+    // Intégrer les overrides de test (ajouts forcés)
+    if (testWeeklyOverride.size > 0) {
+      const forced = [...testWeeklyOverride].map((id) => allWeeklyItems.find(it => Number(it.id) === Number(id))).filter(Boolean);
+      // éviter les doublons par id
+      const currentIds = new Set(weeklyItems.map(it => it.id));
+      for (const it of forced) {
+        if (!currentIds.has(it.id)) weeklyItems.unshift(it);
+      }
+      // limiter visuel à 3 spéciaux + 3 couleurs (plus bas)
+      weeklyItems = weeklyItems.slice(0, 3);
+    }
+
+    // Couleurs de bordure hebdo (existant)
     const borderColors = [
       { id: 100, name: 'Rouge', price: 50, type: 'border-color', colorId: 'red', img: 'border-red' },
       { id: 101, name: 'Bleu', price: 50, type: 'border-color', colorId: 'blue', img: 'border-blue' },
@@ -486,31 +502,10 @@ const handleWeeklyItems = async (event) => {
       { id: 107, name: 'Cyan', price: 50, type: 'border-color', colorId: 'cyan', img: 'border-cyan' },
       { id: 108, name: 'Or', price: 100, type: 'border-color', colorId: 'gold', img: 'border-gold' },
       { id: 109, name: 'Argent', price: 100, type: 'border-color', colorId: 'silver', img: 'border-silver' },
-      { id: 110, name: 'Arc-en-ciel', price: 150, type: 'border-color', colorId: 'rainbow', img: 'border-rainbow' },
-      { id: 111, name: 'Feu', price: 75, type: 'border-color', colorId: 'fire', img: 'border-fire' },
-      { id: 112, name: 'Glace', price: 75, type: 'border-color', colorId: 'ice', img: 'border-ice' },
-      { id: 113, name: 'Océan', price: 75, type: 'border-color', colorId: 'ocean', img: 'border-ocean' },
-      { id: 114, name: 'Forêt', price: 75, type: 'border-color', colorId: 'forest', img: 'border-forest' },
-      { id: 115, name: 'Galaxie', price: 125, type: 'border-color', colorId: 'galaxy', img: 'border-galaxy' },
-      { id: 116, name: 'Aurore', price: 125, type: 'border-color', colorId: 'aurora', img: 'border-aurora' },
-      { id: 117, name: 'Volcan', price: 75, type: 'border-color', colorId: 'volcano', img: 'border-volcano' },
-      { id: 118, name: 'Cristal', price: 75, type: 'border-color', colorId: 'crystal', img: 'border-crystal' },
-      { id: 119, name: 'Minuit', price: 75, type: 'border-color', colorId: 'midnight', img: 'border-midnight' },
-      { id: 120, name: 'Aube', price: 75, type: 'border-color', colorId: 'dawn', img: 'border-dawn' },
-      { id: 121, name: 'Crépuscule', price: 75, type: 'border-color', colorId: 'dusk', img: 'border-dusk' },
-      { id: 122, name: 'Tempête', price: 75, type: 'border-color', colorId: 'storm', img: 'border-storm' },
-      { id: 123, name: 'Printemps', price: 75, type: 'border-color', colorId: 'spring', img: 'border-spring' },
-      { id: 124, name: 'Été', price: 75, type: 'border-color', colorId: 'summer', img: 'border-summer' },
-      { id: 125, name: 'Automne', price: 75, type: 'border-color', colorId: 'autumn', img: 'border-autumn' },
-      { id: 126, name: 'Hiver', price: 75, type: 'border-color', colorId: 'winter', img: 'border-winter' },
-      { id: 127, name: 'Magenta', price: 50, type: 'border-color', colorId: 'magenta', img: 'border-magenta' },
-      { id: 128, name: 'Vert Lime', price: 50, type: 'border-color', colorId: 'lime-green', img: 'border-lime-green' },
-      { id: 129, name: 'Bleu Royal', price: 50, type: 'border-color', colorId: 'royal-blue', img: 'border-royal-blue' },
-      { id: 130, name: 'Blanc', price: 50, type: 'border-color', colorId: 'white', img: 'border-white' },
-      { id: 131, name: 'Bronze', price: 100, type: 'border-color', colorId: 'bronze', img: 'border-bronze' }
+      { id: 110, name: 'Arc-en-ciel', price: 150, type: 'border-color', colorId: 'rainbow', img: 'border-rainbow' }
     ];
 
-    // Générer des couleurs de bordure aléatoires (2-3 par jour)
+    // Seed pour mélanger les couleurs
     const borderSeed = daySeed + '-borders';
     const shuffledBorders = [...borderColors].sort(() => {
       let hash = 0;
@@ -522,23 +517,20 @@ const handleWeeklyItems = async (event) => {
       hash = (hash * 9301 + 49297) % 233280;
       return (hash / 233280) - 0.5;
     });
-    
-    const weeklyBorderColors = shuffledBorders.slice(0, 3); // Toujours 3 couleurs
 
-    // Combiner les items normaux et les couleurs de bordure
+    const weeklyBorderColors = shuffledBorders.slice(0, 3);
     weeklyItems = [...weeklyItems, ...weeklyBorderColors];
 
-    // Calculer le temps jusqu'à la prochaine rotation
-      const now = new Date();
-      const tomorrow = new Date(now);
-      tomorrow.setDate(tomorrow.getDate() + 1);
+    // Temps jusqu'au reset
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(0, 0, 0, 0);
-
-      const timeLeft = tomorrow.getTime() - now.getTime();
-      const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-      const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-      const timeUntilReset = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    const timeLeft = tomorrow.getTime() - now.getTime();
+    const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+    const timeUntilReset = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
     return {
       statusCode: 200,
@@ -564,6 +556,38 @@ const handleWeeklyItems = async (event) => {
         timeUntilReset: '00:00:00'
       })
     };
+  }
+};
+
+// Ajout d'un item en test dans la boutique hebdo (pour l'admin/éditeur)
+const handleWeeklyTestAdd = async (event) => {
+  try {
+    const user = verifyToken(event);
+    const body = JSON.parse(event.body || '{}');
+    const legacyId = Number(body.legacyId);
+    if (!legacyId) {
+      return { statusCode: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success: false, message: 'legacyId manquant' }) };
+    }
+    testWeeklyOverride.add(legacyId);
+    return { statusCode: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success: true }) };
+  } catch (e) {
+    return { statusCode: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success: false, message: 'Token invalide' }) };
+  }
+};
+
+// Retrait de l'override test
+const handleWeeklyTestRemove = async (event) => {
+  try {
+    const user = verifyToken(event);
+    const body = JSON.parse(event.body || '{}');
+    const legacyId = Number(body.legacyId);
+    if (!legacyId) {
+      return { statusCode: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success: false, message: 'legacyId manquant' }) };
+    }
+    testWeeklyOverride.delete(legacyId);
+    return { statusCode: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success: true }) };
+  } catch (e) {
+    return { statusCode: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success: false, message: 'Token invalide' }) };
   }
 };
 
