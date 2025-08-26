@@ -1877,7 +1877,8 @@ onMounted(async () => {
     
 
   
-  if (user.value) {
+  // N'initialiser le store que si l'utilisateur est connecté avec un token
+  if (user.value && user.value.token) {
     await coinsStore.initialize();
     checkSpinAvailability();
   }
@@ -1894,29 +1895,33 @@ onMounted(async () => {
 
 // Watcher pour surveiller les changements de l'utilisateur
 watch(user, async (newUser, oldUser) => {
-  if (newUser && newUser.avatar && typeof newUser.avatar === 'string') {
-    // Si c'est une data URL, l'utiliser directement
-    if (newUser.avatar.startsWith('data:')) {
-      userAvatar.value = newUser.avatar;
-    } else if (newUser.avatar.startsWith('/')) {
-      // Si c'est un chemin, construire l'URL complète
-      userAvatar.value = `${baseUrl}${newUser.avatar}`;
+  if (newUser) {
+    // Gérer l'avatar
+    if (newUser.avatar && typeof newUser.avatar === 'string') {
+      // Si c'est une data URL, l'utiliser directement
+      if (newUser.avatar.startsWith('data:')) {
+        userAvatar.value = newUser.avatar;
+      } else if (newUser.avatar.startsWith('/')) {
+        // Si c'est un chemin, construire l'URL complète
+        userAvatar.value = `${baseUrl}${newUser.avatar}`;
+      }
     }
     
-    await coinsStore.initialize();
-    checkSpinAvailability();
-    
-    // Charger les items dynamiques si l'utilisateur vient de se connecter
-    if (!oldUser && newUser.token) {
-      loadDynamicItems();
+    // N'initialiser le store que si l'utilisateur a un token
+    if (newUser.token) {
+      await coinsStore.initialize();
+      checkSpinAvailability();
+      
+      // Charger les items dynamiques si l'utilisateur vient de se connecter
+      if (!oldUser) {
+        loadDynamicItems();
+      }
     }
   } else {
     userAvatar.value = accountIcon;
-    if (!newUser) {
-      coinsStore.reset();
-      // Réinitialiser les items dynamiques quand l'utilisateur se déconnecte
-      dynamicInfoById.value = new Map();
-    }
+    coinsStore.reset();
+    // Réinitialiser les items dynamiques quand l'utilisateur se déconnecte
+    dynamicInfoById.value = new Map();
   }
 }, { immediate: true });
 onUnmounted(() => {

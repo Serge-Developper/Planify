@@ -1188,11 +1188,14 @@ const authStore = useAuthStore()
 
 // Initialiser le store au montage du composant
 onMounted(async () => {
-  try {
-    await coinsStore.initialize()
-    console.log('✅ Store coins initialisé dans ShopPopup')
-  } catch (error) {
-    console.error('❌ Erreur lors de l\'initialisation du store:', error)
+  // N'initialiser que si l'utilisateur est connecté
+  if (authStore.isLoggedIn && authStore.user?.token) {
+    try {
+      await coinsStore.initialize()
+      console.log('✅ Store coins initialisé dans ShopPopup')
+    } catch (error) {
+      console.error('❌ Erreur lors de l\'initialisation du store:', error)
+    }
   }
 })
 

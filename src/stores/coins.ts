@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { secureApiCall } from '@/api';
+import { useAuthStore } from './auth';
 
 // Import des images
 import oreilleschat from '@/assets/img/oreilleschat.gif';
@@ -583,6 +584,16 @@ export const useCoinsStore = defineStore('coins', {
     // Initialiser le store
     async initialize() {
       try {
+        // Vérifier d'abord si l'utilisateur a un token
+        const authStore = useAuthStore();
+        if (!authStore.user?.token) {
+          console.log('⚠️ Pas de token utilisateur, skip initialize dans coinsStore');
+          // On peut quand même initialiser les bordures et variantes locales
+          this.initializeBorderColors();
+          this.loadDynamicItemVariants();
+          return;
+        }
+        
         // Réinitialiser le store avant de charger les nouvelles données
         this.reset();
         // Charger séquentiellement pour éviter les erreurs 429

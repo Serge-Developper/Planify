@@ -131,7 +131,11 @@ async function closeItemReceivedPopup() {
       await secureApiCall(`/users/ack-gift/${it.id}`, { method: 'POST' })
     }
     // Recharger l'inventaire pour débloquer immédiatement les couleurs données
-    await coinsStore.loadInventory()
+    // Uniquement si l'utilisateur est connecté
+    const authStore = useAuthStore();
+    if (authStore.user?.token) {
+      await coinsStore.loadInventory()
+    }
   } catch {}
   currentItems.value = [];
   currentAdminMessage.value = '';
