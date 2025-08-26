@@ -952,6 +952,15 @@ function resolveDynSrc(src) {
     if (typeof src === 'string' && src.startsWith('/uploads/')) {
       const orig = API_URL || ''
       const base = orig.endsWith('/api') ? orig.slice(0, -4) : orig.replace('/api','')
+      // Aligner avec Collection/Leaderboard: router via les fonctions API
+      if (src.startsWith('/uploads/items/')) {
+        const filename = src.split('/').pop()
+        return base + '/api/items/uploads/' + filename
+      }
+      if (src.startsWith('/uploads/avatars/')) {
+        const filename = src.split('/').pop()
+        return base + '/api/uploads/avatars/' + filename
+      }
       return base + src
     }
   } catch {}
