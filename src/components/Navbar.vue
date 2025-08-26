@@ -1002,6 +1002,9 @@ async function loadUserAvatar() {
     if (typeof av === 'string') {
       if (av.startsWith('data:')) {
         userAvatar.value = av
+      } else if (/^https?:\/\//.test(av)) {
+        // URL absolue fournie par le backend
+        userAvatar.value = av
       } else if (av.startsWith('/uploads/avatars/')) {
         const filename = av.split('/').pop()
         userAvatar.value = `${baseUrl}/api/uploads/avatars/${filename}`
