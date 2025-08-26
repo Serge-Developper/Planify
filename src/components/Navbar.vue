@@ -67,9 +67,9 @@
                     :src="resolveAssetSrc(a.src)"
                     :style="getDynNavbarAssetStyle(a)"
                   />
-                  <!-- Fallback: si aucune asset de variante n'est disponible, afficher l'image de base -->
+                  <!-- Fallback universel: afficher l'image de base quoi qu'il arrive (visible pour debug/étapes) -->
                   <img
-                    v-if="equippedDynItem && equippedDynItem.img && getDynVariantAssetsForNavbar(equippedDynItem).length === 0"
+                    v-if="equippedDynItem && equippedDynItem.img"
                     :src="equippedDynItem.img"
                     alt="dyn"
                     style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:contain; z-index: 10; pointer-events:none;"
