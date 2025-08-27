@@ -24,7 +24,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import axios from 'axios';
-import { API_URL } from '@/api';
+import { API_URL, secureApiCall } from '@/api';
 import ListeDevoirs from './ListeDevoirs.vue'
 import LoginPopup from './LoginPopup.vue';
 import closeImg from '@/assets/img/bouton_supprimer_decocher.png'
@@ -44,15 +44,16 @@ onMounted(async () => {
     return; // NE PAS faire la requête si non connecté
   }
   try {
-    const res = await axios.get(`${API_URL}/events`);
-    if (Array.isArray(res.data)) {
-      events.value = res.data.map(event => ({
+    const res = await secureApiCall('/events');
+    if (Array.isArray(res)) {
+      events.value = res.map(event => ({
         ...event,
         start: new Date(event.start),
         end: new Date(event.end),
       }));
     }
   } catch (e) {
+    console.error('Erreur lors du chargement des événements:', e);
     events.value = [];
   }
 });
@@ -63,15 +64,16 @@ const filteredEvents = computed(() => {
 
 async function reloadEvents() {
   try {
-    const res = await axios.get(`${API_URL}/events`);
-    if (Array.isArray(res.data)) {
-      events.value = res.data.map(event => ({
+    const res = await secureApiCall('/events');
+    if (Array.isArray(res)) {
+      events.value = res.map(event => ({
         ...event,
         start: new Date(event.start),
         end: new Date(event.end),
       }));
     }
   } catch (e) {
+    console.error('Erreur lors du rechargement des événements:', e);
     events.value = [];
   }
 }
