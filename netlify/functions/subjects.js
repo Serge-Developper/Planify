@@ -68,8 +68,18 @@ exports.handler = async (event, context) => {
           };
         }
 
+        // Normaliser les champs optionnels de dégradé
+        const normalized = {
+          name: String(newSubject.name),
+          color: String(newSubject.color),
+          color2: newSubject.color2 ? String(newSubject.color2) : undefined,
+          gradientAngle: typeof newSubject.gradientAngle === 'number' ? newSubject.gradientAngle : undefined,
+          colorOpacity: typeof newSubject.colorOpacity === 'number' ? newSubject.colorOpacity : undefined,
+          color2Opacity: typeof newSubject.color2Opacity === 'number' ? newSubject.color2Opacity : undefined,
+        };
+
         const result = await subjectsCollection.insertOne({
-          ...newSubject,
+          ...normalized,
           createdAt: new Date(),
           updatedAt: new Date()
         });
@@ -82,7 +92,7 @@ exports.handler = async (event, context) => {
           },
           body: JSON.stringify({ 
             _id: result.insertedId,
-            ...newSubject,
+            ...normalized,
             createdAt: new Date(),
             updatedAt: new Date()
           })
@@ -102,7 +112,15 @@ exports.handler = async (event, context) => {
           };
         }
 
-        const updateData = JSON.parse(event.body);
+        const updateDataRaw = JSON.parse(event.body);
+        const updateData = {
+          ...(updateDataRaw.name !== undefined ? { name: String(updateDataRaw.name) } : {}),
+          ...(updateDataRaw.color !== undefined ? { color: String(updateDataRaw.color) } : {}),
+          ...(updateDataRaw.color2 !== undefined ? { color2: updateDataRaw.color2 ? String(updateDataRaw.color2) : undefined } : {}),
+          ...(updateDataRaw.gradientAngle !== undefined ? { gradientAngle: Number(updateDataRaw.gradientAngle) } : {}),
+          ...(updateDataRaw.colorOpacity !== undefined ? { colorOpacity: Number(updateDataRaw.colorOpacity) } : {}),
+          ...(updateDataRaw.color2Opacity !== undefined ? { color2Opacity: Number(updateDataRaw.color2Opacity) } : {}),
+        };
         
         // Vérifier si le nouveau nom existe déjà (sauf pour cette matière)
         if (updateData.name) {

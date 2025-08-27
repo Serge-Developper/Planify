@@ -4,7 +4,12 @@ import { ref, computed } from 'vue';
 export interface Subject {
   _id?: string;
   name: string;
-  color: string;
+  color: string; // Couleur principale (hex)
+  // Optionnel: configuration de dégradé
+  color2?: string; // seconde couleur
+  gradientAngle?: number; // en degrés 0-360
+  colorOpacity?: number; // 0-1 pour color
+  color2Opacity?: number; // 0-1 pour color2
   createdAt?: Date;
   updatedAt?: Date;
 }

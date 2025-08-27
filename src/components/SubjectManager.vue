@@ -23,10 +23,10 @@
           v-for="subject in subjects" 
           :key="subject._id" 
           class="subject-card"
-          :style="{ borderLeftColor: subject.color }"
+          :style="subjectCardStyle(subject)"
         >
           <div class="subject-info">
-            <div class="subject-color" :style="{ backgroundColor: subject.color }"></div>
+            <div class="subject-color" :style="subjectColorStyle(subject)"></div>
             <div class="subject-details">
               <h3>{{ subject.name }}</h3>
               <p class="subject-date">
@@ -81,16 +81,27 @@
           </div>
 
           <div class="form-group">
-            <label for="subjectColor">Couleur *</label>
+            <label for="subjectColor">Couleur principale *</label>
             <div class="color-picker">
-              <input
-                id="subjectColor"
-                v-model="formData.color"
-                type="color"
-                required
-              />
-              <span class="color-preview" :style="{ backgroundColor: formData.color }"></span>
+              <input id="subjectColor" v-model="formData.color" type="color" required />
+              <input type="range" min="0" max="1" step="0.01" v-model.number="formData.colorOpacity" />
+              <span class="color-preview" :style="{ background: rgbaColor(formData.color, formData.colorOpacity) }"></span>
             </div>
+          </div>
+
+          <div class="form-group">
+            <label for="subjectColor2">Deuxième couleur (optionnelle)</label>
+            <div class="color-picker">
+              <input id="subjectColor2" v-model="formData.color2" type="color" />
+              <input type="range" min="0" max="1" step="0.01" v-model.number="formData.color2Opacity" />
+              <span class="color-preview" :style="{ background: rgbaColor(formData.color2, formData.color2Opacity) }"></span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="angle">Angle du dégradé (°)</label>
+            <input id="angle" type="number" min="0" max="360" v-model.number="formData.gradientAngle" />
+            <div class="color-preview" :style="{ background: gradientPreview }"></div>
           </div>
 
           <div class="form-actions">
@@ -114,7 +125,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive, watch } from 'vue';
+import { ref, onMounted, reactive, watch, computed } from 'vue';
 import { useSubjectsStore, type Subject } from '@/stores/subjects';
 
 const subjectsStore = useSubjectsStore();
@@ -124,7 +135,11 @@ const showAddForm = ref(false);
 const editingSubject = ref<Subject | null>(null);
 const formData = reactive({
   name: '',
-  color: '#3B82F6'
+  color: '#3B82F6',
+  color2: '#60A5FA',
+  gradientAngle: 135,
+  colorOpacity: 1,
+  color2Opacity: 1,
 });
 
 // Computed
@@ -145,26 +160,36 @@ const closeForm = () => {
 const resetForm = () => {
   formData.name = '';
   formData.color = '#3B82F6';
+  formData.color2 = '#60A5FA';
+  formData.gradientAngle = 135;
+  formData.colorOpacity = 1;
+  formData.color2Opacity = 1;
 };
 
 const editSubject = (subject: Subject) => {
   editingSubject.value = subject;
   formData.name = subject.name;
   formData.color = subject.color;
+  formData.color2 = (subject as any).color2 || '#60A5FA';
+  formData.gradientAngle = (subject as any).gradientAngle ?? 135;
+  formData.colorOpacity = (subject as any).colorOpacity ?? 1;
+  formData.color2Opacity = (subject as any).color2Opacity ?? 1;
 };
 
 const handleSubmit = async () => {
   try {
+    const payload:any = {
+      name: formData.name,
+      color: formData.color,
+      color2: formData.color2,
+      gradientAngle: formData.gradientAngle,
+      colorOpacity: formData.colorOpacity,
+      color2Opacity: formData.color2Opacity,
+    };
     if (editingSubject.value) {
-      await subjectsStore.updateSubject(editingSubject.value._id!, {
-        name: formData.name,
-        color: formData.color
-      });
+      await subjectsStore.updateSubject(editingSubject.value._id!, payload);
     } else {
-      await subjectsStore.createSubject({
-        name: formData.name,
-        color: formData.color
-      });
+      await subjectsStore.createSubject(payload);
     }
     
     closeForm();
@@ -213,6 +238,43 @@ watch(() => [subjectsStore.subjects, subjectsStore.initialized], ([newSubjects, 
     subjectsStore.initializeStore();
   }
 }, { immediate: true });
+
+// Helpers pour l'aperçu
+function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex || '');
+  return m ? { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) } : null;
+}
+function rgbaColor(hex: string, alpha: number): string {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return hex || '#000000';
+  const a = typeof alpha === 'number' ? Math.min(1, Math.max(0, alpha)) : 1;
+  return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${a})`;
+}
+const gradientPreview = computed(() => {
+  const c1 = rgbaColor(formData.color, formData.colorOpacity);
+  const c2 = rgbaColor(formData.color2, formData.color2Opacity);
+  return `linear-gradient(${formData.gradientAngle || 0}deg, ${c1}, ${c2})`;
+});
+
+function subjectGradient(s: any): string | null {
+  if (s && s.color2) {
+    const c1 = rgbaColor(s.color || '#000000', s.colorOpacity ?? 1);
+    const c2 = rgbaColor(s.color2 || '#000000', s.color2Opacity ?? 1);
+    const angle = typeof s.gradientAngle === 'number' ? s.gradientAngle : 135;
+    return `linear-gradient(${angle}deg, ${c1}, ${c2})`;
+  }
+  return null;
+}
+function subjectCardStyle(s: any) {
+  const gradient = subjectGradient(s);
+  return gradient
+    ? { borderLeftColor: s.color, background: gradient }
+    : { borderLeftColor: s.color };
+}
+function subjectColorStyle(s: any) {
+  const gradient = subjectGradient(s);
+  return gradient ? { background: gradient } : { backgroundColor: s.color };
+}
 </script>
 
 <style scoped>
