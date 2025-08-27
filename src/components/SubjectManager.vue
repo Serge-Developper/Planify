@@ -268,12 +268,13 @@ function rgbaColor(hex: string, alpha: number): string {
 }
 const gradientPreview = computed(() => {
   const c1 = rgbaColor(formData.color, formData.colorOpacity);
+  if (!formData.useGradient) return c1;
   const c2 = rgbaColor(formData.color2, formData.color2Opacity);
   return `linear-gradient(${formData.gradientAngle || 0}deg, ${c1}, ${c2})`;
 });
 
 function subjectGradient(s: any): string | null {
-  if (s && s.color2) {
+  if (s && s.useGradient && s.color2) {
     const c1 = rgbaColor(s.color || '#000000', s.colorOpacity ?? 1);
     const c2 = rgbaColor(s.color2 || '#000000', s.color2Opacity ?? 1);
     const angle = typeof s.gradientAngle === 'number' ? s.gradientAngle : 135;
