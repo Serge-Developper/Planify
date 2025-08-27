@@ -82,15 +82,24 @@ async function handleLogin() {
       // Normaliser l'objet utilisateur: {...user, token}
       const normalizedUser = { ...(data.user || {}), token: data.token };
       userData = normalizedUser; // Stocke la version normalisée
-      // Debug minimal
-      console.log('Login response (hasSecretQuestions):', data.user.hasSecretQuestions);
+      
+      // Debug détaillé
+      console.log('🔍 Login response:', {
+        hasUser: !!data.user,
+        hasToken: !!data.token,
+        tokenLength: data.token ? data.token.length : 0,
+        tokenStart: data.token ? data.token.substring(0, 20) + '...' : 'null',
+        hasSecretQuestions: data.user.hasSecretQuestions
+      });
       
       if (data.user.hasSecretQuestions === false) {
         showSecretQuestionsSetup.value = true;
         // NE PAS stocker dans localStorage ici - attendre que les questions soient définies
+        console.log('⏳ Questions secrètes non définies, attente...');
       } else {
         // Seulement stocker si l'utilisateur a déjà des questions secrètes
         localStorage.setItem('user', JSON.stringify(normalizedUser));
+        console.log('✅ Utilisateur stocké dans localStorage avec token');
         emit('login-success', { user: normalizedUser, password: password.value });
         close();
       }
@@ -120,6 +129,7 @@ function handleSecretQuestionsSaved() {
   showSecretQuestionsSetup.value = false;
   // Maintenant on peut stocker dans localStorage car les questions secrètes sont définies
   localStorage.setItem('user', JSON.stringify(userData));
+  console.log('✅ Questions secrètes définies, utilisateur stocké dans localStorage');
   emit('login-success', { user: userData, password: password.value });
   close();
 }
