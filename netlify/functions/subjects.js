@@ -113,13 +113,17 @@ exports.handler = async (event, context) => {
         }
 
         const updateDataRaw = JSON.parse(event.body);
+        const mkNum = (v) => {
+          const n = Number(v);
+          return Number.isFinite(n) ? n : undefined;
+        };
         const updateData = {
           ...(updateDataRaw.name !== undefined ? { name: String(updateDataRaw.name) } : {}),
           ...(updateDataRaw.color !== undefined ? { color: String(updateDataRaw.color) } : {}),
           ...(updateDataRaw.color2 !== undefined ? { color2: updateDataRaw.color2 ? String(updateDataRaw.color2) : undefined } : {}),
-          ...(updateDataRaw.gradientAngle !== undefined ? { gradientAngle: Number(updateDataRaw.gradientAngle) } : {}),
-          ...(updateDataRaw.colorOpacity !== undefined ? { colorOpacity: Number(updateDataRaw.colorOpacity) } : {}),
-          ...(updateDataRaw.color2Opacity !== undefined ? { color2Opacity: Number(updateDataRaw.color2Opacity) } : {}),
+          ...(updateDataRaw.gradientAngle !== undefined ? (() => { const n = mkNum(updateDataRaw.gradientAngle); return n !== undefined ? { gradientAngle: n } : {}; })() : {}),
+          ...(updateDataRaw.colorOpacity !== undefined ? (() => { const n = mkNum(updateDataRaw.colorOpacity); return n !== undefined ? { colorOpacity: n } : {}; })() : {}),
+          ...(updateDataRaw.color2Opacity !== undefined ? (() => { const n = mkNum(updateDataRaw.color2Opacity); return n !== undefined ? { color2Opacity: n } : {}; })() : {}),
         };
         
         // Vérifier si le nouveau nom existe déjà (sauf pour cette matière)
@@ -141,8 +145,27 @@ exports.handler = async (event, context) => {
           }
         }
 
+        let objectId;
+        try {
+          objectId = require('mongodb').ObjectId(id);
+        } catch (e) {
+          try {
+            const { ObjectId } = require('mongodb');
+            objectId = new ObjectId(id);
+          } catch {
+            return {
+              statusCode: 400,
+              headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ error: 'ID invalide' })
+            };
+          }
+        }
+
         const updateResult = await subjectsCollection.updateOne(
-          { _id: require('mongodb').ObjectId(id) },
+          { _id: objectId },
           { 
             $set: {
               ...updateData,
@@ -204,8 +227,27 @@ exports.handler = async (event, context) => {
           };
         }
 
+        let deleteObjId;
+        try {
+          deleteObjId = require('mongodb').ObjectId(deleteId);
+        } catch (e) {
+          try {
+            const { ObjectId } = require('mongodb');
+            deleteObjId = new ObjectId(deleteId);
+          } catch {
+            return {
+              statusCode: 400,
+              headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ error: 'ID invalide' })
+            };
+          }
+        }
+
         const deleteResult = await subjectsCollection.deleteOne({ 
-          _id: require('mongodb').ObjectId(deleteId) 
+          _id: deleteObjId 
         });
 
         if (deleteResult.deletedCount === 0) {
