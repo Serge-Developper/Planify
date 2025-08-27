@@ -48,6 +48,13 @@ exports.handler = async (event, context) => {
     await connectDB();
 
     if (event.httpMethod === 'GET') {
+      const qs = event.queryStringParameters || {};
+      const id = qs.id || null;
+      if (id) {
+        const one = await BorderColor.findOne({ id: String(id) }).lean();
+        if (!one) return { statusCode: 404, headers: corsHeaders, body: JSON.stringify({ success:false, message:'Couleur introuvable' }) };
+        return { statusCode: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success: true, color: one }) };
+      }
       const list = await BorderColor.find({}).sort({ createdAt: -1 }).lean();
       return { statusCode: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success: true, colors: list }) };
     }
@@ -64,6 +71,32 @@ exports.handler = async (event, context) => {
       if (exists) return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ success:false, message:'id déjà utilisé' }) };
       const doc = await BorderColor.create({ id, name, color, gradient });
       return { statusCode: 201, headers: corsHeaders, body: JSON.stringify({ success:true, color: doc }) };
+    }
+
+    if (event.httpMethod === 'PUT') {
+      try { verifyAdmin(event); } catch { return { statusCode: 401, headers: corsHeaders, body: JSON.stringify({ success:false, message:'Non autorisé' }) }; }
+      const qs = event.queryStringParameters || {};
+      const id = qs.id || null;
+      const body = JSON.parse(event.body || '{}');
+      const update = {};
+      if (body.name !== undefined) update.name = String(body.name);
+      if (body.color !== undefined) update.color = body.color ? String(body.color) : null;
+      if (body.gradient !== undefined) update.gradient = body.gradient ? String(body.gradient) : null;
+      if (!id && !body.id) return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ success:false, message:'id requis pour mise à jour' }) };
+      const key = String(id || body.id);
+      const doc = await BorderColor.findOneAndUpdate({ id: key }, update, { new: true });
+      if (!doc) return { statusCode: 404, headers: corsHeaders, body: JSON.stringify({ success:false, message:'Couleur introuvable' }) };
+      return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ success:true, color: doc }) };
+    }
+
+    if (event.httpMethod === 'DELETE') {
+      try { verifyAdmin(event); } catch { return { statusCode: 401, headers: corsHeaders, body: JSON.stringify({ success:false, message:'Non autorisé' }) }; }
+      const qs = event.queryStringParameters || {};
+      const id = qs.id || null;
+      if (!id) return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ success:false, message:'id requis' }) };
+      const res = await BorderColor.deleteOne({ id: String(id) });
+      if (!res || res.deletedCount === 0) return { statusCode: 404, headers: corsHeaders, body: JSON.stringify({ success:false, message:'Couleur introuvable' }) };
+      return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ success:true }) };
     }
 
     return { statusCode: 405, headers: corsHeaders, body: JSON.stringify({ success:false, message:'Méthode non autorisée' }) };

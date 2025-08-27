@@ -215,6 +215,17 @@
       <div :style="borderPreviewOuter" style="display:inline-block;">
         <div :style="borderPreviewInner"></div>
       </div>
+      <div class="existing" v-if="borderColorsList.length" style="margin-top:12px;">
+        <h4>Couleurs enregistrées</h4>
+        <ul>
+          <li v-for="c in borderColorsList" :key="c.id" style="display:flex;gap:10px;align-items:center;">
+            <div :style="{ width:'18px', height:'18px', borderRadius:'4px', background: c.gradient || c.color || '#000' }"></div>
+            <span>#{{ c.id }} — {{ c.name }}</span>
+            <button class="btn tiny" @click="editBorderColor(c)">Éditer</button>
+            <button class="btn tiny danger" @click="deleteBorderColor(c)">Supprimer</button>
+          </li>
+        </ul>
+      </div>
     </div>
   </div>
 </template>
@@ -270,6 +281,8 @@ const borderForm = ref({
   gradient: '',
   availableInDailyShop: false
 })
+
+const borderColorsList = ref([])
 
 const canvasStyle = computed(() => {
   // Dimensions: Collection = 90 (desktop) / 80 (mobile) — Leaderboard = 50 — Navbar = 57 — Popup Style = 120.5x64
@@ -853,6 +866,7 @@ async function saveBorderColor() {
         method: 'POST',
         body: JSON.stringify({ id: payload.colorId, name: payload.name, color: payload.color, gradient: payload.gradient })
       })
+      await loadBorderColors()
     } catch {}
     alert('Couleur enregistrée !')
     existingItems.value = [res.item, ...existingItems.value]
@@ -862,7 +876,34 @@ async function saveBorderColor() {
   }
 }
 
-onMounted(async () => { await loadExisting() })
+async function loadBorderColors() {
+  try {
+    const res = await secureApiCall('/border-colors')
+    borderColorsList.value = (res && res.success && Array.isArray(res.colors)) ? res.colors : []
+  } catch { borderColorsList.value = [] }
+}
+
+function editBorderColor(c) {
+  if (!c) return
+  borderForm.value.legacyId = Number(borderForm.value.legacyId) || 100
+  borderForm.value.name = c.name || ''
+  borderForm.value.colorId = c.id || ''
+  borderForm.value.color = c.color || '#000000'
+  borderForm.value.gradient = c.gradient || ''
+}
+
+async function deleteBorderColor(c) {
+  if (!c || !c.id) return
+  if (!confirm(`Supprimer la couleur "${c.name}" ?`)) return
+  const res = await secureApiCall(`/border-colors?id=${encodeURIComponent(c.id)}`, { method: 'DELETE' })
+  if (res && res.success) {
+    borderColorsList.value = borderColorsList.value.filter(x => x.id !== c.id)
+  } else {
+    alert('Suppression échouée')
+  }
+}
+
+onMounted(async () => { await loadExisting(); await loadBorderColors(); })
 
 async function loadExisting() {
   try {
