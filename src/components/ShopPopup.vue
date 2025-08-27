@@ -1294,7 +1294,7 @@ async function loadDynamicItems() {
       return
     }
     
-    const res = await secureApiCall('/items')
+    const res = await secureApiCall('/coins/items')
     if (res && res.success && Array.isArray(res.items)) {
       const normalized = res.items.map((it) => ({
         id: it.legacyId,
@@ -1646,7 +1646,7 @@ async function openInfoItem(item) {
   let desc = (typeof raw === 'string') ? raw.trim() : ''
   if (!desc) {
     try {
-      const res = await secureApiCall(`/items?_=${Date.now()}`)
+      const res = await secureApiCall(`/coins/items?_=${Date.now()}`)
       if (res && res.success && Array.isArray(res.items)) {
         let fresh = res.items.find(it => Number(it.legacyId) === Number(item?.id))
         if (!fresh) fresh = res.items.find(it => (

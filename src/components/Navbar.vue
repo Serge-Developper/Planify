@@ -1024,7 +1024,7 @@ async function loadDynamicItems() {
       return
     }
     
-    const res = await secureApiCall('/items')
+    const res = await secureApiCall('/coins/items')
     if (res && res.success && Array.isArray(res.items)) {
       const map = new Map()
       for (const it of res.items) {
