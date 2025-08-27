@@ -457,11 +457,13 @@ const matieresStatiques = [
   "Economie et droit du numérique"
 ];
 
-// Liste des matières dynamiques depuis le store, avec fallback sur les matières statiques
+// Liste des matières : statiques + dynamiques
 const mmiMatieres = computed(() => {
   const matieresDynamiques = subjectsStore.getSubjects.map(subject => subject.name);
-  // Si aucune matière dynamique n'est chargée, utiliser les matières statiques
-  return matieresDynamiques.length > 0 ? matieresDynamiques : matieresStatiques;
+  // Combiner les matières statiques avec les matières dynamiques
+  const toutesMatieres = [...matieresStatiques, ...matieresDynamiques];
+  // Supprimer les doublons (au cas où une matière dynamique aurait le même nom qu'une statique)
+  return [...new Set(toutesMatieres)];
 });
 
 // Génère une clé unique stable pour un event
