@@ -68,9 +68,9 @@
                     :style="getDynNavbarAssetStyle(a)"
                   />
                 </template>
-                <!-- Image de base de l'item dynamique: affichage seulement si pas d'assets de variante -->
+                <!-- Image de base de l'item dynamique: affichage garanti -->
                 <img
-                  v-if="equippedDynItem && equippedDynItem.img && !hasAnyNavbarAsset(equippedDynItem)"
+                  v-if="equippedDynItem && equippedDynItem.img"
                   :src="resolveAssetSrc(equippedDynItem.img)"
                   :alt="equippedDynItem.name"
                   :style="getDynFallbackNavbarStyle(equippedDynItem)"
@@ -146,9 +146,9 @@
               />
 
             </template>
-            <!-- Image de base (mobile) de l'item dynamique: affichage seulement si pas d'assets de variante -->
+            <!-- Image de base (mobile) de l'item dynamique: affichage garanti -->
             <img
-              v-if="equippedDynItem && equippedDynItem.img && !hasAnyNavbarAsset(equippedDynItem)"
+              v-if="equippedDynItem && equippedDynItem.img"
               :src="resolveAssetSrc(equippedDynItem.img)"
               :alt="equippedDynItem.name"
               :style="getDynFallbackNavbarStyle(equippedDynItem)"
@@ -1149,44 +1149,13 @@ function getDynVariantAssetsForNavbar(item) {
     }
     
     if (!Array.isArray(variant.assets) || variant.assets.length === 0) {
-      console.log('⚠️ Pas d\'assets pour la variante, utilisation des assets de base')
-      // Si la variante n'a pas d'assets, utiliser les assets de base
-      return item.assets || []
+      console.log('⚠️ Pas d\'assets pour la variante, retourner tableau vide')
+      return []
     }
     
-    // Combiner les assets de base avec ceux de la variante, en évitant les doublons
-    const baseAssets = Array.isArray(item.assets) ? item.assets : []
-    const variantAssets = variant.assets
-    
-    // Créer un Set des sources pour éviter les doublons
-    const seenSources = new Set()
-    const combinedAssets = []
-    
-    // Ajouter d'abord les assets de la variante
-    for (const asset of variantAssets) {
-      if (asset && asset.src) {
-        const srcKey = String(asset.src).split('/').pop()
-        if (!seenSources.has(srcKey)) {
-          seenSources.add(srcKey)
-          combinedAssets.push(asset)
-        }
-      }
-    }
-    
-    // Ajouter les assets de base qui ne sont pas déjà présents
-    for (const asset of baseAssets) {
-      if (asset && asset.src) {
-        const srcKey = String(asset.src).split('/').pop()
-        if (!seenSources.has(srcKey)) {
-          seenSources.add(srcKey)
-          combinedAssets.push(asset)
-        }
-      }
-    }
-    
-    console.log('✅ Assets combinés (base + variante):', combinedAssets.length, 'assets')
-    console.log('📋 Détail des assets combinés:', combinedAssets.map(a => ({ src: a.src, placement: getDynPlacement(a) })))
-    return combinedAssets
+    console.log('✅ Assets trouvés pour la variante:', variant.assets.length, 'assets')
+    console.log('📋 Détail des assets de la variante:', variant.assets.map(a => ({ src: a.src, placement: getDynPlacement(a) })))
+    return variant.assets
   } catch (e) {
     console.error('❌ Erreur dans getDynVariantAssetsForNavbar:', e)
     return []
