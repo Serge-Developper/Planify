@@ -1,7 +1,15 @@
 <template>
   <div class="admin-item-editor" v-if="isAdmin">
     <h2>Créateur d'items</h2>
-    <div class="editor-form">
+    <div style="display:flex;gap:8px;align-items:center;margin:8px 0;">
+      <label style="display:flex;align-items:center;gap:6px;">
+        <input type="radio" v-model="editorMode" value="items" /> Items dynamiques
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;">
+        <input type="radio" v-model="editorMode" value="border" /> Couleurs de bordure
+      </label>
+    </div>
+    <div class="editor-form" v-if="editorMode==='items'">
       <label>ID (legacy / mapping)
         <input v-model.number="form.legacyId" type="number" min="0" placeholder="ex: 233" />
       </label>
@@ -36,6 +44,32 @@
       </div>
     </div>
 
+    <!-- Formulaire Couleurs de bordure -->
+    <div class="editor-form" v-else>
+      <label>ID couleur (legacy / mapping)
+        <input v-model.number="borderForm.legacyId" type="number" min="0" placeholder="ex: 100" />
+      </label>
+      <label>Nom
+        <input v-model="borderForm.name" type="text" placeholder="Nom de la couleur" />
+      </label>
+      <label>Identifiant colorId (ex: red, royal-blue)
+        <input v-model="borderForm.colorId" type="text" placeholder="ex: red" />
+      </label>
+      <label>Couleur HEX (aplat)
+        <input v-model="borderForm.color" type="text" placeholder="#FF0000 (optionnel si gradient)" />
+      </label>
+      <label>Gradient CSS
+        <input v-model="borderForm.gradient" type="text" placeholder="linear-gradient(45deg,#f00,#0f0) (optionnel)" />
+      </label>
+      <label>
+        Disponible en boutique quotidienne
+        <input v-model="borderForm.availableInDailyShop" type="checkbox" />
+      </label>
+      <div class="upload">
+        <button class="btn primary" @click="saveBorderColor">Enregistrer la couleur</button>
+      </div>
+    </div>
+
     <div class="canvas-section">
       <div class="canvas-tabs">
         <button :class="{active: activeCanvas==='collection'}" @click="activeCanvas='collection'">Collection</button>
@@ -63,8 +97,8 @@
       </div>
       <div class="tools">
         <button class="btn secondary" @click="addAssetFromUrl">Ajouter par URL</button>
-        <button v-if="!isEditing" class="btn primary" @click="saveItem">Enregistrer l'item</button>
-        <button v-else class="btn primary" @click="updateItem">Mettre à jour l'item</button>
+        <button v-if="editorMode==='items' && !isEditing" class="btn primary" @click="saveItem">Enregistrer l'item</button>
+        <button v-if="editorMode==='items' && isEditing" class="btn primary" @click="updateItem">Mettre à jour l'item</button>
         <button class="btn outline" @click="testAddToWeekly">Tester en boutique hebdo</button>
         <button class="btn danger" @click="removeFromWeekly">Retirer de la boutique hebdo</button>
         <button class="btn ghost" @click="clearForm">Nouveau</button>
@@ -184,6 +218,7 @@ import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
 const isAdmin = computed(() => auth.user && auth.user.role === 'admin')
+const editorMode = ref('items') // 'items' | 'border'
 
 const fileInput = ref(null)
 const activeCanvas = ref('collection') // collection | leaderboard | avatar | navbar
@@ -216,6 +251,16 @@ const form = ref({
   assets: [],
   backgrounds: { collection: null, leaderboard: null, avatar: null, navbar: null },
   variants: []
+})
+
+// Formulaire Couleur de bordure
+const borderForm = ref({
+  legacyId: 100,
+  name: '',
+  colorId: '',
+  color: '#000000',
+  gradient: '',
+  availableInDailyShop: false
 })
 
 const canvasStyle = computed(() => {
@@ -751,6 +796,30 @@ async function saveItem() {
     const msg = (res && res.message) ? res.message : 'Erreur création item'
     if (String(msg).includes('legacyId déjà utilisé')) alert('ID déjà utilisé. Choisissez un autre legacyId.')
     else alert(msg)
+  }
+}
+
+async function saveBorderColor() {
+  const payload = {
+    legacyId: Number(borderForm.value.legacyId),
+    name: borderForm.value.name || (borderForm.value.colorId || 'Couleur'),
+    price: 0,
+    type: 'border-color',
+    colorId: borderForm.value.colorId || String(borderForm.value.legacyId),
+    color: borderForm.value.color || null,
+    gradient: borderForm.value.gradient || null,
+    availableInDailyShop: !!borderForm.value.availableInDailyShop,
+    assets: [],
+    backgrounds: { collection: null, leaderboard: null, avatar: null, navbar: null, 'popup-style': null },
+    variants: []
+  }
+  const res = await secureApiCall('/items', { method: 'POST', body: JSON.stringify(payload) })
+  if (res && res.success) {
+    alert('Couleur enregistrée !')
+    existingItems.value = [res.item, ...existingItems.value]
+    borderForm.value = { legacyId: 100, name: '', colorId: '', color: '#000000', gradient: '', availableInDailyShop: false }
+  } else {
+    alert(res?.message || 'Erreur enregistrement couleur')
   }
 }
 

@@ -350,8 +350,10 @@ export const useCoinsStore = defineStore('coins', {
     },
 
     // Fonction pour obtenir l'ID de couleur de bordure à partir d'un item
-    getBorderColorIdFromItem(item: { id: number; name: string; type?: string }) {
+    getBorderColorIdFromItem(item: { id: number; name: string; type?: string; colorId?: string }) {
       // Mapper les IDs d'items vers les IDs de couleurs (que l'item provienne d'un achat ou d'un don admin)
+        // Priorité au colorId embarqué (nouveau système via Admin)
+        if (item && (item as any).colorId) return String((item as any).colorId)
         const colorMapping: { [key: number]: string } = {
           100: 'red',
           101: 'blue', 

@@ -72,6 +72,10 @@ const itemSchema = new mongoose.Schema({
   name: { type: String, required: true },
   price: { type: Number, required: true },
   type: { type: String, default: 'generic' },
+  // Champs pour variantes de couleurs de bordure
+  colorId: { type: String, default: null },
+  color: { type: String, default: null },
+  gradient: { type: String, default: null },
   infoOnly: { type: Boolean, default: false },
   infoDescription: { type: String, default: null },
   assets: { type: [assetSchema], default: [] },
@@ -243,7 +247,14 @@ exports.handler = async (event, context) => {
       }
       const exists = await Item.findOne({ legacyId: body.legacyId });
       if (exists) return { statusCode: 400, headers, body: JSON.stringify({ success: false, message: 'legacyId déjà utilisé' }) };
-      const doc = await Item.create({ ...body, createdBy: user.id || user._id, active: true });
+      // Normaliser les champs couleur si type border-color
+      const payload = { ...body, createdBy: user.id || user._id, active: true };
+      if (payload.type === 'border-color') {
+        if (!payload.colorId) payload.colorId = String(payload.legacyId);
+        payload.color = typeof payload.color === 'string' ? payload.color : null;
+        payload.gradient = typeof payload.gradient === 'string' ? payload.gradient : null;
+      }
+      const doc = await Item.create(payload);
       return { statusCode: 201, headers, body: JSON.stringify({ success: true, item: doc }) };
     }
 
@@ -255,7 +266,13 @@ exports.handler = async (event, context) => {
       const id = getPathId(event);
       if (!id) return { statusCode: 400, headers, body: JSON.stringify({ success: false, message: 'ID manquant' }) };
       const body = JSON.parse(event.body || '{}');
-      const doc = await Item.findByIdAndUpdate(id, body, { new: true });
+      const update = { ...body };
+      if (update.type === 'border-color') {
+        if (update.colorId === undefined) { /* keep */ } else if (!update.colorId) update.colorId = null; else update.colorId = String(update.colorId);
+        if (update.color !== undefined) update.color = typeof update.color === 'string' ? update.color : null;
+        if (update.gradient !== undefined) update.gradient = typeof update.gradient === 'string' ? update.gradient : null;
+      }
+      const doc = await Item.findByIdAndUpdate(id, update, { new: true });
       if (!doc) return { statusCode: 404, headers, body: JSON.stringify({ success: false, message: 'Item introuvable' }) };
       return { statusCode: 200, headers, body: JSON.stringify({ success: true, item: doc }) };
     }
