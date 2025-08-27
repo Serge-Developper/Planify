@@ -68,6 +68,13 @@
                     :style="getDynNavbarAssetStyle(a)"
                   />
                 </template>
+                <!-- Image de base de l'item dynamique: toujours affichée, stylée selon l'éditeur -->
+                <img
+                  v-if="equippedDynItem && equippedDynItem.img"
+                  :src="resolveAssetSrc(equippedDynItem.img)"
+                  :alt="equippedDynItem.name"
+                  :style="getDynFallbackNavbarStyle(equippedDynItem)"
+                />
                 <!-- Animation Matrix à l'intérieur de l'avatar -->
                 <div v-if="equippedItem && equippedItem.displayType === 'matrix'" class="matrix-rain-inside">
                   <div class="matrix-column" v-for="i in 15" :key="i" :style="{ left: (i * 6.67) + '%', animationDelay: (Math.random() * 2) + 's' }">
@@ -146,6 +153,13 @@
                 :style="getDynFallbackNavbarStyle(equippedDynItem)"
               />
             </template>
+            <!-- Image de base (mobile) de l'item dynamique: toujours affichée -->
+            <img
+              v-if="equippedDynItem && equippedDynItem.img"
+              :src="resolveAssetSrc(equippedDynItem.img)"
+              :alt="equippedDynItem.name"
+              :style="getDynFallbackNavbarStyle(equippedDynItem)"
+            />
 
             <!-- Item équipé générique (rendu seulement si une image est définie et pas d'item dynamique) -->
             <img 
