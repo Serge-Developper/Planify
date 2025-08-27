@@ -1024,9 +1024,23 @@ function getDynPlacement(asset) {
   try {
     const m = asset && asset.meta ? asset.meta : {}
     const p = m.navbarPlacement || m.avatarPlacement || asset.navbarPlacement
-    alert('🔍 getDynPlacement - asset: ' + asset.src + '\nmeta: ' + JSON.stringify(m) + '\nplacement: ' + p)
+    
+    // Si pas de placement défini, essayer de le déterminer par la position
+    if (!p || p === 'undefined') {
+      // Si l'asset a des styles navbar, utiliser la position pour déterminer le placement
+      const navbarStyle = asset.navbarStyle || asset.avatarStyle || asset.style
+      if (navbarStyle) {
+        // Si zIndex > 10, probablement "above"
+        if (navbarStyle.zIndex > 10) return 'above'
+        // Si top < 0, probablement "above"
+        if (navbarStyle.top < 0) return 'above'
+        // Sinon, par défaut "inside"
+        return 'inside'
+      }
+      return 'inside' // Fallback par défaut
+    }
+    
     if (p === 'above' || p === 'inside' || p === 'below') return p
-    // Fallback par défaut: inside si non précisé
     return 'inside'
   } catch { return 'inside' }
 }
@@ -1091,15 +1105,27 @@ async function loadDynamicItems() {
           }
           // Utiliser l'id comme clé (comme dans ShopPopup)
           map.set(Number(it.legacyId), normalizedItem)
+          
+          // Debug: afficher les détails de l'item équipé
+          if (it.legacyId === 233) { // Remplacer par l'ID de votre item
+            alert('🔍 Item 233 chargé:\n' + 
+                  'Assets de base: ' + (it.assets ? it.assets.length : 0) + '\n' +
+                  'Variantes: ' + (it.variants ? it.variants.length : 0) + '\n' +
+                  'Détail variantes: ' + JSON.stringify(it.variants?.map(v => ({
+                    name: v.name,
+                    assetsCount: v.assets ? v.assets.length : 0,
+                    assets: v.assets?.map(a => a.src)
+                  }))))
+          }
         }
       }
       dynamicInfoById.value = map
-      console.log('✅ Items dynamiques chargés dans la Navbar:', map.size, 'items')
+      alert('✅ Items dynamiques chargés dans la Navbar: ' + map.size + ' items')
     } else {
       dynamicInfoById.value = new Map()
     }
   } catch (error) {
-    console.error('❌ Erreur lors du chargement des items dynamiques:', error)
+    alert('❌ Erreur lors du chargement des items dynamiques: ' + error.message)
     dynamicInfoById.value = new Map()
   }
 }
