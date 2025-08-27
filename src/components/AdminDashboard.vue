@@ -385,7 +385,7 @@ const editFormLoading = ref(false);
 const viewingUserItems = ref(null);
 const showUserItems = ref(false);
 // Recharger la liste dynamique lors de l'ouverture de la modale des items
-watch(showUserItems, (v) => { if (v) loadAdminDynamicItems() })
+watch(showUserItems, (v) => { if (v) { loadAdminDynamicItems(); loadAdminBorderColors(); } })
 const itemToGive = ref('');
 
 // Gestion des questions secrètes
@@ -546,7 +546,21 @@ function getAvailableQuestions(index) {
       }
     } catch {}
   }
+  async function loadAdminBorderColors() {
+    try {
+      const res = await secureApiCall('/border-colors')
+      if (res && res.success && Array.isArray(res.colors)) {
+        adminBorderColors.value = res.colors.map((c) => ({ id: String(c.id), name: c.name }))
+      } else {
+        adminBorderColors.value = []
+      }
+    } catch {
+      adminBorderColors.value = []
+    }
+  }
   const selectedItemsToGive = ref([]);
+const adminBorderColors = ref([]);
+const selectedBorderColorsToGive = ref([]);
 const itemsLoading = ref(false);
 const adminMessage = ref(''); // Message optionnel de l'admin lors de l'attribution d'items
 const events = ref([]);
@@ -932,6 +946,7 @@ function closeUserItems() {
   viewingUserItems.value = null;
   itemToGive.value = '';
   selectedItemsToGive.value = [];
+  selectedBorderColorsToGive.value = [];
   adminMessage.value = ''; // Réinitialiser le message
 }
 
@@ -1160,7 +1175,9 @@ function selectMissingOnly() {
 
 // Donner plusieurs items (séquentiel)
 async function giveSelectedItemsToUser() {
-  if (!viewingUserItems.value || selectedItemsToGive.value.length === 0) return
+  const selItemsLen = Array.isArray(selectedItemsToGive.value) ? selectedItemsToGive.value.length : 0
+  const selColorsLen = Array.isArray(selectedBorderColorsToGive.value) ? selectedBorderColorsToGive.value.length : 0
+  if (!viewingUserItems.value || (selItemsLen === 0 && selColorsLen === 0)) return
   itemsLoading.value = true
   try {
     let token = auth.token || auth.user?.token
@@ -1187,10 +1204,13 @@ async function giveSelectedItemsToUser() {
     const nameById = Object.fromEntries(itemsCatalog.value.map(i => [i.id, i.name]))
     const ownedIds = new Set((viewingUserItems.value.purchasedItems || []).map(pi => pi.itemId))
     // Ne donner que les items manquants (y compris variantes de bordure)
-    const idsToGive = selectedItemsToGive.value.filter(id => !ownedIds.has(id))
+    const idsToGive = (selectedItemsToGive.value || []).filter(id => !ownedIds.has(id))
 
-    if (idsToGive.length === 0) {
-      alert("Aucun nouvel item à donner: l'utilisateur possède déjà tous les items sélectionnés.")
+    // Couleurs de bordure à donner (pas présentes dans purchasedItems car ce sont des couleurs séparées)
+    const colorsToGive = Array.isArray(selectedBorderColorsToGive.value) ? [...selectedBorderColorsToGive.value] : []
+
+    if (idsToGive.length === 0 && colorsToGive.length === 0) {
+      alert("Aucun nouvel item à donner: rien de sélectionné ou déjà possédé.")
       itemsLoading.value = false
       return
     }
@@ -1205,6 +1225,21 @@ async function giveSelectedItemsToUser() {
           userId: viewingUserItems.value._id,
           itemId: id,
           itemName: nameById[id],
+          adminMessage: adminMessage.value.trim() || null
+        }) })
+        givenCount++
+      } catch (e) {
+        failedCount++
+      }
+    }
+
+    // Donner les couleurs de bordure (backend à implémenter: give-border-color)
+    for (const colorId of colorsToGive) {
+      try {
+        await secureApiCall('/users-admin', { method: 'POST', body: JSON.stringify({
+          action: 'give-border-color',
+          userId: viewingUserItems.value._id,
+          colorId: String(colorId),
           adminMessage: adminMessage.value.trim() || null
         }) })
         givenCount++
