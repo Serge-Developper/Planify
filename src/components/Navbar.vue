@@ -926,54 +926,36 @@ onUnmounted(() => document.removeEventListener('click', handleGlobalClick, true)
 // Variables pour les items équipés
 const equippedItem = computed(() => coinsStore.equippedItem)
 const equippedDynItem = computed(() => {
-  // Utiliser coinsStore.equippedItemId au lieu de user.equippedItemId
-  const equippedId = coinsStore.equippedItemId
-  if (!user.value || !user.value.token || equippedId === null || equippedId === undefined || equippedId === 0) {
-    return null
-  }
-  
-  // Attendre que les items soient chargés
-  if (dynamicInfoById.value.size === 0) {
-    console.log('⏳ En attente du chargement des items dynamiques...')
-    return null
-  }
-  
-  console.log('🔎 Recherche item équipé - equippedId:', equippedId, 'user:', user.value?.username)
-  console.log('🗺️ Items disponibles dans la Map:', Array.from(dynamicInfoById.value.keys()))
-  
-  // Vérifier si l'item équipé est dynamique (ID > 1000 généralement)
-  // Les items classiques ont des IDs 1-28, les dynamiques ont des IDs plus élevés
-  if (equippedId <= 100) {
-    console.log('📋 Item équipé est un item classique (ID:', equippedId, '), pas affiché dans navbar')
-    return null
-  }
-  
-  // Chercher directement dans les items dynamiques
+  const equippedId = Number(coinsStore.equippedItemId)
+  if (!equippedId || equippedId === 0) return null
+
+  // Utiliser dyn d'abord, fallback à une image par défaut si nécessaire
   const dynItem = dynamicInfoById.value.get(equippedId)
-  if (!dynItem) {
-    console.log('❌ Item dynamique non trouvé dans dynamicInfoById avec id:', equippedId)
-    return null
+  if (!dynItem) return null
+  
+  // Image prioritaire: premier asset de la VARIANTE active; sinon premier asset de base; sinon dynItem.img
+  let img = ''
+  try {
+    const variantIndex = coinsStore.getDynamicItemVariant(dynItem.id)
+    const v = Array.isArray(dynItem.variants) ? dynItem.variants[variantIndex] : null
+    const va = v && Array.isArray(v.assets) && v.assets[0] ? v.assets[0] : null
+    if (va && va.src) img = resolveAssetSrc(va.src)
+  } catch {}
+  if (!img) {
+    const firstAsset = dynItem.assets && dynItem.assets[0]
+    img = firstAsset && firstAsset.src ? resolveAssetSrc(firstAsset.src) : (dynItem.img || '')
   }
-  
-  // Transformer l'item comme dans ShopPopup
-  const item = {
-      id: dynItem.id,
-      name: dynItem.name,
-      img: dynItem.assets && dynItem.assets[0] ? resolveAssetSrc(dynItem.assets[0].src) : '',
-      isDynamic: true,
-      assets: dynItem.assets || [],
-      backgrounds: dynItem.backgrounds || {},
-      variants: dynItem.variants || [],
-      legacyId: dynItem.id
-    }
-  
-  console.log('✅ Item équipé trouvé:', item.name)
-  
-  // Forcer la réactivité avec la clé de mise à jour
-  const updateKey = variantUpdateKey.value
-  console.log('🔄 Update key:', updateKey)
-  
-  return item
+
+  return {
+    id: dynItem.id,
+    name: dynItem.name,
+    img,
+    isDynamic: true,
+    assets: Array.isArray(dynItem.assets) ? dynItem.assets : [],
+    backgrounds: dynItem.backgrounds || {},
+    variants: Array.isArray(dynItem.variants) ? dynItem.variants : [],
+    legacyId: dynItem.id
+  }
 })
 
 function resolveAssetSrc(path) {
