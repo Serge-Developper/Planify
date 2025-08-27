@@ -42,7 +42,7 @@
                 <template v-if="equippedDynItem">
                   <img
                     v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
-                    v-if="a && a.src && ((a.meta && (a.meta.navbarPlacement === 'below' || a.meta.avatarPlacement === 'below')) || (!a.meta && a.navbarPlacement === 'below'))"
+                    v-if="a && a.src && getDynPlacement(a) === 'below'"
                     :key="'dyn-variant-nb-below-'+ai+'-'+variantUpdateKey"
                     :src="resolveAssetSrc(a.src)"
                     :style="getDynNavbarAssetStyle(a)"
@@ -62,7 +62,7 @@
                 <template v-if="equippedDynItem">
                   <img
                     v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
-                    v-if="a && a.src && ((a.meta && (a.meta.navbarPlacement === 'inside' || a.meta.avatarPlacement === 'inside')) || (!a.meta && (!a.navbarPlacement || a.navbarPlacement === 'inside')))"
+                    v-if="a && a.src && getDynPlacement(a) === 'inside'"
                     :key="'dyn-variant-nb-inside-'+ai+'-'+variantUpdateKey"
                     :src="resolveAssetSrc(a.src)"
                     :style="getDynNavbarAssetStyle(a)"
@@ -132,7 +132,7 @@
             <template v-if="equippedDynItem">
               <img
                 v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
-                v-if="a && a.src && (!a.meta || a.meta.navbarPlacement === 'above' || a.meta?.avatarPlacement === 'above' || a.navbarPlacement === 'above')"
+                v-if="a && a.src && getDynPlacement(a) === 'above'"
                 :key="'dyn-variant-nb-above-'+ai+'-'+variantUpdateKey"
                 :src="resolveAssetSrc(a.src)"
                 :style="getDynNavbarOverlayStyle(a)"
@@ -392,7 +392,7 @@
                   <template v-if="equippedDynItem">
                     <img
                       v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
-                      v-if="a && a.src && ((a.meta && (a.meta.navbarPlacement === 'below' || a.meta.avatarPlacement === 'below')) || (!a.meta && a.navbarPlacement === 'below'))"
+                      v-if="a && a.src && getDynPlacement(a) === 'below'"
                       :key="'dyn-variant-m-below-'+ai+'-'+variantUpdateKey"
                       :src="resolveAssetSrc(a.src)"
                       :style="getDynNavbarAssetStyle(a)"
@@ -412,7 +412,7 @@
                   <template v-if="equippedDynItem">
                     <img
                       v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
-                      v-if="a && a.src && ((a.meta && (a.meta.navbarPlacement === 'inside' || a.meta.avatarPlacement === 'inside')) || (!a.meta && (!a.navbarPlacement || a.navbarPlacement === 'inside')))"
+                      v-if="a && a.src && getDynPlacement(a) === 'inside'"
                       :key="'dyn-variant-m-inside-'+ai+'-'+variantUpdateKey"
                       :src="resolveAssetSrc(a.src)"
                       :style="getDynNavbarAssetStyle(a)"
@@ -496,7 +496,7 @@
             <template v-if="equippedDynItem">
               <img
                 v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
-                v-if="a && a.src && (!a.meta || a.meta.navbarPlacement === 'above' || a.meta?.avatarPlacement === 'above' || a.navbarPlacement === 'above')"
+                v-if="a && a.src && getDynPlacement(a) === 'above'"
                 :key="'dyn-variant-m-above-'+ai+'-'+variantUpdateKey"
                 :src="resolveAssetSrc(a.src)"
                 :style="getDynNavbarOverlayStyle(a)"
@@ -1004,6 +1004,17 @@ function getDynNavbarOverlayStyle(asset) {
   // Respecte le z-index défini dans l'éditeur; défaut = 15 si non spécifié
   if (typeof style.zIndex !== 'number') style.zIndex = 15
   return style
+}
+
+// Placement helper: normalise le placement (above/inside/below)
+function getDynPlacement(asset) {
+  try {
+    const m = asset && asset.meta ? asset.meta : {}
+    const p = m.navbarPlacement || m.avatarPlacement || asset.navbarPlacement
+    if (p === 'above' || p === 'inside' || p === 'below') return p
+    // Fallback par défaut: inside si non précisé
+    return 'inside'
+  } catch { return 'inside' }
 }
 
 // Chargement des items dynamiques pour la Navbar
