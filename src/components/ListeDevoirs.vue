@@ -610,8 +610,26 @@ function stringToColor(str, type) {
   // Vérifier d'abord si c'est une matière dynamique
   const matiereDynamique = subjectsStore.getSubjectByName(str);
   if (matiereDynamique) {
-    // Utiliser la couleur de la matière dynamique
-    return matiereDynamique.color;
+    // Utiliser la couleur ou le dégradé de la matière dynamique
+    const c1 = matiereDynamique.color;
+    const c2 = matiereDynamique.color2;
+    const a1 = typeof matiereDynamique.colorOpacity === 'number' ? matiereDynamique.colorOpacity : 1;
+    const a2 = typeof matiereDynamique.color2Opacity === 'number' ? matiereDynamique.color2Opacity : 1;
+    const angle = typeof matiereDynamique.gradientAngle === 'number' ? matiereDynamique.gradientAngle : 135;
+    if (c2) {
+      const hexToRgb = (hex) => {
+        const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex || '');
+        return m ? { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) } : null;
+      };
+      const rgba = (hex, alpha) => {
+        const rgb = hexToRgb(hex);
+        if (!rgb) return hex || '#000000';
+        const a = typeof alpha === 'number' ? Math.min(1, Math.max(0, alpha)) : 1;
+        return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${a})`;
+      };
+      return `linear-gradient(${angle}deg, ${rgba(c1, a1)}, ${rgba(c2, a2)})`;
+    }
+    return c1;
   }
 
   // Sinon, utiliser les couleurs statiques existantes

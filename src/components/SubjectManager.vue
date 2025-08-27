@@ -92,6 +92,9 @@
           <div class="form-group">
             <label for="subjectColor2">Deuxième couleur (optionnelle)</label>
             <div class="color-picker">
+              <label style="display:flex;align-items:center;gap:8px;margin-right:12px;">
+                <input type="checkbox" v-model="formData.useGradient" /> Activer le dégradé
+              </label>
               <input id="subjectColor2" v-model="formData.color2" type="color" />
               <input type="range" min="0" max="1" step="0.01" v-model.number="formData.color2Opacity" />
               <span class="color-preview" :style="{ background: rgbaColor(formData.color2, formData.color2Opacity) }"></span>
@@ -140,6 +143,7 @@ const formData = reactive({
   gradientAngle: 135,
   colorOpacity: 1,
   color2Opacity: 1,
+  useGradient: true,
 });
 
 // Computed
@@ -164,6 +168,7 @@ const resetForm = () => {
   formData.gradientAngle = 135;
   formData.colorOpacity = 1;
   formData.color2Opacity = 1;
+  formData.useGradient = true;
 };
 
 const editSubject = (subject: Subject) => {
@@ -174,6 +179,7 @@ const editSubject = (subject: Subject) => {
   formData.gradientAngle = (subject as any).gradientAngle ?? 135;
   formData.colorOpacity = (subject as any).colorOpacity ?? 1;
   formData.color2Opacity = (subject as any).color2Opacity ?? 1;
+  formData.useGradient = !!(subject as any).color2;
 };
 
 const handleSubmit = async () => {
@@ -181,11 +187,16 @@ const handleSubmit = async () => {
     const payload:any = {
       name: formData.name,
       color: formData.color,
-      color2: formData.color2,
       gradientAngle: formData.gradientAngle,
       colorOpacity: formData.colorOpacity,
-      color2Opacity: formData.color2Opacity,
     };
+    if (formData.useGradient) {
+      payload.color2 = formData.color2;
+      payload.color2Opacity = formData.color2Opacity;
+    } else {
+      payload.color2 = null; // désactiver côté backend
+      payload.color2Opacity = undefined;
+    }
     if (editingSubject.value) {
       await subjectsStore.updateSubject(editingSubject.value._id!, payload);
     } else {
