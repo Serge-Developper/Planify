@@ -203,6 +203,13 @@
                     <span>{{ it.name }}</span>
                   </label>
                 </div>
+                <h4 style="margin-top:16px;">Donner des couleurs de bordure</h4>
+                <div class="checkbox-grid">
+                  <label v-for="c in adminBorderColors" :key="c.id" class="item-checkbox">
+                    <input type="checkbox" :value="c.id" v-model="selectedBorderColorsToGive" />
+                    <span>{{ c.name }}</span>
+                  </label>
+                </div>
                 
                 <!-- Champ de message optionnel -->
                 <div class="admin-message-section">
@@ -227,8 +234,8 @@
                   <button type="button" class="toggle-all-btn" @click="selectMissingOnly" title="Ne sélectionner que les items non possédés">
                     Sélectionner uniquement les manquants
                   </button>
-                  <button @click="giveSelectedItemsToUser" :disabled="selectedItemsToGive.length === 0" class="give-item-btn">
-                    Donner les items ({{ selectedItemsToGive.length }})
+                  <button @click="giveSelectedItemsToUser" :disabled="selectedItemsToGive.length === 0 && selectedBorderColorsToGive.length === 0" class="give-item-btn">
+                    Donner ({{ selectedItemsToGive.length + selectedBorderColorsToGive.length }})
                   </button>
                 </div>
               </div>
