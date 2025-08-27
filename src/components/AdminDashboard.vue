@@ -297,7 +297,14 @@ if (!auth.user || auth.user.role !== 'admin') {
 }
 
 // Charger/rafraîchir les items dynamiques
-onMounted(() => {
+onMounted(async () => {
+  // Initialiser le store des matières
+  try {
+    await subjectsStore.initializeStore();
+  } catch (error) {
+    console.warn('Erreur lors de l\'initialisation des matières dans AdminDashboard:', error);
+  }
+  
   loadAdminDynamicItems()
   try { window.addEventListener('items-changed', loadAdminDynamicItems) } catch {}
 })
@@ -305,7 +312,13 @@ onUnmounted(() => {
   try { window.removeEventListener('items-changed', loadAdminDynamicItems) } catch {}
 })
 
-const matieres = [
+// Import du store des matières
+import { useSubjectsStore } from '@/stores/subjects';
+
+const subjectsStore = useSubjectsStore();
+
+// Liste des matières statiques (fallback)
+const matieresStatiques = [
   "Anglais",
   "Culture artistique",
   "Culture numérique",
@@ -326,7 +339,20 @@ const matieres = [
   "Economie et droit du numérique"
 ];
 
-const selectedMatiere = ref(matieres[0]);
+// Liste des matières : statiques + dynamiques
+const matieres = computed(() => {
+  const matieresDynamiques = subjectsStore.getSubjects.map(subject => subject.name);
+  console.log('AdminDashboard - Matières dynamiques:', matieresDynamiques);
+  
+  // Combiner les matières statiques avec les matières dynamiques
+  const toutesMatieres = [...matieresStatiques, ...matieresDynamiques];
+  // Supprimer les doublons (au cas où une matière dynamique aurait le même nom qu'une statique)
+  const resultat = [...new Set(toutesMatieres)];
+  console.log('AdminDashboard - Matières finales:', resultat);
+  return resultat;
+});
+
+const selectedMatiere = ref('Anglais'); // Valeur par défaut
 const showUserForm = ref(false);
 const showUserManagement = ref(false);
 const userForm = ref({
