@@ -97,8 +97,10 @@
                   <div v-else-if="(it as any).name === 'Planify'" class="admin-planify-item-shop">
                     <img :src="adminPlanify" alt="Planify" class="admin-planify-img-shop" />
                   </div>
-                  <!-- Variantes de bordure: pastille couleur/dégradé (comme Collection) -->
-                  <div v-else-if="isBorderVariant(it as any)" class="classic-border-preview" :style="getBorderFillStyle(it as any)"></div>
+                  <!-- Variantes de bordure: pastille couleur/dégradé (comme Collection) avec libellé -->
+                  <div v-else-if="isBorderVariant(it as any)" class="classic-border-preview" :style="getBorderFillStyle(it as any)">
+                    <span class="border-color-label">{{ borderColorName(it as any) }}</span>
+                  </div>
                   <!-- Items dynamiques (créés via AdminItemEditor) -->
                   <template v-else-if="isDynamic(it as any)">
                     <div class="dyn-bg" :style="getDynBgStyle(it as any)"></div>
@@ -345,9 +347,23 @@ function getBorderFillStyle(it: Item): Record<string, string> {
       if (c && c.gradient) bg = c.gradient as string
       else if (c && c.color) bg = c.color as string
     }
-    return { background: bg, width: '100%', height: '100%' }
+    return { background: bg, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }
   } catch {
     return { background: '#000', width: '100%', height: '100%' }
+  }
+}
+
+function borderColorName(it: Item): string {
+  try {
+    const idNum = Number((it as any).id)
+    const colorId = coinsStore.getBorderColorIdFromItem({ id: idNum, name: String((it as any).name || '') } as any)
+    if (colorId) {
+      const c = coinsStore.borderColors.find(c => c.id === colorId)
+      return c ? c.name : String((it as any).name || '')
+    }
+    return String((it as any).name || '')
+  } catch {
+    return String((it as any).name || '')
   }
 }
 
@@ -696,7 +712,8 @@ defineEmits<{
     font-size: 16px;
   }
 }
-.classic-border-preview { width: 100%; height: 100%; }
+.classic-border-preview { width: 100%; height: 100%; position: relative; }
+.border-color-label { font-size: 11px; font-weight: 700; color: #111; background: rgba(255,255,255,0.85); padding: 2px 6px; border-radius: 6px; mix-blend-mode: normal; }
 .black-bg { background: #70dd92; }
 .discord-item-shop { width: 100%; height: 100%; position: relative; }
 .discord-img-shop { position: absolute; top: -3px; left: 13px; width: 65%; height: 112%; object-fit: contain; }
