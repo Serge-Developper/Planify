@@ -24,7 +24,7 @@ export const getAuthHeaders = () => {
   };
 };
 
-let hasRedirectedFor401 = false;
+
 
 // Fonction pour les requêtes API sécurisées
 export const secureApiCall = async (url: string, options: RequestInit = {}) => {
@@ -41,24 +41,8 @@ export const secureApiCall = async (url: string, options: RequestInit = {}) => {
     
     if (!response.ok) {
       if (response.status === 401) {
-        // Token expiré ou invalide
-        try {
-          if (typeof window !== 'undefined' && window.localStorage) {
-            localStorage.removeItem('user');
-          }
-        } catch (error) {
-          console.error('Erreur lors de la suppression du localStorage:', error);
-        }
-        // Ne pas rediriger automatiquement si on est déjà sur la page d'accueil
-        // ou si l'URL contient '/items' (appel API public)
-        const currentPath = window.location.pathname;
-        const isPublicItemsCall = url.includes('/items') && !url.includes('/weekly');
-        
-        if (!hasRedirectedFor401 && currentPath !== '/' && !isPublicItemsCall) {
-          hasRedirectedFor401 = true;
-          // éviter la boucle de refresh si le backend est down
-          try { window.location.href = '/'; } catch { /* noop */ }
-        }
+        // Token expiré ou invalide - laisser les composants gérer
+        console.warn('Token expiré ou invalide pour:', url);
         throw new Error('Session expirée');
       }
       throw new Error(`Erreur ${response.status}: ${response.statusText}`);

@@ -1734,12 +1734,16 @@ async function handleProfile() {
       if (response.success && response.user) {
         console.log('✅ Données utilisateur récupérées:', response.user);
         // Mettre à jour l'utilisateur dans le store avec les données complètes
-        auth.login(response.user);
+        // Mais seulement si les données sont différentes pour éviter les problèmes de synchronisation
+        if (JSON.stringify(response.user) !== JSON.stringify(user.value)) {
+          auth.login(response.user);
+        }
       } else {
         console.log('❌ Erreur lors de la récupération des données utilisateur');
       }
     } catch (error) {
       console.error('❌ Erreur lors de la récupération du profil:', error);
+      // En cas d'erreur, ne pas déconnecter automatiquement, juste afficher le profil actuel
     }
   }
   
