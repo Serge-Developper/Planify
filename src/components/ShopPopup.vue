@@ -2408,7 +2408,18 @@ const getAvatarBorderStyle = (user) => {
   }
   
   // Déterminer la couleur sélectionnée (fallback: couleur de l'utilisateur courant)
-  const rawSelected = (user && user.selectedBorderColor) ? user.selectedBorderColor : coinsStore.selectedBorderColor
+  // Utiliser la couleur propre à CHAQUE utilisateur.
+  // Fallback sur la couleur du store uniquement pour l'utilisateur courant si la propriété est absente.
+  const isCurrentUser = (() => {
+    try {
+      const uid = user && (user._id || user.id)
+      const me = authStore && authStore.user && (authStore.user._id || authStore.user.id)
+      return uid && me && String(uid) === String(me)
+    } catch { return false }
+  })()
+  const rawSelected = (user && user.selectedBorderColor)
+    ? user.selectedBorderColor
+    : (isCurrentUser ? coinsStore.selectedBorderColor : null)
   if (!rawSelected || rawSelected === 'default') {
     return { border: '3px solid #000000' }
   }
