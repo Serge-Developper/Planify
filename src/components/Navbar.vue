@@ -1024,22 +1024,6 @@ function getDynPlacement(asset) {
   try {
     const m = asset && asset.meta ? asset.meta : {}
     const p = m.navbarPlacement || m.avatarPlacement || asset.navbarPlacement
-    
-    // Si pas de placement défini, essayer de le déterminer par la position
-    if (!p || p === 'undefined') {
-      // Si l'asset a des styles navbar, utiliser la position pour déterminer le placement
-      const navbarStyle = asset.navbarStyle || asset.avatarStyle || asset.style
-      if (navbarStyle) {
-        // Si zIndex > 10, probablement "above"
-        if (navbarStyle.zIndex > 10) return 'above'
-        // Si top < 0, probablement "above"
-        if (navbarStyle.top < 0) return 'above'
-        // Sinon, par défaut "inside"
-        return 'inside'
-      }
-      return 'inside' // Fallback par défaut
-    }
-    
     if (p === 'above' || p === 'inside' || p === 'below') return p
     return 'inside'
   } catch { return 'inside' }
@@ -1182,12 +1166,11 @@ function getDynVariantAssetsForNavbar(item) {
       }))
     }
     
-    if (!Array.isArray(variant.assets) || variant.assets.length === 0) {
-      console.log('⚠️ Pas d\'assets pour la variante, utilisation des assets de base')
-      // Si la variante n'a pas d'assets, utiliser les assets de base
-      return item.assets || []
+    if (!Array.isArray(variant.assets)) {
+      console.log('❌ Pas d\'assets pour item', item.id)
+      return []
     }
-    console.log('✅ Assets trouvés pour la variante:', variant.assets.length, 'assets')
+    console.log('✅ Assets trouvés pour item', item.id, ':', variant.assets.length, 'assets')
     return variant.assets
   } catch (e) {
     console.error('❌ Erreur dans getDynVariantAssetsForNavbar:', e)
@@ -1195,20 +1178,7 @@ function getDynVariantAssetsForNavbar(item) {
   }
 }
 
-// Variante filtrée: évite le doublon en retirant les assets dont la source est la même que l'image de base
-function getFilteredDynAssetsForNavbar(item) {
-  try {
-    const assets = getDynVariantAssetsForNavbar(item) || []
-    if (!item || !item.img) return assets
-    const base = String(item.img).split('/').pop()
-    return assets.filter(a => {
-      const src = a && a.src ? String(a.src) : ''
-      return src && src.split('/').pop() !== base
-    })
-  } catch {
-    return getDynVariantAssetsForNavbar(item) || []
-  }
-}
+
 
 onMounted(async () => {
   // Ne charger les items dynamiques que si l'utilisateur est connecté
