@@ -139,8 +139,8 @@
               />
               <!-- Fallback si aucun asset n'est trouvé mais l'item existe -->
               <img
-                v-if="equippedDynItem.img && getDynVariantAssetsForNavbar(equippedDynItem).length === 0"
-                :src="resolveAssetSrc(equippedDynItem.img)"
+                v-if="equippedDynItem && (!equippedDynItem.assets || equippedDynItem.assets.length === 0 || getDynVariantAssetsForNavbar(equippedDynItem).length === 0)"
+                :src="resolveAssetSrc(equippedDynItem.img || (equippedDynItem.assets && equippedDynItem.assets[0] && equippedDynItem.assets[0].src))"
                 :alt="equippedDynItem.name"
                 class="equipped-dynamic-item-overlay"
                 style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 15;"
@@ -503,8 +503,8 @@
               />
               <!-- Fallback mobile si aucun asset n'est trouvé mais l'item existe -->
               <img
-                v-if="equippedDynItem.img && getDynVariantAssetsForNavbar(equippedDynItem).length === 0"
-                :src="resolveAssetSrc(equippedDynItem.img)"
+                v-if="equippedDynItem && (!equippedDynItem.assets || equippedDynItem.assets.length === 0 || getDynVariantAssetsForNavbar(equippedDynItem).length === 0)"
+                :src="resolveAssetSrc(equippedDynItem.img || (equippedDynItem.assets && equippedDynItem.assets[0] && equippedDynItem.assets[0].src))"
                 :alt="equippedDynItem.name"
                 class="equipped-dynamic-item-overlay-mobile"
                 style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 15;"
