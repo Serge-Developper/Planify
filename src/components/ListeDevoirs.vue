@@ -574,6 +574,14 @@ function setSort(type) {
 }
 
 function stringToColor(str, type) {
+  // Vérifier d'abord si c'est une matière dynamique
+  const matiereDynamique = subjectsStore.getSubjectByName(str);
+  if (matiereDynamique) {
+    // Utiliser la couleur de la matière dynamique
+    return matiereDynamique.color;
+  }
+
+  // Sinon, utiliser les couleurs statiques existantes
   if (str === "Gestion de projet") {
     return "linear-gradient(90deg, rgba(83,198,77,0.88) 0%, rgba(126,252,173,0.89) 100%)";
   }
@@ -607,8 +615,33 @@ function stringToColor(str, type) {
   if (str === "Ergonomie et accessibilité") {
     return "linear-gradient(90deg, rgba(62,134,233,0.91) 0%, rgba(137,206,254,0.88) 100%)";
   }
+  if (str === "Culture numérique") {
+    return "linear-gradient(90deg, rgba(59,130,246,0.9) 0%, rgba(147,197,253,0.9) 100%)";
+  }
+  if (str === "Production graphique") {
+    return "linear-gradient(90deg, rgba(34,197,94,0.9) 0%, rgba(134,239,172,0.9) 100%)";
+  }
+  if (str === "Stratégies de communication") {
+    return "linear-gradient(90deg, rgba(168,85,247,0.9) 0%, rgba(196,181,253,0.9) 100%)";
+  }
+  if (str === "Système d'information") {
+    return "linear-gradient(90deg, rgba(251,146,60,0.9) 0%, rgba(254,215,170,0.9) 100%)";
+  }
+  if (str === "Développement web") {
+    return "linear-gradient(90deg, rgba(236,72,153,0.9) 0%, rgba(244,114,182,0.9) 100%)";
+  }
+  if (str === "Gestion de contenus") {
+    return "linear-gradient(90deg, rgba(16,185,129,0.9) 0%, rgba(110,231,183,0.9) 100%)";
+  }
+  if (str === "Intégration") {
+    return "linear-gradient(90deg, rgba(245,101,101,0.9) 0%, rgba(252,165,165,0.9) 100%)";
+  }
+  
+  // Couleurs par défaut selon le type
   if (type === 'exam') return 'hsl(10, 90%, 70%)';
   if (type === 'devoir') return 'hsl(200, 80%, 75%)';
+  
+  // Couleur générée à partir du nom si aucune correspondance
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     hash = str.charCodeAt(i) + ((hash << 5) - hash);
@@ -921,6 +954,12 @@ onMounted(async () => {
     console.warn('Impossible de charger les matières dynamiques, utilisation des matières statiques:', error);
   }
 });
+
+// Recharger les matières quand elles changent (par exemple après création d'une nouvelle matière)
+watch(() => subjectsStore.subjects, async () => {
+  // Les matières ont changé, on peut forcer un rechargement si nécessaire
+  console.log('Matières mises à jour:', subjectsStore.getSubjects);
+}, { deep: true });
 
 // Si tu veux utiliser ce composant de façon autonome (hors EmploiDuTemps), décommente ce qui suit :
 // onMounted(async () => {
