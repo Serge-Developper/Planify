@@ -11,17 +11,25 @@ export const getAuthHeaders = () => {
       if (user) {
         const parsed = JSON.parse(user);
         token = parsed?.token || null;
+        console.log('🔍 Token récupéré:', token ? `${token.substring(0, 20)}...` : 'null');
       }
     }
   } catch (error) {
     console.error('Erreur lors de la lecture du token:', error);
   }
   
-  return {
+  const headers = {
     'Content-Type': 'application/json',
     'Authorization': token ? `Bearer ${token}` : '',
     'X-Requested-With': 'XMLHttpRequest',
   };
+  
+  console.log('🔍 Headers d\'authentification:', {
+    hasToken: !!token,
+    authHeader: token ? `Bearer ${token.substring(0, 20)}...` : 'none'
+  });
+  
+  return headers;
 };
 
 

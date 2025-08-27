@@ -48,16 +48,26 @@ const User = mongoose.models.User || mongoose.model('User', userSchema);
 
 // Middleware d'authentification simplifié
 const verifyToken = (req) => {
+  console.log('🔍 Vérification token - Headers:', {
+    authorization: req.headers.authorization ? `${req.headers.authorization.substring(0, 20)}...` : 'none',
+    'content-type': req.headers['content-type']
+  });
+  
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.log('❌ Token manquant ou format incorrect');
     throw new Error('Token manquant');
   }
 
   const token = authHeader.substring(7);
+  console.log('🔍 Token extrait:', `${token.substring(0, 20)}...`);
+  
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production');
+    console.log('✅ Token valide pour utilisateur:', decoded.username || decoded.id);
     return decoded;
   } catch (error) {
+    console.log('❌ Token invalide:', error.message);
     throw new Error('Token invalide');
   }
 };
