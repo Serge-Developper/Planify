@@ -25,6 +25,40 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
+// Modèles minimaux pour consulter les créations dynamiques
+try {
+  // Items dynamiques créés via l'éditeur
+  const dynItemSchema = new mongoose.Schema({
+    legacyId: Number,
+    name: String,
+    price: Number,
+    infoOnly: Boolean,
+    infoDescription: String
+  });
+  mongoose.model('DynItem', dynItemSchema, 'items');
+} catch {}
+const DynItem = mongoose.models.DynItem || mongoose.model('DynItem');
+
+try {
+  // Couleurs de bordure dynamiques créées via l'éditeur
+  const dynBorderSchema = new mongoose.Schema({
+    id: String,
+    name: String,
+    color: String,
+    gradient: String,
+    price: Number
+  });
+  mongoose.model('DynBorderColor', dynBorderSchema, 'bordercolors');
+} catch {}
+const DynBorderColor = mongoose.models.DynBorderColor || mongoose.model('DynBorderColor');
+
+function hashToInt(str) {
+  try {
+    let h = 0; for (let i = 0; i < String(str).length; i++) { h = ((h << 5) - h) + String(str).charCodeAt(i); h |= 0; }
+    return Math.abs(h) + 100000; // éviter collision faible et rester positif
+  } catch { return 999999; }
+}
+
 // Modèle Item pour les items hebdomadaires
 const itemSchema = new mongoose.Schema({
   itemId: String,
@@ -559,7 +593,7 @@ const handleWeeklyItems = async (event) => {
       const daySeed = getCurrentDaySeed();
     let weeklyItems = getRandomItemsFromSeed(daySeed, 3);
 
-    // Ajouter des couleurs de bordure hebdomadaires
+    // Ajouter des couleurs de bordure hebdomadaires (statiques + dynamiques)
     const borderColors = [
       { id: 100, name: 'Rouge', price: 50, type: 'border-color', colorId: 'red', img: 'border-red' },
       { id: 101, name: 'Bleu', price: 50, type: 'border-color', colorId: 'blue', img: 'border-blue' },
@@ -610,6 +644,34 @@ const handleWeeklyItems = async (event) => {
     
     // Fixer le prix de toutes les couleurs à 40 coins, et sélectionner 3 par jour
     let weeklyBorderColors = shuffledBorders.slice(0, 3).map((c) => ({ ...c, price: 40 }));
+
+    // Ajouter les couleurs de bordure dynamiques (DB) si overrides ou si disponibles
+    try {
+      const dynBorders = await DynBorderColor.find({}).lean();
+      // Appliquer prix 40 par défaut si non défini
+      const normalizedDynBorders = dynBorders.map(b => ({
+        id: b.id || hashToInt(b.name || b.color || b.gradient),
+        name: b.name || String(b.id || ''),
+        type: 'border-color',
+        colorId: b.id || String(hashToInt(b.name || '')),
+        color: b.color || null,
+        gradient: b.gradient || null,
+        price: 40
+      }));
+      // Injecter ceux explicitement demandés via overrides
+      for (const bid of weeklyOverrides.addBorders) {
+        const found = normalizedDynBorders.find(b => String(b.id) === String(bid) || String(b.colorId) === String(bid));
+        if (found && !weeklyBorderColors.some(x => String(x.id) === String(found.id))) {
+          weeklyBorderColors.push(found);
+        }
+      }
+      // Également permettre de retirer dynamiques via removeBorders
+      const removedBorders = new Set([...weeklyOverrides.removeBorders].map(String));
+      weeklyBorderColors = weeklyBorderColors.filter(c => !removedBorders.has(String(c.id)) && !removedBorders.has(String(c.colorId)));
+      // NB: sans override, on ne mélange pas dynamiques dans la rotation pour éviter surcharge
+    } catch (e) {
+      // silencieux: si la collection n'existe pas encore
+    }
     // Appliquer overrides bordures (add/remove) du jour
     ensureFreshOverrides();
     const removedBorders = new Set([...weeklyOverrides.removeBorders].map(String));
