@@ -42,7 +42,7 @@
                 <template v-if="equippedDynItem">
                   <img
                     v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
-                    v-if="a && a.src && ((a.meta && (a.meta.navbarPlacement === 'below' || a.meta.avatarPlacement === 'below')) || (!a.meta && a.navbarPlacement === 'below'))"
+                    v-if="a && a.src && getDynPlacement(a) === 'below'"
                     :key="'dyn-variant-nb-below-'+ai+'-'+variantUpdateKey"
                     :src="resolveAssetSrc(a.src)"
                     :style="getDynNavbarAssetStyle(a)"
@@ -62,12 +62,19 @@
                 <template v-if="equippedDynItem">
                   <img
                     v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
-                    v-if="a && a.src && ((a.meta && (a.meta.navbarPlacement === 'inside' || a.meta.avatarPlacement === 'inside')) || (!a.meta && (!a.navbarPlacement || a.navbarPlacement === 'inside')))"
+                    v-if="a && a.src && getDynPlacement(a) === 'inside'"
                     :key="'dyn-variant-nb-inside-'+ai+'-'+variantUpdateKey"
                     :src="resolveAssetSrc(a.src)"
                     :style="getDynNavbarAssetStyle(a)"
                   />
                 </template>
+                <!-- Image de base de l'item dynamique: affichage garanti (pour éviter les régressions) -->
+                <img
+                  v-if="equippedDynItem && equippedDynItem.img && !hasNavbarInsideAsset(equippedDynItem)"
+                  :src="resolveAssetSrc(equippedDynItem.img)"
+                  :alt="equippedDynItem.name"
+                  :style="getDynFallbackNavbarStyle(equippedDynItem)"
+                />
                 <!-- Animation Matrix à l'intérieur de l'avatar -->
                 <div v-if="equippedItem && equippedItem.displayType === 'matrix'" class="matrix-rain-inside">
                   <div class="matrix-column" v-for="i in 15" :key="i" :style="{ left: (i * 6.67) + '%', animationDelay: (Math.random() * 2) + 's' }">
@@ -132,11 +139,12 @@
             <template v-if="equippedDynItem">
               <img
                 v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
-                v-if="a && a.src && (!a.meta || a.meta.navbarPlacement === 'above' || a.meta?.avatarPlacement === 'above' || a.navbarPlacement === 'above')"
+                v-if="a && a.src && getDynPlacement(a) === 'above'"
                 :key="'dyn-variant-nb-above-'+ai+'-'+variantUpdateKey"
                 :src="resolveAssetSrc(a.src)"
                 :style="getDynNavbarOverlayStyle(a)"
               />
+<<<<<<< HEAD
               <!-- Fallback si aucun asset n'est trouvé mais l'item existe -->
               <img
                 v-if="equippedDynItem && (!equippedDynItem.assets || equippedDynItem.assets.length === 0 || getDynVariantAssetsForNavbar(equippedDynItem).length === 0)"
@@ -145,7 +153,16 @@
                 class="equipped-dynamic-item-overlay"
                 style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 15;"
               />
+=======
+>>>>>>> 72162c2
             </template>
+            <!-- Image de base (mobile) de l'item dynamique: affichage garanti -->
+            <img
+              v-if="equippedDynItem && equippedDynItem.img"
+              :src="resolveAssetSrc(equippedDynItem.img)"
+              :alt="equippedDynItem.name"
+              :style="getDynFallbackNavbarStyle(equippedDynItem)"
+            />
 
             <!-- Item équipé générique (rendu seulement si une image est définie et pas d'item dynamique) -->
             <img 
@@ -392,7 +409,7 @@
                   <template v-if="equippedDynItem">
                     <img
                       v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
-                      v-if="a && a.src && ((a.meta && (a.meta.navbarPlacement === 'below' || a.meta.avatarPlacement === 'below')) || (!a.meta && a.navbarPlacement === 'below'))"
+                      v-if="a && a.src && getDynPlacement(a) === 'below'"
                       :key="'dyn-variant-m-below-'+ai+'-'+variantUpdateKey"
                       :src="resolveAssetSrc(a.src)"
                       :style="getDynNavbarAssetStyle(a)"
@@ -412,7 +429,7 @@
                   <template v-if="equippedDynItem">
                     <img
                       v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
-                      v-if="a && a.src && ((a.meta && (a.meta.navbarPlacement === 'inside' || a.meta.avatarPlacement === 'inside')) || (!a.meta && (!a.navbarPlacement || a.navbarPlacement === 'inside')))"
+                      v-if="a && a.src && getDynPlacement(a) === 'inside'"
                       :key="'dyn-variant-m-inside-'+ai+'-'+variantUpdateKey"
                       :src="resolveAssetSrc(a.src)"
                       :style="getDynNavbarAssetStyle(a)"
@@ -496,11 +513,12 @@
             <template v-if="equippedDynItem">
               <img
                 v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
-                v-if="a && a.src && (!a.meta || a.meta.navbarPlacement === 'above' || a.meta?.avatarPlacement === 'above' || a.navbarPlacement === 'above')"
+                v-if="a && a.src && getDynPlacement(a) === 'above'"
                 :key="'dyn-variant-m-above-'+ai+'-'+variantUpdateKey"
                 :src="resolveAssetSrc(a.src)"
                 :style="getDynNavbarOverlayStyle(a)"
               />
+<<<<<<< HEAD
               <!-- Fallback mobile si aucun asset n'est trouvé mais l'item existe -->
               <img
                 v-if="equippedDynItem && (!equippedDynItem.assets || equippedDynItem.assets.length === 0 || getDynVariantAssetsForNavbar(equippedDynItem).length === 0)"
@@ -509,6 +527,8 @@
                 class="equipped-dynamic-item-overlay-mobile"
                 style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 15;"
               />
+=======
+>>>>>>> 72162c2
             </template>
 
 
@@ -926,48 +946,56 @@ onUnmounted(() => document.removeEventListener('click', handleGlobalClick, true)
 // Variables pour les items équipés
 const equippedItem = computed(() => coinsStore.equippedItem)
 const equippedDynItem = computed(() => {
-  const equippedId = Number(coinsStore.equippedItemId)
-  if (!equippedId || equippedId === 0) return null
 
-  // Utiliser dyn d'abord, fallback à une image par défaut si nécessaire
-  const dynItem = dynamicInfoById.value.get(equippedId)
-  if (!dynItem) return null
-  
-  // Image prioritaire: premier asset de la VARIANTE active; sinon premier asset de base; sinon dynItem.img
-  let img = ''
-  try {
-    const variantIndex = coinsStore.getDynamicItemVariant(dynItem.id)
-    const v = Array.isArray(dynItem.variants) ? dynItem.variants[variantIndex] : null
-    const va = v && Array.isArray(v.assets) && v.assets[0] ? v.assets[0] : null
-    if (va && va.src) img = resolveAssetSrc(va.src)
-  } catch {}
-  if (!img) {
-    const firstAsset = dynItem.assets && dynItem.assets[0]
-    img = firstAsset && firstAsset.src ? resolveAssetSrc(firstAsset.src) : (dynItem.img || '')
+  // Source prioritaire: store (mis à jour en temps réel), sinon fallback sur auth.user
+  const idFromStore = coinsStore && typeof coinsStore.equippedItemId !== 'undefined' ? coinsStore.equippedItemId : null
+  const idFromUser = user.value ? user.value.equippedItemId : null
+  const equippedId = Number(idFromStore ?? idFromUser ?? NaN)
+
+  // Si pas d'utilisateur connecté ou aucun item dynamique équipé
+  if (!user.value || !user.value.token || !Number.isFinite(equippedId) || equippedId === 0) {
+    return null
   }
 
-  return {
+  // Attendre que les items soient chargés
+  if (dynamicInfoById.value.size === 0) {
+    return null
+  }
+
+  // Chercher directement dans les items dynamiques
+  const dynItem = dynamicInfoById.value.get(equippedId)
+  if (!dynItem) {
+    return null
+  }
+
+  // Transformer l'item comme dans ShopPopup
+  const item = {
     id: dynItem.id,
     name: dynItem.name,
-    img,
+    img: dynItem.assets && dynItem.assets[0] ? resolveAssetSrc(dynItem.assets[0].src) : '',
     isDynamic: true,
-    assets: Array.isArray(dynItem.assets) ? dynItem.assets : [],
+    assets: dynItem.assets || [],
     backgrounds: dynItem.backgrounds || {},
-    variants: Array.isArray(dynItem.variants) ? dynItem.variants : [],
+    variants: dynItem.variants || [],
     legacyId: dynItem.id
   }
+
+  return item
+
 })
 
 function resolveAssetSrc(path) {
   if (!path) return ''
-  if (String(path).startsWith('/uploads/')) {
-    // Utiliser les nouvelles APIs pour servir les images depuis la base de données
-    if (path.startsWith('/uploads/avatars/')) {
-      return getApiOrigin() + '/api/uploads/avatars/' + path.split('/').pop()
-    } else if (path.startsWith('/uploads/items/')) {
-      return getApiOrigin() + '/api/items/uploads/' + path.split('/').pop()
-    }
-    return getApiOrigin() + path
+  const p = String(path)
+  // Normaliser les variantes de chemin possibles
+  if (p.includes('uploads/items/')) {
+    return getApiOrigin() + '/api/items/uploads/' + p.split('uploads/items/').pop()
+  }
+  if (p.includes('/uploads/avatars/')) {
+    return getApiOrigin() + '/api/uploads/avatars/' + p.split('/uploads/avatars/').pop()
+  }
+  if (p.startsWith('/uploads/')) {
+    return getApiOrigin() + p
   }
   return path
 }
@@ -1002,16 +1030,61 @@ function getDynNavbarOverlayStyle(asset) {
   return style
 }
 
+// Placement helper: normalise le placement (above/inside/below)
+function getDynPlacement(asset) {
+  try {
+    const m = asset && asset.meta ? asset.meta : {}
+    const p = m.navbarPlacement || m.avatarPlacement || asset.navbarPlacement
+    if (p === 'above' || p === 'inside' || p === 'below') return p
+    // Fallback par défaut: inside si non précisé
+    return 'inside'
+  } catch { return 'inside' }
+}
+
+// Vérifie s'il existe au moins un asset affichable pour la navbar
+function hasAnyNavbarAsset(item) {
+  try {
+    const assets = getDynVariantAssetsForNavbar(item)
+    if (!Array.isArray(assets) || assets.length === 0) return false
+    return assets.some(a => a && a.src)
+  } catch { return false }
+}
+
+// Fallback: applique les valeurs de style de la variante courante (onglet Navbar/Avatar)
+function getDynFallbackNavbarStyle(item) {
+  try {
+    const isMob = !!isMobile && !!isMobile.value
+    const variantIndex = coinsStore.getDynamicItemVariant(item.id || item.legacyId)
+    const variant = item.variants && item.variants[variantIndex]
+    const s = (variant && Array.isArray(variant.assets) && variant.assets[0]
+      ? (isMob
+          ? (variant.assets[0].navbarStyleMobile || variant.assets[0].avatarStyleMobile || variant.assets[0].style || {})
+          : (variant.assets[0].navbarStyle || variant.assets[0].avatarStyle || variant.assets[0].style || {}))
+      : {})
+    const style = { position: 'absolute', objectFit: s.objectFit || 'contain', zIndex: typeof s.zIndex === 'number' ? s.zIndex : 15, top: '0', left: '0', width: '100%', height: '100%' }
+    if (typeof s.top === 'number') style.top = s.top + 'px'
+    if (typeof s.left === 'number') style.left = s.left + 'px'
+    if (typeof s.width === 'number') style.width = s.width + 'px'
+    if (typeof s.height === 'number') style.height = s.height + 'px'
+    if (typeof s.rotate === 'number') style.transform = `rotate(${s.rotate}deg)`
+    return style
+  } catch {
+    return { position: 'absolute', top: '0', left: '0', width: '100%', height: '100%', objectFit: 'contain', zIndex: 15 }
+  }
+}
+
+// Vérifie si la variante courante expose au moins un asset à afficher dans l'avatar (inside/below/above)
+function hasNavbarInsideAsset(item) {
+  try {
+    const assets = getDynVariantAssetsForNavbar(item) || []
+    return assets.some(a => a && a.src && (getDynPlacement(a) === 'inside' || getDynPlacement(a) === 'below' || getDynPlacement(a) === 'above'))
+  } catch { return false }
+}
+
 // Chargement des items dynamiques pour la Navbar
 const dynamicInfoById = ref(new Map())
 async function loadDynamicItems() {
   try {
-    // Ne pas appeler l'API si l'utilisateur n'est pas connecté
-    if (!user.value || !user.value.token) {
-      console.log('⚠️ Pas d\'utilisateur connecté, skip loadDynamicItems')
-      return
-    }
-    
     const res = await secureApiCall('/items')
     if (res && res.success && Array.isArray(res.items)) {
       const map = new Map()
@@ -1103,6 +1176,21 @@ function getDynVariantAssetsForNavbar(item) {
   } catch (e) {
     console.error('❌ Erreur dans getDynVariantAssetsForNavbar:', e)
     return []
+  }
+}
+
+// Variante filtrée: évite le doublon en retirant les assets dont la source est la même que l'image de base
+function getFilteredDynAssetsForNavbar(item) {
+  try {
+    const assets = getDynVariantAssetsForNavbar(item) || []
+    if (!item || !item.img) return assets
+    const base = String(item.img).split('/').pop()
+    return assets.filter(a => {
+      const src = a && a.src ? String(a.src) : ''
+      return src && src.split('/').pop() !== base
+    })
+  } catch {
+    return getDynVariantAssetsForNavbar(item) || []
   }
 }
 

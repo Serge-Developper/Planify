@@ -127,6 +127,8 @@ const handleLogin = async (event) => {
           groupe: user.groupe,
           coins: user.coins,
           avatar: avatarUrl,
+          equippedItemId: user.equippedItemId ?? null,
+          selectedBorderColor: user.selectedBorderColor || 'default',
           hasSecretQuestions: user.secretQuestions && user.secretQuestions.length >= 3 && user.secretQuestions.every(q => q.question && q.answer)
         }
       })
@@ -243,6 +245,8 @@ const handleRegister = async (event) => {
           groupe: newUser.groupe,
           coins: newUser.coins,
           avatar: newUser.avatar,
+          equippedItemId: newUser.equippedItemId ?? null,
+          selectedBorderColor: newUser.selectedBorderColor || 'default',
           hasSecretQuestions: newUser.hasSecretQuestions
         }
       })
@@ -321,6 +325,8 @@ const handleVerifyToken = async (event) => {
           groupe: user.groupe,
           coins: user.coins,
           avatar: avatarUrl,
+          equippedItemId: user.equippedItemId ?? null,
+          selectedBorderColor: user.selectedBorderColor || 'default',
           hasSecretQuestions: user.secretQuestions && user.secretQuestions.length >= 3 && user.secretQuestions.every(q => q.question && q.answer)
         }
       })
