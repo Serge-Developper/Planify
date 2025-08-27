@@ -988,8 +988,8 @@ function getDynNavbarAssetStyle(asset) {
   const isMob = !!isMobile && !!isMobile.value
   const s = asset
     ? (isMob
-        ? (asset.navbarStyleMobile || asset.avatarStyleMobile || asset.style || {})
-        : (asset.navbarStyle || asset.avatarStyle || asset.style || {}))
+        ? (asset.navbarStyleMobile || asset.avatarStyleMobile || asset.leaderboardStyle || asset.collectionStyle || asset.style || {})
+        : (asset.navbarStyle || asset.avatarStyle || asset.leaderboardStyle || asset.collectionStyle || asset.style || {}))
     : {}
   const style = { position: 'absolute', objectFit: s.objectFit || 'contain', zIndex: typeof s.zIndex === 'number' ? s.zIndex : 1 }
   if (typeof s.top === 'number') style.top = s.top + 'px'
@@ -1010,7 +1010,7 @@ function getDynNavbarOverlayStyle(asset) {
 function getDynPlacement(asset) {
   try {
     const m = asset && asset.meta ? asset.meta : {}
-    const p = m.navbarPlacement || m.avatarPlacement || asset.navbarPlacement
+    const p = m.navbarPlacement || m.avatarPlacement || m.leaderboardPlacement || m.collectionPlacement || asset.navbarPlacement
     if (p === 'above' || p === 'inside' || p === 'below') return p
     // Fallback par défaut: inside si non précisé
     return 'inside'
