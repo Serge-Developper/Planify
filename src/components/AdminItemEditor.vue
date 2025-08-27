@@ -404,7 +404,19 @@ const bgStyle = computed(() => {
 // Aperçu simple: cercle avec bordure 3px couleur choisie
 const borderPreviewOuter = computed(() => {
   const hasGradient = !!(borderForm.value.gradient && borderForm.value.gradient.trim())
-  const borderColor = hasGradient ? 'rgb(224, 224, 224)' : (borderForm.value.color || 'rgb(224, 224, 224)')
+  // Technique double background pour simuler une bordure en dégradé
+  if (hasGradient) {
+    return {
+      position: 'relative',
+      width: '50px',
+      height: '50px',
+      background: `linear-gradient(white, white) padding-box, ${borderForm.value.gradient} border-box`,
+      overflow: 'hidden',
+      border: `3px solid transparent`,
+      borderRadius: '12px'
+    }
+  }
+  const borderColor = borderForm.value.color || 'rgb(224, 224, 224)'
   return {
     position: 'relative',
     width: '50px',
@@ -416,13 +428,15 @@ const borderPreviewOuter = computed(() => {
   }
 })
 const borderPreviewInner = computed(() => {
-  // L'inner reste neutre; on pourrait l'utiliser plus tard pour simuler un dégradé
-  return {
+  const style = {
     width: '100%',
     height: '100%',
-    borderRadius: '10px',
-    background: 'transparent'
-  }
+    borderRadius: '10px'
+  } as Record<string, string>
+  const hasGradient = !!(borderForm.value.gradient && borderForm.value.gradient.trim())
+  if (hasGradient) style.background = borderForm.value.gradient
+  else style.background = borderForm.value.color || '#000'
+  return style
 })
 
 // Modèle texte pour l'input background selon base/variante
