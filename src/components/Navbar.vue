@@ -70,7 +70,7 @@
                 </template>
                 <!-- Image de base de l'item dynamique: affichage garanti (pour éviter les régressions) -->
                 <img
-                  v-if="equippedDynItem && equippedDynItem.img"
+                  v-if="equippedDynItem && equippedDynItem.img && !hasNavbarInsideAsset(equippedDynItem)"
                   :src="resolveAssetSrc(equippedDynItem.img)"
                   :alt="equippedDynItem.name"
                   :style="getDynFallbackNavbarStyle(equippedDynItem)"
