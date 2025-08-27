@@ -212,7 +212,7 @@
     <!-- Aperçu simple pour Couleurs de bordure -->
     <div v-else style="margin-top:12px;">
       <h4 style="margin:8px 0;color:#111;">Aperçu de la bordure (3px)</h4>
-      <div :style="borderPreviewOuter" style="display:inline-block;border-radius:50%;">
+      <div :style="borderPreviewOuter" style="display:inline-block;">
         <div :style="borderPreviewInner"></div>
       </div>
     </div>
