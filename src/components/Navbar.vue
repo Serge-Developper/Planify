@@ -70,7 +70,7 @@
                 </template>
                 <!-- Image de base de l'item dynamique: affichage garanti (pour éviter les régressions) -->
                 <img
-                  v-if="equippedDynItem && equippedDynItem.img && !hasNavbarInsideAsset(equippedDynItem)"
+                  v-if="equippedDynItem && equippedDynItem.img"
                   :src="resolveAssetSrc(equippedDynItem.img)"
                   :alt="equippedDynItem.name"
                   :style="getDynFallbackNavbarStyle(equippedDynItem)"
@@ -509,14 +509,7 @@
                 :style="getDynNavbarOverlayStyle(a)"
               />
 
-              <!-- Fallback mobile si aucun asset n'est trouvé mais l'item existe -->
-              <img
-                v-if="equippedDynItem && (!equippedDynItem.assets || equippedDynItem.assets.length === 0 || getDynVariantAssetsForNavbar(equippedDynItem).length === 0)"
-                :src="resolveAssetSrc(equippedDynItem.img || (equippedDynItem.assets && equippedDynItem.assets[0] && equippedDynItem.assets[0].src))"
-                :alt="equippedDynItem.name"
-                class="equipped-dynamic-item-overlay-mobile"
-                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 15;"
-              />
+
 
             </template>
 
@@ -1161,6 +1154,7 @@ function getDynVariantAssetsForNavbar(item) {
       return item.assets || []
     }
     console.log('✅ Assets trouvés pour la variante:', variant.assets.length, 'assets')
+    console.log('📋 Détail des assets de la variante:', variant.assets.map(a => ({ src: a.src, placement: getDynPlacement(a) })))
     return variant.assets
   } catch (e) {
     console.error('❌ Erreur dans getDynVariantAssetsForNavbar:', e)
