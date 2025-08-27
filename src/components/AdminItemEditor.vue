@@ -287,7 +287,7 @@ const borderForm = ref({
 })
 
 const borderColorsList = ref([])
-const editingBorderId = ref(null as any)
+const editingBorderId = ref(null)
 
 const canvasStyle = computed(() => {
   // Dimensions: Collection = 90 (desktop) / 80 (mobile) — Leaderboard = 50 — Navbar = 57 — Popup Style = 120.5x64
