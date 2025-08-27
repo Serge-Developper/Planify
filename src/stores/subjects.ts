@@ -13,6 +13,7 @@ export const useSubjectsStore = defineStore('subjects', () => {
   const subjects = ref<Subject[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
+  const initialized = ref(false);
 
   // Getters
   const getSubjects = computed(() => subjects.value);
@@ -41,6 +42,7 @@ export const useSubjectsStore = defineStore('subjects', () => {
       
       const data = await response.json();
       subjects.value = data;
+      initialized.value = true;
       console.log('Matières chargées:', data.length, 'matières');
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Erreur inconnue';
@@ -49,6 +51,12 @@ export const useSubjectsStore = defineStore('subjects', () => {
       subjects.value = [];
     } finally {
       loading.value = false;
+    }
+  };
+
+  const initializeStore = async () => {
+    if (!initialized.value && !loading.value) {
+      await fetchSubjects();
     }
   };
 
@@ -152,6 +160,7 @@ export const useSubjectsStore = defineStore('subjects', () => {
     subjects,
     loading,
     error,
+    initialized,
     
     // Getters
     getSubjects,
@@ -161,6 +170,7 @@ export const useSubjectsStore = defineStore('subjects', () => {
     // Actions
     fetchSubjects,
     refreshSubjects,
+    initializeStore,
     createSubject,
     updateSubject,
     deleteSubject,

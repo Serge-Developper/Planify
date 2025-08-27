@@ -949,17 +949,17 @@ async function submitAddTask() {
 // Initialiser les matières au montage du composant
 onMounted(async () => {
   try {
-    await subjectsStore.fetchSubjects();
+    await subjectsStore.initializeStore();
   } catch (error) {
     console.warn('Impossible de charger les matières dynamiques, utilisation des matières statiques:', error);
   }
 });
 
-// Recharger les matières si elles ne sont pas chargées
-watch(() => subjectsStore.subjects, (newSubjects) => {
-  if (newSubjects.length === 0 && !subjectsStore.loading) {
-    // Si aucune matière n'est chargée et qu'on n'est pas en train de charger, recharger
-    subjectsStore.fetchSubjects();
+// Recharger les matières si elles ne sont pas chargées et que le store n'est pas initialisé
+watch(() => [subjectsStore.subjects, subjectsStore.initialized], ([newSubjects, initialized]) => {
+  if (Array.isArray(newSubjects) && newSubjects.length === 0 && !subjectsStore.loading && !initialized) {
+    // Si aucune matière n'est chargée, qu'on n'est pas en train de charger et que le store n'est pas initialisé
+    subjectsStore.initializeStore();
   }
 }, { immediate: true });
 
