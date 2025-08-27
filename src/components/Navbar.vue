@@ -70,7 +70,7 @@
                 </template>
                 <!-- Image de base de l'item dynamique: affichage garanti (pour éviter les régressions) -->
                 <img
-                  v-if="equippedDynItem && equippedDynItem.img"
+                  v-if="equippedDynItem && equippedDynItem.img && !hasNavbarInsideAsset(equippedDynItem)"
                   :src="resolveAssetSrc(equippedDynItem.img)"
                   :alt="equippedDynItem.name"
                   :style="getDynFallbackNavbarStyle(equippedDynItem)"
@@ -1047,6 +1047,14 @@ function getDynFallbackNavbarStyle(item) {
   } catch {
     return { position: 'absolute', top: '0', left: '0', width: '100%', height: '100%', objectFit: 'contain', zIndex: 15 }
   }
+}
+
+// Vérifie si la variante courante expose au moins un asset à afficher dans l'avatar (inside/below/above)
+function hasNavbarInsideAsset(item) {
+  try {
+    const assets = getDynVariantAssetsForNavbar(item) || []
+    return assets.some(a => a && a.src && (getDynPlacement(a) === 'inside' || getDynPlacement(a) === 'below' || getDynPlacement(a) === 'above'))
+  } catch { return false }
 }
 
 // Chargement des items dynamiques pour la Navbar
