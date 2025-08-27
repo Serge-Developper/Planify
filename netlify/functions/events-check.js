@@ -36,6 +36,8 @@ const eventSchema = new mongoose.Schema({
   archivedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   checkedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   hiddenBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  // Nouvel historique: utilisateurs déjà comptabilisés pour cette tâche
+  countedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   description: { type: String, default: '' },
   createdBy: { type: String, required: true },
   createdAt: { type: Date, default: Date.now }
@@ -164,43 +166,39 @@ exports.handler = async (event, context) => {
     }
 
     switch (action) {
-      case 'check':
-        if (!eventDoc.checkedBy.some(id => id.equals(userId))) {
-          // Vérifier si la tâche est en retard
-          const [h, m] = (eventDoc.heure || '').split(':');
-          const target = new Date(eventDoc.date);
-          target.setHours(Number(h), Number(m || 0), 0, 0);
-          const now = new Date();
-          const isLate = now > target;
+      case 'check': {
+        const alreadyChecked = eventDoc.checkedBy.some(id => id.equals(userId));
+        // Vérifier si la tâche est en retard au moment de la validation
+        const [h, m] = (eventDoc.heure || '').split(':');
+        const target = new Date(eventDoc.date);
+        target.setHours(Number(h), Number(m || 0), 0, 0);
+        const now = new Date();
+        const isLate = now > target;
 
-          // Ajouter l'utilisateur à la liste des utilisateurs qui ont validé cette tâche
+        // Toujours refléter l'état courant
+        if (!alreadyChecked) {
           eventDoc.checkedBy.push(userId);
-          await eventDoc.save();
-          
-          // Incrémenter le compteur de tâches complétées seulement si la tâche n'est PAS en retard
-          if (!isLate) {
+        }
+
+        // Incrémenter une seule fois par utilisateur et par tâche (si non en retard)
+        if (!isLate) {
+          if (!Array.isArray(eventDoc.countedBy)) eventDoc.countedBy = [];
+          const alreadyCounted = eventDoc.countedBy.some(id => id.equals(userId));
+          if (!alreadyCounted) {
+            eventDoc.countedBy.push(userId);
             await User.findByIdAndUpdate(userId, { $inc: { completedTasks: 1 } });
           }
         }
+
+        await eventDoc.save();
         break;
+      }
         
       case 'uncheck':
         if (eventDoc.checkedBy.some(id => id.equals(userId))) {
-          // Vérifier si la tâche était en retard au moment de la validation
-          const [h, m] = (eventDoc.heure || '').split(':');
-          const target = new Date(eventDoc.date);
-          target.setHours(Number(h), Number(m || 0), 0, 0);
-          const now = new Date();
-          const isLate = now > target;
-
-          // Retirer l'utilisateur de la liste des utilisateurs qui ont validé cette tâche
+          // Retirer uniquement de l'état courant; ne pas décrémenter le compteur persistant
           eventDoc.checkedBy = eventDoc.checkedBy.filter(id => !id.equals(userId));
           await eventDoc.save();
-          
-          // Décrémenter le compteur de tâches complétées seulement si la tâche n'était PAS en retard
-          if (!isLate) {
-            await User.findByIdAndUpdate(userId, { $inc: { completedTasks: -1 } });
-          }
         }
         break;
         

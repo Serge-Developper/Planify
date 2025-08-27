@@ -31,7 +31,8 @@ const userSchema = new mongoose.Schema({
   lastWeeklyReset: Date,
   password: String,
   secretQuestions: [{ question: String, answer: String }],
-  pendingGifts: [{ id: Number, name: String, adminMessage: String, date: Date }]
+  pendingGifts: [{ id: Number, name: String, adminMessage: String, date: Date }],
+  completedTasks: { type: Number, default: 0 }
 });
 
 const User = mongoose.model('User', userSchema);
