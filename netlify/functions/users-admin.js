@@ -197,20 +197,21 @@ exports.handler = async (event, context) => {
 
           case 'give-border-color':
             // Attribuer une couleur de bordure dynamique (stockée dans collection séparée)
-            const { colorId, adminMessage: colorMsg } = data;
+            const { colorId, adminMessage: colorMsg, colorName } = data;
             if (!colorId) return { statusCode: 400, headers, body: JSON.stringify({ error: 'colorId requis' }) };
 
             // On encode la couleur comme un pseudo-item réservé: id textuel via mapping store côté client
             const pseudoItemId = Number.isFinite(Number(colorId)) ? Number(colorId) : 0;
             // Ajouter un enregistrement dans pendingGifts pour l’affichage popup
             if (!Array.isArray(targetUser.pendingGifts)) targetUser.pendingGifts = [];
-            targetUser.pendingGifts.push({ id: pseudoItemId, name: String(colorId), adminMessage: colorMsg || null, date: new Date() });
+            // stocker le nom s'il est fourni
+            targetUser.pendingGifts.push({ id: pseudoItemId, name: String(colorName || colorId), adminMessage: colorMsg || null, date: new Date() });
 
             // Pour compat compat avec l’UI actuelle, on pousse aussi dans purchasedItems un objet lisible
             const purchased = Array.isArray(targetUser.purchasedItems) ? targetUser.purchasedItems : [];
             const exists = purchased.some((it) => (typeof it === 'object' && it && (String(it.colorId) === String(colorId))) );
             if (!exists) {
-              purchased.push({ id: pseudoItemId, itemId: pseudoItemId, itemName: `Couleur ${String(colorId)}`, colorId: String(colorId), purchaseDate: new Date(), equipped: false, adminGiftRead: false, adminMessage: colorMsg || null });
+              purchased.push({ id: pseudoItemId, itemId: pseudoItemId, itemName: String(colorName || `Couleur ${String(colorId)}`), colorId: String(colorId), purchaseDate: new Date(), equipped: false, adminGiftRead: false, adminMessage: colorMsg || null });
               targetUser.purchasedItems = purchased;
             }
 

@@ -1235,11 +1235,13 @@ async function giveSelectedItemsToUser() {
 
     // Donner les couleurs de bordure (backend à implémenter: give-border-color)
     for (const colorId of colorsToGive) {
+      const c = (adminBorderColors.value || []).find(x => String(x.id) === String(colorId))
       try {
         await secureApiCall('/users-admin', { method: 'POST', body: JSON.stringify({
           action: 'give-border-color',
           userId: viewingUserItems.value._id,
           colorId: String(colorId),
+          colorName: c ? c.name : undefined,
           adminMessage: adminMessage.value.trim() || null
         }) })
         givenCount++

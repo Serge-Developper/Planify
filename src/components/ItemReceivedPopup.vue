@@ -327,6 +327,9 @@ function isBorderVariant(it: Item): boolean {
     const idNum = Number((it as any).id)
     const colorId = coinsStore.getBorderColorIdFromItem({ id: idNum, name: String((it as any).name || '') } as any)
     if (colorId) return true
+    // Fallback dynamique: faire correspondre par nom exact d'une couleur enregistrée
+    const byName = coinsStore.borderColors.find(c => String((it as any).name || '').toLowerCase() === String(c.name || '').toLowerCase())
+    if (byName) return true
     // Fallback par nom si un ancien item texte arrive
     if (String(it.name || '').toLowerCase().startsWith('bordure ')) return true
     return false
@@ -344,6 +347,12 @@ function getBorderFillStyle(it: Item): Record<string, string> {
       const c = coinsStore.borderColors.find(c => c.id === colorId)
       if (c && c.gradient) bg = c.gradient as string
       else if (c && c.color) bg = c.color as string
+    } else {
+      // Fallback dynamique: lookup par nom de couleur
+      const byName = coinsStore.borderColors.find(c => String((it as any).name || '').toLowerCase() === String(c.name || '').toLowerCase())
+      if (byName) {
+        bg = (byName.gradient as string) || (byName.color as string) || bg
+      }
     }
     return { background: bg, width: '100%', height: '100%' }
   } catch {
