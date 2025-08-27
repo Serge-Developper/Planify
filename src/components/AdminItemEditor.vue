@@ -52,6 +52,9 @@
       <label>Nom
         <input v-model="borderForm.name" type="text" placeholder="Nom de la couleur" />
       </label>
+      <label>Prix
+        <input v-model.number="borderForm.price" type="number" min="0" />
+      </label>
       <label>Identifiant colorId (ex: red, royal-blue)
         <input v-model="borderForm.colorId" type="text" placeholder="ex: red" />
       </label>
@@ -276,6 +279,7 @@ const form = ref({
 const borderForm = ref({
   legacyId: 100,
   name: '',
+  price: 0,
   colorId: '',
   color: '#000000',
   gradient: '',
@@ -848,7 +852,7 @@ async function saveBorderColor() {
   const payload = {
     legacyId: Number(borderForm.value.legacyId),
     name: borderForm.value.name || (borderForm.value.colorId || 'Couleur'),
-    price: 0,
+    price: Number(borderForm.value.price) || 0,
     type: 'border-color',
     colorId: borderForm.value.colorId || String(borderForm.value.legacyId),
     color: borderForm.value.color || null,
@@ -864,13 +868,13 @@ async function saveBorderColor() {
     try {
       await secureApiCall('/border-colors', {
         method: 'POST',
-        body: JSON.stringify({ id: payload.colorId, name: payload.name, color: payload.color, gradient: payload.gradient })
+        body: JSON.stringify({ id: payload.colorId, name: payload.name, color: payload.color, gradient: payload.gradient, price: payload.price })
       })
       await loadBorderColors()
     } catch {}
     alert('Couleur enregistrée !')
     existingItems.value = [res.item, ...existingItems.value]
-    borderForm.value = { legacyId: 100, name: '', colorId: '', color: '#000000', gradient: '', availableInDailyShop: false }
+    borderForm.value = { legacyId: 100, name: '', price: 0, colorId: '', color: '#000000', gradient: '', availableInDailyShop: false }
   } else {
     alert(res?.message || 'Erreur enregistrement couleur')
   }

@@ -24,6 +24,7 @@ const borderColorSchema = new mongoose.Schema({
   name: { type: String, required: true },
   color: { type: String, default: null },
   gradient: { type: String, default: null },
+  price: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now }
 });
 const BorderColor = mongoose.models.BorderColor || mongoose.model('BorderColor', borderColorSchema);
@@ -66,10 +67,11 @@ exports.handler = async (event, context) => {
       const name = String(body.name || '').trim() || id;
       const color = body.color ? String(body.color) : null;
       const gradient = body.gradient ? String(body.gradient) : null;
+      const price = typeof body.price === 'number' ? body.price : Number(body.price || 0) || 0;
       if (!id) return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ success:false, message:'id requis' }) };
       const exists = await BorderColor.findOne({ id });
       if (exists) return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ success:false, message:'id déjà utilisé' }) };
-      const doc = await BorderColor.create({ id, name, color, gradient });
+      const doc = await BorderColor.create({ id, name, color, gradient, price });
       return { statusCode: 201, headers: corsHeaders, body: JSON.stringify({ success:true, color: doc }) };
     }
 
@@ -84,6 +86,7 @@ exports.handler = async (event, context) => {
       if (body.gradient !== undefined) update.gradient = body.gradient ? String(body.gradient) : null;
       if (!id && !body.id) return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ success:false, message:'id requis pour mise à jour' }) };
       const key = String(id || body.id);
+      if (body.price !== undefined) update.price = (typeof body.price === 'number') ? body.price : Number(body.price || 0) || 0;
       const doc = await BorderColor.findOneAndUpdate({ id: key }, update, { new: true });
       if (!doc) return { statusCode: 404, headers: corsHeaders, body: JSON.stringify({ success:false, message:'Couleur introuvable' }) };
       return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ success:true, color: doc }) };
