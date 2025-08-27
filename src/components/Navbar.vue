@@ -41,7 +41,7 @@
                 <!-- Items dynamiques avec variantes: "below" à l'intérieur (sous l'avatar) -->
                 <template v-if="equippedDynItem">
                   <img
-                    v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
+                    v-for="(a, ai) in getFilteredDynAssetsForNavbar(equippedDynItem)"
                     v-if="a && a.src && getDynPlacement(a) === 'below'"
                     :key="'dyn-variant-nb-below-'+ai+'-'+variantUpdateKey"
                     :src="resolveAssetSrc(a.src)"
@@ -61,7 +61,7 @@
                 <!-- Items dynamiques avec variantes: "inside" à l'intérieur (au-dessus de l'avatar) -->
                 <template v-if="equippedDynItem">
                   <img
-                    v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
+                    v-for="(a, ai) in getFilteredDynAssetsForNavbar(equippedDynItem)"
                     v-if="a && a.src && getDynPlacement(a) === 'inside'"
                     :key="'dyn-variant-nb-inside-'+ai+'-'+variantUpdateKey"
                     :src="resolveAssetSrc(a.src)"
@@ -138,7 +138,7 @@
             <!-- Items dynamiques avec variantes: "above" au-dessus du bouton account -->
             <template v-if="equippedDynItem">
               <img
-                v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
+                v-for="(a, ai) in getFilteredDynAssetsForNavbar(equippedDynItem)"
                 v-if="a && a.src && getDynPlacement(a) === 'above'"
                 :key="'dyn-variant-nb-above-'+ai+'-'+variantUpdateKey"
                 :src="resolveAssetSrc(a.src)"
@@ -405,7 +405,7 @@
                   <!-- Items dynamiques avec variantes (mobile): below -->
                   <template v-if="equippedDynItem">
                     <img
-                      v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
+                      v-for="(a, ai) in getFilteredDynAssetsForNavbar(equippedDynItem)"
                       v-if="a && a.src && getDynPlacement(a) === 'below'"
                       :key="'dyn-variant-m-below-'+ai+'-'+variantUpdateKey"
                       :src="resolveAssetSrc(a.src)"
@@ -425,7 +425,7 @@
                   <!-- Items dynamiques avec variantes (mobile): inside -->
                   <template v-if="equippedDynItem">
                     <img
-                      v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
+                      v-for="(a, ai) in getFilteredDynAssetsForNavbar(equippedDynItem)"
                       v-if="a && a.src && getDynPlacement(a) === 'inside'"
                       :key="'dyn-variant-m-inside-'+ai+'-'+variantUpdateKey"
                       :src="resolveAssetSrc(a.src)"
@@ -509,7 +509,7 @@
             <!-- Items dynamiques avec variantes (mobile): above -->
             <template v-if="equippedDynItem">
               <img
-                v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
+                v-for="(a, ai) in getFilteredDynAssetsForNavbar(equippedDynItem)"
                 v-if="a && a.src && getDynPlacement(a) === 'above'"
                 :key="'dyn-variant-m-above-'+ai+'-'+variantUpdateKey"
                 :src="resolveAssetSrc(a.src)"
@@ -1154,6 +1154,21 @@ function getDynVariantAssetsForNavbar(item) {
   } catch (e) {
     console.error('❌ Erreur dans getDynVariantAssetsForNavbar:', e)
     return []
+  }
+}
+
+// Variante filtrée: évite le doublon en retirant les assets dont la source est la même que l'image de base
+function getFilteredDynAssetsForNavbar(item) {
+  try {
+    const assets = getDynVariantAssetsForNavbar(item) || []
+    if (!item || !item.img) return assets
+    const base = String(item.img).split('/').pop()
+    return assets.filter(a => {
+      const src = a && a.src ? String(a.src) : ''
+      return src && src.split('/').pop() !== base
+    })
+  } catch {
+    return getDynVariantAssetsForNavbar(item) || []
   }
 }
 
