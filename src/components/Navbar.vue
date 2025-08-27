@@ -941,11 +941,17 @@ const equippedDynItem = computed(() => {
   console.log('🔎 Recherche item équipé - equippedId:', equippedId, 'user:', user.value?.username)
   console.log('🗺️ Items disponibles dans la Map:', Array.from(dynamicInfoById.value.keys()))
   
+  // Vérifier si l'item équipé est dynamique (ID > 1000 généralement)
+  // Les items classiques ont des IDs 1-28, les dynamiques ont des IDs plus élevés
+  if (equippedId <= 100) {
+    console.log('📋 Item équipé est un item classique (ID:', equippedId, '), pas affiché dans navbar')
+    return null
+  }
+  
   // Chercher directement dans les items dynamiques
-  // (Dans la navbar on ne gère que les items dynamiques)
   const dynItem = dynamicInfoById.value.get(equippedId)
   if (!dynItem) {
-    console.log('❌ Item non trouvé dans dynamicInfoById avec id:', equippedId)
+    console.log('❌ Item dynamique non trouvé dans dynamicInfoById avec id:', equippedId)
     return null
   }
   
