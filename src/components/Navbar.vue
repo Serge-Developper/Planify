@@ -70,7 +70,7 @@
                 </template>
                 <!-- Image de base de l'item dynamique: affichée seulement si aucune variante n'a d'assets -->
                 <img
-                  v-if="equippedDynItem && equippedDynItem.img && getDynVariantAssetsForNavbar(equippedDynItem).length === 0"
+                  v-if="equippedDynItem && equippedDynItem.img && !hasAnyNavbarAsset(equippedDynItem)"
                   :src="resolveAssetSrc(equippedDynItem.img)"
                   :alt="equippedDynItem.name"
                   :style="getDynFallbackNavbarStyle(equippedDynItem)"
@@ -155,7 +155,7 @@
             </template>
             <!-- Image de base (mobile) de l'item dynamique: seulement si aucune variante n'a d'assets -->
             <img
-              v-if="equippedDynItem && equippedDynItem.img && getDynVariantAssetsForNavbar(equippedDynItem).length === 0"
+              v-if="equippedDynItem && equippedDynItem.img && !hasAnyNavbarAsset(equippedDynItem)"
               :src="resolveAssetSrc(equippedDynItem.img)"
               :alt="equippedDynItem.name"
               :style="getDynFallbackNavbarStyle(equippedDynItem)"
