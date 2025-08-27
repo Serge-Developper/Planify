@@ -66,6 +66,7 @@
                     :key="'dyn-variant-nb-inside-'+ai+'-'+variantUpdateKey"
                     :src="resolveAssetSrc(a.src)"
                     :style="getDynNavbarAssetStyle(a)"
+                    @load="() => console.log('🖼️ Asset variante inside chargé:', a.src, 'placement:', getDynPlacement(a))"
                   />
                 </template>
                 <!-- Image de base de l'item dynamique: affichage seulement si pas d'assets de variante avec le même placement -->
@@ -74,6 +75,7 @@
                   :src="resolveAssetSrc(equippedDynItem.img)"
                   :alt="equippedDynItem.name"
                   :style="getDynFallbackNavbarStyle(equippedDynItem)"
+                  @load="() => console.log('🖼️ Image de base chargée:', equippedDynItem.img)"
                 />
                 <!-- Animation Matrix à l'intérieur de l'avatar -->
                 <div v-if="equippedItem && equippedItem.displayType === 'matrix'" class="matrix-rain-inside">
@@ -1070,14 +1072,29 @@ function hasVariantAssetWithSamePlacement(item, placement) {
     const assets = getDynVariantAssetsForNavbar(item) || []
     const baseImageName = String(item.img).split('/').pop()
     
-    return assets.some(asset => {
+    console.log('🔍 hasVariantAssetWithSamePlacement - item:', item.name, 'placement:', placement)
+    console.log('📋 Base image name:', baseImageName)
+    console.log('📋 Assets de la variante:', assets.map(a => ({ src: a.src, placement: getDynPlacement(a) })))
+    
+    const hasConflict = assets.some(asset => {
       if (!asset || !asset.src) return false
       const assetImageName = String(asset.src).split('/').pop()
       const assetPlacement = getDynPlacement(asset)
+      const isSameImage = assetImageName === baseImageName
+      const isSamePlacement = assetPlacement === placement
+      
+      console.log('🔍 Asset check:', { assetImageName, assetPlacement, isSameImage, isSamePlacement })
+      
       // Vérifier si c'est la même image ET le même placement
-      return assetImageName === baseImageName && assetPlacement === placement
+      return isSameImage && isSamePlacement
     })
-  } catch { return false }
+    
+    console.log('✅ hasVariantAssetWithSamePlacement result:', hasConflict)
+    return hasConflict
+  } catch (e) {
+    console.error('❌ Erreur dans hasVariantAssetWithSamePlacement:', e)
+    return false
+  }
 }
 
 // Chargement des items dynamiques pour la Navbar
