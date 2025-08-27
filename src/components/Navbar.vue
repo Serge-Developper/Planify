@@ -518,7 +518,7 @@
                 :src="resolveAssetSrc(a.src)"
                 :style="getDynNavbarOverlayStyle(a)"
               />
-<<<<<<< HEAD
+
               <!-- Fallback mobile si aucun asset n'est trouvé mais l'item existe -->
               <img
                 v-if="equippedDynItem && (!equippedDynItem.assets || equippedDynItem.assets.length === 0 || getDynVariantAssetsForNavbar(equippedDynItem).length === 0)"
@@ -527,8 +527,7 @@
                 class="equipped-dynamic-item-overlay-mobile"
                 style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 15;"
               />
-=======
->>>>>>> 72162c2
+
             </template>
 
 
