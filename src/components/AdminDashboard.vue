@@ -607,9 +607,21 @@ function handleEditRoleChange() {
 }
 
 const filteredEvents = computed(() => {
+  console.log('filteredEvents - selectedMatiere:', selectedMatiere.value);
+  console.log('filteredEvents - events:', events.value);
+  
   if (!Array.isArray(events.value)) return [];
   if (selectedMatiere.value === 'Toutes') return events.value;
-  return events.value.filter(e => (e.matiere || e.subject) === selectedMatiere.value);
+  
+  const filtered = events.value.filter(e => {
+    const eventMatiere = e.matiere || e.subject;
+    const matches = eventMatiere === selectedMatiere.value;
+    console.log(`Event "${e.titre}" - matiere: "${eventMatiere}", selected: "${selectedMatiere.value}", matches: ${matches}`);
+    return matches;
+  });
+  
+  console.log('filteredEvents - filtered result:', filtered);
+  return filtered;
 });
 
 function formatDate(dateStr) {
@@ -648,24 +660,32 @@ function editEvent(event, idx) {
 
 async function addEvent() {
   try {
+    console.log('addEvent - eventForm.value:', eventForm.value);
+    console.log('addEvent - selectedMatiere:', selectedMatiere.value);
+    
     if (!eventForm.value.groupes || eventForm.value.groupes.length === 0) {
       eventForm.value.groupes = [eventForm.value.groupe];
     }
+    
     if (editingIndex.value !== null && editingIndex.value !== -1) {
       // Modification d'une tâche existante
       const eventToUpdate = events.value[editingIndex.value];
       const updatedEvent = { ...eventToUpdate, ...eventForm.value };
       delete updatedEvent.archived;
+      console.log('addEvent - updating event:', updatedEvent);
       const res = await axios.put(`${API_URL}/events/${eventToUpdate._id}`, updatedEvent);
       events.value[editingIndex.value] = res.data;
       editingIndex.value = null;
     } else {
       // Ajout d'une nouvelle tâche
+      console.log('addEvent - creating new event:', eventForm.value);
       const res = await axios.post(`${API_URL}/events`, eventForm.value);
+      console.log('addEvent - response:', res.data);
       events.value.push(res.data);
     }
     eventForm.value = { titre: '', date: '', heure: '', groupe: 'A', type: 'exam', matiere: selectedMatiere.value, year: 'BUT1', description: '', groupes: [] };
   } catch (err) {
+    console.error('addEvent - error:', err);
     alert('Erreur lors de l\'ajout ou modification : ' + (err.response?.data?.message || err.message));
   }
 }
