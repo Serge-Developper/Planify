@@ -57,6 +57,41 @@ const verifyToken = (req) => {
   }
 };
 
+// Endpoints de test pour la boutique hebdomadaire
+const handleWeeklyTestAdd = async (event) => {
+  try {
+    const user = verifyToken(event);
+    ensureFreshOverrides();
+    const body = JSON.parse(event.body || '{}');
+    const id = Number(body.legacyId);
+    if (!id && id !== 0) {
+      return { statusCode: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:false, message:'legacyId requis' }) };
+    }
+    weeklyOverrides.add.add(id);
+    weeklyOverrides.remove.delete(id);
+    return { statusCode: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:true }) };
+  } catch (e) {
+    return { statusCode: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:false, message:'Non autorisé' }) };
+  }
+}
+
+const handleWeeklyTestRemove = async (event) => {
+  try {
+    const user = verifyToken(event);
+    ensureFreshOverrides();
+    const body = JSON.parse(event.body || '{}');
+    const id = Number(body.legacyId);
+    if (!id && id !== 0) {
+      return { statusCode: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:false, message:'legacyId requis' }) };
+    }
+    weeklyOverrides.remove.add(id);
+    weeklyOverrides.add.delete(id);
+    return { statusCode: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:true }) };
+  } catch (e) {
+    return { statusCode: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:false, message:'Non autorisé' }) };
+  }
+}
+
 // Fonction pour vérifier si c'est le weekend
 const isWeekend = () => {
   const now = new Date();
@@ -94,6 +129,19 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
 };
+
+// Overrides temporaires pour la boutique hebdomadaire (réinitialisés chaque jour)
+let weeklyOverrides = { add: new Set(), remove: new Set(), seed: null };
+function getTodaySeed() {
+  const d = new Date();
+  return d.toISOString().split('T')[0];
+}
+function ensureFreshOverrides() {
+  const seed = getTodaySeed();
+  if (weeklyOverrides.seed !== seed) {
+    weeklyOverrides = { add: new Set(), remove: new Set(), seed };
+  }
+}
 
 // Handler racine pour /api/coins (POST action)
 const handleCoinsRoot = async (event) => {
@@ -228,6 +276,10 @@ const handleCoinsRoute = async (event, path) => {
       return await handleUnequip(event);
     case 'weekly-items':
       return await handleWeeklyItems(event);
+    case 'weekly-items/test-add':
+      return await handleWeeklyTestAdd(event);
+    case 'weekly-items/test-remove':
+      return await handleWeeklyTestRemove(event);
     case 'border-color':
       return await handleBorderColor(event);
     default:
@@ -467,7 +519,16 @@ const handleWeeklyItems = async (event) => {
     return (hash / 233280) - 0.5;
   });
   
-  return shuffled.slice(0, count);
+  let base = shuffled.slice(0, count);
+  // Appliquer overrides (add/remove) du jour
+  ensureFreshOverrides();
+  const removed = new Set([...weeklyOverrides.remove]);
+  base = base.filter(it => !removed.has(Number(it.id)));
+  for (const id of weeklyOverrides.add) {
+    const found = allWeeklyItems.find(i => Number(i.id) === Number(id));
+    if (found && !base.some(x => Number(x.id) === Number(id))) base.push(found);
+  }
+  return base;
     }
 
     // Générer les items hebdomadaires pour aujourd'hui
