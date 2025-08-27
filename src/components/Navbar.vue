@@ -1024,6 +1024,7 @@ function getDynPlacement(asset) {
   try {
     const m = asset && asset.meta ? asset.meta : {}
     const p = m.navbarPlacement || m.avatarPlacement || asset.navbarPlacement
+    alert('🔍 getDynPlacement - asset: ' + asset.src + '\nmeta: ' + JSON.stringify(m) + '\nplacement: ' + p)
     if (p === 'above' || p === 'inside' || p === 'below') return p
     // Fallback par défaut: inside si non précisé
     return 'inside'
