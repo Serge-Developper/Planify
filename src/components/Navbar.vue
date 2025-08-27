@@ -964,14 +964,16 @@ const equippedDynItem = computed(() => {
 
 function resolveAssetSrc(path) {
   if (!path) return ''
-  if (String(path).startsWith('/uploads/')) {
-    // Utiliser les nouvelles APIs pour servir les images depuis la base de données
-    if (path.startsWith('/uploads/avatars/')) {
-      return getApiOrigin() + '/api/uploads/avatars/' + path.split('/').pop()
-    } else if (path.startsWith('/uploads/items/')) {
-      return getApiOrigin() + '/api/items/uploads/' + path.split('/').pop()
-    }
-    return getApiOrigin() + path
+  const p = String(path)
+  // Normaliser les variantes de chemin possibles
+  if (p.includes('uploads/items/')) {
+    return getApiOrigin() + '/api/items/uploads/' + p.split('uploads/items/').pop()
+  }
+  if (p.includes('/uploads/avatars/')) {
+    return getApiOrigin() + '/api/uploads/avatars/' + p.split('/uploads/avatars/').pop()
+  }
+  if (p.startsWith('/uploads/')) {
+    return getApiOrigin() + p
   }
   return path
 }
