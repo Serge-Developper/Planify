@@ -179,6 +179,18 @@ exports.handler = async (event, context) => {
           }
         }
 
+        // Si aucune donnée valide à mettre à jour, retourner 400
+        if (Object.keys(updateData).length === 0) {
+          return {
+            statusCode: 400,
+            headers: {
+              'Access-Control-Allow-Origin': '*',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ error: 'Aucune donnée à mettre à jour' })
+          };
+        }
+
         const updateResult = await subjectsCollection.updateOne(
           { _id: objectId },
           { 
@@ -296,14 +308,14 @@ exports.handler = async (event, context) => {
         };
     }
   } catch (error) {
-    console.error('Erreur:', error);
+    console.error('Erreur subjects.js:', error && error.stack || error);
     return {
       statusCode: 500,
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ error: 'Erreur serveur interne' })
+      body: JSON.stringify({ error: 'Erreur serveur interne', details: String(error && error.message || error) })
     };
   } finally {
     await client.close();
