@@ -1736,7 +1736,10 @@ async function handleProfile() {
         // Mettre à jour l'utilisateur dans le store avec les données complètes
         // Mais seulement si les données sont différentes pour éviter les problèmes de synchronisation
         if (JSON.stringify(response.user) !== JSON.stringify(user.value)) {
-          auth.login(response.user);
+          const preservedToken = user.value && user.value.token ? user.value.token : null;
+          const mergedUser = { ...(user.value || {}), ...(response.user || {}) };
+          if (preservedToken) mergedUser.token = preservedToken;
+          auth.login(mergedUser);
         }
       } else {
         console.log('❌ Erreur lors de la récupération des données utilisateur');
