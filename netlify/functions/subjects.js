@@ -128,9 +128,24 @@ exports.handler = async (event, context) => {
         
         // Vérifier si le nouveau nom existe déjà (sauf pour cette matière)
         if (updateData.name) {
+          let excludeId;
+          try {
+            const { ObjectId } = require('mongodb');
+            excludeId = new ObjectId(id);
+          } catch {
+            return {
+              statusCode: 400,
+              headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ error: 'ID invalide' })
+            };
+          }
+
           const duplicateSubject = await subjectsCollection.findOne({ 
             name: { $regex: new RegExp(`^${updateData.name}$`, 'i') },
-            _id: { $ne: require('mongodb').ObjectId(id) }
+            _id: { $ne: excludeId }
           });
           
           if (duplicateSubject) {
