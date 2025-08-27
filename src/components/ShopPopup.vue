@@ -593,7 +593,7 @@
                       :class="getEquippedItemClass(getUserEquippedItemData(user).name)"
                     />
                 </template>
-                <div class="user-avatar" :style="getAvatarBorderStyle(user)" :class="{ 'jojo-sepia': getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'jojo' }" @click="openLeaderboardProfile(user)">
+                <div class="user-avatar" :style="getAvatarBorderStyle(user)" :class="{ 'jojo-sepia': getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'jojo' }" @click="openLeaderboardProfile(user)" :data-color="String(user && user.selectedBorderColor || '')">
                   <img 
                     :src="getUserAvatar(user)" 
                     :alt="user.username" 

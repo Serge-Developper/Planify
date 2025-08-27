@@ -626,16 +626,6 @@ const handleBorderColor = async (event) => {
       };
     }
 
-    // Vérifier si l'utilisateur possède la bordure classique (itemId 0)
-    const hasClassicBorder = userDoc.purchasedItems.some(item => item.itemId === 0);
-    if (!hasClassicBorder) {
-      return {
-        statusCode: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ success: false, message: 'Vous devez posséder la bordure classique pour changer sa couleur' })
-      };
-    }
-
     // Mettre à jour la couleur de bordure sélectionnée
       userDoc.selectedBorderColor = colorId;
       await userDoc.save();
