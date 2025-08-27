@@ -435,9 +435,33 @@ import { useSubjectsStore } from '@/stores/subjects';
 
 const subjectsStore = useSubjectsStore();
 
-// Liste des matières dynamiques depuis le store
+// Liste des matières statiques (fallback)
+const matieresStatiques = [
+  "Anglais",
+  "Culture artistique",
+  "Culture numérique",
+  "Production graphique",
+  "Gestion de projet",
+  "Hébergement",
+  "Stratégies de communication",
+  "Système d'information",
+  "Développement web",
+  "Gestion de contenus",
+  "Ergonomie et accessibilité",
+  "Projet personnel et professionnel",
+  "Intégration",
+  "Production audio et vidéo",
+  "Expression, communication et rhétorique",
+  "Ecriture multimédia et narration",
+  "Représentation et traitement de l'information",
+  "Economie et droit du numérique"
+];
+
+// Liste des matières dynamiques depuis le store, avec fallback sur les matières statiques
 const mmiMatieres = computed(() => {
-  return subjectsStore.getSubjects.map(subject => subject.name);
+  const matieresDynamiques = subjectsStore.getSubjects.map(subject => subject.name);
+  // Si aucune matière dynamique n'est chargée, utiliser les matières statiques
+  return matieresDynamiques.length > 0 ? matieresDynamiques : matieresStatiques;
 });
 
 // Génère une clé unique stable pour un event
@@ -889,7 +913,11 @@ async function submitAddTask() {
 
 // Initialiser les matières au montage du composant
 onMounted(async () => {
-  await subjectsStore.fetchSubjects();
+  try {
+    await subjectsStore.fetchSubjects();
+  } catch (error) {
+    console.warn('Impossible de charger les matières dynamiques, utilisation des matières statiques:', error);
+  }
 });
 
 // Si tu veux utiliser ce composant de façon autonome (hors EmploiDuTemps), décommente ce qui suit :
