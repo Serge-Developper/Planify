@@ -69,9 +69,9 @@
                                          @load="() => alert('🖼️ Asset variante inside chargé: ' + a.src + '\nURL résolue: ' + resolveAssetSrc(a.src) + '\nplacement: ' + getDynPlacement(a))"
                   />
                 </template>
-                <!-- Image de base de l'item dynamique: affichage seulement si pas d'assets de variante avec la même image -->
+                <!-- Image de base de l'item dynamique: affichage seulement si pas d'assets de variante -->
                 <img
-                  v-if="equippedDynItem && equippedDynItem.img && !hasVariantAssetWithSameImage(equippedDynItem)"
+                  v-if="equippedDynItem && equippedDynItem.img && getDynVariantAssetsForNavbar(equippedDynItem).length === 0"
                   :src="resolveAssetSrc(equippedDynItem.img)"
                   :alt="equippedDynItem.name"
                   :style="getDynFallbackNavbarStyle(equippedDynItem)"
@@ -148,9 +148,9 @@
               />
 
             </template>
-            <!-- Image de base (mobile) de l'item dynamique: affichage seulement si pas d'assets de variante avec la même image -->
+            <!-- Image de base (mobile) de l'item dynamique: affichage seulement si pas d'assets de variante -->
             <img
-              v-if="equippedDynItem && equippedDynItem.img && !hasVariantAssetWithSameImage(equippedDynItem)"
+              v-if="equippedDynItem && equippedDynItem.img && getDynVariantAssetsForNavbar(equippedDynItem).length === 0"
               :src="resolveAssetSrc(equippedDynItem.img)"
               :alt="equippedDynItem.name"
               :style="getDynFallbackNavbarStyle(equippedDynItem)"
