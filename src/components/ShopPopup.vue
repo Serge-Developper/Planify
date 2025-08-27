@@ -2110,7 +2110,7 @@ function getJojoImgStyle() {
   }
 }
 function getJojoTextStyle() {
-  const p = coinsStore.jojoTextPos || { top: -5, left: 5, width: 90 }
+  const p = coinsStore.jojoTextPos || { top: -5, left: 10, width: 72 }
   return {
     position: 'absolute',
     top: p.top + 'px',
@@ -3166,6 +3166,16 @@ const sortedLeaderboardUsers = computed(() => {
     object-fit: contain !important;
     pointer-events: none !important;
     z-index: 7 !important;
+  }
+  /* Ajustements mobiles pour l'aperçu Jojo dans la Collection */
+  @media (min-width: 320px) and (max-width: 1024px) {
+    .jojo-item-shop .jojo-img-shop {
+      left: 77px !important;
+    }
+    .jojo-item-shop .jojo-text-preview {
+      top: 0px !important;
+      left: 8px !important;
+    }
   }
 
   /* Roses - Moyen */
