@@ -66,7 +66,7 @@
                     :key="'dyn-variant-nb-inside-'+ai+'-'+variantUpdateKey"
                     :src="resolveAssetSrc(a.src)"
                     :style="getDynNavbarAssetStyle(a)"
-                                         @load="() => alert('🖼️ Asset variante inside chargé: ' + a.src + ' placement: ' + getDynPlacement(a))"
+                                         @load="() => alert('🖼️ Asset variante inside chargé: ' + a.src + '\nURL résolue: ' + resolveAssetSrc(a.src) + '\nplacement: ' + getDynPlacement(a))"
                   />
                 </template>
                 <!-- Image de base de l'item dynamique: affichage seulement si pas d'assets de variante avec la même image -->
@@ -75,7 +75,7 @@
                   :src="resolveAssetSrc(equippedDynItem.img)"
                   :alt="equippedDynItem.name"
                   :style="getDynFallbackNavbarStyle(equippedDynItem)"
-                  @load="() => alert('🖼️ Image de base chargée: ' + equippedDynItem.img)"
+                  @load="() => alert('🖼️ Image de base chargée: ' + equippedDynItem.img + '\nURL résolue: ' + resolveAssetSrc(equippedDynItem.img))"
                 />
                 <!-- Animation Matrix à l'intérieur de l'avatar -->
                 <div v-if="equippedItem && equippedItem.displayType === 'matrix'" class="matrix-rain-inside">
