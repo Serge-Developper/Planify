@@ -1072,7 +1072,7 @@ function hasVariantAssetWithSameImage(item) {
     const assets = getDynVariantAssetsForNavbar(item) || []
     const baseImageName = String(item.img).split('/').pop()
     
-    alert('🔍 hasVariantAssetWithSameImage - item: ' + item.name + '\nBase image: ' + baseImageName + '\nAssets: ' + assets.length)
+    alert('🔍 hasVariantAssetWithSameImage - item: ' + item.name + '\nBase image: ' + baseImageName + '\nAssets: ' + assets.length + '\n\nAssets details:\n' + assets.map(a => a.src).join('\n'))
     
     const hasConflict = assets.some(asset => {
       if (!asset || !asset.src) return false
