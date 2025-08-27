@@ -46,6 +46,76 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
 };
 
+// Forgot password: récupérer les questions secrètes
+const handleForgotQuestions = async (event) => {
+  try {
+    const body = JSON.parse(event.body || '{}');
+    const { username } = body;
+    if (!username) {
+      return { statusCode: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:false, message:'Identifiant requis' }) };
+    }
+    const user = await User.findOne({ username });
+    if (!user) {
+      return { statusCode: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:false, message:'Utilisateur introuvable' }) };
+    }
+    const questions = Array.isArray(user.secretQuestions) ? user.secretQuestions.filter(q => q && q.question).map(q => ({ question: q.question })) : [];
+    if (questions.length === 0) {
+      return { statusCode: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:false, message:'Aucune question secrète définie' }) };
+    }
+    return { statusCode: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:true, questions }) };
+  } catch (e) {
+    return { statusCode: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:false, message:'Erreur serveur' }) };
+  }
+};
+
+// Forgot password: vérifier les réponses
+const handleForgotVerify = async (event) => {
+  try {
+    const body = JSON.parse(event.body || '{}');
+    const { username, answers } = body;
+    if (!username || !Array.isArray(answers)) {
+      return { statusCode: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:false, message:'Paramètres manquants' }) };
+    }
+    const user = await User.findOne({ username });
+    if (!user) {
+      return { statusCode: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:false, message:'Utilisateur introuvable' }) };
+    }
+    const q = Array.isArray(user.secretQuestions) ? user.secretQuestions : [];
+    if (q.length === 0) {
+      return { statusCode: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:false, message:'Aucune question secrète définie' }) };
+    }
+    const normalize = (s) => String(s || '').trim().toLowerCase();
+    const ok = q.length === answers.length && q.every((qq, i) => normalize(qq.answer) === normalize(answers[i]));
+    if (!ok) {
+      return { statusCode: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:false, message:'Réponses incorrectes' }) };
+    }
+    return { statusCode: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:true }) };
+  } catch (e) {
+    return { statusCode: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:false, message:'Erreur serveur' }) };
+  }
+};
+
+// Forgot password: réinitialiser le mot de passe
+const handleForgotReset = async (event) => {
+  try {
+    const body = JSON.parse(event.body || '{}');
+    const { username, newPassword } = body;
+    if (!username || !newPassword || String(newPassword).length < 8) {
+      return { statusCode: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:false, message:'Paramètres invalides' }) };
+    }
+    const user = await User.findOne({ username });
+    if (!user) {
+      return { statusCode: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:false, message:'Utilisateur introuvable' }) };
+    }
+    const hashed = await bcrypt.hash(String(newPassword), 10);
+    user.password = hashed;
+    await user.save();
+    return { statusCode: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:true, message:'Mot de passe réinitialisé' }) };
+  } catch (e) {
+    return { statusCode: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:false, message:'Erreur serveur' }) };
+  }
+};
+
 // Handler pour le login
 const handleLogin = async (event) => {
   try {
@@ -371,6 +441,12 @@ exports.handler = async (event, context) => {
         return await handleRegister(event);
       case 'verify':
         return await handleVerifyToken(event);
+      case 'forgot-password-questions':
+        return await handleForgotQuestions(event);
+      case 'forgot-password-verify':
+        return await handleForgotVerify(event);
+      case 'forgot-password-reset':
+        return await handleForgotReset(event);
       default:
         return {
           statusCode: 404,
