@@ -328,6 +328,8 @@ const handleCoinsRoute = async (event, path) => {
       return await handleSpinStatus(event);
     case 'inventory':
       return await handleInventory(event);
+    case 'purchase':
+      return await handlePurchase(event);
     case 'equip':
       return await handleEquip(event);
     case 'unequip':
@@ -463,6 +465,49 @@ const handleInventory = async (event) => {
     };
   }
 };
+
+// Handler pour achat (items et couleurs de bordure)
+const handlePurchase = async (event) => {
+  if (event.httpMethod !== 'POST') {
+    return { statusCode: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:false, message:'Méthode non autorisée' }) };
+  }
+  try {
+    const user = verifyToken(event);
+    const body = JSON.parse(event.body || '{}');
+    const { itemId, itemName, price, type } = body;
+    if (typeof itemId === 'undefined' || typeof price === 'undefined') {
+      return { statusCode: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:false, message:'Paramètres manquants' }) };
+    }
+    let userId;
+    if (typeof user === 'object' && user !== null) userId = user.id || user._id; else userId = user;
+    const userDoc = await User.findById(userId);
+    if (!userDoc) return { statusCode: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:false, message:'Utilisateur non trouvé' }) };
+
+    const cost = Number(price) || 0;
+    if ((userDoc.coins || 0) < cost) {
+      return { statusCode: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:false, message:'Solde insuffisant' }) };
+    }
+
+    // Débit
+    userDoc.coins = (userDoc.coins || 0) - cost;
+
+    // Si c'est une couleur de bordure, on l'ajoute comme achat traceur mais on débloque côté front/store
+    if (type === 'border-color' || type === 'border-gradient') {
+      const entry = { itemId: Number(itemId), itemName: String(itemName || 'Couleur'), price: cost, purchaseDate: new Date() };
+      userDoc.purchasedItems.push(entry);
+      await userDoc.save();
+      return { statusCode: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:true, message:'Couleur achetée', newCoins: userDoc.coins, purchasedItem: entry }) };
+    }
+
+    // Achat item normal
+    const purchased = { itemId: Number(itemId), itemName: String(itemName || ''), price: cost, purchaseDate: new Date() };
+    userDoc.purchasedItems.push(purchased);
+    await userDoc.save();
+    return { statusCode: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:true, message:'Item acheté', newCoins: userDoc.coins, purchasedItem: purchased }) };
+  } catch (error) {
+    return { statusCode: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:false, message:'Token invalide' }) };
+  }
+}
 
 // Handler pour equip
 const handleEquip = async (event) => {
