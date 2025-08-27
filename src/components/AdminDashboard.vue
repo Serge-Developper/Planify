@@ -632,14 +632,13 @@ function formatDate(dateStr) {
 
 async function deleteEvent(event, idx) {
   try {
-    await axios.post(`${API_URL}/events/${event._id}/delete`);
-    // Trouver l'index réel dans events.value
+    await secureApiCall(`/events/${event._id}`, { method: 'DELETE' });
     const realIndex = events.value.findIndex(e => e._id === event._id);
     if (realIndex !== -1) {
       events.value.splice(realIndex, 1);
     }
   } catch (e) {
-    alert('Erreur lors de la suppression');
+    alert('Erreur lors de la suppression: ' + (e?.message || ''));
   }
 }
 
@@ -668,20 +667,27 @@ async function addEvent() {
     }
     
     if (editingIndex.value !== null && editingIndex.value !== -1) {
-      // Modification d'une tâche existante
+      // Modification d'une tâche existante (backend attend eventId dans le body)
       const eventToUpdate = events.value[editingIndex.value];
-      const updatedEvent = { ...eventToUpdate, ...eventForm.value };
-      delete updatedEvent.archived;
-      console.log('addEvent - updating event:', updatedEvent);
-      const res = await axios.put(`${API_URL}/events/${eventToUpdate._id}`, updatedEvent);
-      events.value[editingIndex.value] = res.data;
+      const payload = { eventId: eventToUpdate._id, ...eventForm.value };
+      console.log('addEvent - updating event (payload):', payload);
+      const res = await secureApiCall('/events', {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+      });
+      const updated = (res && res.event) ? res.event : res;
+      events.value[editingIndex.value] = updated;
       editingIndex.value = null;
     } else {
       // Ajout d'une nouvelle tâche
       console.log('addEvent - creating new event:', eventForm.value);
-      const res = await axios.post(`${API_URL}/events`, eventForm.value);
-      console.log('addEvent - response:', res.data);
-      events.value.push(res.data);
+      const res = await secureApiCall('/events', {
+        method: 'POST',
+        body: JSON.stringify(eventForm.value)
+      });
+      const created = (res && res.event) ? res.event : res;
+      console.log('addEvent - response:', res);
+      events.value.push(created);
     }
     eventForm.value = { titre: '', date: '', heure: '', groupe: 'A', type: 'exam', matiere: selectedMatiere.value, year: 'BUT1', description: '', groupes: [] };
   } catch (err) {
