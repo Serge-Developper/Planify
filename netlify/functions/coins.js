@@ -63,12 +63,24 @@ const handleWeeklyTestAdd = async (event) => {
     const user = verifyToken(event);
     ensureFreshOverrides();
     const body = JSON.parse(event.body || '{}');
-    const id = Number(body.legacyId);
-    if (!id && id !== 0) {
-      return { statusCode: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:false, message:'legacyId requis' }) };
+    // Si c'est un item dynamique (legacyId numérique)
+    if (body.legacyId !== undefined) {
+      const id = Number(body.legacyId);
+      if (!id && id !== 0) {
+        return { statusCode: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:false, message:'legacyId requis' }) };
+      }
+      weeklyOverrides.add.add(id);
+      weeklyOverrides.remove.delete(id);
     }
-    weeklyOverrides.add.add(id);
-    weeklyOverrides.remove.delete(id);
+    // Si c'est une couleur de bordure dynamique (borderId peut être string ou number)
+    if (body.borderId !== undefined) {
+      const bid = String(body.borderId);
+      if (!bid) {
+        return { statusCode: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:false, message:'borderId requis' }) };
+      }
+      weeklyOverrides.addBorders.add(bid);
+      weeklyOverrides.removeBorders.delete(bid);
+    }
     return { statusCode: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:true }) };
   } catch (e) {
     return { statusCode: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:false, message:'Non autorisé' }) };
@@ -80,12 +92,22 @@ const handleWeeklyTestRemove = async (event) => {
     const user = verifyToken(event);
     ensureFreshOverrides();
     const body = JSON.parse(event.body || '{}');
-    const id = Number(body.legacyId);
-    if (!id && id !== 0) {
-      return { statusCode: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:false, message:'legacyId requis' }) };
+    if (body.legacyId !== undefined) {
+      const id = Number(body.legacyId);
+      if (!id && id !== 0) {
+        return { statusCode: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:false, message:'legacyId requis' }) };
+      }
+      weeklyOverrides.remove.add(id);
+      weeklyOverrides.add.delete(id);
     }
-    weeklyOverrides.remove.add(id);
-    weeklyOverrides.add.delete(id);
+    if (body.borderId !== undefined) {
+      const bid = String(body.borderId);
+      if (!bid) {
+        return { statusCode: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:false, message:'borderId requis' }) };
+      }
+      weeklyOverrides.removeBorders.add(bid);
+      weeklyOverrides.addBorders.delete(bid);
+    }
     return { statusCode: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:true }) };
   } catch (e) {
     return { statusCode: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ success:false, message:'Non autorisé' }) };
@@ -131,7 +153,9 @@ const corsHeaders = {
 };
 
 // Overrides temporaires pour la boutique hebdomadaire (réinitialisés chaque jour)
-let weeklyOverrides = { add: new Set(), remove: new Set(), seed: null };
+// add/remove: items dynamiques (IDs numériques legacy)
+// addBorders/removeBorders: couleurs de bordure (IDs ou colorId sous forme de chaînes)
+let weeklyOverrides = { add: new Set(), remove: new Set(), addBorders: new Set(), removeBorders: new Set(), seed: null };
 function getTodaySeed() {
   const d = new Date();
   return d.toISOString().split('T')[0];
@@ -139,7 +163,7 @@ function getTodaySeed() {
 function ensureFreshOverrides() {
   const seed = getTodaySeed();
   if (weeklyOverrides.seed !== seed) {
-    weeklyOverrides = { add: new Set(), remove: new Set(), seed };
+    weeklyOverrides = { add: new Set(), remove: new Set(), addBorders: new Set(), removeBorders: new Set(), seed };
   }
 }
 
@@ -585,7 +609,20 @@ const handleWeeklyItems = async (event) => {
     });
     
     // Fixer le prix de toutes les couleurs à 40 coins, et sélectionner 3 par jour
-    const weeklyBorderColors = shuffledBorders.slice(0, 3).map((c) => ({ ...c, price: 40 }));
+    let weeklyBorderColors = shuffledBorders.slice(0, 3).map((c) => ({ ...c, price: 40 }));
+    // Appliquer overrides bordures (add/remove) du jour
+    ensureFreshOverrides();
+    const removedBorders = new Set([...weeklyOverrides.removeBorders].map(String));
+    weeklyBorderColors = weeklyBorderColors.filter(c => !removedBorders.has(String(c.id)) && !removedBorders.has(String(c.colorId)));
+
+    for (const bid of weeklyOverrides.addBorders) {
+      // Chercher d'abord dans la liste statique
+      let found = borderColors.find(b => String(b.id) === String(bid) || String(b.colorId) === String(bid));
+      // TODO: possibilité d'étendre: charger aussi depuis la collection dynamique en DB si besoin
+      if (found && !weeklyBorderColors.some(x => String(x.id) === String(found.id))) {
+        weeklyBorderColors.push({ ...found, price: 40 });
+      }
+    }
 
     // Combiner les items normaux et les couleurs de bordure
     weeklyItems = [...weeklyItems, ...weeklyBorderColors];

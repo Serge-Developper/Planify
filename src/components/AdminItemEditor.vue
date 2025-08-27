@@ -390,18 +390,36 @@ const canvasStyle = computed(() => {
 // Boutons de test hebdo pour les couleurs de bordure
 async function testBorderColorWeekly() {
   try {
-    await secureApiCall('/coins/weekly-items', { method: 'GET' })
-    alert('La boutique hebdo a été rechargée. Ouvre l’onglet "Boutique quotidienne" dans la pop-up pour vérifier la couleur.')
-    try { window.dispatchEvent(new Event('items-changed')) } catch {}
+    const id = String(borderForm.value.colorId || borderForm.value.legacyId)
+    if (!id) { alert('Définis un identifiant de couleur (colorId ou legacy).'); return }
+    const res = await secureApiCall('/coins/weekly-items/test-add', {
+      method: 'POST',
+      body: JSON.stringify({ borderId: id })
+    })
+    if (res && res.success) {
+      alert('Couleur ajoutée pour test. Ouvre l’onglet "Boutique quotidienne" pour vérifier.')
+      try { window.dispatchEvent(new Event('items-changed')) } catch {}
+    } else {
+      alert('Impossible d\'ajouter la couleur en test.')
+    }
   } catch (e) {
-    alert('Impossible de recharger la boutique hebdo.')
+    alert('Erreur test hebdo (couleur): ' + (e && e.message ? e.message : e))
   }
 }
 async function removeBorderColorFromWeekly() {
   try {
-    await secureApiCall('/coins/weekly-items', { method: 'GET' })
-    alert('La rotation hebdo sera recalculée au prochain reset (01:00).')
-  } catch (e) { alert('Action non disponible.') }
+    const id = String(borderForm.value.colorId || borderForm.value.legacyId)
+    if (!id) { alert('Définis un identifiant de couleur (colorId ou legacy).'); return }
+    const res = await secureApiCall('/coins/weekly-items/test-remove', {
+      method: 'POST',
+      body: JSON.stringify({ borderId: id })
+    })
+    if (res && res.success) {
+      alert('Couleur retirée de la boutique hebdo.')
+    } else {
+      alert('Impossible de retirer la couleur de la boutique hebdo.')
+    }
+  } catch (e) { alert('Erreur retrait hebdo (couleur): ' + (e && e.message ? e.message : e)) }
 }
 
 const bgStyle = computed(() => {
