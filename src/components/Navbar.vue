@@ -926,8 +926,9 @@ onUnmounted(() => document.removeEventListener('click', handleGlobalClick, true)
 // Variables pour les items équipés
 const equippedItem = computed(() => coinsStore.equippedItem)
 const equippedDynItem = computed(() => {
-  // Utiliser user.equippedItemId comme dans ShopPopup
-  if (!user.value || !user.value.token || user.value.equippedItemId === null || user.value.equippedItemId === undefined || user.value.equippedItemId === 0) {
+  // Utiliser coinsStore.equippedItemId au lieu de user.equippedItemId
+  const equippedId = coinsStore.equippedItemId
+  if (!user.value || !user.value.token || equippedId === null || equippedId === undefined || equippedId === 0) {
     return null
   }
   
@@ -937,7 +938,6 @@ const equippedDynItem = computed(() => {
     return null
   }
   
-  const equippedId = Number(user.value.equippedItemId)
   console.log('🔎 Recherche item équipé - equippedId:', equippedId, 'user:', user.value?.username)
   console.log('🗺️ Items disponibles dans la Map:', Array.from(dynamicInfoById.value.keys()))
   
