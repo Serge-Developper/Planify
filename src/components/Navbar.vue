@@ -68,9 +68,9 @@
                     :style="getDynNavbarAssetStyle(a)"
                   />
                 </template>
-                <!-- Image de base de l'item dynamique: affichage garanti -->
+                <!-- Image de base de l'item dynamique: affichage seulement si pas d'assets de variante avec le même placement -->
                 <img
-                  v-if="equippedDynItem && equippedDynItem.img"
+                  v-if="equippedDynItem && equippedDynItem.img && !hasVariantAssetWithSamePlacement(equippedDynItem, 'inside')"
                   :src="resolveAssetSrc(equippedDynItem.img)"
                   :alt="equippedDynItem.name"
                   :style="getDynFallbackNavbarStyle(equippedDynItem)"
@@ -146,9 +146,9 @@
               />
 
             </template>
-            <!-- Image de base (mobile) de l'item dynamique: affichage garanti -->
+            <!-- Image de base (mobile) de l'item dynamique: affichage seulement si pas d'assets de variante avec le même placement -->
             <img
-              v-if="equippedDynItem && equippedDynItem.img"
+              v-if="equippedDynItem && equippedDynItem.img && !hasVariantAssetWithSamePlacement(equippedDynItem, 'inside')"
               :src="resolveAssetSrc(equippedDynItem.img)"
               :alt="equippedDynItem.name"
               :style="getDynFallbackNavbarStyle(equippedDynItem)"
@@ -1063,7 +1063,24 @@ function hasNavbarInsideAsset(item) {
   } catch { return false }
 }
 
-// Chargement des items dynamiques pour la Navbar
+// Vérifie si la variante a un asset avec le même placement que l'image de base
+function hasVariantAssetWithSamePlacement(item, placement) {
+  try {
+    if (!item || !item.img) return false
+    const assets = getDynVariantAssetsForNavbar(item) || []
+    const baseImageName = String(item.img).split('/').pop()
+    
+    return assets.some(asset => {
+      if (!asset || !asset.src) return false
+      const assetImageName = String(asset.src).split('/').pop()
+      const assetPlacement = getDynPlacement(asset)
+      // Vérifier si c'est la même image ET le même placement
+      return assetImageName === baseImageName && assetPlacement === placement
+    })
+  } catch { return false }
+}
+
+en// Chargement des items dynamiques pour la Navbar
 const dynamicInfoById = ref(new Map())
 async function loadDynamicItems() {
   try {
