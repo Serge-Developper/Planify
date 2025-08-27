@@ -49,6 +49,11 @@
           <h3>Éditeur d'items</h3>
           <AdminItemEditor />
         </section>
+
+        <section v-if="auth.user && auth.user.role === 'admin'" style="margin-top: 24px;">
+          <h3>Gestion des Matières</h3>
+          <SubjectManager />
+        </section>
       </main>
       <div v-if="showUserForm" class="modal">
         <div style="position: relative;">
@@ -276,6 +281,7 @@
 
 <script setup>
 import AdminItemEditor from './AdminItemEditor.vue'
+import SubjectManager from './SubjectManager.vue'
 import { useAuthStore } from '@/stores/auth'
 const auth = useAuthStore()
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';

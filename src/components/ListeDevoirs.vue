@@ -430,27 +430,15 @@ try {
 const isAdmin = computed(() => user.value && user.value.role === 'admin');
 const matiereArchive = ref('');
 
-// Liste officielle MMI
-const mmiMatieres = [
-  "Anglais",
-  "Culture artistique",
-  "Culture numérique",
-  "Production graphique",
-  "Gestion de projet",
-  "Hébergement",
-  "Stratégies de communication",
-  "Système d'information",
-  "Développement web",
-  "Gestion de contenus",
-  "Ergonomie et accessibilité",
-  "Projet personnel et professionnel",
-  "Intégration",
-  "Production audio et vidéo",
-  "Expression, communication et rhétorique",
-  "Ecriture multimédia et narration",
-  "Représentation et traitement de l'information",
-  "Economie et droit du numérique"
-];
+// Import du store des matières
+import { useSubjectsStore } from '@/stores/subjects';
+
+const subjectsStore = useSubjectsStore();
+
+// Liste des matières dynamiques depuis le store
+const mmiMatieres = computed(() => {
+  return subjectsStore.getSubjects.map(subject => subject.name);
+});
 
 // Génère une clé unique stable pour un event
 const eventKey = (e) => (e && (e._id || (e.titre + e.date + e.heure)));
@@ -898,6 +886,11 @@ async function submitAddTask() {
     loadingAdd.value = false;
   }
 }
+
+// Initialiser les matières au montage du composant
+onMounted(async () => {
+  await subjectsStore.fetchSubjects();
+});
 
 // Si tu veux utiliser ce composant de façon autonome (hors EmploiDuTemps), décommente ce qui suit :
 // onMounted(async () => {
