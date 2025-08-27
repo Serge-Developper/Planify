@@ -612,7 +612,7 @@ function stringToColor(str, type) {
   if (matiereDynamique) {
     // Utiliser la couleur ou le dégradé de la matière dynamique
     const c1 = matiereDynamique.color;
-    const c2 = matiereDynamique.color2;
+    const c2 = (matiereDynamique.useGradient === false) ? null : matiereDynamique.color2;
     const a1 = typeof matiereDynamique.colorOpacity === 'number' ? matiereDynamique.colorOpacity : 1;
     const a2 = typeof matiereDynamique.color2Opacity === 'number' ? matiereDynamique.color2Opacity : 1;
     const angle = typeof matiereDynamique.gradientAngle === 'number' ? matiereDynamique.gradientAngle : 135;

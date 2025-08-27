@@ -76,6 +76,9 @@ exports.handler = async (event, context) => {
           gradientAngle: typeof newSubject.gradientAngle === 'number' ? newSubject.gradientAngle : undefined,
           colorOpacity: typeof newSubject.colorOpacity === 'number' ? newSubject.colorOpacity : undefined,
           color2Opacity: typeof newSubject.color2Opacity === 'number' ? newSubject.color2Opacity : undefined,
+          useGradient: typeof newSubject.useGradient === 'boolean'
+            ? newSubject.useGradient
+            : !!newSubject.color2
         };
 
         const result = await subjectsCollection.insertOne({
@@ -124,6 +127,7 @@ exports.handler = async (event, context) => {
           ...(updateDataRaw.gradientAngle !== undefined ? (() => { const n = mkNum(updateDataRaw.gradientAngle); return n !== undefined ? { gradientAngle: n } : {}; })() : {}),
           ...(updateDataRaw.colorOpacity !== undefined ? (() => { const n = mkNum(updateDataRaw.colorOpacity); return n !== undefined ? { colorOpacity: n } : {}; })() : {}),
           ...(updateDataRaw.color2Opacity !== undefined ? (() => { const n = mkNum(updateDataRaw.color2Opacity); return n !== undefined ? { color2Opacity: n } : {}; })() : {}),
+          ...(typeof updateDataRaw.useGradient === 'boolean' ? { useGradient: !!updateDataRaw.useGradient } : {})
         };
         
         // Vérifier si le nouveau nom existe déjà (sauf pour cette matière)

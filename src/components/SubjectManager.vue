@@ -179,7 +179,8 @@ const editSubject = (subject: Subject) => {
   formData.gradientAngle = (subject as any).gradientAngle ?? 135;
   formData.colorOpacity = (subject as any).colorOpacity ?? 1;
   formData.color2Opacity = (subject as any).color2Opacity ?? 1;
-  formData.useGradient = !!(subject as any).color2;
+  // Conserver la dernière valeur de color2 affichée même si le dégradé est désactivé
+  formData.useGradient = (subject as any).useGradient ?? !!(subject as any).color2;
 };
 
 const handleSubmit = async () => {
@@ -193,9 +194,13 @@ const handleSubmit = async () => {
     if (formData.useGradient) {
       payload.color2 = formData.color2;
       payload.color2Opacity = formData.color2Opacity;
+      payload.useGradient = true;
     } else {
-      payload.color2 = null; // désactiver côté backend
-      payload.color2Opacity = undefined;
+      // On n'efface PAS la valeur locale de color2. On persiste la dernière valeur
+      // mais on indique au rendu de ne pas l'utiliser
+      payload.color2 = (editingSubject.value as any)?.color2 || formData.color2 || null;
+      payload.color2Opacity = (editingSubject.value as any)?.color2Opacity ?? formData.color2Opacity ?? undefined;
+      payload.useGradient = false;
     }
     if (editingSubject.value) {
       await subjectsStore.updateSubject(editingSubject.value._id!, payload);
