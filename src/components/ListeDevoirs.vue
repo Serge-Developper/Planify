@@ -408,6 +408,7 @@ import closeHoverImg from '@/assets/img/bouton_supprimer_cocher.png';
 import notifIcon from '@/assets/notif.png';
 import supprimerIcon from '@/assets/supprimer.svg';
 import { API_URL } from '@/api';
+import { useAuthStore } from '@/stores/auth';
 
 const props = defineProps({
   events: { type: Array, required: true }
@@ -416,17 +417,10 @@ const sortBy = ref('date');
 const selectedMatiere = ref('');
 const hoveredCheck = ref(null);
 const hoverCloseAdd = ref(false);
-const user = ref(null);
-try {
-  if (typeof window !== 'undefined' && window.localStorage) {
-    const stored = localStorage.getItem('user');
-    if (stored) {
-      user.value = JSON.parse(stored);
-    }
-  }
-} catch (error) {
-  console.error('Erreur lors de la lecture du localStorage:', error);
-}
+
+// Utiliser le store d'authentification au lieu de lire directement le localStorage
+const authStore = useAuthStore();
+const user = computed(() => authStore.user);
 const isAdmin = computed(() => user.value && user.value.role === 'admin');
 const matiereArchive = ref('');
 
@@ -490,28 +484,62 @@ const playSound = (src) => {
   try { const a = new Audio(src); a.volume = 0.7; a.play().catch(() => {}) } catch {}
 }
 
+// Fonction utilitaire pour les requêtes axios avec authentification
+const authenticatedAxiosRequest = async (method, url, data = null) => {
+  if (!user.value || !user.value.token) {
+    throw new Error('Utilisateur non connecté ou token manquant');
+  }
+  
+  const config = {
+    method,
+    url: `${API_URL}${url}`,
+    headers: {
+      'Authorization': `Bearer ${user.value.token}`,
+      'Content-Type': 'application/json'
+    }
+  };
+  
+  if (data) {
+    config.data = data;
+  }
+  
+  try {
+    const response = await axios(config);
+    return response.data;
+  } catch (error) {
+    console.error(`Erreur ${method} ${url}:`, error);
+    
+    if (error.response?.status === 401) {
+      console.warn('Token expiré, déconnexion...');
+      authStore.logout();
+      throw new Error('Session expirée. Veuillez vous reconnecter.');
+    }
+    
+    throw error;
+  }
+};
+
 async function toggleCheck(event) {
-  if (!user.value) return alert('Non connecté');
   try {
     if (!event.checked) {
-      await axios.post(`${API_URL}/events-check`, {
+      await authenticatedAxiosRequest('POST', '/events-check', {
         eventId: event._id,
         action: 'check'
-      }, { headers: { Authorization: `Bearer ${user.value.token}` } });
+      });
       playSound(cocherSound)
     } else {
-      await axios.post(`${API_URL}/events-check`, {
+      await authenticatedAxiosRequest('POST', '/events-check', {
         eventId: event._id,
         action: 'uncheck'
-      }, { headers: { Authorization: `Bearer ${user.value.token}` } });
+      });
       playSound(annulerSound)
     }
     await nextTick();
     hoveredCheck.value = null;
     emit('refresh-events');
   } catch (error) {
-    alert("Erreur lors de la mise à jour de la tâche.");
-    console.error(error);
+    console.error('Erreur toggleCheck:', error);
+    alert(error.message || "Erreur lors de la mise à jour de la tâche.");
   }
 }
 
@@ -748,19 +776,18 @@ function isLate(event) {
 const emit = defineEmits(['refresh-events']);
 
 async function archiverTout() {
-  if (!user.value) return alert('Non connecté');
   const eventsToArchive = doneEvents.value.filter(e => !e.archived);
   try {
     for (const event of eventsToArchive) {
-      await axios.post(`${API_URL}/events-check`, {
+      await authenticatedAxiosRequest('POST', '/events-check', {
         eventId: event._id,
         action: 'archive'
-      }, { headers: { Authorization: `Bearer ${user.value.token}` } });
+      });
     }
     emit('refresh-events');
     playSound(archiverSound)
   } catch (error) {
-    alert("Erreur lors de l'archivage des tâches.");
+    alert(error.message || "Erreur lors de l'archivage des tâches.");
     console.error(error);
   }
 }
@@ -772,74 +799,70 @@ const archivesFiltered = computed(() =>
 );
 
 async function viderArchive() {
-  if (!user.value) return alert('Non connecté');
   if (!confirm('Voulez-vous vraiment désarchiver toutes les tâches archivées ?')) return;
   try {
     for (const event of archivesFiltered.value.slice()) {
       // Masquer définitivement pour l'utilisateur
-      await axios.post(`${API_URL}/events-check`, {
+      await authenticatedAxiosRequest('POST', '/events-check', {
         eventId: event._id,
         action: 'hide'
-      }, { headers: { Authorization: `Bearer ${user.value.token}` } });
+      });
     }
     emit('refresh-events');
     playSound(supprimerArchiveSound)
   } catch (error) {
-    alert("Erreur lors du désarchivage des tâches.");
+    alert(error.message || "Erreur lors du désarchivage des tâches.");
     console.error(error);
   }
 }
 
 async function viderArchiveType(type) {
-  if (!user.value) return alert('Non connecté');
   if (!confirm(`Voulez-vous vraiment désarchiver tous les ${type === 'devoir' ? 'devoirs' : 'examens'} archivés ?`)) return;
   try {
     for (const event of archivesFiltered.value.filter(e => e.type === type).slice()) {
-      await axios.post(`${API_URL}/events-check`, {
+      await authenticatedAxiosRequest('POST', '/events-check', {
         eventId: event._id,
         action: 'hide'
-      }, { headers: { Authorization: `Bearer ${user.value.token}` } });
+      });
     }
     emit('refresh-events');
     playSound(supprimerArchiveSound)
   } catch (error) {
-    alert('Erreur lors du désarchivage.');
+    alert(error.message || 'Erreur lors du désarchivage.');
   }
 }
 
 async function viderArchiveMatiere(matiere) {
-  if (!user.value) return alert('Non connecté');
   if (!matiere) return;
   if (!confirm(`Voulez-vous vraiment désarchiver toutes les tâches archivées de la matière "${matiere}" ?`)) return;
   try {
     for (const event of archivesFiltered.value.filter(e => e.matiere === matiere).slice()) {
-      await axios.post(`${API_URL}/events-check`, {
+      await authenticatedAxiosRequest('POST', '/events-check', {
         eventId: event._id,
         action: 'hide'
-      }, { headers: { Authorization: `Bearer ${user.value.token}` } });
+      });
     }
     emit('refresh-events');
     playSound(supprimerArchiveSound)
   } catch (error) {
-    alert('Erreur lors du désarchivage.');
+    alert(error.message || 'Erreur lors du désarchivage.');
   }
 }
 
 async function viderArchiveTypeMatiere(type, matiere) {
-  if (!user.value) return alert('Non connecté');
   if (!matiere) return;
   if (!confirm(`Voulez-vous vraiment désarchiver tous les ${type === 'devoir' ? 'devoirs' : 'examens'} archivés de la matière "${matiere}" ?`)) return;
   try {
     for (const event of archivesFiltered.value.filter(e => e.type === type && e.matiere === matiere).slice()) {
-      await axios.post(`${API_URL}/events-check`, {
+      await authenticatedAxiosRequest('POST', '/events-check', {
         eventId: event._id,
         action: 'hide'
-      }, { headers: { Authorization: `Bearer ${user.value.token}` } });
+      });
     }
     emit('refresh-events');
     playSound(supprimerArchiveSound)
   } catch (error) {
-    alert('Erreur lors du désarchivage.');
+    alert(error.message || 'Erreur lors du désarchivage.');
   }
 }
 
@@ -934,17 +957,15 @@ async function submitAddTask() {
       groupe: newTask.value.groupes[0], // toujours une valeur valide
       year: userData.role === 'prof' ? newTask.value.year : (userData.year || 'BUT1') // Utiliser l'année sélectionnée pour les profs
     };
-    const token = userData.token;
-    await axios.post(`${API_URL}/events`, eventToSend, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    
+    await authenticatedAxiosRequest('POST', '/events', eventToSend);
     showAddTaskPopup.value = false;
     showSuccessPopup.value = true;
     emit('refresh-events');
     // Reset du formulaire
     newTask.value = { titre: '', type: 'devoir', matiere: '', date: '', heure: '', description: '', groupes: [], year: '' };
-  } catch (e) {
-    errorMsg.value = e?.response?.data?.message || 'Erreur lors de l\'ajout de la tâche.';
+  } catch (error) {
+    errorMsg.value = error.message || 'Erreur lors de l\'ajout de la tâche.';
     showErrorPopup.value = true;
   } finally {
     loadingAdd.value = false;
@@ -1142,16 +1163,13 @@ async function deleteTaskConfirmed() {
   if (!taskToDelete.value) return;
   
   try {
-    const token = user.value.token;
-    await axios.delete(`${API_URL}/events/${taskToDelete.value._id}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    await authenticatedAxiosRequest('DELETE', `/events/${taskToDelete.value._id}`);
     emit('refresh-events');
     showDeletePopup.value = false;
     taskToDelete.value = null;
-  } catch (e) {
-    console.error('Erreur suppression:', e);
-    alert('Erreur lors de la suppression de la tâche.');
+  } catch (error) {
+    console.error('Erreur suppression:', error);
+    alert(error.message || 'Erreur lors de la suppression de la tâche.');
   }
 }
 
