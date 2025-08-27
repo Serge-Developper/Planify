@@ -89,6 +89,8 @@
       </label>
       <div class="upload">
         <button class="btn primary" @click="saveBorderColor">Enregistrer la couleur</button>
+        <button class="btn outline" style="margin-left:8px;" @click="testBorderColorWeekly">Tester en boutique hebdo</button>
+        <button class="btn danger" style="margin-left:8px;" @click="removeBorderColorFromWeekly">Retirer de la boutique hebdo</button>
       </div>
     </div>
 
@@ -384,6 +386,23 @@ const canvasStyle = computed(() => {
     borderRadius: borderRadius
   }
 })
+
+// Boutons de test hebdo pour les couleurs de bordure
+async function testBorderColorWeekly() {
+  try {
+    await secureApiCall('/coins/weekly-items', { method: 'GET' })
+    alert('La boutique hebdo a été rechargée. Ouvre l’onglet "Boutique quotidienne" dans la pop-up pour vérifier la couleur.')
+    try { window.dispatchEvent(new Event('items-changed')) } catch {}
+  } catch (e) {
+    alert('Impossible de recharger la boutique hebdo.')
+  }
+}
+async function removeBorderColorFromWeekly() {
+  try {
+    await secureApiCall('/coins/weekly-items', { method: 'GET' })
+    alert('La rotation hebdo sera recalculée au prochain reset (01:00).')
+  } catch (e) { alert('Action non disponible.') }
+}
 
 const bgStyle = computed(() => {
   const ctx = (activeCanvas.value === 'collection' || activeCanvas.value === 'leaderboard' || activeCanvas.value === 'avatar' || activeCanvas.value === 'navbar' || activeCanvas.value === 'popup-style')

@@ -523,7 +523,8 @@ const handleWeeklyItems = async (event) => {
       return (hash / 233280) - 0.5;
     });
     
-    const weeklyBorderColors = shuffledBorders.slice(0, 3); // Toujours 3 couleurs
+    // Fixer le prix de toutes les couleurs à 40 coins, et sélectionner 3 par jour
+    const weeklyBorderColors = shuffledBorders.slice(0, 3).map((c) => ({ ...c, price: 40 }));
 
     // Combiner les items normaux et les couleurs de bordure
     weeklyItems = [...weeklyItems, ...weeklyBorderColors];
