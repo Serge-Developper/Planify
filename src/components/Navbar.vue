@@ -70,7 +70,7 @@
                 </template>
                 <!-- Image de base de l'item dynamique: affichage garanti (pour éviter les régressions) -->
                 <img
-                  v-if="equippedDynItem && equippedDynItem.img && !hasNavbarInsideAsset(equippedDynItem)"
+                  v-if="equippedDynItem && equippedDynItem.img && !variantHasBaseAsset(equippedDynItem)"
                   :src="resolveAssetSrc(equippedDynItem.img)"
                   :alt="equippedDynItem.name"
                   :style="getDynFallbackNavbarStyle(equippedDynItem)"
@@ -1054,6 +1054,19 @@ function hasNavbarInsideAsset(item) {
   try {
     const assets = getDynVariantAssetsForNavbar(item) || []
     return assets.some(a => a && a.src && (getDynPlacement(a) === 'inside' || getDynPlacement(a) === 'below' || getDynPlacement(a) === 'above'))
+  } catch { return false }
+}
+
+// Détecte si la variante réplique l'image de base (évite doublon)
+function variantHasBaseAsset(item) {
+  try {
+    if (!item || !item.img) return false
+    const base = String(item.img).split('/').pop()
+    const assets = getDynVariantAssetsForNavbar(item) || []
+    return assets.some(a => {
+      const src = a && a.src ? String(a.src) : ''
+      return src && src.split('/').pop() === base
+    })
   } catch { return false }
 }
 
