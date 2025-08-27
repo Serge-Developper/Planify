@@ -1085,16 +1085,22 @@ function getDynVariantAssetsForNavbar(item) {
     
     // Si c'est un style texte uniquement, retourner les assets de la base avec les styles de la variante
     if (variant.textOnly) {
+      console.log('✅ Style texte uniquement pour item', item.name, '- utiliser les assets de la base avec styles de variante')
       const baseAssets = Array.isArray(item.assets) ? item.assets : []
       // Appliquer les styles de la variante aux assets de la base
       return baseAssets.map(asset => ({
         ...asset,
         // Utiliser les styles de la variante s'ils existent, sinon garder les styles de l'asset
         style: variant.assets && variant.assets[0] && variant.assets[0].style ? variant.assets[0].style : asset.style,
-        navbarStyle: variant.assets && variant.assets[0] && variant.assets[0].navbarStyle ? variant.assets[0].navbarStyle : asset.navbarStyle,
-        navbarStyleMobile: variant.assets && variant.assets[0] && variant.assets[0].navbarStyleMobile ? variant.assets[0].navbarStyleMobile : asset.navbarStyleMobile,
+        collectionStyle: variant.assets && variant.assets[0] && variant.assets[0].collectionStyle ? variant.assets[0].collectionStyle : asset.collectionStyle,
+        collectionStyleMobile: variant.assets && variant.assets[0] && variant.assets[0].collectionStyleMobile ? variant.assets[0].collectionStyleMobile : asset.collectionStyleMobile,
+        leaderboardStyle: variant.assets && variant.assets[0] && variant.assets[0].leaderboardStyle ? variant.assets[0].leaderboardStyle : asset.leaderboardStyle,
+        leaderboardStyleMobile: variant.assets && variant.assets[0] && variant.assets[0].leaderboardStyleMobile ? variant.assets[0].leaderboardStyleMobile : asset.leaderboardStyleMobile,
         avatarStyle: variant.assets && variant.assets[0] && variant.assets[0].avatarStyle ? variant.assets[0].avatarStyle : asset.avatarStyle,
         avatarStyleMobile: variant.assets && variant.assets[0] && variant.assets[0].avatarStyleMobile ? variant.assets[0].avatarStyleMobile : asset.avatarStyleMobile,
+        navbarStyle: variant.assets && variant.assets[0] && variant.assets[0].navbarStyle ? variant.assets[0].navbarStyle : asset.navbarStyle,
+        navbarStyleMobile: variant.assets && variant.assets[0] && variant.assets[0].navbarStyleMobile ? variant.assets[0].navbarStyleMobile : asset.navbarStyleMobile,
+        popupStyleStyle: variant.assets && variant.assets[0] && variant.assets[0].popupStyleStyle ? variant.assets[0].popupStyleStyle : asset.popupStyleStyle,
         meta: variant.assets && variant.assets[0] && variant.assets[0].meta ? variant.assets[0].meta : asset.meta
       }))
     }
