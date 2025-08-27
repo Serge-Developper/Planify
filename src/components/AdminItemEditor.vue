@@ -287,6 +287,7 @@ const borderForm = ref({
 })
 
 const borderColorsList = ref([])
+const editingBorderId = ref(null as any)
 
 const canvasStyle = computed(() => {
   // Dimensions: Collection = 90 (desktop) / 80 (mobile) — Leaderboard = 50 — Navbar = 57 — Popup Style = 120.5x64
@@ -849,31 +850,23 @@ async function saveItem() {
 }
 
 async function saveBorderColor() {
-  const payload = {
-    legacyId: Number(borderForm.value.legacyId),
+  const body = {
+    id: borderForm.value.colorId || String(borderForm.value.legacyId),
     name: borderForm.value.name || (borderForm.value.colorId || 'Couleur'),
-    price: Number(borderForm.value.price) || 0,
-    type: 'border-color',
-    colorId: borderForm.value.colorId || String(borderForm.value.legacyId),
     color: borderForm.value.color || null,
     gradient: borderForm.value.gradient || null,
-    availableInDailyShop: !!borderForm.value.availableInDailyShop,
-    assets: [],
-    backgrounds: { collection: null, leaderboard: null, avatar: null, navbar: null, 'popup-style': null },
-    variants: []
+    price: Number(borderForm.value.price) || 0
   }
-  const res = await secureApiCall('/items', { method: 'POST', body: JSON.stringify(payload) })
+  let res
+  if (editingBorderId.value) {
+    res = await secureApiCall(`/border-colors?id=${encodeURIComponent(editingBorderId.value)}`, { method: 'PUT', body: JSON.stringify(body) })
+  } else {
+    res = await secureApiCall('/border-colors', { method: 'POST', body: JSON.stringify(body) })
+  }
   if (res && res.success) {
-    // Enregistrer aussi comme "couleur" dédiée
-    try {
-      await secureApiCall('/border-colors', {
-        method: 'POST',
-        body: JSON.stringify({ id: payload.colorId, name: payload.name, color: payload.color, gradient: payload.gradient, price: payload.price })
-      })
-      await loadBorderColors()
-    } catch {}
-    alert('Couleur enregistrée !')
-    existingItems.value = [res.item, ...existingItems.value]
+    await loadBorderColors()
+    alert(editingBorderId.value ? 'Couleur mise à jour !' : 'Couleur enregistrée !')
+    editingBorderId.value = null
     borderForm.value = { legacyId: 100, name: '', price: 0, colorId: '', color: '#000000', gradient: '', availableInDailyShop: false }
   } else {
     alert(res?.message || 'Erreur enregistrement couleur')
@@ -894,6 +887,8 @@ function editBorderColor(c) {
   borderForm.value.colorId = c.id || ''
   borderForm.value.color = c.color || '#000000'
   borderForm.value.gradient = c.gradient || ''
+  borderForm.value.price = typeof c.price === 'number' ? c.price : 0
+  editingBorderId.value = c.id
 }
 
 async function deleteBorderColor(c) {
