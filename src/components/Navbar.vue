@@ -68,6 +68,13 @@
                     :style="getDynNavbarAssetStyle(a)"
                   />
                 </template>
+                <!-- Base image pour items dynamiques: affichage garanti dans l'avatar -->
+                <img
+                  v-if="equippedDynItem && equippedDynItem.img"
+                  :src="resolveAssetSrc(equippedDynItem.img)"
+                  alt="Item dynamique"
+                  style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 5; pointer-events: none;"
+                />
                 <!-- Animation Matrix à l'intérieur de l'avatar -->
                 <div v-if="equippedItem && equippedItem.displayType === 'matrix'" class="matrix-rain-inside">
                   <div class="matrix-column" v-for="i in 15" :key="i" :style="{ left: (i * 6.67) + '%', animationDelay: (Math.random() * 2) + 's' }">
@@ -510,6 +517,13 @@
                 style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 15;"
               />
             </template>
+            <!-- Base image mobile pour items dynamiques: affichage garanti -->
+            <img
+              v-if="equippedDynItem && equippedDynItem.img"
+              :src="resolveAssetSrc(equippedDynItem.img)"
+              alt="Item dynamique"
+              style="position: absolute; top: 0; left: 0; width: 51px; height: 51px; object-fit: contain; z-index: 5; pointer-events: none;"
+            />
 
 
             <img 
