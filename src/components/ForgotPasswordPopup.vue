@@ -13,12 +13,18 @@
             <input v-model="q.answer" type="text" placeholder="Votre réponse" required />
           </div>
         </div>
-        <button type="submit" :disabled="loading">{{ loading ? 'Vérification...' : 'Valider' }}</button>
+        <button type="submit" :disabled="loading">
+          <span v-if="loading" class="btn-small-text">Vérification...</span>
+          <span v-else>Valider</span>
+        </button>
         <div v-if="error" class="error">{{ error }}</div>
       </form>
       <form v-else class="reset-form" @submit.prevent="handleReset">
         <input v-model="newPassword" type="password" placeholder="Nouveau mot de passe (min. 8)" required class="new-password-input" />
-        <button type="submit" :disabled="loading">{{ loading ? 'Réinitialisation...' : 'Réinitialiser' }}</button>
+        <button type="submit" :disabled="loading">
+          <span v-if="loading" class="btn-small-text">Réinitialisation...</span>
+          <span v-else>Réinitialiser</span>
+        </button>
         <div v-if="error" class="error">{{ error }}</div>
       </form>
       <div v-if="showAdminMsg" class="admin-msg">Contactez l'administration.</div>
@@ -248,6 +254,7 @@ button[type="submit"] {
 button[type="submit"]:hover {
   background: #4f46e5;
 }
+.btn-small-text { font-size: 0.9rem; }
 .error {
   color: #ef4444;
   margin-top: 10px;
