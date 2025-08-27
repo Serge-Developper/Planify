@@ -725,6 +725,8 @@ export const useCoinsStore = defineStore('coins', {
         { id: 'g230', name: 'Ambre Nuit', color: '#060002', gradient: 'linear-gradient(135deg,#f77500,#060002)', unlocked: false },
         { id: 'g231', name: 'Émeraude Nuit', color: '#1c231f', gradient: 'linear-gradient(135deg,#01f9a0,#1c231f)', unlocked: false }
       ];
+      // Charger également les couleurs dynamiques créées depuis l'Admin
+      this.fetchDynamicBorderColors();
     },
 
     // Débloquer une couleur de bordure
@@ -733,6 +735,20 @@ export const useCoinsStore = defineStore('coins', {
       if (color) {
         color.unlocked = true;
       }
+    },
+
+    // Charger les couleurs dynamiques (admin)
+    async fetchDynamicBorderColors() {
+      try {
+        const res = await secureApiCall('/border-colors');
+        const list = (res && res.success && Array.isArray(res.colors)) ? res.colors : [];
+        for (const c of list) {
+          const exists = this.borderColors.find(b => b.id === c.id);
+          if (!exists) {
+            this.borderColors.push({ id: c.id, name: c.name || c.id, color: c.color || '#000000', unlocked: false, gradient: c.gradient || undefined });
+          }
+        }
+      } catch (e) {}
     },
 
     // Changer la couleur de bordure sélectionnée

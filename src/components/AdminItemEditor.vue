@@ -847,6 +847,13 @@ async function saveBorderColor() {
   }
   const res = await secureApiCall('/items', { method: 'POST', body: JSON.stringify(payload) })
   if (res && res.success) {
+    // Enregistrer aussi comme "couleur" dédiée
+    try {
+      await secureApiCall('/border-colors', {
+        method: 'POST',
+        body: JSON.stringify({ id: payload.colorId, name: payload.name, color: payload.color, gradient: payload.gradient })
+      })
+    } catch {}
     alert('Couleur enregistrée !')
     existingItems.value = [res.item, ...existingItems.value]
     borderForm.value = { legacyId: 100, name: '', colorId: '', color: '#000000', gradient: '', availableInDailyShop: false }
