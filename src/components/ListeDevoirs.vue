@@ -460,10 +460,15 @@ const matieresStatiques = [
 // Liste des matières : statiques + dynamiques
 const mmiMatieres = computed(() => {
   const matieresDynamiques = subjectsStore.getSubjects.map(subject => subject.name);
+  console.log('Matières dynamiques chargées:', matieresDynamiques);
+  console.log('Matières statiques:', matieresStatiques);
+  
   // Combiner les matières statiques avec les matières dynamiques
   const toutesMatieres = [...matieresStatiques, ...matieresDynamiques];
   // Supprimer les doublons (au cas où une matière dynamique aurait le même nom qu'une statique)
-  return [...new Set(toutesMatieres)];
+  const resultat = [...new Set(toutesMatieres)];
+  console.log('Matières finales:', resultat);
+  return resultat;
 });
 
 // Génère une clé unique stable pour un event
@@ -957,11 +962,18 @@ onMounted(async () => {
 
 // Recharger les matières si elles ne sont pas chargées et que le store n'est pas initialisé
 watch(() => [subjectsStore.subjects, subjectsStore.initialized], ([newSubjects, initialized]) => {
+  console.log('Watch subjects - newSubjects:', newSubjects, 'initialized:', initialized);
   if (Array.isArray(newSubjects) && newSubjects.length === 0 && !subjectsStore.loading && !initialized) {
     // Si aucune matière n'est chargée, qu'on n'est pas en train de charger et que le store n'est pas initialisé
+    console.log('Rechargement des matières...');
     subjectsStore.initializeStore();
   }
 }, { immediate: true });
+
+// Watcher pour forcer la mise à jour du computed mmiMatieres
+watch(() => subjectsStore.subjects, (newSubjects) => {
+  console.log('Matières mises à jour dans le store:', newSubjects);
+}, { deep: true });
 
 // Si tu veux utiliser ce composant de façon autonome (hors EmploiDuTemps), décommente ce qui suit :
 // onMounted(async () => {
