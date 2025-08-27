@@ -35,7 +35,16 @@ export const useSubjectsStore = defineStore('subjects', () => {
     error.value = null;
     
     try {
-      const response = await fetch('/.netlify/functions/subjects');
+      // Ajouter un timeout de 10 secondes
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      
+      const response = await fetch('/.netlify/functions/subjects', {
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
       if (!response.ok) {
         throw new Error('Erreur lors du chargement des matières');
       }
@@ -45,7 +54,11 @@ export const useSubjectsStore = defineStore('subjects', () => {
       initialized.value = true;
       console.log('Matières chargées:', data.length, 'matières');
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Erreur inconnue';
+      if (err instanceof Error && err.name === 'AbortError') {
+        error.value = 'Délai d\'attente dépassé. Vérifiez votre connexion.';
+      } else {
+        error.value = err instanceof Error ? err.message : 'Erreur inconnue';
+      }
       console.error('Erreur fetchSubjects:', err);
       // En cas d'erreur, vider la liste pour éviter les données corrompues
       subjects.value = [];

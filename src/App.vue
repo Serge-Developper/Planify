@@ -6,11 +6,13 @@ import Footer from './components/Footer.vue'
 import ItemReceivedPopup from './components/ItemReceivedPopup.vue'
 import { useCoinsStore } from './stores/coins'
 import { useAuthStore } from './stores/auth'
+import { useSubjectsStore } from './stores/subjects'
 import { secureApiCall } from './api'
 
 const route = useRoute();
 const coinsStore = useCoinsStore();
 const authStore = useAuthStore();
+const subjectsStore = useSubjectsStore();
 
 // État pour la popup de notification d'items reçus
 const showItemReceivedPopup = ref(false);
@@ -142,6 +144,11 @@ async function closeItemReceivedPopup() {
 }
 
 onMounted(() => {
+  // Initialiser le store des matières au démarrage de l'application
+  subjectsStore.initializeStore().catch(error => {
+    console.warn('Erreur lors de l\'initialisation des matières:', error);
+  });
+
   // Vérifier les nouveaux items après le chargement initial
   setTimeout(async () => {
     // S'assurer que la palette de couleurs est prête pour le rendu des pastilles

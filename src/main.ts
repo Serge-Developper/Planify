@@ -6,7 +6,6 @@ import { createPinia } from 'pinia'
 
 import App from './App.vue'
 import router from './router'
-import { useSubjectsStore } from './stores/subjects'
 
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
@@ -41,11 +40,5 @@ const pinia = createPinia()
 
 app.use(pinia)
 app.use(router)
-
-// Initialiser les matières au démarrage de l'application
-const subjectsStore = useSubjectsStore()
-subjectsStore.initializeStore().catch(error => {
-  console.warn('Erreur lors de l\'initialisation des matières:', error);
-})
 
 app.mount('#app')

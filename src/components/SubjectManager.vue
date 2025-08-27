@@ -12,11 +12,11 @@
       </div>
     </div>
 
-    <!-- Liste des matières -->
-    <div class="subjects-list" v-if="!loading">
-      <div v-if="subjects.length === 0" class="no-subjects">
-        <p>Aucune matière créée. Ajoutez votre première matière !</p>
-      </div>
+         <!-- Liste des matières -->
+     <div class="subjects-list" v-if="!loading && !error">
+       <div v-if="subjects.length === 0" class="no-subjects">
+         <p>Aucune matière créée. Ajoutez votre première matière !</p>
+       </div>
       
       <div v-else class="subjects-grid">
         <div 
@@ -47,11 +47,17 @@
       </div>
     </div>
 
-    <!-- Loading -->
-    <div v-if="loading" class="loading">
-      <div class="spinner"></div>
-      <p>Chargement des matières...</p>
-    </div>
+         <!-- Loading -->
+     <div v-if="loading" class="loading">
+       <div class="spinner"></div>
+       <p>Chargement des matières...</p>
+     </div>
+
+     <!-- Error state -->
+     <div v-if="error && !loading" class="error-state">
+       <p>Erreur lors du chargement des matières</p>
+       <button @click="refreshSubjects" class="retry-btn">Réessayer</button>
+     </div>
 
     <!-- Formulaire d'ajout/modification -->
     <div v-if="showAddForm || editingSubject" class="modal-overlay" @click="closeForm">
@@ -543,14 +549,36 @@ watch(() => [subjectsStore.subjects, subjectsStore.initialized], ([newSubjects, 
   max-width: 400px;
 }
 
-.close-error {
-  background: none;
-  border: none;
-  color: #dc2626;
-  cursor: pointer;
-  font-size: 1.2rem;
-  padding: 4px;
-}
+ .close-error {
+   background: none;
+   border: none;
+   color: #dc2626;
+   cursor: pointer;
+   font-size: 1.2rem;
+   padding: 4px;
+ }
+
+ .error-state {
+   text-align: center;
+   padding: 40px;
+   color: #dc2626;
+ }
+
+ .retry-btn {
+   background: #dc2626;
+   color: white;
+   border: none;
+   padding: 12px 24px;
+   border-radius: 8px;
+   cursor: pointer;
+   font-weight: 500;
+   margin-top: 16px;
+   transition: background-color 0.2s ease;
+ }
+
+ .retry-btn:hover {
+   background: #b91c1c;
+ }
 
 @media (max-width: 768px) {
   .subject-manager-header {
