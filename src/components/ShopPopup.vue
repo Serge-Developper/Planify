@@ -1193,6 +1193,8 @@ onMounted(async () => {
     try {
       await coinsStore.initialize()
       console.log('✅ Store coins initialisé dans ShopPopup')
+      // Recharger le leaderboard après init pour garantir selectedBorderColor + palette
+      try { await loadLeaderboardUsers() } catch {}
     } catch (error) {
       console.error('❌ Erreur lors de l\'initialisation du store:', error)
     }
@@ -2435,6 +2437,15 @@ const getAvatarBorderStyle = (user) => {
   const selected = coinsStore.borderColors.find(c => c.id === baseId)
   
   if (!selected) {
+    // Fallback minimal pour quelques ids courants si la palette n'est pas encore prête
+    const fallbackColors = {
+      'red': '#FF0000', 'blue': '#0066FF', 'green': '#00FF00', 'yellow': '#FFFF00',
+      'cyan': '#00FFFF', 'magenta': '#FF00FF', 'orange': '#FF8800', 'pink': '#FF2F72',
+      'purple': '#7A1FFF', 'white': '#FFFFFF', 'royal-blue': '#0FA3B1', 'gold': '#FFD700',
+      'silver': '#C0C0C0', 'bronze': '#CD7F32'
+    }
+    const hex = fallbackColors[baseId]
+    if (hex) return { border: `3px solid ${hex}` }
     return { border: '3px solid #000000' }
   }
   
