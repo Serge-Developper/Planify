@@ -58,12 +58,31 @@
       <label>Identifiant colorId (ex: red, royal-blue)
         <input v-model="borderForm.colorId" type="text" placeholder="ex: red" />
       </label>
-      <label>Couleur HEX (aplat)
-        <input v-model="borderForm.color" type="text" placeholder="#FF0000 (optionnel si gradient)" />
-      </label>
-      <label>Gradient CSS
-        <input v-model="borderForm.gradient" type="text" placeholder="linear-gradient(45deg,#f00,#0f0) (optionnel)" />
-      </label>
+      <div class="gradient-ui">
+        <div class="grid2">
+          <label>Couleur 1
+            <input type="color" v-model="grad.c1" />
+          </label>
+          <label>Opacité 1
+            <input type="number" min="0" max="1" step="0.05" v-model.number="grad.o1" />
+          </label>
+          <label>Couleur 2
+            <input type="color" v-model="grad.c2" />
+          </label>
+          <label>Opacité 2
+            <input type="number" min="0" max="1" step="0.05" v-model.number="grad.o2" />
+          </label>
+          <label>Angle (deg)
+            <input type="number" v-model.number="grad.angle" />
+          </label>
+          <label>
+            <input type="checkbox" v-model="grad.enabled" /> Utiliser le dégradé
+          </label>
+        </div>
+        <div class="preview" :style="{ background: gradCss }"></div>
+      </div>
+      <input v-model="borderForm.color" type="hidden" />
+      <input v-model="borderForm.gradient" type="hidden" />
       <label>
         Disponible en boutique quotidienne
         <input v-model="borderForm.availableInDailyShop" type="checkbox" />
@@ -285,6 +304,41 @@ const borderForm = ref({
   gradient: '',
   availableInDailyShop: false
 })
+// UI simple pour dégradé (mêmes principes que matières dynamiques)
+const grad = ref({ enabled: false, c1: '#000000', o1: 1, c2: '#ffffff', o2: 1, angle: 45 })
+const gradCss = computed(() => {
+  const a = Math.max(0, Math.min(1, Number(grad.value.o1)))
+  const b = Math.max(0, Math.min(1, Number(grad.value.o2)))
+  const c1 = grad.value.c1 || '#000000'
+  const c2 = grad.value.c2 || '#ffffff'
+  if (grad.value.enabled) {
+    const rgba1 = hexToRgba(c1, a)
+    const rgba2 = hexToRgba(c2, b)
+    return `linear-gradient(${Number(grad.value.angle) || 0}deg, ${rgba1}, ${rgba2})`
+  }
+  return c1
+})
+watch(grad, () => {
+  // alimenter les champs envoyés à l’API
+  if (grad.value.enabled) {
+    borderForm.value.gradient = gradCss.value
+    borderForm.value.color = grad.value.c1
+  } else {
+    borderForm.value.gradient = ''
+    borderForm.value.color = grad.value.c1
+  }
+}, { deep: true, immediate: true })
+
+function hexToRgba(hex, alpha) {
+  try {
+    const h = hex.replace('#','')
+    const bigint = parseInt(h.length === 3 ? h.split('').map(ch=>ch+ch).join('') : h, 16)
+    const r = (bigint >> 16) & 255
+    const g = (bigint >> 8) & 255
+    const b = bigint & 255
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`
+  } catch { return hex }
+}
 
 const borderColorsList = ref([])
 const editingBorderId = ref(null)

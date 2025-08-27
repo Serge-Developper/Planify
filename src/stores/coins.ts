@@ -421,7 +421,14 @@ export const useCoinsStore = defineStore('coins', {
       for (const invItem of this.purchasedItems) {
         const id = typeof invItem === 'number' ? invItem : (typeof invItem === 'string' ? Number(invItem) : Number(invItem?.itemId))
         const name = (invItem && typeof invItem === 'object') ? invItem.itemName : undefined
-        const colorId = this.getBorderColorIdFromItem({ id, name } as any);
+        // 1) priorité au colorId directement présent sur l'entrée (dons dynamiques)
+        const directColorId = (invItem && typeof invItem === 'object' && (invItem as any).colorId) ? String((invItem as any).colorId) : null
+        let colorId = directColorId || this.getBorderColorIdFromItem({ id, name } as any);
+        // 2) fallback par nom exact sur la palette si pas trouvé
+        if (!colorId && name) {
+          const found = this.borderColors.find(c => String(c.name).toLowerCase() === String(name).toLowerCase())
+          if (found) colorId = found.id
+        }
         if (colorId) {
           this.unlockBorderColor(colorId);
         }
