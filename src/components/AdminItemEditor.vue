@@ -331,23 +331,25 @@ const bgStyle = computed(() => {
 
 // Aperçu simple: cercle avec bordure 3px couleur choisie
 const borderPreviewOuter = computed(() => {
-  const c = borderForm.value.gradient && borderForm.value.gradient.trim() ? borderForm.value.gradient : borderForm.value.color
+  const hasGradient = !!(borderForm.value.gradient && borderForm.value.gradient.trim())
+  const borderColor = hasGradient ? 'rgb(224, 224, 224)' : (borderForm.value.color || 'rgb(224, 224, 224)')
   return {
-    width: '92px', height: '92px', padding: '3px', background: '#fff', boxSizing: 'content-box',
-    border: '3px solid transparent',
-    borderImage: c && c.startsWith('linear-gradient') ? `linear-gradient(90deg, transparent, transparent) 1` : 'none',
-    // on ne peut pas appliquer border-image directement avec gradient comme bordure; on triche avec inner div
+    position: 'relative',
+    width: '50px',
+    height: '50px',
+    background: 'transparent',
+    overflow: 'hidden',
+    border: `3px solid ${borderColor}`,
+    borderRadius: '12px'
   }
 })
 const borderPreviewInner = computed(() => {
-  const c = borderForm.value.gradient && borderForm.value.gradient.trim() ? borderForm.value.gradient : borderForm.value.color
+  // L'inner reste neutre; on pourrait l'utiliser plus tard pour simuler un dégradé
   return {
-    width: '86px', height: '86px', borderRadius: '50%', background: '#fafafa',
-    boxSizing: 'border-box',
-    border: `3px solid ${(!c || c.startsWith('linear-gradient')) ? 'transparent' : c}`,
-    // si gradient, on simule avec un ring par box-shadow
-    boxShadow: c && c.startsWith('linear-gradient') ? `0 0 0 3px #fff inset, 0 0 0 3px #fff` : 'none',
-    position: 'relative'
+    width: '100%',
+    height: '100%',
+    borderRadius: '10px',
+    background: 'transparent'
   }
 })
 
