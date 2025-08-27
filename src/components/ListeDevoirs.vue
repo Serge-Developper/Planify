@@ -955,11 +955,13 @@ onMounted(async () => {
   }
 });
 
-// Recharger les matières quand elles changent (par exemple après création d'une nouvelle matière)
-watch(() => subjectsStore.subjects, async () => {
-  // Les matières ont changé, on peut forcer un rechargement si nécessaire
-  console.log('Matières mises à jour:', subjectsStore.getSubjects);
-}, { deep: true });
+// Recharger les matières si elles ne sont pas chargées
+watch(() => subjectsStore.subjects, (newSubjects) => {
+  if (newSubjects.length === 0 && !subjectsStore.loading) {
+    // Si aucune matière n'est chargée et qu'on n'est pas en train de charger, recharger
+    subjectsStore.fetchSubjects();
+  }
+}, { immediate: true });
 
 // Si tu veux utiliser ce composant de façon autonome (hors EmploiDuTemps), décommente ce qui suit :
 // onMounted(async () => {

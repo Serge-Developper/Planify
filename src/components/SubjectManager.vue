@@ -2,9 +2,14 @@
   <div class="subject-manager">
     <div class="subject-manager-header">
       <h2>Gestion des Matières</h2>
-      <button @click="showAddForm = true" class="add-subject-btn">
-        <span>+</span> Ajouter une matière
-      </button>
+      <div class="header-actions">
+        <button @click="refreshSubjects" class="refresh-btn" :disabled="loading" title="Actualiser">
+          🔄
+        </button>
+        <button @click="showAddForm = true" class="add-subject-btn">
+          <span>+</span> Ajouter une matière
+        </button>
+      </div>
     </div>
 
     <!-- Liste des matières -->
@@ -103,7 +108,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue';
+import { ref, onMounted, reactive, watch } from 'vue';
 import { useSubjectsStore, type Subject } from '@/stores/subjects';
 
 const subjectsStore = useSubjectsStore();
@@ -178,10 +183,30 @@ const clearError = () => {
   subjectsStore.clearError();
 };
 
+const refreshSubjects = async () => {
+  try {
+    await subjectsStore.refreshSubjects();
+  } catch (error) {
+    console.error('Erreur lors du rafraîchissement:', error);
+  }
+};
+
 // Lifecycle
-onMounted(() => {
-  subjectsStore.fetchSubjects();
+onMounted(async () => {
+  try {
+    await subjectsStore.fetchSubjects();
+  } catch (error) {
+    console.error('Erreur lors du chargement des matières:', error);
+  }
 });
+
+// Recharger les matières si elles ne sont pas chargées
+watch(() => subjectsStore.subjects, (newSubjects) => {
+  if (newSubjects.length === 0 && !subjectsStore.loading) {
+    // Si aucune matière n'est chargée et qu'on n'est pas en train de charger, recharger
+    subjectsStore.fetchSubjects();
+  }
+}, { immediate: true });
 </script>
 
 <style scoped>
@@ -196,6 +221,33 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 30px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.refresh-btn {
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all 0.2s ease;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  background: #e5e7eb;
+  transform: rotate(180deg);
+}
+
+.refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .subject-manager-header h2 {

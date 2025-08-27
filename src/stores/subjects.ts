@@ -26,7 +26,10 @@ export const useSubjectsStore = defineStore('subjects', () => {
   );
 
   // Actions
-  const fetchSubjects = async () => {
+  const fetchSubjects = async (force = false) => {
+    // Éviter de recharger si déjà en cours et pas forcé
+    if (loading.value && !force) return;
+    
     loading.value = true;
     error.value = null;
     
@@ -38,12 +41,19 @@ export const useSubjectsStore = defineStore('subjects', () => {
       
       const data = await response.json();
       subjects.value = data;
+      console.log('Matières chargées:', data.length, 'matières');
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Erreur inconnue';
       console.error('Erreur fetchSubjects:', err);
+      // En cas d'erreur, vider la liste pour éviter les données corrompues
+      subjects.value = [];
     } finally {
       loading.value = false;
     }
+  };
+
+  const refreshSubjects = async () => {
+    return fetchSubjects(true);
   };
 
   const createSubject = async (subject: Omit<Subject, '_id' | 'createdAt' | 'updatedAt'>) => {
@@ -150,6 +160,7 @@ export const useSubjectsStore = defineStore('subjects', () => {
     
     // Actions
     fetchSubjects,
+    refreshSubjects,
     createSubject,
     updateSubject,
     deleteSubject,
