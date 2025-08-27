@@ -3861,7 +3861,7 @@ body, html {
 .profile-popup .close-img { width: 32px; height: 32px; display:block; filter: grayscale(0.5) brightness(0.95); transition: transform 0.25s, filter 0.25s; }
 .profile-popup .close-btn:hover .close-img { transform: scale(1.18); filter: grayscale(0) brightness(1.1); }
 
-/* Styles pour les items dynamiques fallback */
+/* Styles pour les items dynamiques fallback µµµµµ*/
 .equipped-dynamic-item-overlay {
   position: absolute;
   top: 0;
