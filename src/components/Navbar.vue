@@ -1070,17 +1070,17 @@ function hasVariantAssetWithSameImage(item) {
   try {
     if (!item || !item.img) return false
     const assets = getDynVariantAssetsForNavbar(item) || []
-    const baseImageName = String(item.img).split('/').pop()
+    const baseImageUrl = resolveAssetSrc(item.img)
     
-    alert('🔍 hasVariantAssetWithSameImage - item: ' + item.name + '\nBase image: ' + baseImageName + '\nAssets: ' + assets.length + '\n\nAssets details:\n' + assets.map(a => a.src).join('\n'))
+    alert('🔍 hasVariantAssetWithSameImage - item: ' + item.name + '\nBase image URL: ' + baseImageUrl + '\nAssets: ' + assets.length + '\n\nAssets details:\n' + assets.map(a => resolveAssetSrc(a.src)).join('\n'))
     
     const hasConflict = assets.some(asset => {
       if (!asset || !asset.src) return false
-      const assetImageName = String(asset.src).split('/').pop()
-      const isSameImage = assetImageName === baseImageName
+      const assetImageUrl = resolveAssetSrc(asset.src)
+      const isSameImage = assetImageUrl === baseImageUrl
       
       if (isSameImage) {
-        alert('🚫 DOUBLON DÉTECTÉ! Asset: ' + assetImageName + ' = Base: ' + baseImageName)
+        alert('🚫 DOUBLON DÉTECTÉ! Asset URL: ' + assetImageUrl + ' = Base URL: ' + baseImageUrl)
       }
       
       // Vérifier si c'est la même image (peu importe le placement)
