@@ -1153,9 +1153,22 @@ function getDynVariantAssetsForNavbar(item) {
       return []
     }
     
-    console.log('✅ Assets trouvés pour la variante:', variant.assets.length, 'assets')
-    console.log('📋 Détail des assets de la variante:', variant.assets.map(a => ({ src: a.src, placement: getDynPlacement(a) })))
-    return variant.assets
+    // Filtrer les assets qui sont identiques à l'image de base pour éviter les doublons
+    const baseImageName = item.img ? String(item.img).split('/').pop() : null
+    const filteredAssets = variant.assets.filter(asset => {
+      if (!asset || !asset.src) return false
+      const assetImageName = String(asset.src).split('/').pop()
+      // Si c'est la même image que la base, ne pas l'inclure (éviter le doublon)
+      if (baseImageName && assetImageName === baseImageName) {
+        console.log('🚫 Asset filtré (doublon de l\'image de base):', assetImageName)
+        return false
+      }
+      return true
+    })
+    
+    console.log('✅ Assets filtrés pour la variante:', filteredAssets.length, 'assets (sur', variant.assets.length, ')')
+    console.log('📋 Détail des assets filtrés:', filteredAssets.map(a => ({ src: a.src, placement: getDynPlacement(a) })))
+    return filteredAssets
   } catch (e) {
     console.error('❌ Erreur dans getDynVariantAssetsForNavbar:', e)
     return []
