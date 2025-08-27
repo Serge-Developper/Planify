@@ -1102,7 +1102,31 @@ function handleNotifClick(type) {
 }
 
 function canDelete(event) {
-  return user.value && (user.value.role === 'delegue' || user.value.role === 'prof') && event.createdBy === user.value._id;
+  // Vérifier si l'utilisateur est délégué ou prof
+  if (!user.value || (user.value.role !== 'delegue' && user.value.role !== 'prof')) {
+    return false;
+  }
+  
+  // Si la tâche a été créée par cet utilisateur, permettre la suppression
+  if (event.createdBy === user.value._id) {
+    return true;
+  }
+  
+  // Pour les matières dynamiques, permettre la suppression si l'utilisateur est délégué ou prof
+  // Vérifier si c'est une matière dynamique (pas dans la liste statique)
+  const matieresStatiques = [
+    "Anglais", "Culture artistique", "Culture numérique", "Production graphique",
+    "Gestion de projet", "Hébergement", "Stratégies de communication", "Système d'information",
+    "Développement web", "Gestion de contenus", "Ergonomie et accessibilité",
+    "Projet personnel et professionnel", "Intégration", "Production audio et vidéo",
+    "Expression, communication et rhétorique", "Ecriture multimédia et narration",
+    "Représentation et traitement de l'information", "Economie et droit du numérique"
+  ];
+  
+  const isDynamicSubject = !matieresStatiques.includes(event.matiere);
+  console.log(`canDelete - Event: ${event.titre}, Matiere: ${event.matiere}, isDynamic: ${isDynamicSubject}`);
+  
+  return isDynamicSubject;
 }
 
 const showDeletePopup = ref(false);
