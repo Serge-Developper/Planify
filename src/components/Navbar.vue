@@ -66,16 +66,14 @@
                     :key="'dyn-variant-nb-inside-'+ai+'-'+variantUpdateKey"
                     :src="resolveAssetSrc(a.src)"
                     :style="getDynNavbarAssetStyle(a)"
-                                         @load="() => alert('🖼️ Asset variante inside chargé: ' + a.src + '\nURL résolue: ' + resolveAssetSrc(a.src) + '\nplacement: ' + getDynPlacement(a))"
                   />
                 </template>
-                <!-- Image de base de l'item dynamique: affichage seulement si pas d'assets de variante -->
+                <!-- Image de base de l'item dynamique: affichage garanti (pour éviter les régressions) -->
                 <img
-                  v-if="equippedDynItem && equippedDynItem.img && getDynVariantAssetsForNavbar(equippedDynItem).length === 0"
+                  v-if="equippedDynItem && equippedDynItem.img && !hasNavbarInsideAsset(equippedDynItem)"
                   :src="resolveAssetSrc(equippedDynItem.img)"
                   :alt="equippedDynItem.name"
                   :style="getDynFallbackNavbarStyle(equippedDynItem)"
-                  @load="() => alert('🖼️ Image de base chargée: ' + equippedDynItem.img + '\nURL résolue: ' + resolveAssetSrc(equippedDynItem.img))"
                 />
                 <!-- Animation Matrix à l'intérieur de l'avatar -->
                 <div v-if="equippedItem && equippedItem.displayType === 'matrix'" class="matrix-rain-inside">
@@ -148,9 +146,9 @@
               />
 
             </template>
-            <!-- Image de base (mobile) de l'item dynamique: affichage seulement si pas d'assets de variante -->
+            <!-- Image de base (mobile) de l'item dynamique: affichage garanti -->
             <img
-              v-if="equippedDynItem && equippedDynItem.img && getDynVariantAssetsForNavbar(equippedDynItem).length === 0"
+              v-if="equippedDynItem && equippedDynItem.img"
               :src="resolveAssetSrc(equippedDynItem.img)"
               :alt="equippedDynItem.name"
               :style="getDynFallbackNavbarStyle(equippedDynItem)"
@@ -511,7 +509,14 @@
                 :style="getDynNavbarOverlayStyle(a)"
               />
 
-
+              <!-- Fallback mobile si aucun asset n'est trouvé mais l'item existe -->
+              <img
+                v-if="equippedDynItem && (!equippedDynItem.assets || equippedDynItem.assets.length === 0 || getDynVariantAssetsForNavbar(equippedDynItem).length === 0)"
+                :src="resolveAssetSrc(equippedDynItem.img || (equippedDynItem.assets && equippedDynItem.assets[0] && equippedDynItem.assets[0].src))"
+                :alt="equippedDynItem.name"
+                class="equipped-dynamic-item-overlay-mobile"
+                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 15;"
+              />
 
             </template>
 
@@ -1065,36 +1070,6 @@ function hasNavbarInsideAsset(item) {
   } catch { return false }
 }
 
-// Vérifie si la variante a un asset avec la même image que l'image de base
-function hasVariantAssetWithSameImage(item) {
-  try {
-    if (!item || !item.img) return false
-    const assets = getDynVariantAssetsForNavbar(item) || []
-    const baseImageUrl = resolveAssetSrc(item.img)
-    
-    alert('🔍 hasVariantAssetWithSameImage - item: ' + item.name + '\nBase image URL: ' + baseImageUrl + '\nAssets: ' + assets.length + '\n\nAssets details:\n' + assets.map(a => resolveAssetSrc(a.src)).join('\n'))
-    
-    const hasConflict = assets.some(asset => {
-      if (!asset || !asset.src) return false
-      const assetImageUrl = resolveAssetSrc(asset.src)
-      const isSameImage = assetImageUrl === baseImageUrl
-      
-      if (isSameImage) {
-        alert('🚫 DOUBLON DÉTECTÉ! Asset URL: ' + assetImageUrl + ' = Base URL: ' + baseImageUrl)
-      }
-      
-      // Vérifier si c'est la même image (peu importe le placement)
-      return isSameImage
-    })
-    
-    alert('✅ hasVariantAssetWithSameImage result: ' + hasConflict)
-    return hasConflict
-  } catch (e) {
-    alert('❌ Erreur dans hasVariantAssetWithSameImage: ' + e.message)
-    return false
-  }
-}
-
 // Chargement des items dynamiques pour la Navbar
 const dynamicInfoById = ref(new Map())
 async function loadDynamicItems() {
@@ -1181,26 +1156,12 @@ function getDynVariantAssetsForNavbar(item) {
     }
     
     if (!Array.isArray(variant.assets) || variant.assets.length === 0) {
-      console.log('⚠️ Pas d\'assets pour la variante, retourner tableau vide')
-      return []
+      console.log('⚠️ Pas d\'assets pour la variante, utilisation des assets de base')
+      // Si la variante n'a pas d'assets, utiliser les assets de base
+      return item.assets || []
     }
-    
-    // Filtrer les assets qui sont identiques à l'image de base pour éviter les doublons
-    const baseImageName = item.img ? String(item.img).split('/').pop() : null
-    const filteredAssets = variant.assets.filter(asset => {
-      if (!asset || !asset.src) return false
-      const assetImageName = String(asset.src).split('/').pop()
-      // Si c'est la même image que la base, ne pas l'inclure (éviter le doublon)
-      if (baseImageName && assetImageName === baseImageName) {
-        console.log('🚫 Asset filtré (doublon de l\'image de base):', assetImageName)
-        return false
-      }
-      return true
-    })
-    
-    console.log('✅ Assets filtrés pour la variante:', filteredAssets.length, 'assets (sur', variant.assets.length, ')')
-    console.log('📋 Détail des assets filtrés:', filteredAssets.map(a => ({ src: a.src, placement: getDynPlacement(a) })))
-    return filteredAssets
+    console.log('✅ Assets trouvés pour la variante:', variant.assets.length, 'assets')
+    return variant.assets
   } catch (e) {
     console.error('❌ Erreur dans getDynVariantAssetsForNavbar:', e)
     return []
