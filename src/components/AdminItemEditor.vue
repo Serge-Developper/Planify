@@ -70,7 +70,7 @@
       </div>
     </div>
 
-    <div class="canvas-section">
+    <div class="canvas-section" v-if="editorMode==='items'">
       <div class="canvas-tabs">
         <button :class="{active: activeCanvas==='collection'}" @click="activeCanvas='collection'">Collection</button>
         <button :class="{active: activeCanvas==='leaderboard'}" @click="activeCanvas='leaderboard'">Leaderboard</button>
@@ -208,6 +208,14 @@
         </div>
       </div>
     </div>
+    
+    <!-- Aperçu simple pour Couleurs de bordure -->
+    <div v-else style="margin-top:12px;">
+      <h4 style="margin:8px 0;color:#111;">Aperçu de la bordure (3px)</h4>
+      <div :style="borderPreviewOuter" style="display:inline-block;border-radius:50%;">
+        <div :style="borderPreviewInner"></div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -318,6 +326,28 @@ const bgStyle = computed(() => {
   return {
     position: 'absolute', inset: 0, pointerEvents: 'none',
     background: chosen || 'transparent'
+  }
+})
+
+// Aperçu simple: cercle avec bordure 3px couleur choisie
+const borderPreviewOuter = computed(() => {
+  const c = borderForm.value.gradient && borderForm.value.gradient.trim() ? borderForm.value.gradient : borderForm.value.color
+  return {
+    width: '92px', height: '92px', padding: '3px', background: '#fff', boxSizing: 'content-box',
+    border: '3px solid transparent',
+    borderImage: c && c.startsWith('linear-gradient') ? `linear-gradient(90deg, transparent, transparent) 1` : 'none',
+    // on ne peut pas appliquer border-image directement avec gradient comme bordure; on triche avec inner div
+  }
+})
+const borderPreviewInner = computed(() => {
+  const c = borderForm.value.gradient && borderForm.value.gradient.trim() ? borderForm.value.gradient : borderForm.value.color
+  return {
+    width: '86px', height: '86px', borderRadius: '50%', background: '#fafafa',
+    boxSizing: 'border-box',
+    border: `3px solid ${(!c || c.startsWith('linear-gradient')) ? 'transparent' : c}`,
+    // si gradient, on simule avec un ring par box-shadow
+    boxShadow: c && c.startsWith('linear-gradient') ? `0 0 0 3px #fff inset, 0 0 0 3px #fff` : 'none',
+    position: 'relative'
   }
 })
 
