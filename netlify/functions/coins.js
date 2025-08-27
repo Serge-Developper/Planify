@@ -593,6 +593,32 @@ const handleWeeklyItems = async (event) => {
       const daySeed = getCurrentDaySeed();
     let weeklyItems = getRandomItemsFromSeed(daySeed, 3);
 
+    // Injecter les items dynamiques explicitement demandés via overrides
+    try {
+      ensureFreshOverrides();
+      const removedItems = new Set([...weeklyOverrides.remove].map(Number));
+      // Retirer déjà les supprimés de la liste courante
+      weeklyItems = weeklyItems.filter(it => !removedItems.has(Number(it.id)));
+      // Ajouter ceux en add (depuis DB si absents du catalogue statique)
+      for (const id of weeklyOverrides.add) {
+        const exists = weeklyItems.some(x => Number(x.id) === Number(id));
+        if (exists) continue;
+        // Chercher en statique d'abord
+        const staticFound = allWeeklyItems.find(i => Number(i.id) === Number(id));
+        if (staticFound) {
+          weeklyItems.push(staticFound);
+          continue;
+        }
+        // Sinon, chercher en DB (items dynamiques)
+        const dyn = await DynItem.findOne({ legacyId: Number(id) }).lean();
+        if (dyn) {
+          weeklyItems.push({ id: Number(dyn.legacyId), name: dyn.name, price: Number(dyn.price) || 0, infoOnly: !!dyn.infoOnly, infoDescription: dyn.infoDescription || null });
+        }
+      }
+    } catch (e) {
+      // silencieux si la collection n'existe pas
+    }
+
     // Ajouter des couleurs de bordure hebdomadaires (statiques + dynamiques)
     const borderColors = [
       { id: 100, name: 'Rouge', price: 50, type: 'border-color', colorId: 'red', img: 'border-red' },
