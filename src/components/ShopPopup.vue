@@ -593,7 +593,7 @@
                       :class="getEquippedItemClass(getUserEquippedItemData(user).name)"
                     />
                 </template>
-                <div class="user-avatar" :style="getAvatarBorderStyle(user)" :class="{ 'jojo-sepia': getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'jojo', 'no-border': getUserEquippedItemData(user) && (getUserEquippedItemData(user).displayType === 'discord' || getUserEquippedItemData(user).name === 'Galaxie' || getUserEquippedItemData(user).name === 'Coeur' || getUserEquippedItemData(user).name === 'Prestige' || getUserEquippedItemData(user).name === 'Planify') }" @click="openLeaderboardProfile(user)">
+                <div class="user-avatar" :style="getAvatarBorderStyle(user)" :class="{ 'jojo-sepia': getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'jojo' }" @click="openLeaderboardProfile(user)">
                   <img 
                     :src="getUserAvatar(user)" 
                     :alt="user.username" 
