@@ -432,7 +432,7 @@ const borderPreviewInner = computed(() => {
     width: '100%',
     height: '100%',
     borderRadius: '10px'
-  } as Record<string, string>
+  }
   const hasGradient = !!(borderForm.value.gradient && borderForm.value.gradient.trim())
   if (hasGradient) style.background = borderForm.value.gradient
   else style.background = borderForm.value.color || '#000'
