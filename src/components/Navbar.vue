@@ -143,7 +143,7 @@
                 :src="resolveAssetSrc(equippedDynItem.img)"
                 :alt="equippedDynItem.name"
                 class="equipped-dynamic-item-overlay"
-                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 15;"
+                :style="getDynFallbackNavbarStyle(equippedDynItem)"
               />
             </template>
 
@@ -507,7 +507,7 @@
                 :src="resolveAssetSrc(equippedDynItem.img)"
                 :alt="equippedDynItem.name"
                 class="equipped-dynamic-item-overlay-mobile"
-                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 15;"
+                :style="getDynFallbackNavbarStyle(equippedDynItem)"
               />
             </template>
 
@@ -1026,6 +1026,29 @@ function hasAnyNavbarAsset(item) {
     if (!Array.isArray(assets) || assets.length === 0) return false
     return assets.some(a => a && a.src)
   } catch { return false }
+}
+
+// Fallback: applique les valeurs de style de la variante courante (onglet Navbar/Avatar)
+function getDynFallbackNavbarStyle(item) {
+  try {
+    const isMob = !!isMobile && !!isMobile.value
+    const variantIndex = coinsStore.getDynamicItemVariant(item.id || item.legacyId)
+    const variant = item.variants && item.variants[variantIndex]
+    const s = (variant && Array.isArray(variant.assets) && variant.assets[0]
+      ? (isMob
+          ? (variant.assets[0].navbarStyleMobile || variant.assets[0].avatarStyleMobile || variant.assets[0].style || {})
+          : (variant.assets[0].navbarStyle || variant.assets[0].avatarStyle || variant.assets[0].style || {}))
+      : {})
+    const style = { position: 'absolute', objectFit: s.objectFit || 'contain', zIndex: typeof s.zIndex === 'number' ? s.zIndex : 15, top: '0', left: '0', width: '100%', height: '100%' }
+    if (typeof s.top === 'number') style.top = s.top + 'px'
+    if (typeof s.left === 'number') style.left = s.left + 'px'
+    if (typeof s.width === 'number') style.width = s.width + 'px'
+    if (typeof s.height === 'number') style.height = s.height + 'px'
+    if (typeof s.rotate === 'number') style.transform = `rotate(${s.rotate}deg)`
+    return style
+  } catch {
+    return { position: 'absolute', top: '0', left: '0', width: '100%', height: '100%', objectFit: 'contain', zIndex: 15 }
+  }
 }
 
 // Chargement des items dynamiques pour la Navbar
