@@ -1149,10 +1149,20 @@ function getDynVariantAssetsForNavbar(item) {
   }
 }
 
+// Assets à afficher en Navbar: privilégie la variante, sinon les assets de base
+function getNavbarAssetsForDisplay(item) {
+  try {
+    const variantAssets = getDynVariantAssetsForNavbar(item) || []
+    if (Array.isArray(variantAssets) && variantAssets.length > 0) return variantAssets
+    const baseAssets = Array.isArray(item?.assets) ? item.assets : []
+    return baseAssets
+  } catch { return [] }
+}
+
 // Variante filtrée: évite le doublon en retirant les assets dont la source est la même que l'image de base
 function getFilteredDynAssetsForNavbar(item) {
   try {
-    const assets = getDynVariantAssetsForNavbar(item) || []
+    const assets = getNavbarAssetsForDisplay(item) || []
     if (!item || !item.img) return assets
     const base = String(item.img).split('/').pop()
     return assets.filter(a => {
@@ -1160,7 +1170,7 @@ function getFilteredDynAssetsForNavbar(item) {
       return src && src.split('/').pop() !== base
     })
   } catch {
-    return getDynVariantAssetsForNavbar(item) || []
+    return getNavbarAssetsForDisplay(item) || []
   }
 }
 
