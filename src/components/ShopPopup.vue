@@ -3528,6 +3528,43 @@ const sortedLeaderboardUsers = computed(() => {
 /* Media query pour les écrans de 320px à 768px - Collection centrée en colonne */
 @media (min-width: 320px) and (max-width: 1024px) {
 
+
+  .discord-img-shop {
+    position: absolute !important;
+    top: 14px !important;
+    left: 12px !important;
+    width: 65% !important;
+    height: 65% !important;
+    object-fit: contain !important;
+  }
+
+  .coeur-img-shop {
+    position: absolute !important;
+    top: 7px !important;
+    left: 7px !important;
+    width: 80% !important;
+    height: 80% !important;
+    object-fit: contain !important;
+  }
+
+  .admin-planify-img-shop {
+    position: absolute !important;
+    top: 13px !important;
+    left: 13px !important;
+    width: 65% !important;
+    height: 65% !important;
+    object-fit: contain !important;
+  }
+
+  .alpha-img-shop {
+    position: absolute !important;
+    top: 13px !important;
+    left: 13px !important;
+    width: 65% !important;
+    height: 65% !important;
+    object-fit: contain !important;
+  }
+
   .timer-value { 
     font-size: 16px !important;
   }
@@ -3648,12 +3685,12 @@ const sortedLeaderboardUsers = computed(() => {
   }
   
   .clown-nose-shop {
-    max-width: 100% !important;
-    max-height: 45% !important;
-    object-fit: contain !important;
-    position: absolute !important;
-    top: 30px !important;
-    left: 25px !important;
+    max-width: 91% !important;
+        max-height: 35% !important;
+        object-fit: contain !important;
+        position: absolute !important;
+        top: 35px !important;
+        left: 27px !important;
   }
   
   .absolute-cinema-img-shop-right {
@@ -4459,10 +4496,10 @@ const sortedLeaderboardUsers = computed(() => {
   }
   .discord-img-shop {
     position: absolute;
-    top: -3px;
-    left: 13px;
+    top: 15px;
+    left: 12px;
     width: 65%;
-    height: 112%;
+    height: 65%;
     object-fit: contain;
   }
   /* Galaxie = clone des propriétés Discord */
@@ -4487,10 +4524,10 @@ const sortedLeaderboardUsers = computed(() => {
   }
   .coeur-img-shop {
     position: absolute;
-    top: -5px;
-    left: 8px;
+    top: 7px;
+    left: 7px;
     width: 80%;
-    height: 112%;
+    height: 80%;
     object-fit: contain;
   }
   /* Alpha = clone des propriétés Galaxie */
@@ -4501,10 +4538,10 @@ const sortedLeaderboardUsers = computed(() => {
   }
   .alpha-img-shop {
     position: absolute;
-    top: -5px;
+    top: 15px;
     left: 15px;
     width: 65%;
-    height: 112%;
+    height: 65%;
     object-fit: contain;
   }
   /* Admin Planify = clone des propriétés Galaxie */
@@ -4515,10 +4552,10 @@ const sortedLeaderboardUsers = computed(() => {
   }
   .admin-planify-img-shop {
     position: absolute;
-    top: -5px;
+    top: 13px;
     left: 15px;
     width: 65%;
-    height: 112%;
+    height: 65%;
     object-fit: contain;
   }
 
