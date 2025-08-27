@@ -1080,7 +1080,7 @@ function hasVariantAssetWithSamePlacement(item, placement) {
   } catch { return false }
 }
 
-en// Chargement des items dynamiques pour la Navbar
+// Chargement des items dynamiques pour la Navbar
 const dynamicInfoById = ref(new Map())
 async function loadDynamicItems() {
   try {
