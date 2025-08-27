@@ -143,7 +143,38 @@ async function closeItemReceivedPopup() {
   currentAdminMessage.value = '';
 }
 
-onMounted(() => {
+// Fonction pour valider le token au démarrage
+async function validateTokenOnStartup() {
+  if (!authStore.user || !authStore.user.token) {
+    console.log('Aucun utilisateur connecté au démarrage');
+    return;
+  }
+
+  try {
+    console.log('Validation du token au démarrage...');
+    // Tester le token avec une requête qui nécessite une authentification
+    const response = await secureApiCall('/users', { method: 'GET' });
+    
+    if (response && response.success) {
+      console.log('Token valide, utilisateur connecté:', authStore.user.username);
+    } else {
+      console.warn('Token invalide, déconnexion...');
+      authStore.logout();
+    }
+  } catch (error: any) {
+    console.error('Erreur lors de la validation du token:', error);
+    // Si erreur 401/403, déconnecter l'utilisateur
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      console.warn('Token expiré ou invalide, déconnexion...');
+      authStore.logout();
+    }
+  }
+}
+
+onMounted(async () => {
+  // Valider le token au démarrage
+  await validateTokenOnStartup();
+  
   // Initialiser le store des matières au démarrage de l'application
   subjectsStore.initializeStore().catch(error => {
     console.warn('Erreur lors de l\'initialisation des matières:', error);
