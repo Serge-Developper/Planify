@@ -139,7 +139,7 @@
               />
               <!-- Fallback si aucun asset n'est trouvé mais l'item existe -->
               <img
-                v-if="equippedDynItem.img && getDynVariantAssetsForNavbar(equippedDynItem).length === 0"
+                v-if="equippedDynItem.img && !hasAnyNavbarAsset(equippedDynItem)"
                 :src="resolveAssetSrc(equippedDynItem.img)"
                 :alt="equippedDynItem.name"
                 class="equipped-dynamic-item-overlay"
@@ -503,7 +503,7 @@
               />
               <!-- Fallback mobile si aucun asset n'est trouvé mais l'item existe -->
               <img
-                v-if="equippedDynItem.img && getDynVariantAssetsForNavbar(equippedDynItem).length === 0"
+                v-if="equippedDynItem.img && !hasAnyNavbarAsset(equippedDynItem)"
                 :src="resolveAssetSrc(equippedDynItem.img)"
                 :alt="equippedDynItem.name"
                 class="equipped-dynamic-item-overlay-mobile"
@@ -1019,16 +1019,19 @@ function getDynPlacement(asset) {
   } catch { return 'inside' }
 }
 
+// Vérifie s'il existe au moins un asset affichable pour la navbar
+function hasAnyNavbarAsset(item) {
+  try {
+    const assets = getDynVariantAssetsForNavbar(item)
+    if (!Array.isArray(assets) || assets.length === 0) return false
+    return assets.some(a => a && a.src)
+  } catch { return false }
+}
+
 // Chargement des items dynamiques pour la Navbar
 const dynamicInfoById = ref(new Map())
 async function loadDynamicItems() {
   try {
-    // Ne pas appeler l'API si l'utilisateur n'est pas connecté
-    if (!user.value || !user.value.token) {
-      console.log('⚠️ Pas d\'utilisateur connecté, skip loadDynamicItems')
-      return
-    }
-    
     const res = await secureApiCall('/items')
     if (res && res.success && Array.isArray(res.items)) {
       const map = new Map()
