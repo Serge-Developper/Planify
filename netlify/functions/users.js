@@ -24,6 +24,7 @@ const userSchema = new mongoose.Schema({
     purchaseDate: { type: Date, default: Date.now }
   }],
   equippedItemId: String,
+  selectedBorderColor: { type: String, default: 'default' },
   lastSpinDate: Date,
   spinCount: { type: Number, default: 0 },
   weeklySpinCount: { type: Number, default: 0 },
@@ -40,6 +41,9 @@ const User = mongoose.model('User', userSchema);
 try {
   if (!User.schema.path('pendingGifts')) {
     User.schema.add({ pendingGifts: [{ id: Number, name: String, adminMessage: String, date: Date }] });
+  }
+  if (!User.schema.path('selectedBorderColor')) {
+    User.schema.add({ selectedBorderColor: { type: String, default: 'default' } })
   }
 } catch {}
 
