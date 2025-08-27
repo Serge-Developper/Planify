@@ -144,14 +144,6 @@
                 :src="resolveAssetSrc(a.src)"
                 :style="getDynNavbarOverlayStyle(a)"
               />
-              <!-- Fallback si aucun asset n'est trouvé mais l'item existe -->
-              <img
-                v-if="equippedDynItem.img && !hasAnyNavbarAsset(equippedDynItem)"
-                :src="resolveAssetSrc(equippedDynItem.img)"
-                :alt="equippedDynItem.name"
-                class="equipped-dynamic-item-overlay"
-                :style="getDynFallbackNavbarStyle(equippedDynItem)"
-              />
             </template>
             <!-- Image de base (mobile) de l'item dynamique: affichage garanti -->
             <img
@@ -514,14 +506,6 @@
                 :key="'dyn-variant-m-above-'+ai+'-'+variantUpdateKey"
                 :src="resolveAssetSrc(a.src)"
                 :style="getDynNavbarOverlayStyle(a)"
-              />
-              <!-- Fallback mobile si aucun asset n'est trouvé mais l'item existe -->
-              <img
-                v-if="equippedDynItem.img && !hasAnyNavbarAsset(equippedDynItem)"
-                :src="resolveAssetSrc(equippedDynItem.img)"
-                :alt="equippedDynItem.name"
-                class="equipped-dynamic-item-overlay-mobile"
-                :style="getDynFallbackNavbarStyle(equippedDynItem)"
               />
             </template>
 
