@@ -191,8 +191,23 @@ const corsHeaders = {
 // addBorders/removeBorders: couleurs de bordure (IDs ou colorId sous forme de chaînes)
 let weeklyOverrides = { add: new Set(), remove: new Set(), addBorders: new Set(), removeBorders: new Set(), seed: null };
 function getTodaySeed() {
-  const d = new Date();
-  return d.toISOString().split('T')[0];
+  // Jour courant en Europe/Paris avec reset à 01:00
+  const fmt = new Intl.DateTimeFormat('fr-FR', {
+    timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+  });
+  const parts = Object.fromEntries(fmt.formatToParts(new Date()).map(p => [p.type, p.value]));
+  let y = Number(parts.year), m = Number(parts.month), d = Number(parts.day);
+  const hour = Number(parts.hour);
+  if (hour < 1) {
+    const date = new Date(Date.UTC(y, m - 1, d));
+    date.setUTCDate(date.getUTCDate() - 1);
+    y = date.getUTCFullYear();
+    m = date.getUTCMonth() + 1;
+    d = date.getUTCDate();
+  }
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${y}-${pad(m)}-${pad(d)}`;
 }
 function ensureFreshOverrides() {
   const seed = getTodaySeed();
@@ -600,43 +615,75 @@ const handleWeeklyItems = async (event) => {
   { id: 22, name: '2000', price: 215, img: 'nokia' }
 ];
 
-    // Fonction pour obtenir la seed du jour actuel
+    // Fonctions de date/heure pour l'heure de Paris et rotation à 01:00
+    function getParisNowParts() {
+      const fmt = new Intl.DateTimeFormat('fr-FR', {
+        timeZone: 'Europe/Paris',
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+        hour12: false
+      });
+      const parts = fmt.formatToParts(new Date());
+      const map = {};
+      for (const p of parts) map[p.type] = p.value;
+      return {
+        year: Number(map.year),
+        month: Number(map.month),
+        day: Number(map.day),
+        hour: Number(map.hour),
+        minute: Number(map.minute),
+        second: Number(map.second)
+      };
+    }
+
+    function formatYmd(y, m, d) {
+      return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    }
+
+    // Seed du jour (Europe/Paris) avec reset à 01:00
     function getCurrentDaySeed() {
-  const now = new Date();
-      const dateString = now.toISOString().split('T')[0];
-      return dateString;
+      const p = getParisNowParts();
+      let y = p.year, m = p.month, d = p.day;
+      if (p.hour < 1) {
+        const date = new Date(Date.UTC(y, m - 1, d));
+        date.setUTCDate(date.getUTCDate() - 1);
+        y = date.getUTCFullYear();
+        m = date.getUTCMonth() + 1;
+        d = date.getUTCDate();
+      }
+      return formatYmd(y, m, d);
     }
 
-    // Fonction pour générer des items aléatoires basés sur une seed
-    function getRandomItemsFromSeed(seed, count = 3) {
-  let hash = 0;
-  for (let i = 0; i < seed.length; i++) {
-    const char = seed.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-        hash = hash & hash; // Convertir en 32-bit integer
-  }
-  
-      // Utiliser la seed pour mélanger le tableau
-      const shuffled = [...allWeeklyItems].sort(() => {
-    hash = (hash * 9301 + 49297) % 233280;
-    return (hash / 233280) - 0.5;
-  });
-  
-  let base = shuffled.slice(0, count);
-  // Appliquer overrides (add/remove) du jour
-  ensureFreshOverrides();
-  const removed = new Set([...weeklyOverrides.remove]);
-  base = base.filter(it => !removed.has(Number(it.id)));
-  for (const id of weeklyOverrides.add) {
-    const found = allWeeklyItems.find(i => Number(i.id) === Number(id));
-    if (found && !base.some(x => Number(x.id) === Number(id))) base.push(found);
-  }
-  return base;
+    function getPreviousDaySeed() {
+      const seed = getCurrentDaySeed();
+      const [y, m, d] = seed.split('-').map(Number);
+      const date = new Date(Date.UTC(y, m - 1, d));
+      date.setUTCDate(date.getUTCDate() - 1);
+      return formatYmd(date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate());
     }
 
-    // Générer les items hebdomadaires pour aujourd'hui
-      const daySeed = getCurrentDaySeed();
-    let weeklyItems = getRandomItemsFromSeed(daySeed, 3);
+    // Mélange déterministe basé sur une seed
+    function getShuffledFromSeed(seed, array) {
+      let hash = 0;
+      for (let i = 0; i < seed.length; i++) {
+        const char = seed.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // 32-bit
+      }
+      const shuffled = [...array].sort(() => {
+        hash = (hash * 9301 + 49297) % 233280;
+        return (hash / 233280) - 0.5;
+      });
+      return shuffled;
+    }
+
+    // Générer les items quotidiens pour aujourd'hui (1h Paris) avec exclusion J+1
+    const daySeed = getCurrentDaySeed();
+    const prevSeed = getPreviousDaySeed();
+    const currentShuffled = getShuffledFromSeed(daySeed, allWeeklyItems);
+    const prevTop = getShuffledFromSeed(prevSeed, allWeeklyItems).slice(0, 3);
+    const prevIds = new Set(prevTop.map(it => Number(it.id)));
+    let weeklyItems = currentShuffled.filter(it => !prevIds.has(Number(it.id))).slice(0, 3);
 
     // Injecter les items dynamiques explicitement demandés via overrides
     try {
@@ -700,21 +747,13 @@ const handleWeeklyItems = async (event) => {
       { id: 131, name: 'Bronze', price: 100, type: 'border-color', colorId: 'bronze', img: 'border-bronze' }
     ];
 
-    // Générer des couleurs de bordure aléatoires (2-3 par jour)
+    // Générer des couleurs de bordure aléatoires (3 par jour) avec exclusion J+1
     const borderSeed = daySeed + '-borders';
-    const shuffledBorders = [...borderColors].sort(() => {
-      let hash = 0;
-      for (let i = 0; i < borderSeed.length; i++) {
-        const char = borderSeed.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash;
-      }
-      hash = (hash * 9301 + 49297) % 233280;
-      return (hash / 233280) - 0.5;
-    });
-    
-    // Fixer le prix de toutes les couleurs à 40 coins, et sélectionner 3 par jour
-    let weeklyBorderColors = shuffledBorders.slice(0, 3).map((c) => ({ ...c, price: 40 }));
+    const prevBorderSeed = prevSeed + '-borders';
+    const shuffledBorders = getShuffledFromSeed(borderSeed, borderColors);
+    const prevBordersTop = getShuffledFromSeed(prevBorderSeed, borderColors).slice(0, 3);
+    const prevBorderIds = new Set(prevBordersTop.map(b => String(b.id)));
+    let weeklyBorderColors = shuffledBorders.filter(b => !prevBorderIds.has(String(b.id))).slice(0, 3).map((c) => ({ ...c, price: 40 }));
 
     // Ajouter les couleurs de bordure dynamiques (DB) si overrides ou si disponibles
     try {
@@ -760,17 +799,33 @@ const handleWeeklyItems = async (event) => {
     // Combiner les items normaux et les couleurs de bordure
     weeklyItems = [...weeklyItems, ...weeklyBorderColors];
 
-    // Calculer le temps jusqu'à la prochaine rotation
-      const now = new Date();
-      const tomorrow = new Date(now);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(0, 0, 0, 0);
+    // Calculer le temps jusqu'à la prochaine rotation (01:00 Europe/Paris)
+    const nowMs = Date.now();
+    const p = getParisNowParts();
+    const secondsOfDay = (p.hour * 3600) + (p.minute * 60) + p.second;
+    const resetSeconds = 1 * 3600; // 01:00:00
+    let deltaSec;
+    if (secondsOfDay < resetSeconds) {
+      deltaSec = resetSeconds - secondsOfDay;
+    } else {
+      deltaSec = (24 * 3600 - secondsOfDay) + resetSeconds;
+    }
+    const timeLeft = deltaSec * 1000;
+    const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+    const timeUntilReset = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
-      const timeLeft = tomorrow.getTime() - now.getTime();
-      const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-      const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-      const timeUntilReset = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    // Calculer l'horodatage ISO de la prochaine rotation (Europe/Paris 01:00)
+    const p2 = getParisNowParts();
+    const now = new Date();
+    let target = new Date(now);
+    if (p2.hour < 1) {
+      target.setHours(1, 0, 0, 0);
+    } else {
+      target.setDate(target.getDate() + 1);
+      target.setHours(1, 0, 0, 0);
+    }
 
     return {
       statusCode: 200,
@@ -780,7 +835,7 @@ const handleWeeklyItems = async (event) => {
         weeklyItems,
         timeUntilReset,
         daySeed,
-        nextReset: tomorrow.toISOString()
+        nextReset: target.toISOString()
       })
     };
 
