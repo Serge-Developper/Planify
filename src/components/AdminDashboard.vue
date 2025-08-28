@@ -686,11 +686,27 @@ async function addEvent() {
     if (!eventForm.value.groupes || eventForm.value.groupes.length === 0) {
       eventForm.value.groupes = [eventForm.value.groupe];
     }
+    // Normalisation côté client pour éviter les 400 backend
+    const normalizeDate = (d) => {
+      if (!d) return d;
+      // Convertir 27/08/2025 -> 2025-08-27 si nécessaire
+      const m = String(d).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+      return d;
+    };
+    const basePayload = { ...eventForm.value };
+    basePayload.matiere = basePayload.matiere || selectedMatiere.value || '';
+    basePayload.date = normalizeDate(basePayload.date);
+    // Validation minimale avant envoi
+    if (!basePayload.titre || !basePayload.matiere || !basePayload.date) {
+      alert('Veuillez renseigner un titre, une matière et une date valides.');
+      return;
+    }
     
     if (editingIndex.value !== null && editingIndex.value !== -1) {
       // Modification d'une tâche existante (backend attend eventId dans le body)
       const eventToUpdate = events.value[editingIndex.value];
-      const payload = { eventId: eventToUpdate._id, ...eventForm.value };
+      const payload = { eventId: eventToUpdate._id, ...basePayload };
       console.log('addEvent - updating event (payload):', payload);
       const res = await secureApiCall('/events', {
         method: 'PUT',
@@ -701,10 +717,10 @@ async function addEvent() {
       editingIndex.value = null;
     } else {
       // Ajout d'une nouvelle tâche
-      console.log('addEvent - creating new event:', eventForm.value);
+      console.log('addEvent - creating new event:', basePayload);
       const res = await secureApiCall('/events', {
         method: 'POST',
-        body: JSON.stringify(eventForm.value)
+        body: JSON.stringify(basePayload)
       });
       const created = (res && res.event) ? res.event : res;
       console.log('addEvent - response:', res);
