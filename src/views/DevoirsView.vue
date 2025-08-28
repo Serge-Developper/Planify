@@ -148,6 +148,10 @@ function handleLoginSuccess(payload) {
   color: #666;
 }
 
+.loading {
+  font-family: 'Cobe Heavy', Inter, sans-serif;
+}
+
 .popup-overlay-login {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
