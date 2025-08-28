@@ -1809,16 +1809,39 @@ function cancelDelete() {
   margin-bottom: 12px;
 }
 .btn-vider-retards {
-  background: #ff6b6b;
+  background: linear-gradient(90deg, #ff7a7a 0%, #ff4d4d 100%);
   color: #fff;
   border: none;
-  border-radius: 12px;
-  padding: 10px 16px;
+  border-radius: 24px;
+  padding: 12px 18px;
   cursor: pointer;
-  font-weight: 700;
-  box-shadow: 0 2px 8px #0002;
+  font-weight: 800;
+  font-family: 'Cobe Heavy', Inter, sans-serif;
+  font-size: 1.02em;
+  box-shadow: 0 2px 12px rgba(255, 77, 77, 0.35);
+  transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+  position: relative;
+  overflow: hidden;
 }
-.btn-vider-retards:hover { background: #ff4d4d; }
+.btn-vider-retards::before {
+  content: '🗑️';
+  display: inline-block;
+  margin-right: 8px;
+  transform: translateY(1px);
+}
+.btn-vider-retards:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(255, 77, 77, 0.45);
+  filter: brightness(1.03);
+}
+.btn-vider-retards:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(255, 77, 77, 0.35);
+}
+.btn-vider-retards:focus-visible {
+  outline: 3px solid #ffd1d1;
+  outline-offset: 2px;
+}
 .popup-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
