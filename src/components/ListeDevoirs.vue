@@ -1813,6 +1813,10 @@ function cancelDelete() {
   color: #111;
   margin: 40px 0 18px 0;
   box-shadow: 0 2px 12px rgba(255, 77, 77, 0.35);
+  /* Garantir exactement la même géométrie que le bouton Ajouter */
+  border-radius: 24px;
+  padding: 12px 32px;
+  font-size: 1.2em;
 }
 .btn-vider-retards:hover {
   background: linear-gradient(90deg, #ff4d4d 0%, #ff7a7a 100%);
