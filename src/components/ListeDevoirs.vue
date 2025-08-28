@@ -1814,6 +1814,7 @@ function cancelDelete() {
   border: none;
   border-radius: 24px;
   padding: 12px 18px;
+  margin: 40px 0 18px;
   cursor: pointer;
   font-weight: 800;
   font-family: 'Cobe Heavy', Inter, sans-serif;
