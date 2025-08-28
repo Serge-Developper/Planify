@@ -251,6 +251,7 @@
             </div>
           </div>
           <div class="liste-col-droite">
+            <button v-if="lateEvents.length > 0" class="btn-archiver-tout" @click="viderRetards">Vider les retards</button>
             <div v-if="lateEvents.length === 0" class="aucune-tache">Aucune tâche en retard</div>
             <div v-for="event in lateEvents" :key="event.titre + event.date + event.heure" class="devoir-card-liste en-retard">
               <img v-if="isNewTask(event)" :src="notifIcon" alt="Nouveau" class="notif-icon" />
@@ -881,6 +882,26 @@ async function viderArchiveTypeMatiere(type, matiere) {
     playSound(supprimerArchiveSound)
   } catch (error) {
     alert(error.message || 'Erreur lors du désarchivage.');
+  }
+}
+
+// Vider toutes les tâches en retard (les masquer pour l'utilisateur)
+async function viderRetards() {
+  if (!user.value) return alert('Non connecté');
+  if (lateEvents.value.length === 0) return;
+  if (!confirm('Voulez-vous vraiment vider toutes les tâches en retard ?')) return;
+  try {
+    for (const event of lateEvents.value.slice()) {
+      await axios.post(`${API_URL}/events-check`, {
+        eventId: event._id,
+        action: 'hide'
+      }, { headers: { Authorization: `Bearer ${user.value.token}` } });
+    }
+    emit('refresh-events');
+    playSound(supprimerArchiveSound)
+  } catch (error) {
+    alert('Erreur lors du vidage des retards.');
+    console.error(error);
   }
 }
 
