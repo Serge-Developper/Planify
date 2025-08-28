@@ -33,7 +33,9 @@ try {
     name: String,
     price: Number,
     infoOnly: Boolean,
-    infoDescription: String
+    infoDescription: String,
+    availableInDailyShop: { type: Boolean, default: false },
+    active: { type: Boolean, default: true }
   });
   mongoose.model('DynItem', dynItemSchema, 'items');
 } catch {}
@@ -46,7 +48,8 @@ try {
     name: String,
     color: String,
     gradient: String,
-    price: Number
+    price: Number,
+    availableInDailyShop: { type: Boolean, default: false }
   });
   mongoose.model('DynBorderColor', dynBorderSchema, 'bordercolors');
 } catch {}
@@ -685,27 +688,37 @@ const handleWeeklyItems = async (event) => {
     const prevIds = new Set(prevTop.map(it => Number(it.id)));
     let weeklyItems = currentShuffled.filter(it => !prevIds.has(Number(it.id))).slice(0, 3);
 
-    // Injecter les items dynamiques explicitement demandés via overrides
+    // Injecter les items dynamiques éligibles (availableInDailyShop) et les overrides
     try {
       ensureFreshOverrides();
       const removedItems = new Set([...weeklyOverrides.remove].map(Number));
       // Retirer déjà les supprimés de la liste courante
       weeklyItems = weeklyItems.filter(it => !removedItems.has(Number(it.id)));
-      // Ajouter ceux en add (depuis DB si absents du catalogue statique)
+      // Charger les items dynamiques disponibles pour la boutique quotidienne
+      const dynPool = await DynItem.find({ active: true, availableInDailyShop: true }).lean();
+      const dynCatalog = dynPool.map(dyn => ({ id: Number(dyn.legacyId), name: dyn.name, price: Number(dyn.price) || 0, infoOnly: !!dyn.infoOnly, infoDescription: dyn.infoDescription || null, isDynamic: true }));
+
+      // Construire le pool combiné statique + dynamiques
+      const combinedCatalog = [...allWeeklyItems, ...dynCatalog];
+
+      // Si la sélection courante manque de slots (après exclusion J-1), la compléter depuis combinedCatalog
+      if (weeklyItems.length < 3) {
+        const missing = 3 - weeklyItems.length;
+        const currentIds = new Set(weeklyItems.map(it => Number(it.id)));
+        for (const it of combinedCatalog) {
+          if (currentIds.has(Number(it.id))) continue;
+          if (removedItems.has(Number(it.id))) continue;
+          weeklyItems.push(it);
+          if (weeklyItems.length >= 3) break;
+        }
+      }
+
+      // Overrides add: injecter s'ils sont dans le catalogue combiné
       for (const id of weeklyOverrides.add) {
         const exists = weeklyItems.some(x => Number(x.id) === Number(id));
         if (exists) continue;
-        // Chercher en statique d'abord
-        const staticFound = allWeeklyItems.find(i => Number(i.id) === Number(id));
-        if (staticFound) {
-          weeklyItems.push(staticFound);
-          continue;
-        }
-        // Sinon, chercher en DB (items dynamiques)
-        const dyn = await DynItem.findOne({ legacyId: Number(id) }).lean();
-        if (dyn) {
-          weeklyItems.push({ id: Number(dyn.legacyId), name: dyn.name, price: Number(dyn.price) || 0, infoOnly: !!dyn.infoOnly, infoDescription: dyn.infoDescription || null });
-        }
+        const fromCombined = combinedCatalog.find(i => Number(i.id) === Number(id));
+        if (fromCombined) weeklyItems.push(fromCombined);
       }
     } catch (e) {
       // silencieux si la collection n'existe pas
@@ -755,9 +768,9 @@ const handleWeeklyItems = async (event) => {
     const prevBorderIds = new Set(prevBordersTop.map(b => String(b.id)));
     let weeklyBorderColors = shuffledBorders.filter(b => !prevBorderIds.has(String(b.id))).slice(0, 3).map((c) => ({ ...c, price: 40 }));
 
-    // Ajouter les couleurs de bordure dynamiques (DB) si overrides ou si disponibles
+    // Ajouter les couleurs de bordure dynamiques (DB) disponibles pour la boutique quotidienne + overrides
     try {
-      const dynBorders = await DynBorderColor.find({}).lean();
+      const dynBorders = await DynBorderColor.find({ availableInDailyShop: true }).lean();
       // Appliquer prix 40 par défaut si non défini
       const normalizedDynBorders = dynBorders.map(b => ({
         id: b.id || hashToInt(b.name || b.color || b.gradient),
@@ -768,7 +781,13 @@ const handleWeeklyItems = async (event) => {
         gradient: b.gradient || null,
         price: 40
       }));
-      // Injecter ceux explicitement demandés via overrides
+      // Injecter dynamiques éligibles
+      for (const found of normalizedDynBorders) {
+        if (!weeklyBorderColors.some(x => String(x.id) === String(found.id))) {
+          weeklyBorderColors.push(found);
+        }
+      }
+      // Injecter explicitement demandés via overrides
       for (const bid of weeklyOverrides.addBorders) {
         const found = normalizedDynBorders.find(b => String(b.id) === String(bid) || String(b.colorId) === String(bid));
         if (found && !weeklyBorderColors.some(x => String(x.id) === String(found.id))) {
