@@ -7,7 +7,7 @@
       </button>
       <button 
         v-if="sortBy === 'enretard' && lateEvents.length > 0" 
-        class="btn-vider-retards" 
+        class="btn-ajouter-tache btn-vider-retards" 
         @click="viderRetards">
         Vider les retards
       </button>
@@ -1810,37 +1810,14 @@ function cancelDelete() {
 }
 .btn-vider-retards {
   background: linear-gradient(90deg, #ff7a7a 0%, #ff4d4d 100%);
-  color: #fff;
-  border: none;
-  border-radius: 24px;
-  padding: 12px 18px;
-  margin: 40px 0 18px;
-  cursor: pointer;
-  font-family: 'Cobe Heavy', Inter, sans-serif;
-  font-size: 1.02em;
+  color: #111;
+  margin: 40px 0 18px 0;
   box-shadow: 0 2px 12px rgba(255, 77, 77, 0.35);
-  transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
-  position: relative;
-  overflow: hidden;
-}
-.btn-vider-retards::before {
-  content: '🗑️';
-  display: inline-block;
-  margin-right: 8px;
-  transform: translateY(1px);
 }
 .btn-vider-retards:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(255, 77, 77, 0.45);
-  filter: brightness(1.03);
-}
-.btn-vider-retards:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 10px rgba(255, 77, 77, 0.35);
-}
-.btn-vider-retards:focus-visible {
-  outline: 3px solid #ffd1d1;
-  outline-offset: 2px;
+  background: linear-gradient(90deg, #ff4d4d 0%, #ff7a7a 100%);
+  color: #000;
+  box-shadow: 0 4px 16px rgba(255, 77, 77, 0.45);
 }
 .popup-overlay {
   position: fixed;
