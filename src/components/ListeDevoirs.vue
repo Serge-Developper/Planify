@@ -1,9 +1,17 @@
 <template>
   <div class="liste-devoirs-bg">
     <h2 class="liste-title">Liste des devoirs</h2>
-    <button v-if="user && (user.role === 'delegue' || user.role === 'prof')" class="btn-ajouter-tache" @click="showAddTaskPopup = true">
-      <span style="font-size:1.3em;margin-right:6px;">＋</span> Ajouter une tâche
-    </button>
+    <div class="actions-bar">
+      <button v-if="user && (user.role === 'delegue' || user.role === 'prof')" class="btn-ajouter-tache" @click="showAddTaskPopup = true">
+        <span style="font-size:1.3em;margin-right:6px;">＋</span> Ajouter une tâche
+      </button>
+      <button 
+        v-if="sortBy === 'enretard' && lateEvents.length > 0" 
+        class="btn-vider-retards" 
+        @click="viderRetards">
+        Vider les retards
+      </button>
+    </div>
     <div v-if="showAddTaskPopup" class="popup-overlay" @click.self="showAddTaskPopup = false">
       <div class="popup-content-ajout-tache">
         <button class="close-btn-ajout" @click="() => { hoverCloseAdd = false; showAddTaskPopup = false }" @mouseover="hoverCloseAdd = true" @mouseleave="hoverCloseAdd = false">
@@ -251,7 +259,6 @@
             </div>
           </div>
           <div class="liste-col-droite">
-            <button v-if="lateEvents.length > 0" class="btn-archiver-tout" @click="viderRetards">Vider les retards</button>
             <div v-if="lateEvents.length === 0" class="aucune-tache">Aucune tâche en retard</div>
             <div v-for="event in lateEvents" :key="event.titre + event.date + event.heure" class="devoir-card-liste en-retard">
               <img v-if="isNewTask(event)" :src="notifIcon" alt="Nouveau" class="notif-icon" />
@@ -1794,6 +1801,24 @@ function cancelDelete() {
   color: #000;
   box-shadow: 0 4px 16px #39ff7a55;
 }
+/* Barre d'actions (Ajouter / Vider les retards) */
+.actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.btn-vider-retards {
+  background: #ff6b6b;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-weight: 700;
+  box-shadow: 0 2px 8px #0002;
+}
+.btn-vider-retards:hover { background: #ff4d4d; }
 .popup-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
