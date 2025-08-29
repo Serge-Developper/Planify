@@ -466,7 +466,7 @@ const mmiMatieres = computed(() => {
   const userSpec = user.value?.specialite || ''
   // Filtrer les dynamiques par année et spécialité
   const dyn = subjectsStore.getSubjects
-    .filter((s:any) => {
+    .filter((s) => {
       const years = Array.isArray(s?.yearsAllowed) ? s.yearsAllowed : []
       if (years.length > 0 && userYear && !years.includes(userYear)) return false
       const specs = Array.isArray(s?.specialitesAllowed) ? s.specialitesAllowed : []
@@ -476,7 +476,7 @@ const mmiMatieres = computed(() => {
     .map(s => s.name)
 
   // Filtrage simple pour les matières statiques (exemples, à étendre via Admin si besoin)
-  const staticRules:any = {
+  const staticRules = {
     'Anglais': { BUT2: ['gestion-projet'] },
   }
   const staticsFiltered = matieresStatiques.filter((name) => {

@@ -382,15 +382,17 @@ const matieres = computed(() => {
   const userSpec = auth.user?.specialite || ''
   const matieresDynamiques = subjectsStore.getSubjects
     .filter((subject) => {
-      const years = Array.isArray((subject as any)?.yearsAllowed) ? (subject as any).yearsAllowed : []
+      const yearsField = subject && subject.yearsAllowed
+      const years = Array.isArray(yearsField) ? yearsField : []
       if (years.length > 0 && !years.includes(userYear)) return false
-      const specs = Array.isArray((subject as any)?.specialitesAllowed) ? (subject as any).specialitesAllowed : []
+      const specsField = subject && subject.specialitesAllowed
+      const specs = Array.isArray(specsField) ? specsField : []
       if (specs.length > 0 && userSpec && !specs.includes(userSpec)) return false
       return true
     })
     .map(subject => subject.name);
   // Filtrage rudimentaire pour matières statiques par année/spécialité (exemples)
-  const staticRules:any = {
+  const staticRules = {
     'Anglais': { BUT2: ['gestion-projet'] },
   };
   const staticsFiltered = matieresStatiques.filter((name) => {
