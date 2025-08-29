@@ -885,7 +885,6 @@ function editUser(user) {
     year: userData.year,
     specialite: userData.specialite,
     coins: userData.coins || 0
-    coins: userData.coins || 0
   };
   
   console.log('Nouveau formulaire d\'édition:', newEditForm);
