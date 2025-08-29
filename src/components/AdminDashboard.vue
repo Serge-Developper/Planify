@@ -375,16 +375,36 @@ const matieresStatiques = [
   "Economie et droit du numérique"
 ];
 
+// Règles locales pour les matières statiques par année (optionnel)
+// Vide => disponible pour toutes les années
+const staticYearRules = {
+  // Exemple demandé: Ergonomie et accessibilité uniquement en BUT1
+  "Ergonomie et accessibilité": ["BUT1"],
+};
+
 // Liste des matières : statiques + dynamiques
 const matieres = computed(() => {
-  const matieresDynamiques = subjectsStore.getSubjects.map(subject => subject.name);
-  console.log('AdminDashboard - Matières dynamiques:', matieresDynamiques);
-  
-  // Combiner les matières statiques avec les matières dynamiques
-  const toutesMatieres = [...matieresStatiques, ...matieresDynamiques];
-  // Supprimer les doublons (au cas où une matière dynamique aurait le même nom qu'une statique)
+  const userYear = auth.user?.year || ''
+
+  // Filtrer les matières dynamiques par années autorisées
+  const matieresDynamiques = subjectsStore.getSubjects
+    .filter((subject:any) => {
+      const years = Array.isArray(subject.yearsAllowed) ? subject.yearsAllowed : []
+      if (years.length === 0) return true
+      return years.includes(userYear)
+    })
+    .map(subject => subject.name);
+
+  // Filtrer les matières statiques via règles locales si définies
+  const staticsFiltered = matieresStatiques.filter((name) => {
+    const allowed = (staticYearRules as any)[name]
+    if (!allowed || !Array.isArray(allowed) || allowed.length === 0) return true
+    return allowed.includes(userYear)
+  })
+
+  // Combiner et dédupliquer (priorité au set final)
+  const toutesMatieres = [...staticsFiltered, ...matieresDynamiques];
   const resultat = [...new Set(toutesMatieres)];
-  console.log('AdminDashboard - Matières finales:', resultat);
   return resultat;
 });
 
