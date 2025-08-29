@@ -3755,10 +3755,10 @@ const sortedLeaderboardUsers = computed(() => {
   
   /* Correction du leaderboard container pour mobile */
   .leaderboard-container {
-    width: 100% !important;
     max-width: 100% !important;
     margin: 0 auto !important;
     padding: 0 15px !important;
+    width: 290px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
