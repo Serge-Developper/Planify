@@ -71,9 +71,9 @@ const loadEvents = async () => {
       // Harmoniser sur 'exam' pour rester cohérent avec ListeDevoirs
       if (type === 'examen') type = 'exam'
       if (!type) type = 'devoir'
-      const checked = Array.isArray(e.checkedBy) ? e.checkedBy.includes(userId) : !!e.isCompleted
-      const archived = Array.isArray(e.archivedBy) ? e.archivedBy.includes(userId) : false
-      const hidden = Array.isArray(e.hiddenBy) ? e.hiddenBy.includes(userId) : false
+      const checked = Array.isArray(e.checkedBy) ? e.checkedBy.some((id) => String(id) === String(userId)) : !!e.isCompleted
+      const archived = Array.isArray(e.archivedBy) ? e.archivedBy.some((id) => String(id) === String(userId)) : false
+      const hidden = Array.isArray(e.hiddenBy) ? e.hiddenBy.some((id) => String(id) === String(userId)) : false
       return {
         _id: e._id,
         titre,
@@ -85,6 +85,7 @@ const loadEvents = async () => {
         groupes: Array.isArray(e.groupes) ? e.groupes : [],
         year: e.year ?? '',
         description: e.description ?? '',
+        createdBy: e.createdBy || e.userId || '',
         checked,
         archived,
         hidden,
