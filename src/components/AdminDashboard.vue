@@ -388,7 +388,7 @@ const matieres = computed(() => {
 
   // Filtrer les matières dynamiques par années autorisées
   const matieresDynamiques = subjectsStore.getSubjects
-    .filter((subject:any) => {
+    .filter((subject) => {
       const years = Array.isArray(subject.yearsAllowed) ? subject.yearsAllowed : []
       if (years.length === 0) return true
       return years.includes(userYear)
@@ -397,7 +397,7 @@ const matieres = computed(() => {
 
   // Filtrer les matières statiques via règles locales si définies
   const staticsFiltered = matieresStatiques.filter((name) => {
-    const allowed = (staticYearRules as any)[name]
+    const allowed = staticYearRules[name]
     if (!allowed || !Array.isArray(allowed) || allowed.length === 0) return true
     return allowed.includes(userYear)
   })
