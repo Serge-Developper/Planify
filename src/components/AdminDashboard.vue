@@ -38,6 +38,7 @@
           </select>
           
           <select v-model="eventForm.year" required>
+            <option value="">Toutes années</option>
             <option value="BUT1">1ère année</option>
             <option value="BUT2">2ème année</option>
             <option value="BUT3">3ème année</option>
