@@ -11,7 +11,7 @@
 
     <!-- Règles pour matières statiques (sélection de matière existante) -->
     <div class="subjects-list" style="margin-top:24px;">
-      <h3>Règles pour matières statiques</h3>
+      <h3 style="color: black;">Règles pour matières statiques</h3>
       <div class="form-group">
         <label>Matière statique</label>
         <div class="subjects-grid">
@@ -53,7 +53,7 @@
           <button class="cancel-btn" @click="() => { staticEditName = ''; clearStaticForm(); }">Fermer</button>
         </div>
       </div>
-      <div style="margin-top:12px;">
+      <div class="règles-liste" style="margin-top:12px;">
         <h4>Règles existantes</h4>
         <ul>
           <li v-for="r in subjectsStore.staticRules" :key="r.subjectName" style="display:flex;gap:8px;align-items:center;">
@@ -497,6 +497,10 @@ function subjectColorStyle(s: any) {
   cursor: not-allowed;
 }
 
+.règles-liste {
+  color: black;
+}
+
 .subject-manager-header h2 {
   margin: 0;
   color: #1f2937;
@@ -597,6 +601,7 @@ function subjectColorStyle(s: any) {
   font-size: 1.2rem;
   cursor: pointer;
   padding: 8px;
+  background-color: #7b757554;
   border-radius: 6px;
   transition: background-color 0.2s ease;
 }
