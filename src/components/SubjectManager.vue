@@ -107,28 +107,6 @@
             <div class="color-preview" :style="{ background: gradientPreview }"></div>
           </div>
 
-          <div class="form-group">
-            <label>Années autorisées</label>
-            <div style="display:flex;gap:10px;flex-wrap:wrap">
-              <label><input type="checkbox" value="BUT1" v-model="formData.yearsAllowed" /> BUT1</label>
-              <label><input type="checkbox" value="BUT2" v-model="formData.yearsAllowed" /> BUT2</label>
-              <label><input type="checkbox" value="BUT3" v-model="formData.yearsAllowed" /> BUT3</label>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>Groupes autorisés</label>
-            <div style="display:flex;gap:10px;flex-wrap:wrap">
-              <label><input type="checkbox" value="Promo" v-model="formData.groupsAllowed" /> Promo</label>
-              <label><input type="checkbox" value="A" v-model="formData.groupsAllowed" /> A</label>
-              <label><input type="checkbox" value="A'" v-model="formData.groupsAllowed" /> A'</label>
-              <label><input type="checkbox" value="A\"" v-model="formData.groupsAllowed" /> A"</label>
-              <label><input type="checkbox" value="B" v-model="formData.groupsAllowed" /> B</label>
-              <label><input type="checkbox" value="B'" v-model="formData.groupsAllowed" /> B'</label>
-              <label><input type="checkbox" value="B\"" v-model="formData.groupsAllowed" /> B"</label>
-            </div>
-          </div>
-
           <div class="form-actions">
             <button type="button" @click="closeForm" class="cancel-btn">
               Annuler
@@ -166,8 +144,6 @@ const formData = reactive({
   colorOpacity: 1,
   color2Opacity: 1,
   useGradient: true,
-  yearsAllowed: [] as string[],
-  groupsAllowed: [] as string[],
 });
 
 // Computed
@@ -193,8 +169,6 @@ const resetForm = () => {
   formData.colorOpacity = 1;
   formData.color2Opacity = 1;
   formData.useGradient = true;
-  formData.yearsAllowed = [];
-  formData.groupsAllowed = [];
 };
 
 const editSubject = (subject: Subject) => {
@@ -207,8 +181,6 @@ const editSubject = (subject: Subject) => {
   formData.color2Opacity = (subject as any).color2Opacity ?? 1;
   // Conserver la dernière valeur de color2 affichée même si le dégradé est désactivé
   formData.useGradient = (subject as any).useGradient ?? !!(subject as any).color2;
-  formData.yearsAllowed = Array.isArray((subject as any).yearsAllowed) ? [...(subject as any).yearsAllowed] : [];
-  formData.groupsAllowed = Array.isArray((subject as any).groupsAllowed) ? [...(subject as any).groupsAllowed] : [];
 };
 
 const handleSubmit = async () => {
@@ -218,8 +190,6 @@ const handleSubmit = async () => {
       color: formData.color,
       gradientAngle: formData.gradientAngle,
       colorOpacity: formData.colorOpacity,
-      yearsAllowed: formData.yearsAllowed,
-      groupsAllowed: formData.groupsAllowed,
     };
     if (formData.useGradient) {
       payload.color2 = formData.color2;

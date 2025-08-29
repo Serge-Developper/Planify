@@ -10,8 +10,6 @@ export interface Subject {
   gradientAngle?: number; // en degrés 0-360
   colorOpacity?: number; // 0-1 pour color
   color2Opacity?: number; // 0-1 pour color2
-  yearsAllowed?: string[];
-  groupsAllowed?: string[];
   createdAt?: Date;
   updatedAt?: Date;
 }
