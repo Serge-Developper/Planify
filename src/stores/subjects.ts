@@ -12,6 +12,7 @@ export interface Subject {
   color2Opacity?: number; // 0-1 pour color2
   yearsAllowed?: string[];
   groupsAllowed?: string[];
+  specialitesAllowed?: string[];
   createdAt?: Date;
   updatedAt?: Date;
 }

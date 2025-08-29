@@ -43,6 +43,7 @@ exports.handler = async (event, context) => {
         }
         const isValidYear = (y) => ['BUT1','BUT2','BUT3'].includes(String(y));
         const isValidGroup = (g) => ['Promo','A','A\'','A"','B','B\'','B"'].includes(String(g));
+        const isValidSpec = (s) => typeof s === 'string' && s.length <= 48; // validation simple
         const toArray = (v) => Array.isArray(v) ? v.map(String) : [];
         const normalized = {
           name: String(newSubject.name),
@@ -53,7 +54,8 @@ exports.handler = async (event, context) => {
           color2Opacity: typeof newSubject.color2Opacity === 'number' ? newSubject.color2Opacity : undefined,
           useGradient: typeof newSubject.useGradient === 'boolean' ? !!newSubject.useGradient : !!newSubject.color2,
           yearsAllowed: toArray(newSubject.yearsAllowed).filter(isValidYear),
-          groupsAllowed: toArray(newSubject.groupsAllowed).filter(isValidGroup)
+          groupsAllowed: toArray(newSubject.groupsAllowed).filter(isValidGroup),
+          specialitesAllowed: toArray(newSubject.specialitesAllowed).filter(isValidSpec)
         };
         const result = await subjectsCollection.insertOne({ ...normalized, createdAt: new Date(), updatedAt: new Date() });
         return { statusCode: 201, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }, body: JSON.stringify({ _id: result.insertedId, ...normalized, createdAt: new Date(), updatedAt: new Date() }) };
@@ -65,6 +67,7 @@ exports.handler = async (event, context) => {
         const mkNum = (v) => { const n = Number(v); return Number.isFinite(n) ? n : undefined; };
         const isValidYear = (y) => ['BUT1','BUT2','BUT3'].includes(String(y));
         const isValidGroup = (g) => ['Promo','A','A\'','A"','B','B\'','B"'].includes(String(g));
+        const isValidSpec = (s) => typeof s === 'string' && s.length <= 48;
         const toArray = (v) => Array.isArray(v) ? v.map(String) : [];
         const updateData = {
           ...(updateDataRaw.name !== undefined ? { name: String(updateDataRaw.name) } : {}),
@@ -75,7 +78,8 @@ exports.handler = async (event, context) => {
           ...(updateDataRaw.color2Opacity !== undefined ? (() => { const n = mkNum(updateDataRaw.color2Opacity); return n !== undefined ? { color2Opacity: n } : {}; })() : {}),
           ...(typeof updateDataRaw.useGradient === 'boolean' ? { useGradient: !!updateDataRaw.useGradient } : {}),
           ...(updateDataRaw.yearsAllowed !== undefined ? { yearsAllowed: toArray(updateDataRaw.yearsAllowed).filter(isValidYear) } : {}),
-          ...(updateDataRaw.groupsAllowed !== undefined ? { groupsAllowed: toArray(updateDataRaw.groupsAllowed).filter(isValidGroup) } : {})
+          ...(updateDataRaw.groupsAllowed !== undefined ? { groupsAllowed: toArray(updateDataRaw.groupsAllowed).filter(isValidGroup) } : {}),
+          ...(updateDataRaw.specialitesAllowed !== undefined ? { specialitesAllowed: toArray(updateDataRaw.specialitesAllowed).filter(isValidSpec) } : {})
         };
         let objectId;
         try { objectId = require('mongodb').ObjectId(id); } catch (e) {

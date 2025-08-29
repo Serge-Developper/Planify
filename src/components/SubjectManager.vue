@@ -89,6 +89,16 @@
               <label><input type="checkbox" value="B\"" v-model="formData.groupsAllowed" /> B"</label>
             </div>
           </div>
+
+          <div class="form-group">
+            <label>Spécialités autorisées</label>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <label><input type="checkbox" value="gestion-projet" v-model="formData.specialitesAllowed" /> Gestion de projet</label>
+              <label><input type="checkbox" value="dev-web" v-model="formData.specialitesAllowed" /> Développement web</label>
+              <label><input type="checkbox" value="design" v-model="formData.specialitesAllowed" /> Design</label>
+              <label><input type="checkbox" value="contenus" v-model="formData.specialitesAllowed" /> Contenus</label>
+            </div>
+          </div>
           <div class="form-group">
             <label for="subjectName">Nom de la matière *</label>
             <input
@@ -167,6 +177,7 @@ const formData = reactive({
   useGradient: true,
   yearsAllowed: [] as string[],
   groupsAllowed: [] as string[],
+  specialitesAllowed: [] as string[],
 });
 
 // Computed
@@ -194,6 +205,7 @@ const resetForm = () => {
   formData.useGradient = true;
   formData.yearsAllowed = [];
   formData.groupsAllowed = [];
+  formData.specialitesAllowed = [];
 };
 
 const editSubject = (subject: Subject) => {
@@ -208,6 +220,7 @@ const editSubject = (subject: Subject) => {
   formData.useGradient = (subject as any).useGradient ?? !!(subject as any).color2;
   formData.yearsAllowed = Array.isArray((subject as any).yearsAllowed) ? [...(subject as any).yearsAllowed] : [];
   formData.groupsAllowed = Array.isArray((subject as any).groupsAllowed) ? [...(subject as any).groupsAllowed] : [];
+  formData.specialitesAllowed = Array.isArray((subject as any).specialitesAllowed) ? [...(subject as any).specialitesAllowed] : [];
 };
 
 const handleSubmit = async () => {
@@ -219,6 +232,7 @@ const handleSubmit = async () => {
       colorOpacity: formData.colorOpacity,
       yearsAllowed: formData.yearsAllowed,
       groupsAllowed: formData.groupsAllowed,
+      specialitesAllowed: formData.specialitesAllowed,
     };
     if (formData.useGradient) {
       payload.color2 = formData.color2;

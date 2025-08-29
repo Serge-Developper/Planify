@@ -462,16 +462,22 @@ const matieresStatiques = [
 
 // Liste des matières : statiques + dynamiques
 const mmiMatieres = computed(() => {
-  const matieresDynamiques = subjectsStore.getSubjects.map(subject => subject.name);
-  console.log('Matières dynamiques chargées:', matieresDynamiques);
-  console.log('Matières statiques:', matieresStatiques);
-  
-  // Combiner les matières statiques avec les matières dynamiques
-  const toutesMatieres = [...matieresStatiques, ...matieresDynamiques];
-  // Supprimer les doublons (au cas où une matière dynamique aurait le même nom qu'une statique)
-  const resultat = [...new Set(toutesMatieres)];
-  console.log('Matières finales:', resultat);
-  return resultat;
+  const userYear = user.value?.year || ''
+  const userSpec = user.value?.specialite || ''
+  // Filtrer les dynamiques par année et spécialité
+  const dyn = subjectsStore.getSubjects
+    .filter((s:any) => {
+      const years = Array.isArray(s?.yearsAllowed) ? s.yearsAllowed : []
+      if (years.length > 0 && userYear && !years.includes(userYear)) return false
+      const specs = Array.isArray(s?.specialitesAllowed) ? s.specialitesAllowed : []
+      if (specs.length > 0 && userSpec && !specs.includes(userSpec)) return false
+      return true
+    })
+    .map(s => s.name)
+
+  const toutesMatieres = [...matieresStatiques, ...dyn]
+  const resultat = [...new Set(toutesMatieres)]
+  return resultat
 });
 
 // Génère une clé unique stable pour un event
