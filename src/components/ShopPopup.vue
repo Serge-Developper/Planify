@@ -552,7 +552,25 @@
                         <!-- Avatar et infos utilisateur -->
             <div class="user-info">
               <div class="user-avatar-container" @click="openLeaderboardProfile(user)">
-                <!-- Overlays Discord/Galaxie/Coeur rendus uniquement plus bas dans user-avatar -->
+                <!-- Overlays externes (état d'origine) -->
+                <img 
+                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'discord'"
+                  :src="discordVariants[coinsStore.discordVariantIndex]"
+                  :alt="'Discord'"
+                  class="equipped-discord"
+                />
+                <img 
+                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).name === 'Galaxie'"
+                  :src="galaxie"
+                  :alt="'Galaxie'"
+                  class="equipped-galaxie"
+                />
+                <img 
+                  v-if="getUserEquippedItemData(user) && (getUserEquippedItemData(user).name === 'Coeur' || getUserEquippedItemData(user).displayType === 'coeur')"
+                  :src="coeur"
+                  :alt="'Coeur'"
+                  class="equipped-coeur"
+                />
                 <img 
                   v-if="getUserEquippedItemData(user) && (getUserEquippedItemData(user).name === 'Prestige' || getUserEquippedItemData(user).displayType === 'alpha')"
                   :src="alphaImg"
