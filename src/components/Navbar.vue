@@ -792,6 +792,7 @@
           <div><strong>Nom d'utilisateur :</strong> {{ user?.username || user?.name || 'Utilisateur' }}</div>
           <div><strong>Rôle :</strong> {{ user?.role ? afficherRole(user.role) : 'Non défini' }}</div>
           <div><strong>Année :</strong> {{ user?.year ? afficherAnnee(user.year) : 'Non définie' }}</div>
+          <div v-if="user?.specialite"><strong>Spécialité :</strong> {{ afficherSpecialite(user.specialite) }}</div>
           <div><strong>Groupe :</strong> {{ user?.groupe || 'Non défini' }}</div>
           <div class="coins-profile-row">
             <strong>PlanifyCoins :</strong>
@@ -1851,6 +1852,11 @@ function afficherAnnee(year) {
     'BUT3': '3ème année BUT'
   };
   return yearMap[year] || year;
+}
+
+function afficherSpecialite(val) {
+  const map = { devweb: 'Développement web', creation: 'Création numérique', gestion: 'Gestion de projet' };
+  return map[String(val)] || val || '';
 }
 
 // Fonction pour gérer les erreurs de chargement d'image

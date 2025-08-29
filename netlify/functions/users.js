@@ -258,6 +258,7 @@ exports.handler = async (event, context) => {
               role: user.role,
               year: user.year,
               groupe: user.groupe,
+              specialite: user.specialite || '',
               coins: user.coins || 0,
               avatar: user.avatar && user.avatar.data ? 
                 `data:${user.avatar.mimetype};base64,${user.avatar.data}` : 
