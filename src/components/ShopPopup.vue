@@ -1753,15 +1753,17 @@ const getColorSwatchStyle = (c) => {
   return style
 }
 
-// Obtenir le prix courant d'un item
-// - Onglet Collection: toujours le prix de base (pas d'override hebdo)
-// - Onglet Boutique quotidienne: appliquer le prix hebdomadaire si présent
+// Obtenir le prix de base d'un item (même prix en Collection et en Boutique)
+// On ignore volontairement tout override hebdomadaire pour conserver 600/400
 const getItemPrice = (item) => {
-  if (activeTab.value === 'weekly') {
-    const override = weeklyPriceMap.value.get(item.id)
-    return typeof override !== 'undefined' ? override : item.price
-  }
-  return item.price
+  // Chercher dans le catalogue statique
+  const s = shopItems.find((si) => Number(si.id) === Number(item?.id))
+  if (s && typeof s.price !== 'undefined') return s.price
+  // Sinon, chercher dans les items dynamiques chargés
+  const d = dynamicItems.value.find((di) => Number(di.id) === Number(item?.id))
+  if (d && typeof d.price !== 'undefined') return d.price
+  // Fallback: prix fourni par l'item
+  return typeof item?.price !== 'undefined' ? item.price : 0
 }
 
 // Style pour le cercle d'aperçu dans les variantes hebdomadaires
