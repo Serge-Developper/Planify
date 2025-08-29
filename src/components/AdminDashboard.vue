@@ -378,7 +378,14 @@ const matieresStatiques = [
 
 // Liste des matières : statiques + dynamiques
 const matieres = computed(() => {
-  const matieresDynamiques = subjectsStore.getSubjects.map(subject => subject.name);
+  const userYear = auth.user?.year || ''
+  const matieresDynamiques = subjectsStore.getSubjects
+    .filter((subject) => {
+      const years = Array.isArray((subject as any).yearsAllowed) ? (subject as any).yearsAllowed : []
+      if (years.length === 0) return true
+      return years.includes(userYear)
+    })
+    .map(subject => subject.name);
   const toutesMatieres = [...matieresStatiques, ...matieresDynamiques];
   const resultat = [...new Set(toutesMatieres)];
   return resultat;
