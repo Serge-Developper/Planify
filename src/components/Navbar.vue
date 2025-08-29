@@ -2978,8 +2978,8 @@ body, html {
   position: absolute !important;
     top: -18px !important;
     left: -18px !important;
-    width: 165% !important;
-    height: 165% !important;
+    width: 164% !important;
+    height: 164% !important;
     object-fit: contain !important;
     pointer-events: none !important;
     z-index: 15 !important;
