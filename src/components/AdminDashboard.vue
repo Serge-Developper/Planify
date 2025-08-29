@@ -391,19 +391,14 @@ const matieres = computed(() => {
       return true
     })
     .map(subject => subject.name);
-  // Filtrage rudimentaire pour matières statiques par année/spécialité (exemples)
-  const staticRules = {
-    'Anglais': { BUT2: ['gestion'] },
-  };
+  // Règles statiques: chargées depuis le store (admin éditables)
   const staticsFiltered = matieresStatiques.filter((name) => {
-    const rules = staticRules[name]
-    if (!rules) return true
-    // Si des règles existent pour l'année
-    const yearRules = rules[userYear]
-    if (!yearRules) return true
-    if (Array.isArray(yearRules) && userSpec) {
-      return !yearRules.includes(userSpec) ? false : true
-    }
+    const rule = (subjectsStore.staticRules || []).find(r => String(r.subjectName).toLowerCase() === String(name).toLowerCase())
+    if (!rule) return true
+    const years = Array.isArray(rule.yearsAllowed) ? rule.yearsAllowed : []
+    if (years.length > 0 && userYear && !years.includes(userYear)) return false
+    const specs = Array.isArray(rule.specialitesAllowed) ? rule.specialitesAllowed : []
+    if (specs.length > 0 && userSpec && !specs.includes(userSpec)) return false
     return true
   })
   const toutesMatieres = [...staticsFiltered, ...matieresDynamiques];

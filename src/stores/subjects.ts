@@ -22,6 +22,8 @@ export const useSubjectsStore = defineStore('subjects', () => {
   const loading = ref(false);
   const error = ref<string | null>(null);
   const initialized = ref(false);
+  // Règles pour matières statiques, format: { subjectName, yearsAllowed, specialitesAllowed }
+  const staticRules = ref<Array<{ subjectName: string; yearsAllowed: string[]; specialitesAllowed: string[] }>>([]);
 
   // Getters
   const getSubjects = computed(() => subjects.value);
@@ -78,11 +80,42 @@ export const useSubjectsStore = defineStore('subjects', () => {
   const initializeStore = async () => {
     if (!initialized.value && !loading.value) {
       await fetchSubjects();
+      await fetchStaticRules();
     }
   };
 
   const refreshSubjects = async () => {
     return fetchSubjects(true);
+  };
+
+  // Charger les règles statiques
+  const fetchStaticRules = async () => {
+    try {
+      const res = await fetch('/.netlify/functions/static-subject-rules');
+      if (!res.ok) throw new Error('Erreur chargement règles statiques');
+      const data = await res.json();
+      staticRules.value = Array.isArray(data) ? data : [];
+    } catch (e) {
+      console.warn('fetchStaticRules:', e);
+      staticRules.value = [];
+    }
+  };
+
+  const saveStaticRule = async (subjectName: string, yearsAllowed: string[], specialitesAllowed: string[]) => {
+    const payload = { subjectName, yearsAllowed, specialitesAllowed };
+    const res = await fetch('/.netlify/functions/static-subject-rules', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Erreur sauvegarde règle statique');
+    await fetchStaticRules();
+  };
+
+  const deleteStaticRule = async (subjectName: string) => {
+    const res = await fetch('/.netlify/functions/static-subject-rules?subjectName=' + encodeURIComponent(subjectName), { method: 'DELETE' });
+    if (!res.ok) throw new Error('Erreur suppression règle statique');
+    await fetchStaticRules();
   };
 
   const createSubject = async (subject: Omit<Subject, '_id' | 'createdAt' | 'updatedAt'>) => {
@@ -182,6 +215,7 @@ export const useSubjectsStore = defineStore('subjects', () => {
     loading,
     error,
     initialized,
+    staticRules,
     
     // Getters
     getSubjects,
@@ -196,5 +230,8 @@ export const useSubjectsStore = defineStore('subjects', () => {
     updateSubject,
     deleteSubject,
     clearError,
+    fetchStaticRules,
+    saveStaticRule,
+    deleteStaticRule,
   };
 });

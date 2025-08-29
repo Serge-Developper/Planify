@@ -12,6 +12,46 @@
       </div>
     </div>
 
+    <!-- Règles pour matières statiques -->
+    <div class="subjects-list" style="margin-top:24px;">
+      <h3>Règles pour matières statiques</h3>
+      <div class="form-group">
+        <label>Nom de la matière statique</label>
+        <input type="text" v-model="staticRulesForm.subjectName" placeholder="Ex: Système d'information" />
+      </div>
+      <div class="form-group">
+        <label>Années visibles</label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <label><input type="checkbox" value="BUT1" v-model="staticRulesForm.yearsAllowed" /> BUT1</label>
+          <label><input type="checkbox" value="BUT2" v-model="staticRulesForm.yearsAllowed" /> BUT2</label>
+          <label><input type="checkbox" value="BUT3" v-model="staticRulesForm.yearsAllowed" /> BUT3</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Spécialités visibles</label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <label><input type="checkbox" value="gestion" v-model="staticRulesForm.specialitesAllowed" /> Gestion</label>
+          <label><input type="checkbox" value="devweb" v-model="staticRulesForm.specialitesAllowed" /> Dev Web</label>
+          <label><input type="checkbox" value="creation" v-model="staticRulesForm.specialitesAllowed" /> Création</label>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="submit-btn" :disabled="savingStatic" @click="() => saveStatic()">{{ savingStatic ? 'Sauvegarde...' : 'Sauvegarder règle' }}</button>
+        <button class="cancel-btn" @click="() => clearStaticForm()">Réinitialiser</button>
+      </div>
+      <div style="margin-top:12px;">
+        <h4>Règles existantes</h4>
+        <ul>
+          <li v-for="r in subjectsStore.staticRules" :key="r.subjectName" style="display:flex;gap:8px;align-items:center;">
+            <span style="min-width:240px;">{{ r.subjectName }}</span>
+            <span>Années: {{ (r.yearsAllowed||[]).join(', ') || '—' }}</span>
+            <span>Spécialités: {{ (r.specialitesAllowed||[]).join(', ') || '—' }}</span>
+            <button class="delete-btn" title="Supprimer" @click="() => removeStatic(r.subjectName)">🗑️</button>
+          </li>
+        </ul>
+      </div>
+    </div>
+
          <!-- Liste des matières -->
      <div class="subjects-list" v-if="!loading && !error">
        <div v-if="subjects.length === 0" class="no-subjects">
@@ -162,6 +202,8 @@ import { ref, onMounted, reactive, watch, computed } from 'vue';
 import { useSubjectsStore, type Subject } from '@/stores/subjects';
 
 const subjectsStore = useSubjectsStore();
+const staticRulesForm = reactive<{ subjectName: string; yearsAllowed: string[]; specialitesAllowed: string[] }>({ subjectName: '', yearsAllowed: [], specialitesAllowed: [] })
+const savingStatic = ref(false)
 
 // State
 const showAddForm = ref(false);
@@ -187,6 +229,28 @@ const formatDate = (date: Date | string | undefined) => {
   if (!date) return '';
   return new Date(date).toLocaleDateString('fr-FR');
 };
+
+function clearStaticForm() {
+  staticRulesForm.subjectName = ''
+  staticRulesForm.yearsAllowed = []
+  staticRulesForm.specialitesAllowed = []
+}
+
+async function saveStatic() {
+  if (!staticRulesForm.subjectName.trim()) return;
+  try {
+    savingStatic.value = true
+    await subjectsStore.saveStaticRule(staticRulesForm.subjectName.trim(), [...staticRulesForm.yearsAllowed], [...staticRulesForm.specialitesAllowed])
+  } finally {
+    savingStatic.value = false
+  }
+}
+
+async function removeStatic(name: string) {
+  try {
+    await subjectsStore.deleteStaticRule(name)
+  } catch {}
+}
 
 const closeForm = () => {
   showAddForm.value = false;
@@ -287,6 +351,7 @@ onMounted(async () => {
   } catch (error) {
     console.error('Erreur lors du chargement des matières:', error);
   }
+  try { await subjectsStore.fetchStaticRules(); } catch {}
 });
 
 // Recharger les matières si elles ne sont pas chargées et que le store n'est pas initialisé
