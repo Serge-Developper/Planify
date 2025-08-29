@@ -208,10 +208,10 @@
 
             <!-- Section pour donner des items (cases à cocher) -->
             <div class="give-items-section">
-              <h4>Donner des items</h4>
+              <h4>Donner des items (statiques)</h4>
               <div class="give-item-form checkboxes">
                 <div class="checkbox-grid">
-                  <label v-for="it in itemsCatalog" :key="it.id" class="item-checkbox">
+                  <label v-for="it in itemsCatalog.filter(i => baseStaticIds.has(i.id))" :key="it.id" class="item-checkbox">
                     <input type="checkbox" :value="it.id" v-model="selectedItemsToGive" />
                     <span>{{ it.name }}</span>
                   </label>
@@ -248,10 +248,10 @@
                 </div>
                 
                 <div class="checkbox-actions">
-                  <button type="button" class="toggle-all-btn" @click="toggleSelectAll">
-                    {{ selectedItemsToGive.length === itemsCatalog.length ? 'Tout désélectionner' : 'Tout sélectionner' }}
+                  <button type="button" class="toggle-all-btn" @click="toggleSelectAllStatic">
+                    {{ selectedItemsToGive.length === staticItems.length ? 'Tout désélectionner' : 'Tout sélectionner' }}
                   </button>
-                  <button type="button" class="toggle-all-btn" @click="selectMissingOnly" title="Ne sélectionner que les items non possédés">
+                  <button type="button" class="toggle-all-btn" @click="selectMissingOnlyStatic" title="Ne sélectionner que les items non possédés">
                     Sélectionner uniquement les manquants
                   </button>
                   <button @click="giveSelectedItemsToUser" :disabled="selectedItemsToGive.length === 0 && selectedBorderColorsToGive.length === 0" class="give-item-btn">
@@ -546,6 +546,7 @@ function getAvailableQuestions(index) {
   ]);
   // Conserver la liste de base (statiques) pour pouvoir purger proprement les dynamiques
   const baseStaticIds = new Set(itemsCatalog.value.map(x => x.id))
+  const staticItems = computed(() => itemsCatalog.value.filter(i => baseStaticIds.has(i.id)))
   // Injecter les items dynamiques créés via l'éditeur
   async function loadAdminDynamicItems() {
     try {
@@ -1202,19 +1203,21 @@ async function removeAllItemsAndBorderColor(userId) {
 }
 
 // Sélection/désélection de toutes les cases
-function toggleSelectAll() {
-  if (selectedItemsToGive.value.length === itemsCatalog.value.length) {
+function toggleSelectAll() { /* conservé pour compat */ }
+function toggleSelectAllStatic() {
+  if (selectedItemsToGive.value.length === staticItems.value.length) {
     selectedItemsToGive.value = []
   } else {
-    selectedItemsToGive.value = itemsCatalog.value.map(i => i.id)
+    selectedItemsToGive.value = staticItems.value.map(i => i.id)
   }
 }
 
 // Sélectionner uniquement les items que l'utilisateur ne possède pas encore
-function selectMissingOnly() {
+function selectMissingOnly() { /* conservé pour compat */ }
+function selectMissingOnlyStatic() {
   if (!viewingUserItems.value) return
   const ownedIds = new Set((viewingUserItems.value.purchasedItems || []).map(pi => pi.itemId))
-  selectedItemsToGive.value = itemsCatalog.value
+  selectedItemsToGive.value = staticItems.value
     .map(i => i.id)
     .filter(id => !ownedIds.has(id))
 }
