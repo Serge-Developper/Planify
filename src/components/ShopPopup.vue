@@ -555,7 +555,7 @@
                 <!-- Overlays externes (état d'origine) -->
                 <img 
                   v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'discord'"
-                  :src="discordVariants[coinsStore.discordVariantIndex]"
+                  :src="discordVariants[getDiscordVariantForUser(user)]"
                   :alt="'Discord'"
                   class="equipped-discord"
                 />
@@ -662,7 +662,7 @@
                       :key="'lb-jojo-'+coinsStore.jojoVariantIndex"
                     />
                     <img 
-              v-if="getUserEquippedItemData(user).name === 'Jojo' && coinsStore.jojoVariantIndex === 1" 
+              v-if="getUserEquippedItemData(user).name === 'Jojo' && getJojoVariantForUser(user) === 1" 
                       :src="jojotext" 
                       alt="Jojo text"
                       class="equipped-jojotext-inside"
@@ -719,7 +719,7 @@
                 <!-- Overlays Discord/Galaxie/Coeur rendus à l'intérieur de l'avatar -->
                 <img 
                   v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'discord'"
-                  :src="discordVariants[coinsStore.discordVariantIndex]"
+                  :src="discordVariants[getDiscordVariantForUser(user)]"
                   alt="Discord"
                   class="equipped-discord"
                 />
@@ -2067,6 +2067,22 @@ const discordDisplayImg = computed(() => {
   const idx = coinsStore.discordVariantIndex || 0
   return discordVariants[idx] || discordon
 })
+
+// Extraire l'index de variante (dv/jv) depuis selectedBorderColor d'un utilisateur
+function getVariantIndexFromSelectedColor(user, key) {
+  try {
+    const raw = String(user && user.selectedBorderColor || '')
+    const parts = raw.split('|')
+    const p = parts.find((s) => String(s).startsWith(`${key}=`))
+    if (!p) return 0
+    const v = Number(p.split('=')[1])
+    return Number.isFinite(v) ? v : 0
+  } catch {
+    return 0
+  }
+}
+function getJojoVariantForUser(user) { return getVariantIndexFromSelectedColor(user, 'jv') }
+function getDiscordVariantForUser(user) { const i = getVariantIndexFromSelectedColor(user, 'dv'); return [0,1,2].includes(i) ? i : 0 }
 
 
 
