@@ -599,9 +599,13 @@ const toDoEvents = computed(() => {
     return !e.checked && (!selectedMatiere.value || e.matiere === selectedMatiere.value) && typeFilter;
   });
 
-  // Filtrage spécialité/année côté élève
+  // Filtrage spécialité/année côté élève uniquement (pas pour prof/délégué/admin)
   filtered = filtered.filter(e => {
     const u = user.value || {};
+    const role = u.role;
+    if (role === 'prof' || role === 'delegue' || role === 'admin') {
+      return true;
+    }
     const sameYear = !e.year || e.year === '' || e.year === u.year;
     const sameSpec = !e.specialite || e.specialite === '' || e.specialite === u.specialite;
     return sameYear && sameSpec;
