@@ -1199,8 +1199,8 @@ function canDelete(event) {
   if (!user.value || (user.value.role !== 'delegue' && user.value.role !== 'prof')) {
     return false;
   }
-  const uid = String(user.value._id || user.value.id || '');
-  const createdBy = String(event && event.createdBy || '');
+  const uid = String((user.value && (user.value._id || user.value.id || user.value.userId || (user.value.user && (user.value.user._id || user.value.user.id)))) || '');
+  const createdBy = String((event && (event.createdBy || event.userId)) || '');
   return !!uid && !!createdBy && createdBy === uid;
 }
 
