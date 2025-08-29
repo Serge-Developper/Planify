@@ -1803,7 +1803,7 @@ function cancelDelete() {
   box-shadow: 0 4px 16px #39ff7a55;
 }
 /* Harmoniser le style d'icône dans les boutons */
-.btn-icon { width: 27px; height: 25px; margin-right: 8px; display: inline-block; }
+.btn-icon { width: 20px; height: 20px; margin-right: 8px; display: inline-block; }
 /* Barre d'actions (Ajouter / Vider les retards) */
 .actions-bar {
   display: flex;
