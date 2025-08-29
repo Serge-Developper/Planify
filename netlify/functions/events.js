@@ -20,7 +20,8 @@ const eventSchema = new mongoose.Schema({
   heure: String, // HH:mm
   groupe: String,
   groupes: [{ type: String }],
-  year: String,
+  year: String, // legacy (une seule année)
+  years: [{ type: String }], // nouveau: multi-années (ex: ['BUT1','BUT2'])
   specialite: { type: String, default: '' },
   archivedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   checkedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
@@ -104,7 +105,10 @@ const handleGetEvents = async (event) => {
                 $or: [
                   { year: { $exists: false } },
                   { year: '' },
-                  ...(u.year ? [{ year: u.year }] : [])
+                  ...(u.year ? [{ year: u.year }] : []),
+                  { years: { $exists: false } },
+                  { years: { $size: 0 } },
+                  ...(u.year ? [{ years: u.year }] : [])
                 ]
               },
               {
@@ -183,6 +187,7 @@ const handleCreateEvent = async (event) => {
       groupe: body.groupe || 'Promo',
       groupes: Array.isArray(body.groupes) ? body.groupes : [],
       year: body.year || '',
+      years: Array.isArray(body.years) ? body.years.filter(Boolean) : [],
       specialite: body.specialite || '',
       // Legacy mirrors
       title: titre,
@@ -243,6 +248,7 @@ const handleUpdateEvent = async (event) => {
     assignIfDefined('groupe', body.groupe);
     if (Array.isArray(body.groupes)) eventDoc.groupes = body.groupes;
     assignIfDefined('year', body.year);
+    if (Array.isArray(body.years)) eventDoc.years = body.years.filter(Boolean);
     assignIfDefined('specialite', body.specialite);
     assignIfDefined('title', body.title ?? body.titre);
     assignIfDefined('subject', body.subject ?? body.matiere);
