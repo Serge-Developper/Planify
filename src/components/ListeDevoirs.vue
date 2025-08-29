@@ -9,7 +9,7 @@
         v-if="sortBy === 'enretard' && lateEvents.length > 0" 
         class="btn-ajouter-tache btn-vider-retards" 
         @click="viderRetards">
-        <img class="btn-icon" src="@/assets/supprimer.svg" alt="Vider" />
+        <img class="btn-icon" src="@/assets/can.png" alt="Vider" />
         Vider les retards
       </button>
     </div>
