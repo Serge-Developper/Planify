@@ -2333,6 +2333,18 @@ function cancelDelete() {
 }
 
 @media (min-width: 320px) and (max-width: 1024px) {
+  /* Actions en colonne sur mobile, avec écart réduit */
+  .actions-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    flex-direction: column;
+  }
+  /* Supprimer la marge verticale supplémentaire pour rapprocher les deux boutons */
+  .btn-vider-retards {
+    margin: 0;
+  }
   .liste-title {
     font-size: calc(2.2em + (64 - 2.8) * ((100vw - 320px) / 704)) !important;
   }
