@@ -475,7 +475,22 @@ const mmiMatieres = computed(() => {
     })
     .map(s => s.name)
 
-  const toutesMatieres = [...matieresStatiques, ...dyn]
+  // Filtrage simple pour les matières statiques (exemples, à étendre via Admin si besoin)
+  const staticRules:any = {
+    'Anglais': { BUT2: ['gestion-projet'] },
+  }
+  const staticsFiltered = matieresStatiques.filter((name) => {
+    const rules = staticRules[name]
+    if (!rules) return true
+    const yearRules = rules[userYear]
+    if (!yearRules) return true
+    if (Array.isArray(yearRules) && userSpec) {
+      return !yearRules.includes(userSpec) ? false : true
+    }
+    return true
+  })
+
+  const toutesMatieres = [...staticsFiltered, ...dyn]
   const resultat = [...new Set(toutesMatieres)]
   return resultat
 });

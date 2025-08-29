@@ -381,15 +381,30 @@ const matieres = computed(() => {
   const userYear = auth.user?.year || ''
   const userSpec = auth.user?.specialite || ''
   const matieresDynamiques = subjectsStore.getSubjects
-    .filter((subject:any) => {
-      const years = Array.isArray(subject?.yearsAllowed) ? subject.yearsAllowed : []
+    .filter((subject) => {
+      const years = Array.isArray((subject as any)?.yearsAllowed) ? (subject as any).yearsAllowed : []
       if (years.length > 0 && !years.includes(userYear)) return false
-      const specs = Array.isArray(subject?.specialitesAllowed) ? subject.specialitesAllowed : []
+      const specs = Array.isArray((subject as any)?.specialitesAllowed) ? (subject as any).specialitesAllowed : []
       if (specs.length > 0 && userSpec && !specs.includes(userSpec)) return false
       return true
     })
     .map(subject => subject.name);
-  const toutesMatieres = [...matieresStatiques, ...matieresDynamiques];
+  // Filtrage rudimentaire pour matières statiques par année/spécialité (exemples)
+  const staticRules:any = {
+    'Anglais': { BUT2: ['gestion-projet'] },
+  };
+  const staticsFiltered = matieresStatiques.filter((name) => {
+    const rules = staticRules[name]
+    if (!rules) return true
+    // Si des règles existent pour l'année
+    const yearRules = rules[userYear]
+    if (!yearRules) return true
+    if (Array.isArray(yearRules) && userSpec) {
+      return !yearRules.includes(userSpec) ? false : true
+    }
+    return true
+  })
+  const toutesMatieres = [...staticsFiltered, ...matieresDynamiques];
   const resultat = [...new Set(toutesMatieres)];
   return resultat;
 });
