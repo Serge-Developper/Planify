@@ -3099,19 +3099,23 @@ const sortedLeaderboardUsers = computed(() => {
 
   .leaderboard-container .equipped-galaxie{
     position: absolute !important;
-    top: -19px !important;
-    left: -18px !important;
-    width: 170% !important;
-    height: 176% !important;
-    z-index: 4 !important;
+    top: -14px !important;
+    left: -15px !important;
+    width: 159% !important;
+    height: 156% !important;
+    object-fit: contain !important;
+    pointer-events: none !important;
+    z-index: 15 !important;
   }
   .leaderboard-container .equipped-coeur{
     position: absolute !important;
-    top: -19px !important;
-    left: -18px !important;
-    width: 170% !important;
-    height: 176% !important;
-    z-index: 4 !important;
+    top: -6px !important;
+    left: -6px !important;
+    width: 122% !important;
+    height: 125% !important;
+    object-fit: contain !important;
+    pointer-events: none !important;
+    z-index: 15 !important;
   }
   .leaderboard-container .equipped-alpha{
     position: absolute !important;
@@ -3137,10 +3141,10 @@ const sortedLeaderboardUsers = computed(() => {
   /* Discord - Leaderboard */
   .leaderboard-container .equipped-discord {
     position: absolute !important;
-    top: 0px !important;
-    left: -6px !important;
-    width: 113% !important;
-    height: 112% !important;
+    top: 1px !important;
+    left: -5px !important;
+    width: 109% !important;
+    height: 108% !important;
     object-fit: contain !important;
     pointer-events: none !important;
     z-index: 15 !important;
