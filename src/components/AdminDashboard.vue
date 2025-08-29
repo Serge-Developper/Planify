@@ -162,24 +162,6 @@
                 <option value="creation">Création numérique</option>
                 <option value="gestion">Gestion de projet</option>
               </select>
-                                            <select v-model="editForm.groupe" :disabled="editForm.role === 'prof'" :class="{ 'disabled-field': editForm.role === 'prof' }">
-                 <option value="">Aucun groupe</option>
-                 <option value="Promo">Promo</option>
-                                   <option value="A">A</option>
-                  <option value="A'">A'</option>
-                  <option value="A&quot;">A"</option>
-                  <option value="B">B</option>
-                  <option value="B'">B'</option>
-                  <option value="B&quot;">B"</option>
-                 <!-- Option de debug pour voir la valeur actuelle -->
-                 <option v-if="editForm.groupe && !['', 'Promo', 'A', 'A\'', 'A&quot;', 'B', 'B\'', 'B&quot;'].includes(editForm.groupe)" :value="editForm.groupe">{{ editForm.groupe }} (VALEUR ACTUELLE)</option>
-               </select>
-               <select v-model="editForm.year" :disabled="editForm.role === 'prof'" :class="{ 'disabled-field': editForm.role === 'prof' }">
-                 <option value="">Aucune année</option>
-                 <option value="BUT1">1ère année</option>
-                 <option value="BUT2">2ème année</option>
-                 <option value="BUT3">3ème année</option>
-               </select>
               <div v-if="editForm.role === 'prof'" style="font-size: 0.9em; color: #6b7280; font-style: italic;">
                 ⓘ Les professeurs travaillent avec toute la promo (toutes les années)
               </div>
