@@ -220,6 +220,27 @@ const subjectsStore = useSubjectsStore();
 const staticRulesForm = reactive<{ subjectName: string; yearsAllowed: string[]; groupsAllowed: string[]; specialitesAllowed: string[] }>({ subjectName: '', yearsAllowed: [], groupsAllowed: [], specialitesAllowed: [] })
 const savingStatic = ref(false)
 const staticEditName = ref('')
+// Liste des matières statiques (base du site)
+const matieresStatiques = [
+  "Anglais",
+  "Culture artistique",
+  "Culture numérique",
+  "Production graphique",
+  "Gestion de projet",
+  "Hébergement",
+  "Stratégies de communication",
+  "Système d'information",
+  "Développement web",
+  "Gestion de contenus",
+  "Ergonomie et accessibilité",
+  "Projet personnel et professionnel",
+  "Intégration",
+  "Production audio et vidéo",
+  "Expression, communication et rhétorique",
+  "Ecriture multimédia et narration",
+  "Représentation et traitement de l'information",
+  "Economie et droit du numérique"
+]
 
 // State
 const showAddForm = ref(false);
