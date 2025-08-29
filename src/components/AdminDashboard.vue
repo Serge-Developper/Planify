@@ -223,6 +223,13 @@
                     <span>{{ c.name }}</span>
                   </label>
                 </div>
+                <h4 style="margin-top:16px;">Items dynamiques</h4>
+                <div class="checkbox-grid">
+                  <label v-for="it in itemsCatalog.filter(i => !baseStaticIds.has(i.id))" :key="'dyn-'+it.id" class="item-checkbox">
+                    <input type="checkbox" :value="it.id" v-model="selectedItemsToGive" />
+                    <span>{{ it.name }}</span>
+                  </label>
+                </div>
                 
                 <!-- Champ de message optionnel -->
                 <div class="admin-message-section">
