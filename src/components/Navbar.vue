@@ -2851,13 +2851,13 @@ body, html {
 
 .equipped-item-overlay-mobile {
   position: absolute;
-  top: -2px !important;
-  left: 1px !important;
-  width: 61px !important;
-  height: 61px !important;
-  object-fit: contain;
-  pointer-events: none;
-  z-index: 15;
+    top: -16px !important;
+    left: -17px !important;
+    width: 92px !important;
+    height: 92px !important;
+    object-fit: contain;
+    pointer-events: none;
+    z-index: 15;
 }
 
 .equipped-cat-ears {
