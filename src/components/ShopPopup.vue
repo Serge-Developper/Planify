@@ -698,8 +698,25 @@
                       <div class="matrix-column" v-for="i in 20" :key="i" :style="{ left: (i * 5) + '%', animationDelay: (Math.random() * 2) + 's' }">
                         <span v-for="j in 5" :key="j" class="matrix-char">{{ getRandomMatrixChar() }}</span>
                 </div>
-                <!-- Discord overlay positionné au niveau du conteneur parent (user-avatar-container) -->
-                
+                <!-- Overlays Discord/Galaxie/Coeur rendus à l'intérieur de l'avatar -->
+                <img 
+                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'discord'"
+                  :src="discordVariants[coinsStore.discordVariantIndex]"
+                  alt="Discord"
+                  class="equipped-discord"
+                />
+                <img 
+                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).name === 'Galaxie'"
+                  :src="galaxie"
+                  alt="Galaxie"
+                  class="equipped-galaxie"
+                />
+                <img 
+                  v-if="getUserEquippedItemData(user) && (getUserEquippedItemData(user).name === 'Coeur' || getUserEquippedItemData(user).displayType === 'coeur')"
+                  :src="coeur"
+                  alt="Coeur"
+                  class="equipped-coeur"
+                />
               </div>
               
               <!-- Items positionnés par-dessus l'avatar (comme dans la navbar) -->
