@@ -1803,7 +1803,7 @@ function cancelDelete() {
   box-shadow: 0 4px 16px #39ff7a55;
 }
 /* Harmoniser le style d'icône dans les boutons */
-.btn-icon { width: 20px; height: 20px; margin-right: 8px; display: inline-block; }
+.btn-icon { width: 27px; height: 25px; margin-right: 8px; display: inline-block; }
 /* Barre d'actions (Ajouter / Vider les retards) */
 .actions-bar {
   display: flex;
@@ -2343,7 +2343,8 @@ function cancelDelete() {
   }
   /* Supprimer la marge verticale supplémentaire pour rapprocher les deux boutons */
   .btn-vider-retards {
-    margin: 0;
+    margin: 0px 0px 0px 0px;
+    width: 250.96px;
   }
   .liste-title {
     font-size: calc(2.2em + (64 - 2.8) * ((100vw - 320px) / 704)) !important;
