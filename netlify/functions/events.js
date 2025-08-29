@@ -321,25 +321,10 @@ const handleDeleteEvent = async (event) => {
     const isPrivileged = role === 'admin' || role === 'prof';
     const isDelegue = role === 'delegue';
     
-    // Vérifier si c'est une matière dynamique (pas dans la liste statique)
-    const matieresStatiques = [
-      "Anglais", "Culture artistique", "Culture numérique", "Production graphique",
-      "Gestion de projet", "Hébergement", "Stratégies de communication", "Système d'information",
-      "Développement web", "Gestion de contenus", "Ergonomie et accessibilité",
-      "Projet personnel et professionnel", "Intégration", "Production audio et vidéo",
-      "Expression, communication et rhétorique", "Ecriture multimédia et narration",
-      "Représentation et traitement de l'information", "Economie et droit du numérique"
-    ];
+    console.log(`DELETE Event - User: ${userId}, Role: ${role}, Matiere: ${eventDoc.matiere}, isOwner: ${isOwner}`);
     
-    const isDynamicSubject = !matieresStatiques.includes(eventDoc.matiere);
-    
-    console.log(`DELETE Event - User: ${userId}, Role: ${role}, Matiere: ${eventDoc.matiere}, isDynamic: ${isDynamicSubject}, isOwner: ${isOwner}, isPrivileged: ${isPrivileged}, isDelegue: ${isDelegue}`);
-    
-    // Autoriser la suppression si :
-    // 1. L'utilisateur est le créateur, OU
-    // 2. L'utilisateur est admin/prof, OU
-    // 3. L'utilisateur est délégué ET c'est une matière dynamique
-    if (!isOwner && !isPrivileged && !(isDelegue && isDynamicSubject)) {
+    // Nouvelle règle: créateur (quel que soit le type), ou admin/prof
+    if (!isOwner && !isPrivileged) {
       return {
         statusCode: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
