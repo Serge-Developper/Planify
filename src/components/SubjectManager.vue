@@ -93,10 +93,9 @@
           <div class="form-group">
             <label>Spécialités autorisées</label>
             <div style="display:flex;gap:10px;flex-wrap:wrap">
-              <label><input type="checkbox" value="gestion-projet" v-model="formData.specialitesAllowed" /> Gestion de projet</label>
-              <label><input type="checkbox" value="dev-web" v-model="formData.specialitesAllowed" /> Développement web</label>
-              <label><input type="checkbox" value="design" v-model="formData.specialitesAllowed" /> Design</label>
-              <label><input type="checkbox" value="contenus" v-model="formData.specialitesAllowed" /> Contenus</label>
+              <label><input type="checkbox" value="gestion" v-model="formData.specialitesAllowed" /> Gestion de projet</label>
+              <label><input type="checkbox" value="devweb" v-model="formData.specialitesAllowed" /> Développement web</label>
+              <label><input type="checkbox" value="creation" v-model="formData.specialitesAllowed" /> Création numérique</label>
             </div>
           </div>
           <div class="form-group">

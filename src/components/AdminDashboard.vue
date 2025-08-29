@@ -393,7 +393,7 @@ const matieres = computed(() => {
     .map(subject => subject.name);
   // Filtrage rudimentaire pour matières statiques par année/spécialité (exemples)
   const staticRules = {
-    'Anglais': { BUT2: ['gestion-projet'] },
+    'Anglais': { BUT2: ['gestion'] },
   };
   const staticsFiltered = matieresStatiques.filter((name) => {
     const rules = staticRules[name]

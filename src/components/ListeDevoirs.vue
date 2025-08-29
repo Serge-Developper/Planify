@@ -477,7 +477,7 @@ const mmiMatieres = computed(() => {
 
   // Filtrage simple pour les matières statiques (exemples, à étendre via Admin si besoin)
   const staticRules = {
-    'Anglais': { BUT2: ['gestion-projet'] },
+    'Anglais': { BUT2: ['gestion'] },
   }
   const staticsFiltered = matieresStatiques.filter((name) => {
     const rules = staticRules[name]
