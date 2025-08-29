@@ -9,7 +9,7 @@
         v-if="sortBy === 'enretard' && lateEvents.length > 0" 
         class="btn-ajouter-tache btn-vider-retards" 
         @click="viderRetards">
-        <img class="btn-icon" src="@/assets/supprimer.svg" alt="Vider" />
+        <img class="btn-icon" src="@/assets/can.png" alt="Vider" />
         Vider les retards
       </button>
     </div>
@@ -1820,6 +1820,8 @@ function cancelDelete() {
   border-radius: 24px;
   padding: 12px 32px;
   font-size: 1.2em;
+  height: 59px;
+  width: 250.95px;
 }
 .btn-vider-retards:hover {
   /* Même effet hover que le bouton Ajouter (dégradé inversé + renforcement de l'ombre) */
