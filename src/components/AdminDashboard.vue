@@ -381,7 +381,7 @@ const matieres = computed(() => {
   const userYear = auth.user?.year || ''
   const matieresDynamiques = subjectsStore.getSubjects
     .filter((subject) => {
-      const yearsField = (subject && (subject as any).yearsAllowed) as any
+      const yearsField = subject && subject.yearsAllowed
       const years = Array.isArray(yearsField) ? yearsField : []
       if (years.length === 0) return true
       return years.includes(userYear)
