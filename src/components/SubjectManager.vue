@@ -83,10 +83,10 @@
               <label><input type="checkbox" value="Promo" v-model="formData.groupsAllowed" /> Promo</label>
               <label><input type="checkbox" value="A" v-model="formData.groupsAllowed" /> A</label>
               <label><input type="checkbox" value="A'" v-model="formData.groupsAllowed" /> A'</label>
-              <label><input type="checkbox" value="A\"" v-model="formData.groupsAllowed" /> A"</label>
+              <label><input type="checkbox" value="A&quot;" v-model="formData.groupsAllowed" /> A"</label>
               <label><input type="checkbox" value="B" v-model="formData.groupsAllowed" /> B</label>
               <label><input type="checkbox" value="B'" v-model="formData.groupsAllowed" /> B'</label>
-              <label><input type="checkbox" value="B\"" v-model="formData.groupsAllowed" /> B"</label>
+              <label><input type="checkbox" value="B&quot;" v-model="formData.groupsAllowed" /> B"</label>
             </div>
           </div>
 
