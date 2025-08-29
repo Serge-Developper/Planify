@@ -32,6 +32,7 @@ const userSchema = new mongoose.Schema({
   role: { type: String, enum: ['admin', 'prof', 'delegue', 'eleve', 'etudiant'], required: true },
   year: { type: String, enum: ['BUT1', 'BUT2', 'BUT3', ''], default: '' },
   groupe: { type: String, enum: ['A', "A'", 'A2', 'B', "B'", 'B2', 'Promo', ''], default: '' },
+  specialite: { type: String, enum: ['devweb', 'creation', 'gestion', ''], default: '' },
   secretQuestions: [{
     question: { type: String, required: true },
     answer: { type: String, required: true }
@@ -337,7 +338,7 @@ exports.handler = async (event, context) => {
       try {
         const url = new URL(event.rawUrl || `http://localhost${event.path}${event.queryStringParameters ? '?' + new URLSearchParams(event.queryStringParameters).toString() : ''}`);
         const userIdFromQuery = url.searchParams.get('userId');
-        const { userId: userIdFromBody, username, email, coins, role, password, newPassword, secretQuestions } = JSON.parse(event.body || '{}');
+        const { userId: userIdFromBody, username, email, coins, role, password, newPassword, secretQuestions, specialite } = JSON.parse(event.body || '{}');
         const userId = userIdFromQuery || userIdFromBody;
 
         if (!userId) return { statusCode: 400, headers, body: JSON.stringify({ error: 'UserId requis' }) };
@@ -350,6 +351,7 @@ exports.handler = async (event, context) => {
         if (email !== undefined) targetUser.email = email;
         if (typeof coins === 'number') targetUser.coins = Math.max(0, coins);
         if (role && ['admin','prof','delegue','eleve','etudiant','user'].includes(role)) targetUser.role = role;
+        if (specialite !== undefined) targetUser.specialite = String(specialite || '');
         if (Array.isArray(secretQuestions)) {
           const safe = secretQuestions
             .filter(q => q && typeof q.question === 'string' && typeof q.answer === 'string' && q.question.trim() && q.answer.trim())

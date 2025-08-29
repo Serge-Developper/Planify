@@ -78,6 +78,13 @@
               <option value="BUT2">2ème année</option>
               <option value="BUT3">3ème année</option>
             </select>
+            <!-- Spécialité MMI -->
+            <select v-model="userForm.specialite" :disabled="userForm.role === 'prof'" :class="{ 'disabled-field': userForm.role === 'prof' }">
+              <option value="">Aucune spécialité</option>
+              <option value="devweb">Développement web</option>
+              <option value="creation">Création numérique</option>
+              <option value="gestion">Gestion de projet</option>
+            </select>
             <div v-if="userForm.role === 'prof'" style="font-size: 0.9em; color: #6b7280; font-style: italic;">
               ⓘ Les professeurs travaillent avec toute la promo (toutes les années)
             </div>
@@ -102,6 +109,7 @@
                   <span class="user-role">{{ user.role }}</span>
                   <span v-if="user.groupe" class="user-groupe">Groupe: {{ user.groupe }}</span>
                   <span v-if="user.year" class="user-year">Année: {{ user.year }}</span>
+                  <span v-if="user.specialite" class="user-specialite">Spécialité: {{ formatSpecialite(user.specialite) }}</span>
                   <span class="user-coins">🪙 {{ user.coins || 0 }} coins</span>
                 </div>
                                <div class="user-actions">
@@ -130,6 +138,29 @@
                 <option value="delegue">Délégué</option>
                 <option value="prof">Professeur</option>
                 <option value="admin">Admin</option>
+              </select>
+              <select v-model="editForm.groupe" :disabled="editForm.role === 'prof'" :class="{ 'disabled-field': editForm.role === 'prof' }">
+                <option value="">Aucun groupe</option>
+                <option value="Promo">Promo</option>
+                <option value="A">A</option>
+                <option value="A'">A'</option>
+                <option value="A&quot;">A"</option>
+                <option value="B">B</option>
+                <option value="B'">B'</option>
+                <option value="B&quot;">B"</option>
+              </select>
+              <select v-model="editForm.year" :disabled="editForm.role === 'prof'" :class="{ 'disabled-field': editForm.role === 'prof' }">
+                <option value="">Aucune année</option>
+                <option value="BUT1">1ère année</option>
+                <option value="BUT2">2ème année</option>
+                <option value="BUT3">3ème année</option>
+              </select>
+              <!-- Spécialité MMI -->
+              <select v-model="editForm.specialite" :disabled="editForm.role === 'prof'" :class="{ 'disabled-field': editForm.role === 'prof' }">
+                <option value="">Aucune spécialité</option>
+                <option value="devweb">Développement web</option>
+                <option value="creation">Création numérique</option>
+                <option value="gestion">Gestion de projet</option>
               </select>
                                             <select v-model="editForm.groupe" :disabled="editForm.role === 'prof'" :class="{ 'disabled-field': editForm.role === 'prof' }">
                  <option value="">Aucun groupe</option>
@@ -367,7 +398,8 @@ const userForm = ref({
   password: '',
   role: 'eleve',
   groupe: 'A',
-  year: 'BUT1'
+  year: 'BUT1',
+  specialite: ''
 });
 const userFormMessage = ref('');
 const userFormLoading = ref(false);
@@ -378,7 +410,8 @@ const editForm = ref({
   password: '',
   role: 'eleve',
   groupe: '',
-  year: ''
+  year: '',
+  specialite: ''
 });
 const editFormMessage = ref('');
 const editFormLoading = ref(false);
@@ -627,6 +660,11 @@ function handleEditRoleChange() {
   }
 }
 
+function formatSpecialite(val) {
+  const map = { devweb: 'Développement web', creation: 'Création numérique', gestion: 'Gestion de projet' };
+  return map[String(val)] || val || '';
+}
+
 const filteredEvents = computed(() => {
   console.log('filteredEvents - selectedMatiere:', selectedMatiere.value);
   console.log('filteredEvents - events:', events.value);
@@ -802,11 +840,12 @@ async function addUser() {
       password: userForm.value.password,
       role: userForm.value.role,
       groupe: userForm.value.groupe,
-      year: userForm.value.year
+      year: userForm.value.year,
+      specialite: userForm.value.specialite || ''
     }) })
     
     userFormMessage.value = 'Utilisateur ajouté avec succès !';
-    userForm.value = { username: '', password: '', role: 'eleve', groupe: 'A', year: 'BUT1' };
+    userForm.value = { username: '', password: '', role: 'eleve', groupe: 'A', year: 'BUT1', specialite: '' };
     showUserForm.value = false;
     await fetchUsers(); // Rafraîchir la liste
   } catch (error) {
@@ -828,6 +867,7 @@ function editUser(user) {
     role: user.role === 'etudiant' ? 'eleve' : (user.role || 'eleve'), // Convertir 'etudiant' en 'eleve'
     groupe: user.groupe || '',
     year: user.year || '',
+    specialite: user.specialite || '',
     coins: user.coins || 0
   };
   
@@ -843,6 +883,8 @@ function editUser(user) {
     role: userData.role,
     groupe: userData.groupe,
     year: userData.year,
+    specialite: userData.specialite,
+    coins: userData.coins || 0
     coins: userData.coins || 0
   };
   

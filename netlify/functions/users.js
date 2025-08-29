@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
   role: { type: String, default: 'user' },
   year: String,
   groupe: String,
+  specialite: { type: String, default: '' },
   avatar: {
     filename: String,
     mimetype: String,

@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
   role: { type: String, default: 'user' },
   year: String,
   groupe: String,
+  specialite: { type: String, default: '' },
   coins: { type: Number, default: 0 },
   avatar: {
     filename: String,
@@ -220,7 +221,7 @@ const handleLogin = async (event) => {
 const handleRegister = async (event) => {
   try {
     const body = JSON.parse(event.body || '{}');
-    const { username, email, password, year, groupe, role: requestedRole } = body;
+    const { username, email, password, year, groupe, role: requestedRole, specialite } = body;
 
     if (!username || !password) {
       return {
@@ -281,6 +282,7 @@ const handleRegister = async (event) => {
       password: hashedPassword,
       year: year || '',
       groupe: groupe || '',
+      specialite: specialite || '',
       coins: 1000, // Bonus de bienvenue
       role: roleToAssign
     });
@@ -313,6 +315,7 @@ const handleRegister = async (event) => {
           role: newUser.role,
           year: newUser.year,
           groupe: newUser.groupe,
+          specialite: newUser.specialite || '',
           coins: newUser.coins,
           avatar: newUser.avatar,
           equippedItemId: newUser.equippedItemId ?? null,
