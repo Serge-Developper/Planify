@@ -56,7 +56,7 @@
         </ul>
 
         <section v-if="auth.user && auth.user.role === 'admin'" style="margin-top: 24px;">
-          <h3>Éditeur d'items</h3>
+          <h3 style="color: black;">Éditeur d'items</h3>
           <AdminItemEditor />
         </section>
 
