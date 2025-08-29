@@ -21,6 +21,7 @@ const eventSchema = new mongoose.Schema({
   groupe: String,
   groupes: [{ type: String }],
   year: String,
+  specialite: { type: String, default: '' },
   archivedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   checkedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   hiddenBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
@@ -42,7 +43,8 @@ const Event = mongoose.model('Event', eventSchema);
 const userSchema = new mongoose.Schema({
   role: String,
   year: String,
-  groupe: String
+  groupe: String,
+  specialite: { type: String, default: '' }
 });
 const User = mongoose.models.User || mongoose.model('User', userSchema);
 
@@ -103,6 +105,13 @@ const handleGetEvents = async (event) => {
                   { year: { $exists: false } },
                   { year: '' },
                   ...(u.year ? [{ year: u.year }] : [])
+                ]
+              },
+              {
+                $or: [
+                  { specialite: { $exists: false } },
+                  { specialite: '' },
+                  ...(u.specialite ? [{ specialite: u.specialite }] : [])
                 ]
               },
               {
@@ -174,6 +183,7 @@ const handleCreateEvent = async (event) => {
       groupe: body.groupe || 'Promo',
       groupes: Array.isArray(body.groupes) ? body.groupes : [],
       year: body.year || '',
+      specialite: body.specialite || '',
       // Legacy mirrors
       title: titre,
       subject: matiere,
@@ -233,6 +243,7 @@ const handleUpdateEvent = async (event) => {
     assignIfDefined('groupe', body.groupe);
     if (Array.isArray(body.groupes)) eventDoc.groupes = body.groupes;
     assignIfDefined('year', body.year);
+    assignIfDefined('specialite', body.specialite);
     assignIfDefined('title', body.title ?? body.titre);
     assignIfDefined('subject', body.subject ?? body.matiere);
     if (body.dueDate !== undefined) eventDoc.dueDate = new Date(body.dueDate);

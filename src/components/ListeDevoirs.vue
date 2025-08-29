@@ -582,6 +582,14 @@ const toDoEvents = computed(() => {
     return !e.checked && (!selectedMatiere.value || e.matiere === selectedMatiere.value) && typeFilter;
   });
 
+  // Filtrage spécialité/année côté élève
+  filtered = filtered.filter(e => {
+    const u = user.value || {};
+    const sameYear = !e.year || e.year === '' || e.year === u.year;
+    const sameSpec = !e.specialite || e.specialite === '' || e.specialite === u.specialite;
+    return sameYear && sameSpec;
+  });
+
   if (sortBy.value === 'passe') {
     filtered = filtered.sort((a, b) => {
       const dateA = new Date(a.date + 'T' + (a.heure ? a.heure : '00:00'));

@@ -29,6 +29,19 @@
             <option value="exam">Examen</option>
             <option value="devoir">Devoir</option>
           </select>
+          <!-- Spécialité/Année ciblées -->
+          <select v-model="eventForm.specialite">
+            <option value="">Aucune spécialité</option>
+            <option value="devweb">Développement web</option>
+            <option value="creation">Création numérique</option>
+            <option value="gestion">Gestion de projet</option>
+          </select>
+          <select v-model="eventForm.year">
+            <option value="">Toutes années</option>
+            <option value="BUT1">1ère année</option>
+            <option value="BUT2">2ème année</option>
+            <option value="BUT3">3ème année</option>
+          </select>
           <select v-model="eventForm.year" required>
             <option value="BUT1">1ère année</option>
             <option value="BUT2">2ème année</option>
@@ -595,6 +608,7 @@ const eventForm = ref({
   type: 'exam',
   matiere: matieres[0],
   year: 'BUT1',
+  specialite: '',
   description: ''
 });
 
@@ -622,6 +636,7 @@ onMounted(async () => {
       heure: ev.heure ?? '',
       groupe: ev.groupe ?? 'Promo',
       year: ev.year ?? '',
+      specialite: ev.specialite ?? '',
       groupes: Array.isArray(ev.groupes) ? ev.groupes : [],
     }));
   } catch (e) {
@@ -725,6 +740,9 @@ async function addEvent() {
     const basePayload = { ...eventForm.value };
     basePayload.matiere = basePayload.matiere || selectedMatiere.value || '';
     basePayload.date = normalizeDate(basePayload.date);
+    // Normaliser spécialité/année vides pour l'API
+    basePayload.specialite = basePayload.specialite || '';
+    basePayload.year = basePayload.year || '';
     // Validation minimale avant envoi
     if (!basePayload.titre || !basePayload.matiere || !basePayload.date) {
       alert('Veuillez renseigner un titre, une matière et une date valides.');
