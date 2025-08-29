@@ -68,10 +68,7 @@ exports.handler = async (event, context) => {
           };
         }
 
-        // Normaliser les champs optionnels de dégradé et de disponibilité
-        const allowYear = (y) => ['BUT1','BUT2','BUT3'].includes(String(y))
-        const allowGroup = (g) => ['Promo','A','A\'','A"','B','B\'','B"'].includes(String(g))
-        const toStringArray = (arr) => Array.isArray(arr) ? arr.map(String) : []
+        // Normaliser les champs optionnels de dégradé
         const normalized = {
           name: String(newSubject.name),
           color: String(newSubject.color),
@@ -81,9 +78,7 @@ exports.handler = async (event, context) => {
           color2Opacity: typeof newSubject.color2Opacity === 'number' ? newSubject.color2Opacity : undefined,
           useGradient: typeof newSubject.useGradient === 'boolean'
             ? newSubject.useGradient
-            : !!newSubject.color2,
-          yearsAllowed: toStringArray(newSubject.yearsAllowed).filter(allowYear),
-          groupsAllowed: toStringArray(newSubject.groupsAllowed).filter(allowGroup)
+            : !!newSubject.color2
         };
 
         const result = await subjectsCollection.insertOne({
@@ -125,9 +120,6 @@ exports.handler = async (event, context) => {
           const n = Number(v);
           return Number.isFinite(n) ? n : undefined;
         };
-        const allowYear = (y) => ['BUT1','BUT2','BUT3'].includes(String(y))
-        const allowGroup = (g) => ['Promo','A','A\'','A"','B','B\'','B"'].includes(String(g))
-        const toStringArray = (arr) => Array.isArray(arr) ? arr.map(String) : []
         const updateData = {
           ...(updateDataRaw.name !== undefined ? { name: String(updateDataRaw.name) } : {}),
           ...(updateDataRaw.color !== undefined ? { color: String(updateDataRaw.color) } : {}),
@@ -135,9 +127,7 @@ exports.handler = async (event, context) => {
           ...(updateDataRaw.gradientAngle !== undefined ? (() => { const n = mkNum(updateDataRaw.gradientAngle); return n !== undefined ? { gradientAngle: n } : {}; })() : {}),
           ...(updateDataRaw.colorOpacity !== undefined ? (() => { const n = mkNum(updateDataRaw.colorOpacity); return n !== undefined ? { colorOpacity: n } : {}; })() : {}),
           ...(updateDataRaw.color2Opacity !== undefined ? (() => { const n = mkNum(updateDataRaw.color2Opacity); return n !== undefined ? { color2Opacity: n } : {}; })() : {}),
-          ...(typeof updateDataRaw.useGradient === 'boolean' ? { useGradient: !!updateDataRaw.useGradient } : {}),
-          ...(updateDataRaw.yearsAllowed !== undefined ? { yearsAllowed: toStringArray(updateDataRaw.yearsAllowed).filter(allowYear) } : {}),
-          ...(updateDataRaw.groupsAllowed !== undefined ? { groupsAllowed: toStringArray(updateDataRaw.groupsAllowed).filter(allowGroup) } : {})
+          ...(typeof updateDataRaw.useGradient === 'boolean' ? { useGradient: !!updateDataRaw.useGradient } : {})
         };
         
         // Vérifier si le nouveau nom existe déjà (sauf pour cette matière)
