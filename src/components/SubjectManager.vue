@@ -3,41 +3,55 @@
     <div class="subject-manager-header">
       <h2>Gestion des Matières</h2>
       <div class="header-actions">
-        <button @click="refreshSubjects" class="refresh-btn" :disabled="loading" title="Actualiser">
-          🔄
-        </button>
         <button @click="showAddForm = true" class="add-subject-btn">
           <span>+</span> Ajouter une matière
         </button>
       </div>
     </div>
 
-    <!-- Règles pour matières statiques -->
+    <!-- Règles pour matières statiques (sélection de matière existante) -->
     <div class="subjects-list" style="margin-top:24px;">
       <h3>Règles pour matières statiques</h3>
       <div class="form-group">
-        <label>Nom de la matière statique</label>
-        <input type="text" v-model="staticRulesForm.subjectName" placeholder="Ex: Système d'information" />
-      </div>
-      <div class="form-group">
-        <label>Années visibles</label>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <label><input type="checkbox" value="BUT1" v-model="staticRulesForm.yearsAllowed" /> BUT1</label>
-          <label><input type="checkbox" value="BUT2" v-model="staticRulesForm.yearsAllowed" /> BUT2</label>
-          <label><input type="checkbox" value="BUT3" v-model="staticRulesForm.yearsAllowed" /> BUT3</label>
+        <label>Matière statique</label>
+        <div class="subjects-grid">
+          <button v-for="name in matieresStatiques" :key="name" class="edit-btn" @click="openStaticRule(name)">{{ name }}</button>
         </div>
       </div>
-      <div class="form-group">
-        <label>Spécialités visibles</label>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <label><input type="checkbox" value="gestion" v-model="staticRulesForm.specialitesAllowed" /> Gestion</label>
-          <label><input type="checkbox" value="devweb" v-model="staticRulesForm.specialitesAllowed" /> Dev Web</label>
-          <label><input type="checkbox" value="creation" v-model="staticRulesForm.specialitesAllowed" /> Création</label>
+      <div v-if="staticEditName" class="subject-form" style="margin-top:12px;">
+        <h4>Paramètres pour: {{ staticEditName }}</h4>
+        <div class="form-group">
+          <label>Années visibles</label>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <label><input type="checkbox" value="BUT1" v-model="staticRulesForm.yearsAllowed" /> BUT1</label>
+            <label><input type="checkbox" value="BUT2" v-model="staticRulesForm.yearsAllowed" /> BUT2</label>
+            <label><input type="checkbox" value="BUT3" v-model="staticRulesForm.yearsAllowed" /> BUT3</label>
+          </div>
         </div>
-      </div>
-      <div class="form-actions">
-        <button class="submit-btn" :disabled="savingStatic" @click="() => saveStatic()">{{ savingStatic ? 'Sauvegarde...' : 'Sauvegarder règle' }}</button>
-        <button class="cancel-btn" @click="() => clearStaticForm()">Réinitialiser</button>
+        <div class="form-group">
+          <label>Groupes visibles</label>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <label><input type="checkbox" value="Promo" v-model="staticRulesForm.groupsAllowed" /> Promo</label>
+            <label><input type="checkbox" value="A" v-model="staticRulesForm.groupsAllowed" /> A</label>
+            <label><input type="checkbox" value="A'" v-model="staticRulesForm.groupsAllowed" /> A'</label>
+            <label><input type="checkbox" value="A&quot;" v-model="staticRulesForm.groupsAllowed" /> A"</label>
+            <label><input type="checkbox" value="B" v-model="staticRulesForm.groupsAllowed" /> B</label>
+            <label><input type="checkbox" value="B'" v-model="staticRulesForm.groupsAllowed" /> B'</label>
+            <label><input type="checkbox" value="B&quot;" v-model="staticRulesForm.groupsAllowed" /> B"</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Spécialités visibles</label>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <label><input type="checkbox" value="gestion" v-model="staticRulesForm.specialitesAllowed" /> Gestion</label>
+            <label><input type="checkbox" value="devweb" v-model="staticRulesForm.specialitesAllowed" /> Dev Web</label>
+            <label><input type="checkbox" value="creation" v-model="staticRulesForm.specialitesAllowed" /> Création</label>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="submit-btn" :disabled="savingStatic" @click="() => saveStatic(staticEditName)">{{ savingStatic ? 'Sauvegarde...' : 'Sauvegarder règle' }}</button>
+          <button class="cancel-btn" @click="() => { staticEditName = ''; clearStaticForm(); }">Fermer</button>
+        </div>
       </div>
       <div style="margin-top:12px;">
         <h4>Règles existantes</h4>
@@ -45,6 +59,7 @@
           <li v-for="r in subjectsStore.staticRules" :key="r.subjectName" style="display:flex;gap:8px;align-items:center;">
             <span style="min-width:240px;">{{ r.subjectName }}</span>
             <span>Années: {{ (r.yearsAllowed||[]).join(', ') || '—' }}</span>
+            <span>Groupes: {{ (r.groupsAllowed||[]).join(', ') || '—' }}</span>
             <span>Spécialités: {{ (r.specialitesAllowed||[]).join(', ') || '—' }}</span>
             <button class="delete-btn" title="Supprimer" @click="() => removeStatic(r.subjectName)">🗑️</button>
           </li>
@@ -202,8 +217,9 @@ import { ref, onMounted, reactive, watch, computed } from 'vue';
 import { useSubjectsStore, type Subject } from '@/stores/subjects';
 
 const subjectsStore = useSubjectsStore();
-const staticRulesForm = reactive<{ subjectName: string; yearsAllowed: string[]; specialitesAllowed: string[] }>({ subjectName: '', yearsAllowed: [], specialitesAllowed: [] })
+const staticRulesForm = reactive<{ subjectName: string; yearsAllowed: string[]; groupsAllowed: string[]; specialitesAllowed: string[] }>({ subjectName: '', yearsAllowed: [], groupsAllowed: [], specialitesAllowed: [] })
 const savingStatic = ref(false)
+const staticEditName = ref('')
 
 // State
 const showAddForm = ref(false);
@@ -233,14 +249,32 @@ const formatDate = (date: Date | string | undefined) => {
 function clearStaticForm() {
   staticRulesForm.subjectName = ''
   staticRulesForm.yearsAllowed = []
+  staticRulesForm.groupsAllowed = []
   staticRulesForm.specialitesAllowed = []
 }
 
-async function saveStatic() {
-  if (!staticRulesForm.subjectName.trim()) return;
+function openStaticRule(name: string) {
+  staticEditName.value = name
+  const existing = (subjectsStore.staticRules || []).find(r => String(r.subjectName).toLowerCase() === String(name).toLowerCase())
+  if (existing) {
+    staticRulesForm.subjectName = existing.subjectName
+    staticRulesForm.yearsAllowed = Array.isArray(existing.yearsAllowed) ? [...existing.yearsAllowed] : []
+    staticRulesForm.groupsAllowed = Array.isArray(existing.groupsAllowed) ? [...existing.groupsAllowed] : []
+    staticRulesForm.specialitesAllowed = Array.isArray(existing.specialitesAllowed) ? [...existing.specialitesAllowed] : []
+  } else {
+    staticRulesForm.subjectName = name
+    staticRulesForm.yearsAllowed = []
+    staticRulesForm.groupsAllowed = []
+    staticRulesForm.specialitesAllowed = []
+  }
+}
+
+async function saveStatic(name?: string) {
+  const subjectName = (name || staticRulesForm.subjectName || '').trim()
+  if (!subjectName) return;
   try {
     savingStatic.value = true
-    await subjectsStore.saveStaticRule(staticRulesForm.subjectName.trim(), [...staticRulesForm.yearsAllowed], [...staticRulesForm.specialitesAllowed])
+    await subjectsStore.saveStaticRule(subjectName, [...staticRulesForm.yearsAllowed], [...staticRulesForm.specialitesAllowed], [...staticRulesForm.groupsAllowed])
   } finally {
     savingStatic.value = false
   }

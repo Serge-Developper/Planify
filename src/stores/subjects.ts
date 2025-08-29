@@ -23,7 +23,7 @@ export const useSubjectsStore = defineStore('subjects', () => {
   const error = ref<string | null>(null);
   const initialized = ref(false);
   // Règles pour matières statiques, format: { subjectName, yearsAllowed, specialitesAllowed }
-  const staticRules = ref<Array<{ subjectName: string; yearsAllowed: string[]; specialitesAllowed: string[] }>>([]);
+  const staticRules = ref<Array<{ subjectName: string; yearsAllowed: string[]; groupsAllowed?: string[]; specialitesAllowed: string[] }>>([]);
 
   // Getters
   const getSubjects = computed(() => subjects.value);
@@ -101,8 +101,9 @@ export const useSubjectsStore = defineStore('subjects', () => {
     }
   };
 
-  const saveStaticRule = async (subjectName: string, yearsAllowed: string[], specialitesAllowed: string[]) => {
-    const payload = { subjectName, yearsAllowed, specialitesAllowed };
+  const saveStaticRule = async (subjectName: string, yearsAllowed: string[], specialitesAllowed: string[], groupsAllowed?: string[]) => {
+    const payload: any = { subjectName, yearsAllowed, specialitesAllowed };
+    if (groupsAllowed) payload.groupsAllowed = groupsAllowed;
     const res = await fetch('/.netlify/functions/static-subject-rules', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

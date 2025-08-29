@@ -40,11 +40,13 @@ exports.handler = async (event) => {
         }
         const toArray = (v) => Array.isArray(v) ? v.map(String) : [];
         const isValidYear = (y) => ['BUT1','BUT2','BUT3'].includes(String(y));
+        const isValidGroup = (g) => ['Promo','A','A\'','A"','B','B\'','B"'].includes(String(g));
         const yearsAllowed = toArray(payload.yearsAllowed).filter(isValidYear);
+        const groupsAllowed = toArray(payload.groupsAllowed).filter(isValidGroup);
         const specialitesAllowed = toArray(payload.specialitesAllowed).map(String);
         await coll.updateOne(
           { subjectName },
-          { $set: { subjectName, yearsAllowed, specialitesAllowed, updatedAt: new Date() } },
+          { $set: { subjectName, yearsAllowed, groupsAllowed, specialitesAllowed, updatedAt: new Date() } },
           { upsert: true }
         );
         return { statusCode: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }, body: JSON.stringify({ success: true }) };
