@@ -37,12 +37,12 @@
             <option value="gestion">Gestion de projet</option>
           </select>
           
-          <div class="years-checkboxes">
-            <label><input type="checkbox" value="BUT1" v-model="eventForm.years" /> 1ère année</label>
-            <label><input type="checkbox" value="BUT2" v-model="eventForm.years" /> 2ème année</label>
-            <label><input type="checkbox" value="BUT3" v-model="eventForm.years" /> 3ème année</label>
-            <button type="button" class="years-all-btn" @click="toggleAllYears">{{ allYearsSelected ? 'Tout désélectionner' : 'Toutes années' }}</button>
-          </div>
+          <select v-model="eventForm.year" required>
+            <option value="">Toutes années</option>
+            <option value="BUT1">1ère année</option>
+            <option value="BUT2">2ème année</option>
+            <option value="BUT3">3ème année</option>
+          </select>
           <textarea v-model="eventForm.description" placeholder="Description (optionnelle)" rows="3"></textarea>
           <button type="submit">{{ editingIndex !== null && editingIndex !== -1 ? 'Modifier' : 'Ajouter' }}</button>
         </form>
@@ -604,7 +604,6 @@ const eventForm = ref({
   type: 'exam',
   matiere: matieres[0],
   year: '',
-  years: [],
   specialite: '',
   description: ''
 });
