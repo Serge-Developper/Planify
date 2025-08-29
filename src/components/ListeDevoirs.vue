@@ -1837,7 +1837,7 @@ function cancelDelete() {
   margin-bottom: 12px;
 }
 .btn-vider-retards {
-  background: linear-gradient(90deg, #ff7a7a 0%, #ff4d4d 100%);
+  background: linear-gradient(90deg, #ff4d4d, #ff5252);
   color: #111;
   margin: 40px 0 18px 0;
   box-shadow: 0 2px 12px rgba(255, 77, 77, 0.35);
@@ -1850,7 +1850,7 @@ function cancelDelete() {
 }
 .btn-vider-retards:hover {
   /* Même effet hover que le bouton Ajouter (dégradé inversé + renforcement de l'ombre) */
-  background: linear-gradient(90deg, #ff4d4d 0%, #ff7a7a 100%);
+  background: linear-gradient(90deg, #ff4d4d, #ff5252);
   color: #000;
   box-shadow: 0 4px 16px rgba(255, 77, 77, 0.45);
 }
@@ -1953,7 +1953,6 @@ function cancelDelete() {
 }
 .btn-valider-ajout:hover {
   background: linear-gradient(90deg, #6EFF78 0%, #39ff7a 100%);
-  color: #000;
   box-shadow: 0 4px 16px #39ff7a55;
 }
 .groupes-checkboxes {
