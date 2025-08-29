@@ -13,6 +13,7 @@
         </button>
         <button class="add-user-btn" @click="showUserForm = true">Ajouter un utilisateur</button>
         <button class="manage-users-btn" @click="openUserManagement">Gérer les utilisateurs</button>
+        <button class="manage-users-btn" @click="showSubjectsManagement = true">Gérer les matières</button>
       </aside>
       <main class="matiere-content">
         <h2>{{ selectedMatiere }}</h2>
@@ -59,10 +60,7 @@
           <AdminItemEditor />
         </section>
 
-        <section v-if="auth.user && auth.user.role === 'admin'" style="margin-top: 24px;">
-          <h3>Gestion des Matières</h3>
-          <SubjectManager />
-        </section>
+        <!-- Gestion des matières déplacée en modal -->
       </main>
       <div v-if="showUserForm" class="modal">
         <div style="position: relative;">
@@ -308,6 +306,18 @@
           </form>
         </div>
       </div>
+
+      <!-- Modal de gestion des matières -->
+      <div v-if="showSubjectsManagement" class="modal">
+        <div class="user-management-modal" style="max-width: 1000px;">
+          <button class="modal-close-top" @click="showSubjectsManagement = false" aria-label="Fermer">×</button>
+          <h3 style="color: #000000; margin-bottom: 20px;">Gérer les matières</h3>
+          <SubjectManager />
+          <div class="modal-footer">
+            <button @click="showSubjectsManagement = false" class="close-btn">Fermer</button>
+          </div>
+        </div>
+      </div>
      </template>
     <template v-else>
       <EmploiDuTemps />
@@ -331,6 +341,7 @@ const router = useRouter();
 if (!auth.user || auth.user.role !== 'admin') {
   router.replace('/');
 }
+const showSubjectsManagement = ref(false)
 
 // Charger/rafraîchir les items dynamiques
 onMounted(async () => {
