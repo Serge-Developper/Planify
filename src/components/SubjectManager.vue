@@ -19,7 +19,7 @@
         </div>
       </div>
       <div v-if="staticEditName" class="subject-form" style="margin-top:12px;">
-        <h4>Paramètres pour: {{ staticEditName }}</h4>
+        <h4 style="color: black;">Paramètres pour: {{ staticEditName }}</h4>
         <div class="form-group">
           <label>Années visibles</label>
           <div style="display:flex;gap:10px;flex-wrap:wrap">
