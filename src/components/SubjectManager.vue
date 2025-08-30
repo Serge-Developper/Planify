@@ -55,7 +55,7 @@
       </div>
       <div class="règles-liste" style="margin-top:12px;">
         <h4>Règles existantes</h4>
-        <ul style="display: flex; flex-direction: column;">
+        <ul style="display: flex; flex-direction: column; gap: 20px;">
           <li v-for="r in subjectsStore.staticRules" :key="r.subjectName" style="display:flex;gap:8px;align-items:center;">
             <span style="min-width:240px;">{{ r.subjectName }}</span>
             <span>Années: {{ (r.yearsAllowed||[]).join(', ') || '—' }}</span>
