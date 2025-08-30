@@ -1,0 +1,5 @@
+[33mfe80562[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Test - Repush pour tester les questions secrètes
+[33me3f2c85[m Correction de la logique des questions secrètes - Le modal ne s'ouvre que si hasSecretQuestions est explicitement false - Ajout de logs pour déboguer - Amélioration de la gestion d'erreur
+[33me4d64a7[m Nettoyage du projet et correction des erreurs TypeScript - Suppression des fichiers non essentiels - Ajout des déclarations de types pour les fonctions Netlify - Correction des erreurs mongoose et bcryptjs - Optimisation de la structure du projet
+[33m0e824bd[m Correction des erreurs TypeScript dans les fonctions Netlify - Ajout de vérifications de type pour JWT payload et variables d'environnement - Correction des conflits de noms de variables - Amélioration de la gestion des erreurs
+[33m242e539[m Correction de la structure de réponse de l'API d'authentification

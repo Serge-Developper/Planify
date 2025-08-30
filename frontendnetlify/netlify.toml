@@ -1,0 +1,47 @@
+[build]
+  # Répertoire de base pour le build (racine du projet)
+  base = "."
+  # Commande de build pour Vue.js
+  command = "npm install --include=dev && npm run build"
+  # Répertoire où sont les fichiers buildés
+  publish = "dist"
+  # Répertoire des fonctions Netlify (équivalent du dossier /api de Vercel)
+  functions = "netlify/functions"
+
+[build.environment]
+  # Version Node.js
+  NODE_VERSION = "20"
+  # Force clean install
+  NPM_FLAGS = "--legacy-peer-deps"
+  # Disable cache pour forcer installation complète
+  NETLIFY_SKIP_CACHE = "true"
+
+# Redirection spécifique pour les avatars
+[[redirects]]
+  from = "/uploads/avatars/*"
+  to = "/.netlify/functions/serve-avatar/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/api/uploads/avatars/*"
+  to = "/.netlify/functions/serve-avatar/:splat"
+  status = 200
+
+# Redirections pour les API endpoints (DOIT être en premier)
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# Redirection pour les routes Vue.js (SPA)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Plugin pour installer automatiquement les dépendances des fonctions
+[[plugins]]
+package = "@netlify/plugin-functions-install-core"
+
+# Variables d'environnement (à configurer via l'interface Netlify)
+# MONGODB_URI, JWT_SECRET, JWT_ISSUER, JWT_AUDIENCE

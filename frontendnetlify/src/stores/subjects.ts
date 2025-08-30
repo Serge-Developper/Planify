@@ -1,0 +1,238 @@
+import { defineStore } from 'pinia';
+import { ref, computed } from 'vue';
+
+export interface Subject {
+  _id?: string;
+  name: string;
+  color: string; // Couleur principale (hex)
+  // Optionnel: configuration de dégradé
+  color2?: string; // seconde couleur
+  gradientAngle?: number; // en degrés 0-360
+  colorOpacity?: number; // 0-1 pour color
+  color2Opacity?: number; // 0-1 pour color2
+  yearsAllowed?: string[];
+  groupsAllowed?: string[];
+  specialitesAllowed?: string[];
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export const useSubjectsStore = defineStore('subjects', () => {
+  const subjects = ref<Subject[]>([]);
+  const loading = ref(false);
+  const error = ref<string | null>(null);
+  const initialized = ref(false);
+  // Règles pour matières statiques, format: { subjectName, yearsAllowed, specialitesAllowed }
+  const staticRules = ref<Array<{ subjectName: string; yearsAllowed: string[]; groupsAllowed?: string[]; specialitesAllowed: string[] }>>([]);
+
+  // Getters
+  const getSubjects = computed(() => subjects.value);
+  const getSubjectById = computed(() => (id: string) => 
+    subjects.value.find(subject => subject._id === id)
+  );
+  const getSubjectByName = computed(() => (name: string) => 
+    subjects.value.find(subject => 
+      subject.name.toLowerCase() === name.toLowerCase()
+    )
+  );
+
+  // Actions
+  const fetchSubjects = async (force = false) => {
+    // Éviter de recharger si déjà en cours et pas forcé
+    if (loading.value && !force) return;
+    
+    loading.value = true;
+    error.value = null;
+    
+    try {
+      // Ajouter un timeout de 10 secondes
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      
+      const response = await fetch('/.netlify/functions/subjects', {
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error('Erreur lors du chargement des matières');
+      }
+      
+      const data = await response.json();
+      subjects.value = data;
+      initialized.value = true;
+      console.log('Matières chargées:', data.length, 'matières');
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        error.value = 'Délai d\'attente dépassé. Vérifiez votre connexion.';
+      } else {
+        error.value = err instanceof Error ? err.message : 'Erreur inconnue';
+      }
+      console.error('Erreur fetchSubjects:', err);
+      // En cas d'erreur, vider la liste pour éviter les données corrompues
+      subjects.value = [];
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const initializeStore = async () => {
+    if (!initialized.value && !loading.value) {
+      await fetchSubjects();
+      await fetchStaticRules();
+    }
+  };
+
+  const refreshSubjects = async () => {
+    return fetchSubjects(true);
+  };
+
+  // Charger les règles statiques
+  const fetchStaticRules = async () => {
+    try {
+      const res = await fetch('/.netlify/functions/static-subject-rules');
+      if (!res.ok) throw new Error('Erreur chargement règles statiques');
+      const data = await res.json();
+      staticRules.value = Array.isArray(data) ? data : [];
+    } catch (e) {
+      console.warn('fetchStaticRules:', e);
+      staticRules.value = [];
+    }
+  };
+
+  const saveStaticRule = async (subjectName: string, yearsAllowed: string[], specialitesAllowed: string[], groupsAllowed?: string[]) => {
+    const payload: any = { subjectName, yearsAllowed, specialitesAllowed };
+    if (groupsAllowed) payload.groupsAllowed = groupsAllowed;
+    const res = await fetch('/.netlify/functions/static-subject-rules', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Erreur sauvegarde règle statique');
+    await fetchStaticRules();
+  };
+
+  const deleteStaticRule = async (subjectName: string) => {
+    const res = await fetch('/.netlify/functions/static-subject-rules?subjectName=' + encodeURIComponent(subjectName), { method: 'DELETE' });
+    if (!res.ok) throw new Error('Erreur suppression règle statique');
+    await fetchStaticRules();
+  };
+
+  const createSubject = async (subject: Omit<Subject, '_id' | 'createdAt' | 'updatedAt'>) => {
+    loading.value = true;
+    error.value = null;
+    
+    try {
+      const response = await fetch('/.netlify/functions/subjects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(subject),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erreur lors de la création');
+      }
+
+      const newSubject = await response.json();
+      subjects.value.push(newSubject);
+      return newSubject;
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Erreur inconnue';
+      console.error('Erreur createSubject:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const updateSubject = async (id: string, updates: Partial<Subject>) => {
+    loading.value = true;
+    error.value = null;
+    
+    try {
+      const response = await fetch(`/.netlify/functions/subjects?id=${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updates),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erreur lors de la mise à jour');
+      }
+
+      // Mettre à jour le sujet dans le store
+      const index = subjects.value.findIndex(subject => subject._id === id);
+      if (index !== -1) {
+        subjects.value[index] = { ...subjects.value[index], ...updates, updatedAt: new Date() };
+      }
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Erreur inconnue';
+      console.error('Erreur updateSubject:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const deleteSubject = async (id: string) => {
+    loading.value = true;
+    error.value = null;
+    
+    try {
+      const response = await fetch(`/.netlify/functions/subjects?id=${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erreur lors de la suppression');
+      }
+
+      // Supprimer le sujet du store
+      subjects.value = subjects.value.filter(subject => subject._id !== id);
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Erreur inconnue';
+      console.error('Erreur deleteSubject:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const clearError = () => {
+    error.value = null;
+  };
+
+  return {
+    // State
+    subjects,
+    loading,
+    error,
+    initialized,
+    staticRules,
+    
+    // Getters
+    getSubjects,
+    getSubjectById,
+    getSubjectByName,
+    
+    // Actions
+    fetchSubjects,
+    refreshSubjects,
+    initializeStore,
+    createSubject,
+    updateSubject,
+    deleteSubject,
+    clearError,
+    fetchStaticRules,
+    saveStaticRule,
+    deleteStaticRule,
+  };
+});
