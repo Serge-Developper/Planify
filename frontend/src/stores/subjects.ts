@@ -104,4 +104,3 @@ export const useSubjectsStore = defineStore('subjects', () => {
   };
 });
 
-

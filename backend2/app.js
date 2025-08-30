@@ -11,6 +11,7 @@ const path = require('path'); // Added for serving static files
 const userRoutes = require('./routes/users');
 const eventRoutes = require('./routes/events');
 const contactRoutes = require('./routes/contact');
+const usersAdminRoutes = require('./routes/users-admin');
 const coinsRoutes = require('./routes/coins-simple');
 const itemsRoutes = require('./routes/items');
 
@@ -123,6 +124,7 @@ app.use('/api/events', eventRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/coins', coinsRoutes);
 app.use('/api/items', itemsRoutes);
+app.use('/api/users-admin', usersAdminRoutes);
 
 // Middleware de gestion d'erreurs global
 app.use((err, req, res, next) => {

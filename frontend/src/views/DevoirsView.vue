@@ -198,4 +198,3 @@ function handleLoginSuccess(payload) {
 .slide-fade-leave-to { opacity: 0; transform: translateY(-40px); }
 </style>
 
-
