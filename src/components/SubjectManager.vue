@@ -18,7 +18,7 @@
           <button v-for="name in matieresStatiques" :key="name" class="edit-btn" @click="openStaticRule(name)">{{ name }}</button>
         </div>
       </div>
-      <div v-if="staticEditName" class="subject-form" style="margin-top:12px;">
+      <div v-if="staticEditName" class="subject-form" style="margin-top:12px; color: black;">
         <h4 style="color: black;">Paramètres pour: {{ staticEditName }}</h4>
         <div class="form-group">
           <label>Années visibles</label>
