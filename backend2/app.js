@@ -37,7 +37,7 @@ console.log('🔄 Rate limiting désactivé pour éviter les erreurs 429');
 
 // === MIDDLEWARE CORS GLOBAL POUR TOUTES LES ROUTES API ===
 app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', 'https://planify.tovmassian.but24.tovmassian.but24.mmi-nancy.fr');
+  res.setHeader('Access-Control-Allow-Origin', 'https://planifymmi.fr');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -67,7 +67,7 @@ app.options('*', (req, res) => {
 
 // CORS géré par Plesk - commenté pour éviter les doublons
 // app.use(cors({
-//   origin: ['https://planify.tovmassian.but24.tovmassian.but24.mmi-nancy.fr'],
+//   origin: ['https://planifymmi.fr'],
 //   credentials: true,
 //   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 //   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']

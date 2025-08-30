@@ -35,7 +35,7 @@ export default defineConfig({
       '524f1ea48590.ngrok-free.app'
     ],
     cors: {
-      origin: ['http://localhost:5173', 'https://planify.tovmassian.but24.mmi-nancy.fr'],
+      origin: ['http://localhost:5173', 'https://planifymmi.fr'],
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'Accept-Language'],
       credentials: true
