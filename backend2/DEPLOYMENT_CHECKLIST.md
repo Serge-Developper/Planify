@@ -41,13 +41,13 @@ Corriger l'erreur 404 de l'endpoint `/api/coins/spin-status`
 
 ### Test 1: Route de base
 ```
-GET https://api.planify.tovmassian.but24.tovmassian.but24.mmi-nancy.fr/
+GET https://api.planifymmi.fr/
 ```
 **Attendu :** `API Planifyvrai2 en ligne`
 
 ### Test 2: Endpoint spin-status
 ```
-GET https://api.planify.tovmassian.but24.tovmassian.but24.mmi-nancy.fr/api/coins/spin-status
+GET https://api.planifymmi.fr/api/coins/spin-status
 Headers: Authorization: Bearer YOUR_TOKEN
 ```
 **Attendu :**
@@ -61,7 +61,7 @@ Headers: Authorization: Bearer YOUR_TOKEN
 
 ### Test 3: Endpoint user-coins (vérification)
 ```
-GET https://api.planify.tovmassian.but24.tovmassian.but24.mmi-nancy.fr/api/coins/user-coins
+GET https://api.planifymmi.fr/api/coins/user-coins
 Headers: Authorization: Bearer YOUR_TOKEN
 ```
 **Attendu :** `{"coins": 21}` (ou autre valeur)

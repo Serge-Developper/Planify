@@ -1,7 +1,15 @@
 <template>
   <div class="admin-item-editor" v-if="isAdmin">
     <h2>Créateur d'items</h2>
-    <div class="editor-form">
+    <div style="display:flex;gap:8px;align-items:center;margin:8px 0;">
+      <label style="display:flex;align-items:center;gap:6px;">
+        <input type="radio" v-model="editorMode" value="items" /> Items dynamiques
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;">
+        <input type="radio" v-model="editorMode" value="border" /> Couleurs de bordure
+      </label>
+    </div>
+    <div class="editor-form" v-if="editorMode==='items'">
       <label>ID (legacy / mapping)
         <input v-model.number="form.legacyId" type="number" min="0" placeholder="ex: 233" />
       </label>
@@ -36,7 +44,57 @@
       </div>
     </div>
 
-    <div class="canvas-section">
+    <!-- Formulaire Couleurs de bordure -->
+    <div class="editor-form" v-else>
+      <label>ID couleur (legacy / mapping)
+        <input v-model.number="borderForm.legacyId" type="number" min="0" placeholder="ex: 100" />
+      </label>
+      <label>Nom
+        <input v-model="borderForm.name" type="text" placeholder="Nom de la couleur" />
+      </label>
+      <label>Prix
+        <input v-model.number="borderForm.price" type="number" min="0" />
+      </label>
+      <label>Identifiant colorId (ex: red, royal-blue)
+        <input v-model="borderForm.colorId" type="text" placeholder="ex: red" />
+      </label>
+      <div class="gradient-ui">
+        <div class="grid2">
+          <label>Couleur 1
+            <input type="color" v-model="grad.c1" />
+          </label>
+          <label>Opacité 1
+            <input type="number" min="0" max="1" step="0.05" v-model.number="grad.o1" />
+          </label>
+          <label>Couleur 2
+            <input type="color" v-model="grad.c2" />
+          </label>
+          <label>Opacité 2
+            <input type="number" min="0" max="1" step="0.05" v-model.number="grad.o2" />
+          </label>
+          <label>Angle (deg)
+            <input type="number" v-model.number="grad.angle" />
+          </label>
+          <label>
+            <input type="checkbox" v-model="grad.enabled" /> Utiliser le dégradé
+          </label>
+        </div>
+        <div class="preview" :style="{ background: gradCss }"></div>
+      </div>
+      <input v-model="borderForm.color" type="hidden" />
+      <input v-model="borderForm.gradient" type="hidden" />
+      <label>
+        Disponible en boutique quotidienne
+        <input v-model="borderForm.availableInDailyShop" type="checkbox" />
+      </label>
+      <div class="upload">
+        <button class="btn primary" @click="saveBorderColor">Enregistrer la couleur</button>
+        <button class="btn outline" style="margin-left:8px;" @click="testBorderColorWeekly">Tester en boutique hebdo</button>
+        <button class="btn danger" style="margin-left:8px;" @click="removeBorderColorFromWeekly">Retirer de la boutique hebdo</button>
+      </div>
+    </div>
+
+    <div class="canvas-section" v-if="editorMode==='items'">
       <div class="canvas-tabs">
         <button :class="{active: activeCanvas==='collection'}" @click="activeCanvas='collection'">Collection</button>
         <button :class="{active: activeCanvas==='leaderboard'}" @click="activeCanvas='leaderboard'">Leaderboard</button>

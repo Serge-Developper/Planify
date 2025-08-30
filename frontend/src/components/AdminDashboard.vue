@@ -13,6 +13,7 @@
         </button>
         <button class="add-user-btn" @click="showUserForm = true">Ajouter un utilisateur</button>
         <button class="manage-users-btn" @click="openUserManagement">Gérer les utilisateurs</button>
+        <button class="manage-users-btn" @click="showSubjectsManagement = true">Gérer les matières</button>
       </aside>
       <main class="matiere-content">
         <h2>{{ selectedMatiere }}</h2>
@@ -29,7 +30,16 @@
             <option value="exam">Examen</option>
             <option value="devoir">Devoir</option>
           </select>
+          <!-- Spécialité/Année ciblées -->
+          <select v-model="eventForm.specialite">
+            <option value="">Aucune spécialité</option>
+            <option value="devweb">Développement web</option>
+            <option value="creation">Création numérique</option>
+            <option value="gestion">Gestion de projet</option>
+          </select>
+          
           <select v-model="eventForm.year" required>
+            <option value="">Toutes années</option>
             <option value="BUT1">1ère année</option>
             <option value="BUT2">2ème année</option>
             <option value="BUT3">3ème année</option>
@@ -46,9 +56,11 @@
         </ul>
 
         <section v-if="auth.user && auth.user.role === 'admin'" style="margin-top: 24px;">
-          <h3>Éditeur d'items</h3>
+          <h3 style="color: black;">Éditeur d'items</h3>
           <AdminItemEditor />
         </section>
+
+        <!-- Gestion des matières déplacée en modal -->
       </main>
       <div v-if="showUserForm" class="modal">
         <div style="position: relative;">
@@ -72,6 +84,13 @@
               <option value="BUT1">1ère année</option>
               <option value="BUT2">2ème année</option>
               <option value="BUT3">3ème année</option>
+            </select>
+            <!-- Spécialité MMI -->
+            <select v-model="userForm.specialite" :disabled="userForm.role === 'prof'" :class="{ 'disabled-field': userForm.role === 'prof' }">
+              <option value="">Aucune spécialité</option>
+              <option value="devweb">Développement web</option>
+              <option value="creation">Création numérique</option>
+              <option value="gestion">Gestion de projet</option>
             </select>
             <div v-if="userForm.role === 'prof'" style="font-size: 0.9em; color: #6b7280; font-style: italic;">
               ⓘ Les professeurs travaillent avec toute la promo (toutes les années)
@@ -267,6 +286,18 @@
           </form>
         </div>
       </div>
+
+      <!-- Modal de gestion des matières -->
+      <div v-if="showSubjectsManagement" class="modal">
+        <div class="user-management-modal" style="max-width: 1000px;">
+          <button class="modal-close-top" @click="showSubjectsManagement = false" aria-label="Fermer">×</button>
+          <h3 style="color: #000000; margin-bottom: 20px;">Gérer les matières</h3>
+          <SubjectManager />
+          <div class="modal-footer">
+            <button @click="showSubjectsManagement = false" class="close-btn">Fermer</button>
+          </div>
+        </div>
+      </div>
      </template>
     <template v-else>
       <EmploiDuTemps />
@@ -276,6 +307,7 @@
 
 <script setup>
 import AdminItemEditor from './AdminItemEditor.vue'
+import SubjectManager from './SubjectManager.vue'
 import { useAuthStore } from '@/stores/auth'
 const auth = useAuthStore()
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
@@ -289,6 +321,8 @@ const router = useRouter();
 if (!auth.user || auth.user.role !== 'admin') {
   router.replace('/');
 }
+
+const showSubjectsManagement = ref(false)
 
 // Charger/rafraîchir les items dynamiques
 onMounted(() => {

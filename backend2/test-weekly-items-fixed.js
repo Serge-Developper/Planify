@@ -50,8 +50,8 @@ async function testWeeklyItemsFixed() {
 async function testProductionURL() {
   console.log('\n🧪 Test de l\'URL de production (simulation)...\n');
   
-  const productionURL = 'https://api.planify.tovmassian.but24.tovmassian.but24.mmi-nancy.fr/api/coins/weekly-items';
-  const wrongURL = 'https://api.planify.tovmassian.but24.tovmassian.but24.mmi-nancy.fr/api/api/coins/weekly-items';
+  const productionURL = 'https://api.planifymmi.fr/api/coins/weekly-items';
+  const wrongURL = 'https://api.planifymmi.fr/api/api/coins/weekly-items';
   
   console.log('✅ URL correcte:', productionURL);
   console.log('❌ URL incorrecte (causait 404):', wrongURL);

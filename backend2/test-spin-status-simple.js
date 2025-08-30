@@ -2,7 +2,7 @@
 const axios = require('axios');
 
 async function testSpinStatus() {
-  const baseUrl = 'https://api.planify.tovmassian.but24.tovmassian.but24.mmi-nancy.fr';
+  const baseUrl = 'https://api.planifymmi.fr';
   
   console.log('🔍 Test de l\'endpoint spin-status...\n');
   

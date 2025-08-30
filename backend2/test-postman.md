@@ -3,7 +3,7 @@
 ## 1. Test de la route existante
 D'abord, testons une route qui fonctionne pour vérifier que l'API est accessible :
 
-**GET** `https://api.planify.tovmassian.but24.tovmassian.but24.mmi-nancy.fr/api/coins/user-coins`
+**GET** `https://api.planifymmi.fr/api/coins/user-coins`
 
 **Headers :**
 ```
@@ -12,7 +12,7 @@ Content-Type: application/json
 ```
 
 ## 2. Test de la route spin-status
-**GET** `https://api.planify.tovmassian.but24.tovmassian.but24.mmi-nancy.fr/api/coins/spin-status`
+**GET** `https://api.planifymmi.fr/api/coins/spin-status`
 
 **Headers :**
 ```

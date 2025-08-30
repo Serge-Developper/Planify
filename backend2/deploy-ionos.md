@@ -39,13 +39,13 @@ Redéployer le backend pour corriger l'erreur 404 de l'endpoint `/api/coins/spin
 
 ### Test 1: Route de base
 ```
-GET https://api.planify.tovmassian.but24.tovmassian.but24.mmi-nancy.fr/
+GET https://api.planifymmi.fr/
 ```
 **Réponse attendue :** `API Planifyvrai2 en ligne`
 
 ### Test 2: Endpoint spin-status (avec token)
 ```
-GET https://api.planify.tovmassian.but24.tovmassian.but24.mmi-nancy.fr/api/coins/spin-status
+GET https://api.planifymmi.fr/api/coins/spin-status
 Headers:
 Authorization: Bearer YOUR_JWT_TOKEN
 ```

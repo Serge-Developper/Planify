@@ -4,7 +4,7 @@
 
 ### 1. Configuration de la requête
 - **Méthode:** GET
-- **URL:** `https://api.planify.tovmassian.but24.tovmassian.but24.mmi-nancy.fr/api/coins/spin-status`
+- **URL:** `https://api.planifymmi.fr/api/coins/spin-status`
 
 ### 2. Headers requis
 ```
