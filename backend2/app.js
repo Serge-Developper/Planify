@@ -19,6 +19,7 @@ const app = express();
 let lastMongoError = null;
 
 
+
 // Middleware de sécurité Helmet
 app.use(helmet({
   contentSecurityPolicy: {
@@ -77,13 +78,13 @@ app.options('*', (req, res) => {
 app.use(express.json({ limit: '35mb' })); // Limite la taille des requêtes
 app.use(express.urlencoded({ limit: '35mb', extended: true })); // Pour les formulaires multipart
 // Middleware: vérifier l'état de la DB pour éviter des 500 obscurs
- function requireDb(req, res, next) {
-   const state = mongoose.connection?.readyState;
-   if (state !== 1) {
-     return res.status(503).json({ success: false, message: 'Base de données indisponible', state });
-   }
-   next();
- }
+function requireDb(req, res, next) {
+  const state = mongoose.connection?.readyState;
+  if (state !== 1) {
+    return res.status(503).json({ success: false, message: 'Base de données indisponible', state });
+  }
+  next();
+}
 
 
 
@@ -110,18 +111,27 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
 //   res.sendStatus(200);
 // });
 
-// Connexion à MongoDB avec options de sécurité (commentée pour test)
-// if (process.env.NODE_ENV !== 'production') {
-//   console.log('MONGO_URI =', process.env.MONGO_URI);
-// }
-// mongoose.connect(process.env.MONGO_URI || '', {
-//   useNewUrlParser: true,
-//   useUnifiedTopology: true,
-//   serverSelectionTimeoutMS: 5000,
-//   socketTimeoutMS: 45000,
-// })
-//   .then(() => { if (process.env.NODE_ENV !== 'production') console.log('Connecté à MongoDB') })
-//   .catch((err) => console.error('Erreur MongoDB :', err));
+// Connexion à MongoDB avec prise en charge de MONGO_URI et MONGODB_URI
+const MONGO_URI_SELECTED = process.env.MONGO_URI || process.env.MONGODB_URI || '';
+if (process.env.NODE_ENV !== 'production') {
+  // Masquer les identifiants éventuels dans les logs
+  const masked = MONGO_URI_SELECTED.replace(/\/\/[A-Za-z0-9._%+-]+:[^@]+@/, '//***:***@');
+  console.log('Mongo URI utilisé =', masked || '(non défini)');
+}
+const mongoDbName = process.env.MONGO_DB_NAME || undefined;
+const mongoOptions = {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 15000,
+  socketTimeoutMS: 45000,
+  ...(mongoDbName ? { dbName: mongoDbName } : {})
+};
+
+mongoose.connect(MONGO_URI_SELECTED, mongoOptions)
+  .then(() => { if (process.env.NODE_ENV !== 'production') console.log('Connecté à MongoDB') })
+  .catch((err) => { lastMongoError = err; console.error('Erreur MongoDB :', err); });
+
+mongoose.connection.on('error', (err) => { lastMongoError = err; });
 
 // Route de test
 app.get('/', (req, res) => res.send('API Planifyvrai2 en ligne'));
@@ -135,25 +145,27 @@ app.use('/api/items', requireDb, itemsRoutes);
 app.use('/api/users-admin', requireDb, usersAdminRoutes);
 
 // Endpoint de diagnostic simple
- app.get('/api/health', async (req, res) => {
-   const state = mongoose.connection?.readyState;
-   const states = { 0: 'disconnected', 1: 'connected', 2: 'connecting', 3: 'disconnecting' };
-   const usedUri = (process.env.MONGO_URI || process.env.MONGODB_URI || '')
-      .replace(/:\/\/[A-Za-z0-9._%+-]+:[^@]+@/, '://***:***@');
-    res.json({
-      ok: true,
-     env: {
-        node_env: process.env.NODE_ENV || 'development',
-        has_jwt_secret: Boolean(process.env.JWT_SECRET),
-        has_mongo_uri: Boolean(process.env.MONGO_URI || process.env.MONGODB_URI),
-       mongo_uri_preview: usedUri.slice(0, 60) + (usedUri.length > 60 ? '...' : '')
-       },
-     mongo: {
-       readyState: state,
-        state: states[state] || 'unknown'
-       }
-     });
- });
+app.get('/api/health', async (req, res) => {
+  const state = mongoose.connection?.readyState;
+  const states = { 0: 'disconnected', 1: 'connected', 2: 'connecting', 3: 'disconnecting' };
+  const usedUri = (process.env.MONGO_URI || process.env.MONGODB_URI || '')
+    .replace(/:\/\/[A-Za-z0-9._%+-]+:[^@]+@/, '://***:***@');
+  res.json({
+    ok: true,
+    env: {
+      node_env: process.env.NODE_ENV || 'development',
+      has_jwt_secret: Boolean(process.env.JWT_SECRET),
+      has_mongo_uri: Boolean(process.env.MONGO_URI || process.env.MONGODB_URI),
+      mongo_uri_preview: usedUri.slice(0, 60) + (usedUri.length > 60 ? '...' : ''),
+      mongo_db_name: mongoDbName || null
+    },
+    mongo: {
+      readyState: state,
+      state: states[state] || 'unknown',
+      lastError: lastMongoError ? String(lastMongoError?.message || lastMongoError) : null
+    }
+  });
+});
 
 // Middleware de gestion d'erreurs global
 app.use((err, req, res, next) => {
