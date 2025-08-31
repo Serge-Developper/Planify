@@ -1,5 +1,7 @@
 // Configuration sécurisée de l'API
-export const API_URL = import.meta.env.VITE_API_URL || '/api';
+const RAW_API_URL = (import.meta.env.VITE_API_URL ?? '/api').toString().trim();
+const BASE_URL = RAW_API_URL.replace(/\/+$/, ''); // supprime les slashs finaux
+export const API_URL = BASE_URL.endsWith('/api') ? BASE_URL : `${BASE_URL}/api`;
 
 // Headers de sécurité par défaut
 export const getAuthHeaders = () => {
