@@ -16,6 +16,7 @@ const coinsRoutes = require('./routes/coins-simple');
 const itemsRoutes = require('./routes/items');
 
 const app = express();
+let lastMongoError = null;
 
 
 
@@ -120,11 +121,13 @@ if (process.env.NODE_ENV !== 'production') {
 mongoose.connect(MONGO_URI_SELECTED, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 5000,
+  serverSelectionTimeoutMS: 15000,
   socketTimeoutMS: 45000,
 })
   .then(() => { if (process.env.NODE_ENV !== 'production') console.log('Connecté à MongoDB') })
-  .catch((err) => console.error('Erreur MongoDB :', err));
+  .catch((err) => { lastMongoError = err; console.error('Erreur MongoDB :', err); });
+
+mongoose.connection.on('error', (err) => { lastMongoError = err; });
 
 // Route de test
 app.get('/', (req, res) => res.send('API Planifyvrai2 en ligne'));
@@ -153,7 +156,8 @@ app.get('/api/health', async (req, res) => {
     },
     mongo: {
       readyState: state,
-      state: states[state] || 'unknown'
+      state: states[state] || 'unknown',
+      lastError: lastMongoError ? String(lastMongoError?.message || lastMongoError) : null
     }
   });
 });
