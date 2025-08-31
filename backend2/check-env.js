@@ -2,9 +2,8 @@ require('dotenv').config();
 
 console.log('🔍 Vérification de la configuration de l\'environnement...\n');
 
-// Variables requises
+// Variables requises (accepte MONGO_URI ou MONGODB_URI)
 const requiredVars = [
-  'MONGO_URI',
   'JWT_SECRET',
   'PORT'
 ];
@@ -41,9 +40,13 @@ console.log('\n🔧 Configuration actuelle:');
 console.log(`  NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
 console.log(`  PORT: ${process.env.PORT || 3000}`);
 console.log(`  MONGO_URI configuré: ${!!process.env.MONGO_URI}`);
+console.log(`  MONGODB_URI configuré: ${!!process.env.MONGODB_URI}`);
 console.log(`  JWT_SECRET configuré: ${!!process.env.JWT_SECRET}`);
 
-if (allRequiredPresent) {
+// Vérifier la présence d'au moins une URI Mongo
+const hasMongo = !!(process.env.MONGO_URI || process.env.MONGODB_URI);
+
+if (allRequiredPresent && hasMongo) {
   console.log('\n🎉 Toutes les variables requises sont configurées!');
 } else {
   console.log('\n⚠️ Certaines variables requises sont manquantes.');
@@ -51,6 +54,6 @@ if (allRequiredPresent) {
 }
 
 console.log('\n💡 Conseils:');
-console.log('- Assurez-vous que MONGO_URI pointe vers une base MongoDB valide');
+console.log('- Assurez-vous que MONGO_URI ou MONGODB_URI pointe vers une base MongoDB valide');
 console.log('- JWT_SECRET doit être une chaîne sécurisée et unique');
 console.log('- En production, définissez NODE_ENV=production'); 

@@ -102,11 +102,14 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
 //   res.sendStatus(200);
 // });
 
-// Connexion à MongoDB avec options de sécurité
+// Connexion à MongoDB avec prise en charge de MONGO_URI et MONGODB_URI
+const MONGO_URI_SELECTED = process.env.MONGO_URI || process.env.MONGODB_URI || '';
 if (process.env.NODE_ENV !== 'production') {
-  console.log('MONGO_URI =', process.env.MONGO_URI);
+  // Masquer les identifiants éventuels dans les logs
+  const masked = MONGO_URI_SELECTED.replace(/\/\/[A-Za-z0-9._%+-]+:[^@]+@/, '//***:***@');
+  console.log('Mongo URI utilisé =', masked || '(non défini)');
 }
-mongoose.connect(process.env.MONGO_URI || '', {
+mongoose.connect(MONGO_URI_SELECTED, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   serverSelectionTimeoutMS: 5000,
