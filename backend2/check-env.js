@@ -41,6 +41,7 @@ console.log(`  NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
 console.log(`  PORT: ${process.env.PORT || 3000}`);
 console.log(`  MONGO_URI configuré: ${!!process.env.MONGO_URI}`);
 console.log(`  MONGODB_URI configuré: ${!!process.env.MONGODB_URI}`);
+console.log(`  MONGO_DB_NAME: ${process.env.MONGO_DB_NAME || '(non défini)'}`);
 console.log(`  JWT_SECRET configuré: ${!!process.env.JWT_SECRET}`);
 
 // Vérifier la présence d'au moins une URI Mongo

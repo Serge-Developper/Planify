@@ -118,12 +118,16 @@ if (process.env.NODE_ENV !== 'production') {
   const masked = MONGO_URI_SELECTED.replace(/\/\/[A-Za-z0-9._%+-]+:[^@]+@/, '//***:***@');
   console.log('Mongo URI utilisé =', masked || '(non défini)');
 }
-mongoose.connect(MONGO_URI_SELECTED, {
+const mongoDbName = process.env.MONGO_DB_NAME || undefined;
+const mongoOptions = {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   serverSelectionTimeoutMS: 15000,
   socketTimeoutMS: 45000,
-})
+  ...(mongoDbName ? { dbName: mongoDbName } : {})
+};
+
+mongoose.connect(MONGO_URI_SELECTED, mongoOptions)
   .then(() => { if (process.env.NODE_ENV !== 'production') console.log('Connecté à MongoDB') })
   .catch((err) => { lastMongoError = err; console.error('Erreur MongoDB :', err); });
 
@@ -152,7 +156,8 @@ app.get('/api/health', async (req, res) => {
       node_env: process.env.NODE_ENV || 'development',
       has_jwt_secret: Boolean(process.env.JWT_SECRET),
       has_mongo_uri: Boolean(process.env.MONGO_URI || process.env.MONGODB_URI),
-      mongo_uri_preview: usedUri.slice(0, 60) + (usedUri.length > 60 ? '...' : '')
+      mongo_uri_preview: usedUri.slice(0, 60) + (usedUri.length > 60 ? '...' : ''),
+      mongo_db_name: mongoDbName || null
     },
     mongo: {
       readyState: state,
