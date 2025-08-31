@@ -129,6 +129,27 @@ app.use('/api/coins', coinsRoutes);
 app.use('/api/items', itemsRoutes);
 app.use('/api/users-admin', usersAdminRoutes);
 
+// Endpoint de diagnostic simple
+app.get('/api/health', async (req, res) => {
+  const state = mongoose.connection?.readyState;
+  const states = { 0: 'disconnected', 1: 'connected', 2: 'connecting', 3: 'disconnecting' };
+  const usedUri = (process.env.MONGO_URI || process.env.MONGODB_URI || '')
+    .replace(/:\/\/[A-Za-z0-9._%+-]+:[^@]+@/, '://***:***@');
+  res.json({
+    ok: true,
+    env: {
+      node_env: process.env.NODE_ENV || 'development',
+      has_jwt_secret: Boolean(process.env.JWT_SECRET),
+      has_mongo_uri: Boolean(process.env.MONGO_URI || process.env.MONGODB_URI),
+      mongo_uri_preview: usedUri.slice(0, 60) + (usedUri.length > 60 ? '...' : '')
+    },
+    mongo: {
+      readyState: state,
+      state: states[state] || 'unknown'
+    }
+  });
+});
+
 // Middleware de gestion d'erreurs global
 app.use((err, req, res, next) => {
   console.error(err.stack);
