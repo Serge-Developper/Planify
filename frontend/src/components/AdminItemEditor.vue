@@ -989,5 +989,3 @@ function clearForm() {
 /* cercle + bordure verte en mode collection */
 .canvas.round { border-radius: 50%; border: 3px solid #3ddc84; }
 </style>
-
-
