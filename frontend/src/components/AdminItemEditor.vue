@@ -170,8 +170,8 @@
       <div class="existing" v-if="existingItems.length">
         <h4>Items enregistrés</h4>
         <ul>
-          <li v-for="it in existingItems" :key="it._id">
-            <span>#{{ it.legacyId }} — {{ it.name }} ({{ (it.variants || []).length }} styles)</span>
+          <li v-for="(it, idx) in existingItems" :key="(it && (it.legacyId ?? it.id)) ?? it?._id ?? idx">
+             <span v-if="it">#{{ (it?.legacyId ?? it?.id) }} — {{ it?.name || 'Item' }} ({{ ((it?.variants || []).length) || 0 }} styles)</span>
             <button class="btn tiny" @click="editItem(it)">Éditer</button>
             <button class="btn tiny danger" @click="removeItem(it)">Supprimer</button>
           </li>
@@ -242,6 +242,9 @@ import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
 const isAdmin = computed(() => auth.user && auth.user.role === 'admin')
+
+// Mode de l'éditeur: items dynamiques par défaut
+const editorMode = ref('items')
 
 const fileInput = ref(null)
 const activeCanvas = ref('collection') // collection | leaderboard | avatar | navbar

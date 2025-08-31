@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { secureApiCall } from '@/api';
+import { useAuthStore } from './auth';
 
 // Import des images
 import oreilleschat from '@/assets/img/oreilleschat.gif';
@@ -545,14 +546,17 @@ export const useCoinsStore = defineStore('coins', {
     },
 
     // Initialiser le store
-    async initialize() {
-      // Charger séquentiellement pour éviter les erreurs 429
-      this.initializeBorderColors();
-      this.loadDynamicItemVariants(); // Charger les variantes dynamiques depuis localStorage
-      await this.loadBalance();
-      await this.loadSpinStatus();
-      await this.loadInventory();
-    },
+async initialize() {
+  const auth = useAuthStore();
+  // Toujours initialiser la palette + variantes locales
+  this.initializeBorderColors();
+  await this.loadDynamicItemVariants();
+  // Si pas de token, ne pas appeler d'API protégées
+  if (!auth?.user?.token) return;
+  await this.loadBalance();
+  await this.loadSpinStatus();
+  await this.loadInventory();
+},
 
     // Initialiser les couleurs de bordures
     initializeBorderColors() {
@@ -698,9 +702,13 @@ export const useCoinsStore = defineStore('coins', {
       );
     },
 
-// Marquer un item comme vu et notifier le backend (ack cadeau admin)
-     async markItemAsSeen(itemId: number) {
-      const item = this.purchasedItems.find(item => item.itemId === itemId);
+    // Marquer un item comme vu et notifier le backend (ack cadeau admin)
+    async markItemAsSeen(itemId: number) {
+      const it = this.purchasedItems.find(i => i.itemId === itemId);
+      if (!it || !it.adminMessage) return;
+      try {
+        await secureApiCall(`/users/ack-gift/${encodeURIComponent(String(itemId))}`);
+      } catch {}
     },
 
 
@@ -739,18 +747,24 @@ export const useCoinsStore = defineStore('coins', {
       this.jojoTextPos = { ...this.jojoTextPos, ...pos }
     },
 
-    // Définir la variante d'un item dynamique
-    setDynamicItemVariant(itemId: number, variantIndex: number) {
-      if (typeof itemId === 'number' && typeof variantIndex === 'number') {
-        this.dynamicItemVariants.set(itemId, variantIndex)
-        // Persister dans localStorage
-        try {
-          const variants = Object.fromEntries(this.dynamicItemVariants)
-          localStorage.setItem('dynamicItemVariants', JSON.stringify(variants))
-        } catch (e) {
-          console.warn('Impossible de sauvegarder les variantes dynamiques:', e)
-        }
+    // Définir la variante d'un item dynamique (persistance locale + serveur)
+    async setDynamicItemVariant(itemId: number, variantIndex: number) {
+      if (typeof itemId !== 'number' || typeof variantIndex !== 'number') return;
+      this.dynamicItemVariants.set(itemId, variantIndex)
+      // Persister localement
+      try {
+        const variants = Object.fromEntries(this.dynamicItemVariants)
+        localStorage.setItem('dynamicItemVariants', JSON.stringify(variants))
+      } catch (e) {
+        console.warn('Impossible de sauvegarder les variantes dynamiques:', e)
       }
+      // Persister côté serveur
+      try {
+        await secureApiCall('/users/dynamic-item-variants', {
+          method: 'POST',
+          body: JSON.stringify({ itemId, variantIndex })
+        })
+      } catch {}
     },
 
     // Obtenir la variante d'un item dynamique
@@ -758,16 +772,35 @@ export const useCoinsStore = defineStore('coins', {
       return this.dynamicItemVariants.get(itemId) || 0
     },
 
-    // Charger les variantes depuis localStorage
-    loadDynamicItemVariants() {
+    // Charger les variantes (serveur si dispo, sinon localStorage)
+    async loadDynamicItemVariants() {
+      const auth = useAuthStore();
+      // 1) Essai côté serveur
       try {
-        const stored = localStorage.getItem('dynamicItemVariants')
+        if (auth?.user?.token) {
+          const res = await secureApiCall('/users/dynamic-item-variants');
+          if (res && res.success && res.variants) {
+            const entries: [number, number][] =
+              Object.entries(res.variants).map(([k, v]) => [Number(k), Number(v as any)] as [number, number]);
+            this.dynamicItemVariants = new Map<number, number>(entries);
+            try {
+              localStorage.setItem('dynamicItemVariants', JSON.stringify(Object.fromEntries(this.dynamicItemVariants)));
+            } catch {}
+            return;
+          }
+        }
+      } catch {}
+      // 2) Fallback localStorage
+      try {
+        const stored = localStorage.getItem('dynamicItemVariants');
         if (stored) {
-          const variants = JSON.parse(stored)
-          this.dynamicItemVariants = new Map(Object.entries(variants).map(([k, v]) => [Number(k), Number(v)]))
+          const variants = JSON.parse(stored) as Record<string, number>;
+          const entries: [number, number][] =
+            Object.entries(variants).map(([k, v]) => [Number(k), Number(v)] as [number, number]);
+          this.dynamicItemVariants = new Map<number, number>(entries);
         }
       } catch (e) {
-        console.warn('Impossible de charger les variantes dynamiques:', e)
+        console.warn('Impossible de charger les variantes dynamiques:', e);
       }
     }
   }

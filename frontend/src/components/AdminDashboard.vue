@@ -212,9 +212,9 @@
               <h4>Donner des items</h4>
               <div class="give-item-form checkboxes">
                 <div class="checkbox-grid">
-                  <label v-for="it in itemsCatalog" :key="it.id" class="item-checkbox">
-                    <input type="checkbox" :value="it.id" v-model="selectedItemsToGive" />
-                    <span>{{ it.name }}</span>
+                  <label v-for="(it, idx) in itemsCatalog.filter(Boolean)" :key="(it && it.id) ?? idx" class="item-checkbox">
++                     <input type="checkbox" :value="it?.id" v-model="selectedItemsToGive" />
++                     <span>{{ it?.name || ('Item ' + ((it && it.id) ?? idx)) }}</span>
                   </label>
                 </div>
                 
@@ -524,7 +524,10 @@ function getAvailableQuestions(index) {
     try {
       const res = await secureApiCall('/items')
       if (res && res.success && Array.isArray(res.items)) {
-        const extra = res.items.map(it => ({ id: it.legacyId, name: it.name }))
+        const raw = Array.isArray(res.items) ? res.items : []
+        const extra = raw
+          .filter(it => it && (typeof it.legacyId === 'number' || typeof it.id === 'number'))
+          .map(it => ({ id: (typeof it.legacyId === 'number' ? it.legacyId : it.id), name: it.name || `Item ${(it && (it.legacyId ?? it.id)) || ''}` }))
         const existing = new Map(itemsCatalog.value.map(x => [x.id, x]))
         for (const e of extra) {
           if (existing.has(e.id)) {
@@ -535,7 +538,7 @@ function getAvailableQuestions(index) {
         }
         // Purger les anciens IDs dynamiques qui ne sont plus présents (ex: legacyId modifié)
         const extraIds = new Set(extra.map(e => e.id))
-        itemsCatalog.value = itemsCatalog.value.filter(x => baseStaticIds.has(x.id) || extraIds.has(x.id))
+        itemsCatalog.value = itemsCatalog.value.filter(Boolean).filter(x => baseStaticIds.has(x.id) || extraIds.has(x.id))
         // tri par id pour stabilité
         itemsCatalog.value = [...itemsCatalog.value].sort((a,b)=>a.id-b.id)
       }
