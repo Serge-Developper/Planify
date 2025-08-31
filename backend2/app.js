@@ -19,15 +19,6 @@ const app = express();
 
 
 
-// Gestion globale des erreurs process pour éviter un crash silencieux sous Passenger
-process.on('unhandledRejection', (reason) => {
-  console.error('Unhandled Promise Rejection:', reason);
-});
-
-process.on('uncaughtException', (err) => {
-  console.error('Uncaught Exception:', err);
-});
-
 // Middleware de sécurité Helmet
 app.use(helmet({
   contentSecurityPolicy: {
@@ -111,24 +102,18 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
 //   res.sendStatus(200);
 // });
 
-// Connexion à MongoDB (garde si MONGO_URI manquant)
-const mongoUri = process.env.MONGO_URI;
+// Connexion à MongoDB avec options de sécurité
 if (process.env.NODE_ENV !== 'production') {
-  console.log('MONGO_URI défini =', Boolean(mongoUri));
+  console.log('MONGO_URI =', process.env.MONGO_URI);
 }
-
-if (mongoUri && mongoUri.trim().length > 0) {
-  mongoose.connect(mongoUri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 5000,
-    socketTimeoutMS: 45000,
-  })
-    .then(() => { if (process.env.NODE_ENV !== 'production') console.log('Connecté à MongoDB'); })
-    .catch((err) => console.error('Erreur MongoDB :', err));
-} else {
-  console.warn('⚠️  MONGO_URI non défini. L\'API démarre sans connexion MongoDB.');
-}
+mongoose.connect(process.env.MONGO_URI || '', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+})
+  .then(() => { if (process.env.NODE_ENV !== 'production') console.log('Connecté à MongoDB') })
+  .catch((err) => console.error('Erreur MongoDB :', err));
 
 // Route de test
 app.get('/', (req, res) => res.send('API Planifyvrai2 en ligne'));

@@ -1,0 +1,11 @@
+# Configuration Passenger simplifiée
+PassengerNodejs /opt/plesk/node/22.19.0/bin/node
+PassengerAppType node
+PassengerStartupFile test-basic.js
+PassengerAppEnv production
+
+# Headers CORS
+Header always set Access-Control-Allow-Origin "https://planifymmi.fr"
+Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+Header always set Access-Control-Allow-Credentials "true"
