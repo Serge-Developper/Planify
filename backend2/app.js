@@ -16,7 +16,7 @@ const coinsRoutes = require('./routes/coins-simple');
 const itemsRoutes = require('./routes/items');
 
 const app = express();
-
+let lastMongoError = null;
 
 
 // Middleware de sécurité Helmet
@@ -76,6 +76,14 @@ app.options('*', (req, res) => {
 
 app.use(express.json({ limit: '35mb' })); // Limite la taille des requêtes
 app.use(express.urlencoded({ limit: '35mb', extended: true })); // Pour les formulaires multipart
+// Middleware: vérifier l'état de la DB pour éviter des 500 obscurs
+ function requireDb(req, res, next) {
+   const state = mongoose.connection?.readyState;
+   if (state !== 1) {
+     return res.status(503).json({ success: false, message: 'Base de données indisponible', state });
+   }
+   next();
+ }
 
 
 
@@ -119,12 +127,12 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
 app.get('/', (req, res) => res.send('API Planifyvrai2 en ligne'));
 
 // Routes sans rate limiting
-app.use('/api/users', userRoutes);
-app.use('/api/events', eventRoutes);
+app.use('/api/users', requireDb, userRoutes);
+app.use('/api/events', requireDb, eventRoutes);
 app.use('/api/contact', contactRoutes);
-app.use('/api/coins', coinsRoutes);
-app.use('/api/items', itemsRoutes);
-app.use('/api/users-admin', usersAdminRoutes);
+app.use('/api/coins', requireDb, coinsRoutes);
+app.use('/api/items', requireDb, itemsRoutes);
+app.use('/api/users-admin', requireDb, usersAdminRoutes);
 
 // Endpoint de diagnostic simple
  app.get('/api/health', async (req, res) => {
