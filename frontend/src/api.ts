@@ -1,7 +1,15 @@
 // Configuration sécurisée de l'API
-const RAW_API_URL = (import.meta.env.VITE_API_URL ?? '/api').toString().trim();
-const BASE_URL = RAW_API_URL.replace(/\/+$/, ''); // supprime les slashs finaux
-export const API_URL = BASE_URL.endsWith('/api') ? BASE_URL : `${BASE_URL}/api`;
+let RAW_API_URL = (import.meta.env.VITE_API_URL ?? '/api').toString().trim();
+
+// Corriger les erreurs fréquentes: "https//..." (sans ":"), ou "https://https//..."
+RAW_API_URL = RAW_API_URL
+  .replace(/^([a-z]+)(?=\/\/)/i, '$1:') // ajoute le ":" après le schéma si manquant
+  .replace(/^(https?:\/\/)https?:\/\//i, '$1') // supprime un protocole dupliqué
+  .replace(/\s+/g, '') // retire les espaces accidentels
+;
+
+const BASE_URL_CLEAN = RAW_API_URL.replace(/\/+$/, ''); // supprime les slashs finaux
+export const API_URL = BASE_URL_CLEAN.endsWith('/api') ? BASE_URL_CLEAN : `${BASE_URL_CLEAN}/api`;
 
 // Headers de sécurité par défaut
 export const getAuthHeaders = () => {
