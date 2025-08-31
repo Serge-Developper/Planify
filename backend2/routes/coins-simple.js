@@ -473,6 +473,130 @@ router.post('/spin-wheel', verifyToken, async (req, res) => {
   }
 });
 
+// Compatibilité Netlify: POST /api/coins { action: 'spin-wheel' }
+router.post('/', verifyToken, async (req, res) => {
+  try {
+    const action = (req && req.body && req.body.action) ? String(req.body.action) : ''
+    if (action !== 'spin-wheel') {
+      res.status(400).json({ success: false, message: 'Action non reconnue' })
+      return
+    }
+    // Réutiliser la logique de /spin-wheel
+    const userId = req.user.id || req.user._id;
+    const user = await User.findById(userId);
+    if (!user) {
+      res.json({
+        success: true,
+        coinsWon: 10,
+        newCoins: 10,
+        rewardName: "10 coins",
+        message: "Félicitations ! Vous avez gagné 10 coins !"
+      });
+      return;
+    }
+
+    const now = new Date();
+    const lastSpin = user.lastSpinDate;
+    if (lastSpin) {
+      const timeDiff = now.getTime() - lastSpin.getTime();
+      const hoursDiff = timeDiff / (1000 * 60 * 60);
+      if (hoursDiff < 24) {
+        res.json({ success: false, message: "Vous avez déjà tourné la roue aujourd'hui. Revenez demain !", canSpin: false });
+        return;
+      }
+    }
+
+    const hasGalaxy = Array.isArray(user.purchasedItems) && user.purchasedItems.some(it => Number(it.itemId) === 25);
+    const rewards = [
+      { coins: 10, probability: 0.20, name: '10 coins' },
+      { coins: 20, probability: 0.18, name: '20 coins' },
+      { coins: 30, probability: 0.15, name: '30 coins' },
+      { coins: 50, probability: 0.13, name: '50 coins' },
+      { coins: 70, probability: 0.11, name: '70 coins' },
+      { coins: 100, probability: 0.10, name: '100 coins' },
+      ...(!hasGalaxy ? [{ itemId: 25, probability: 0.01, name: 'Galaxie' }] : []),
+      { coins: 0, probability: 0.10, name: 'Perdu' }
+    ];
+
+    let reward = rewards[0];
+    const rand = Math.random();
+    let cumulative = 0;
+    for (const r of rewards) {
+      cumulative += r.probability;
+      if (rand <= cumulative) { reward = r; break; }
+    }
+
+    const dayOfWeek = now.getDay();
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    const baseCoins = (typeof reward.coins === 'number') ? reward.coins : 0;
+    let finalCoins = baseCoins;
+    let isWeekendBonus = false;
+    if (isWeekend && baseCoins > 0) { finalCoins = baseCoins * 2; isWeekendBonus = true; }
+
+    let rewardName = reward.name;
+    if (reward.itemId === 25) {
+      if (!hasGalaxy) {
+        user.purchasedItems.push({ itemId: 25, itemName: 'Galaxie', equipped: false });
+      }
+      finalCoins = 0;
+      rewardName = 'Galaxie';
+    } else {
+      user.coins = (user.coins || 0) + finalCoins;
+    }
+    user.lastSpinDate = now;
+    await user.save();
+
+    let message;
+    if (reward.itemId === 25) {
+      message = `🌌 Incroyable ! Vous avez obtenu l'item Galaxie !`;
+    } else if (isWeekend && typeof reward.coins === 'number' && reward.coins > 0) {
+      message = `🎉 WEEKEND BONUS x2 ! Vous avez gagné ${finalCoins} coins (${reward.coins} x 2) !`;
+    } else if (typeof reward.coins === 'number' && reward.coins > 0) {
+      message = `Félicitations ! Vous avez gagné ${finalCoins} coins !`;
+    } else {
+      message = `😔 Dommage, vous n'avez rien gagné cette fois-ci !`;
+    }
+
+    res.json({
+      success: true,
+      coinsWon: finalCoins,
+      newCoins: user.coins,
+      rewardName,
+      rewardItemId: reward.itemId || null,
+      isWeekendBonus,
+      originalCoins: baseCoins,
+      message
+    });
+  } catch (error) {
+    console.error('Erreur spin (root):', error);
+    res.status(500).json({ success: false, message: 'Erreur lors du spin' });
+  }
+});
+
+// Compatibilité Netlify: GET /api/coins → statut spin (équivalent /spin-status)
+router.get('/', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.id || req.user._id;
+    const user = await User.findById(userId);
+    if (!user) {
+      res.json({ success: true, canSpin: true, lastSpinDate: null });
+      return;
+    }
+    const now = new Date();
+    const lastSpin = user.lastSpinDate;
+    let canSpin = true;
+    if (lastSpin) {
+      const timeDiff = now.getTime() - lastSpin.getTime();
+      const hoursDiff = timeDiff / (1000 * 60 * 60);
+      if (hoursDiff < 24) canSpin = false;
+    }
+    res.json({ success: true, canSpin, lastSpinDate: lastSpin });
+  } catch (e) {
+    console.error('Erreur statut (root):', e);
+    res.status(500).json({ success: false, message: 'Erreur statut spin' });
+  }
+});
+
 // Récupérer les items de la boutique hebdomadaire (synchronisés pour tous)
 router.get('/weekly-items', verifyToken, async (req, res) => {
   try {
