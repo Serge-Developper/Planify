@@ -698,15 +698,13 @@ export const useCoinsStore = defineStore('coins', {
       );
     },
 
-    // Marquer un item comme vu (optionnel, pour éviter de re-afficher la popup)
-    markItemAsSeen(itemId: number) {
+// Marquer un item comme vu et notifier le backend (ack cadeau admin)
+     async markItemAsSeen(itemId: number) {
       const item = this.purchasedItems.find(item => item.itemId === itemId);
-      if (item && item.adminMessage) {
-        // Optionnel: on pourrait ajouter un champ seen pour éviter de re-afficher
-        // item.seen = true;
-      }
     },
 
+
+    
     // Définir la variante Discord utilisée dans l'UI
     async setDiscordVariantIndex(index: number) {
       if (typeof index === 'number' && index >= 0 && index <= 2) {

@@ -14,6 +14,11 @@ const contactRoutes = require('./routes/contact');
 const usersAdminRoutes = require('./routes/users-admin');
 const coinsRoutes = require('./routes/coins-simple');
 const itemsRoutes = require('./routes/items');
+ // Routeur léger pour couleurs dynamiques (compat Netlify); renvoie une liste vide par défaut
+ const borderColorsRouter = express.Router();
+ borderColorsRouter.get('/', (req, res) => {
+   res.json({ success: true, colors: [] });
+ });
 
 const app = express();
 let lastMongoError = null;
@@ -142,7 +147,7 @@ app.use('/api/events', requireDb, eventRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/coins', requireDb, coinsRoutes);
 app.use('/api/items', requireDb, itemsRoutes);
-app.use('/api/users-admin', requireDb, usersAdminRoutes);
+app.use('/api/border-colors', borderColorsRouter);
 
 // Endpoint de diagnostic simple
 app.get('/api/health', async (req, res) => {

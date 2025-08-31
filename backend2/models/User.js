@@ -21,6 +21,8 @@ const userSchema = new mongoose.Schema({
   }],
   equippedItemId: { type: Number, default: null, required: false }, // ID de l'item actuellement équipé
   selectedBorderColor: { type: String, default: 'default' }, // Couleur de bordure choisie (toujours active)
+  // Persistance des variantes d'items dynamiques (ex: Discord/Jojo)
+   dynamicItemVariants: { type: Map, of: Number, default: {} },
   secretQuestions: [{
     question: { type: String, required: true },
     answer: { type: String, required: true }
