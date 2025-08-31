@@ -102,18 +102,18 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
 //   res.sendStatus(200);
 // });
 
-// Connexion à MongoDB avec options de sécurité
-if (process.env.NODE_ENV !== 'production') {
-  console.log('MONGO_URI =', process.env.MONGO_URI);
-}
-mongoose.connect(process.env.MONGO_URI || '', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 5000,
-  socketTimeoutMS: 45000,
-})
-  .then(() => { if (process.env.NODE_ENV !== 'production') console.log('Connecté à MongoDB') })
-  .catch((err) => console.error('Erreur MongoDB :', err));
+// Connexion à MongoDB avec options de sécurité (commentée pour test)
+// if (process.env.NODE_ENV !== 'production') {
+//   console.log('MONGO_URI =', process.env.MONGO_URI);
+// }
+// mongoose.connect(process.env.MONGO_URI || '', {
+//   useNewUrlParser: true,
+//   useUnifiedTopology: true,
+//   serverSelectionTimeoutMS: 5000,
+//   socketTimeoutMS: 45000,
+// })
+//   .then(() => { if (process.env.NODE_ENV !== 'production') console.log('Connecté à MongoDB') })
+//   .catch((err) => console.error('Erreur MongoDB :', err));
 
 // Route de test
 app.get('/', (req, res) => res.send('API Planifyvrai2 en ligne'));
