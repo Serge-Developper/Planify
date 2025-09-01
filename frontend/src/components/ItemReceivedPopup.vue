@@ -172,6 +172,7 @@ import discordon from '@/assets/img/discordon.png'
 import jojo from '@/assets/img/tobecontinued.png'
 import jojotext from '@/assets/img/jojotext.gif'
 import { useCoinsStore } from '@/stores/coins'
+import { API_URL } from '@/api'
 import closeImg from '@/assets/img/bouton_supprimer_decocher.png'
 import closeHoverImg from '@/assets/img/bouton_supprimer_cocher.png'
 
@@ -230,15 +231,24 @@ function isDynamic(item) {
   return !!(item.isDynamic || (Array.isArray(item.assets) && item.assets.length))
 }
 
+function getApiOrigin() {
+  try {
+    if (API_URL && API_URL.startsWith('http')) return new URL(API_URL).origin
+  } catch {}
+  try {
+    if (import.meta && import.meta.env && import.meta.env.DEV) return 'http://localhost:3000'
+  } catch {}
+  try { return window.location.origin } catch { return '' }
+}
+const apiOrigin = getApiOrigin()
+
 function resolveAssetSrc(path) {
   try {
-    if (typeof path === 'string' && path.startsWith('/uploads/')) {
-      const api = import.meta.env && import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : '/api'
-      const base = api.endsWith('/api') ? api.slice(0, -4) : api.replace('/api','')
-      return base + path
-    }
-  } catch {}
-  return path || ''
+    if (!path) return ''
+    const p = String(path)
+    if (p.startsWith('/uploads/')) return apiOrigin + p
+    return p
+  } catch { return path || '' }
 }
 
 function getDynAssetStyle(asset) {
