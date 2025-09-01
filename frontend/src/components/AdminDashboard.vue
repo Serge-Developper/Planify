@@ -163,9 +163,15 @@
                  <option value="BUT2">2ème année</option>
                  <option value="BUT3">3ème année</option>
                </select>
-              <div v-if="editForm.role === 'prof'" style="font-size: 0.9em; color: #6b7280; font-style: italic;">
-                ⓘ Les professeurs travaillent avec toute la promo (toutes les années)
-              </div>
++              <select v-model="editForm.specialite" :disabled="editForm.role === 'prof'" :class="{ 'disabled-field': editForm.role === 'prof' }">
++                <option value="">Aucune spécialité</option>
++                <option value="devweb">Développement web</option>
++                <option value="creation">Création numérique</option>
++                <option value="gestion">Gestion de projet</option>
++              </select>
+               <div v-if="editForm.role === 'prof'" style="font-size: 0.9em; color: #6b7280; font-style: italic;">
+                 ⓘ Les professeurs travaillent avec toute la promo (toutes les années)
+               </div>
               <div class="edit-actions">
                 <button type="submit" :disabled="editFormLoading">Sauvegarder</button>
                 <button type="button" @click="cancelEdit">Annuler</button>
@@ -383,7 +389,8 @@ const userForm = ref({
   password: '',
   role: 'eleve',
   groupe: 'A',
-  year: 'BUT1'
+  year: 'BUT1',
+  specialite: ''
 });
 const userFormMessage = ref('');
 const userFormLoading = ref(false);
@@ -394,7 +401,8 @@ const editForm = ref({
   password: '',
   role: 'eleve',
   groupe: '',
-  year: ''
+  year: '',
+  specialite: ''
 });
 const editFormMessage = ref('');
 const editFormLoading = ref(false);
@@ -800,7 +808,7 @@ async function addUser() {
     }
     
     userFormMessage.value = 'Utilisateur ajouté avec succès !';
-    userForm.value = { username: '', password: '', role: 'eleve', groupe: 'A', year: 'BUT1' };
+    userForm.value = { username: '', password: '', role: 'eleve', groupe: 'A', year: 'BUT1', specialite: '' };
     showUserForm.value = false;
     await fetchUsers(); // Rafraîchir la liste
   } catch (error) {
@@ -837,6 +845,7 @@ function editUser(user) {
     role: userData.role,
     groupe: userData.groupe,
     year: userData.year,
+    specialite: user.specialite || '' ,
     coins: userData.coins || 0
   };
   
@@ -880,6 +889,9 @@ async function updateUser() {
     const updateData = { ...editForm.value };
     if (!updateData.password) {
       delete updateData.password; // Ne pas envoyer le mot de passe s'il est vide
+    }
+    if (updateData.specialite === undefined) {
+      updateData.specialite = ''
     }
     
     // Récupérer le token d'authentification
