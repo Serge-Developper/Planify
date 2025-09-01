@@ -486,6 +486,21 @@ onMounted(async () => {
   try { await subjectsStore.initializeStore() } catch {}
 })
 
+// Ensemble des matières visibles (insensible à la casse) pour filtrer les tâches
+const visibleSubjectsSet = computed(() => {
+  try {
+    return new Set((availableMatieres.value || []).map(m => String(m).toLowerCase()))
+  } catch {
+    return new Set()
+  }
+})
+function isEventSubjectVisible(e) {
+  const name = String(e && e.matiere || '').toLowerCase()
+  // Si pas de nom, on laisse passer par compat
+  if (!name) return true
+  return visibleSubjectsSet.value.has(name)
+}
+
 // Génère une clé unique stable pour un event
 const eventKey = (e) => (e && (e._id || (e.titre + e.date + e.heure)));
 
@@ -537,11 +552,14 @@ const sortedEvents = computed(() => {
 });
 
 const doneEvents = computed(() =>
-  props.events.filter(e => e.checked && !e.archived)
+  props.events
+    .filter(e => isEventSubjectVisible(e))
+    .filter(e => e.checked && !e.archived)
     .filter(e => !selectedMatiere.value || e.matiere === selectedMatiere.value)
 );
 const toDoEvents = computed(() => {
   let filtered = props.events.filter(e => {
+    if (!isEventSubjectVisible(e)) return false
     if (e.archived) return false;
 
     const t = timeLeft(e.date, e.heure);
@@ -571,11 +589,12 @@ const toDoEvents = computed(() => {
 });
 
 const archives = computed(() => 
-  props.events.filter(e => e.archived && (!selectedMatiere.value || e.matiere === selectedMatiere.value))
+  props.events.filter(e => isEventSubjectVisible(e) && e.archived && (!selectedMatiere.value || e.matiere === selectedMatiere.value))
 );
 
 const lateEvents = computed(() =>
   props.events.filter(e =>
+    isEventSubjectVisible(e) &&
     !e.archived &&
     !e.checked &&
     isLate(e) &&
