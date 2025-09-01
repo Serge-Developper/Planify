@@ -17,12 +17,12 @@ router.get('/', verifyToken, requireRole(['admin']), async (req, res) => {
 router.post('/', verifyToken, requireRole(['admin']), async (req, res) => {
   try {
     const payload = req.body || {};
-    if (!payload.name || !payload.color) return res.status(400).json({ success: false, message: 'name et color requis' });
+    if (!payload.name || !payload.color) { res.status(400).json({ success: false, message: 'name et color requis' }); return; }
     const doc = new Subject(payload);
     await doc.save();
     res.json({ success: true, subject: doc });
   } catch (e) {
-    if (e && e.code === 11000) return res.status(409).json({ success: false, message: 'Nom déjà utilisé' });
+    if (e && e.code === 11000) { res.status(409).json({ success: false, message: 'Nom déjà utilisé' }); return; }
     res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 });
@@ -33,7 +33,7 @@ router.put('/:id', verifyToken, requireRole(['admin']), async (req, res) => {
     const { id } = req.params;
     const updates = req.body || {};
     const doc = await Subject.findByIdAndUpdate(id, updates, { new: true });
-    if (!doc) return res.status(404).json({ success: false, message: 'Matière non trouvée' });
+    if (!doc) { res.status(404).json({ success: false, message: 'Matière non trouvée' }); return; }
     res.json({ success: true, subject: doc });
   } catch (e) {
     res.status(500).json({ success: false, message: 'Erreur serveur' });
