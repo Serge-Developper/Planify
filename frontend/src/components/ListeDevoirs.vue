@@ -1,9 +1,18 @@
 <template>
   <div class="liste-devoirs-bg">
     <h2 class="liste-title">Liste des devoirs</h2>
-    <button v-if="user && (user.role === 'delegue' || user.role === 'prof')" class="btn-ajouter-tache" @click="showAddTaskPopup = true">
-      <span style="font-size:1.3em;margin-right:6px;">＋</span> Ajouter une tâche
-    </button>
+    <div class="actions-bar">
+      <button v-if="user && (user.role === 'delegue' || user.role === 'prof')" class="btn-ajouter-tache" @click="showAddTaskPopup = true">
+        <span style="font-size:1.3em;margin-right:6px;">＋</span> Ajouter une tâche
+      </button>
+      <button 
+        v-if="sortBy === 'enretard' && lateEvents.length > 0" 
+        class="btn-ajouter-tache btn-vider-retards" 
+        @click="viderRetards">
+        <img class="btn-icon" :src="supprimerIcon" alt="Vider" />
+        Vider les retards
+      </button>
+    </div>
     <div v-if="showAddTaskPopup" class="popup-overlay" @click.self="showAddTaskPopup = false">
       <div class="popup-content-ajout-tache">
         <button class="close-btn-ajout" @click="() => { hoverCloseAdd = false; showAddTaskPopup = false }" @mouseover="hoverCloseAdd = true" @mouseleave="hoverCloseAdd = false">
@@ -779,6 +788,25 @@ async function viderArchiveTypeMatiere(type, matiere) {
   }
 }
 
+// Vider toutes les tâches en retard (les masquer pour l'utilisateur courant)
+async function viderRetards() {
+  if (!user.value) return alert('Non connecté');
+  if (lateEvents.value.length === 0) return;
+  if (!confirm('Voulez-vous vraiment vider toutes les tâches en retard ?')) return;
+  try {
+    for (const event of lateEvents.value.slice()) {
+      await axios.post(`${API_URL}/events/events-check`, {
+        eventId: event._id,
+        action: 'hide'
+      }, { headers: { Authorization: `Bearer ${user.value.token}` } });
+    }
+    emit('refresh-events');
+  } catch (error) {
+    alert('Erreur lors du vidage des retards.');
+    console.error(error);
+  }
+}
+
 function linkify(text) {
   if (!text) return '';
   return text.replace(
@@ -1455,6 +1483,29 @@ function cancelDelete() {
 @keyframes shine {
   0% { left: -150%; }
   100% { left: 200%; }
+}
+.actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.btn-icon { width: 20px; height: 20px; margin-right: 8px; display: inline-block; }
+.btn-vider-retards {
+  background: linear-gradient(90deg, #ff4d4d, #ff5252);
+  color: #111;
+  margin: 40px 0 18px 0;
+  box-shadow: 0 2px 12px rgba(255, 77, 77, 0.35);
+  border-radius: 24px;
+  padding: 12px 32px;
+  font-size: 1.2em;
+  height: 59px;
+  width: 250.95px;
+}
+.btn-vider-retards:hover {
+  background: linear-gradient(90deg, #ff4d4d, #ff5252);
+  color: #000;
+  box-shadow: 0 4px 16px rgba(255, 77, 77, 0.45);
 }
 .devoir-card-liste.archive {
   opacity: 0.8;

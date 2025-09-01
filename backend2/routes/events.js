@@ -454,4 +454,80 @@ router.post('/:id/uncheck', verifyToken, async (req, res) => {
   }
 });
 
+// Point d'entrée générique (compat Netlify) pour agir sur un événement
+// Actions supportées: check, uncheck, archive, unarchive, hide, unhide
+router.post('/events-check', verifyToken, async (req, res) => {
+  try {
+    const { eventId, action } = req.body || {};
+    if (!eventId || !action) {
+      return res.status(400).json({ success: false, message: 'eventId et action requis' });
+    }
+
+    const { Types } = require('mongoose');
+    if (!Types.ObjectId.isValid(eventId)) {
+      return res.status(400).json({ success: false, message: 'EventId invalide' });
+    }
+
+    const event = await Event.findById(eventId);
+    if (!event) return res.status(404).json({ success: false, message: 'Événement non trouvé' });
+
+    const userId = req.user.id;
+
+    switch (action) {
+      case 'check': {
+        // Vérifier si la tâche est en retard
+        const [h, m] = (event.heure || '').split(':');
+        const target = new Date(event.date);
+        target.setHours(Number(h), Number(m || 0), 0, 0);
+        const now = new Date();
+        const isLate = now > target;
+
+        await Event.updateOne({ _id: eventId }, { $addToSet: { checkedBy: userId } });
+        if (!isLate) {
+          const User = require('../models/User');
+          await User.findByIdAndUpdate(userId, { $inc: { completedTasks: 1 } });
+        }
+        return res.json({ success: true });
+      }
+      case 'uncheck': {
+        // Vérifier si la tâche était en retard
+        const [h, m] = (event.heure || '').split(':');
+        const target = new Date(event.date);
+        target.setHours(Number(h), Number(m || 0), 0, 0);
+        const now = new Date();
+        const isLate = now > target;
+
+        await Event.updateOne({ _id: eventId }, { $pull: { checkedBy: userId } });
+        if (!isLate) {
+          const User = require('../models/User');
+          await User.findByIdAndUpdate(userId, { $inc: { completedTasks: -1 } });
+        }
+        return res.json({ success: true });
+      }
+      case 'archive': {
+        await Event.updateOne({ _id: eventId }, { $addToSet: { archivedBy: userId } });
+        return res.json({ success: true });
+      }
+      case 'unarchive': {
+        await Event.updateOne({ _id: eventId }, { $pull: { archivedBy: userId } });
+        return res.json({ success: true });
+      }
+      case 'hide': {
+        // Sur IONOS on utilise deletedBy pour masquer pour soi
+        await Event.updateOne({ _id: eventId }, { $addToSet: { deletedBy: userId } });
+        return res.json({ success: true });
+      }
+      case 'unhide': {
+        await Event.updateOne({ _id: eventId }, { $pull: { deletedBy: userId } });
+        return res.json({ success: true });
+      }
+      default:
+        return res.status(400).json({ success: false, message: 'Action non supportée' });
+    }
+  } catch (error) {
+    console.error('Erreur /events-check:', error);
+    return res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+});
+
 module.exports = router;
