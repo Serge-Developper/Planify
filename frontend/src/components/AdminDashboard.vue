@@ -4,7 +4,7 @@
     <template v-if="!showEmploi">
       <aside class="matieres-list">
         <button
-          v-for="matiere in matieres"
+          v-for="matiere in allMatieres"
           :key="matiere"
           @click="selectMatiere(matiere)"
           :class="{ selected: matiere === selectedMatiere }"
@@ -357,13 +357,15 @@ const matieres = [
 ];
 
 const selectedMatiere = ref(matieres[0]);
-// Injecter les matières dynamiques dans la liste latérale
+const allMatieres = ref<string[]>([...matieres])
+// Injecter les matières dynamiques dans la liste latérale (sans muter directement le tableau constant)
 onMounted(async () => {
   try { await subjectsStore.initializeStore() } catch {}
   try {
     const dynamicNames = (subjectsStore.subjects || []).map(s => s.name).filter(Boolean)
-    for (const n of dynamicNames) if (!matieres.includes(n)) matieres.push(n)
-  } catch {}
+    const merged = new Set<string>([...matieres, ...dynamicNames])
+    allMatieres.value = Array.from(merged)
+  } catch { allMatieres.value = [...matieres] }
 })
 const showUserForm = ref(false);
 const showUserManagement = ref(false);
