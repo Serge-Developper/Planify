@@ -18,7 +18,7 @@
           </select>
           <select v-model="newTask.matiere" required>
             <option value="" disabled>Matière</option>
-            <option v-for="matiere in mmiMatieres" :key="matiere" :value="matiere">{{ matiere }}</option>
+            <option v-for="matiere in availableMatieres" :key="matiere" :value="matiere">{{ matiere }}</option>
           </select>
           <div class="input-floating">
             <input v-model="newTask.date" type="date" required id="date-input" placeholder=" " class="mobile-date-input" @input="updateDatePlaceholder" />
@@ -86,7 +86,7 @@
         <span class="tri-label">Matière :</span>
         <select v-model="selectedMatiere" class="matiere-select">
           <option value="">Toutes</option>
-          <option v-for="matiere in mmiMatieres" :key="matiere" :value="matiere">{{ matiere }}</option>
+          <option v-for="matiere in availableMatieres" :key="matiere" :value="matiere">{{ matiere }}</option>
         </select>
       </div>
     </div>
@@ -444,6 +444,41 @@ const mmiMatieres = [
   "Représentation et traitement de l'information",
   "Economie et droit du numérique"
 ];
+
+// Matières disponibles pour l'utilisateur: liste statique + dynamiques filtrées par règles/specialités
+import { useSubjectsStore } from '@/stores/subjects'
+const subjectsStore = useSubjectsStore()
+const availableMatieres = computed(() => {
+  const base = [...mmiMatieres]
+  try {
+    const u = user.value || {}
+    const uSpec = u.specialite || ''
+    const uYear = u.year || ''
+    const uGroup = u.groupe || ''
+    const dyn = (subjectsStore.subjects || [])
+      .filter((s:any) => {
+        const years = Array.isArray(s.yearsAllowed) ? s.yearsAllowed : []
+        const groups = Array.isArray(s.groupsAllowed) ? s.groupsAllowed : []
+        const specs = Array.isArray(s.specialitesAllowed) ? s.specialitesAllowed : []
+        // Années: si défini, doit contenir l'année de l'utilisateur
+        if (years.length && !years.includes(uYear)) return false
+        // Groupes: si défini, doit contenir Promo ou le groupe de l'utilisateur
+        if (groups.length && !(groups.includes('Promo') || groups.includes(uGroup))) return false
+        // Spécialités: si défini, l'utilisateur doit en avoir une et elle doit être incluse
+        if (specs.length) {
+          if (!uSpec) return false
+          if (!specs.includes(uSpec)) return false
+        }
+        return true
+      })
+      .map((s:any) => s.name)
+      .filter(Boolean)
+    const merged = Array.from(new Set<string>([...base, ...dyn]))
+    return merged
+  } catch {
+    return base
+  }
+})
 
 // Génère une clé unique stable pour un event
 const eventKey = (e) => (e && (e._id || (e.titre + e.date + e.heure)));
