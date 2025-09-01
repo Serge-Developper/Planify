@@ -4,7 +4,7 @@
     <template v-if="!showEmploi">
       <aside class="matieres-list">
         <button
-          v-for="matiere in matieres"
+          v-for="matiere in allMatieres"
           :key="matiere"
           @click="selectMatiere(matiere)"
           :class="{ selected: matiere === selectedMatiere }"
@@ -311,6 +311,7 @@ import SubjectManager from './SubjectManager.vue'
 import { useAuthStore } from '@/stores/auth'
 const auth = useAuthStore()
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
+import { useSubjectsStore } from '@/stores/subjects';
 import axios from 'axios';
 import { API_URL, secureApiCall } from '@/api';
 import EmploiDuTemps from '../components/EmploiDuTemps.vue';
@@ -353,6 +354,13 @@ const matieres = [
   "Représentation et traitement de l'information",
   "Economie et droit du numérique"
 ];
+
+const subjectsStore = useSubjectsStore();
+onMounted(async () => { try { await subjectsStore.initializeStore() } catch {} })
+const dynamicMatieres = computed(() => (subjectsStore.subjects || []).map(s => s && s.name).filter(Boolean))
+const allMatieres = computed(() => {
+  try { return Array.from(new Set([ ...matieres, ...dynamicMatieres.value ])) } catch { return matieres }
+})
 
 const selectedMatiere = ref(matieres[0]);
 const showUserForm = ref(false);
@@ -567,7 +575,7 @@ const eventForm = ref({
   heure: '',
   groupe: 'A',
   type: 'exam',
-  matiere: matieres[0],
+  matiere: selectedMatiere.value,
   year: 'BUT1',
   description: ''
 });
