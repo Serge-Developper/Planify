@@ -163,13 +163,19 @@
                  <option value="BUT2">2ème année</option>
                  <option value="BUT3">3ème année</option>
                </select>
-              <div v-if="editForm.role === 'prof'" style="font-size: 0.9em; color: #6b7280; font-style: italic;">
-                ⓘ Les professeurs travaillent avec toute la promo (toutes les années)
-              </div>
-              <div class="edit-actions">
-                <button type="submit" :disabled="editFormLoading">Sauvegarder</button>
-                <button type="button" @click="cancelEdit">Annuler</button>
-              </div>
++              <select v-model="editForm.specialite" :disabled="editForm.role === 'prof'" :class="{ 'disabled-field': editForm.role === 'prof' }">
++                <option value="">Aucune spécialité</option>
++                <option value="devweb">Développement web</option>
++                <option value="creation">Création numérique</option>
++                <option value="gestion">Gestion de projet</option>
++              </select>
+               <div v-if="editForm.role === 'prof'" style="font-size: 0.9em; color: #6b7280; font-style: italic;">
+                 ⓘ Les professeurs travaillent avec toute la promo (toutes les années)
+               </div>
+               <div class="edit-actions">
+                 <button type="submit" :disabled="editFormLoading">Sauvegarder</button>
+                 <button type="button" @click="cancelEdit">Annuler</button>
+               </div>
             </form>
             <div v-if="editFormMessage" :style="{color: editFormMessage.includes('succès') ? 'green' : 'red'}">{{ editFormMessage }}</div>
                      </div>
@@ -806,6 +812,7 @@ function editUser(user) {
     role: userData.role,
     groupe: userData.groupe,
     year: userData.year,
+    specialite: userData.specialite || '',
     coins: userData.coins || 0
   };
   

@@ -810,6 +810,7 @@
           <div><strong>Rôle :</strong> {{ user?.role ? afficherRole(user.role) : 'Non défini' }}</div>
           <div><strong>Année :</strong> {{ user?.year ? afficherAnnee(user.year) : 'Non définie' }}</div>
           <div><strong>Groupe :</strong> {{ user?.groupe || 'Non défini' }}</div>
+          <div v-if="user?.specialite"><strong>Spécialité :</strong> {{ afficherSpecialite(user.specialite) }}</div>
           <div class="coins-profile-row">
             <strong>PlanifyCoins :</strong>
             <span class="coins-value">{{ formattedBalance }}</span>
@@ -1662,6 +1663,11 @@ function afficherAnnee(year) {
   if (year === 'BUT2') return '2ème année';
   if (year === 'BUT3') return '3ème année';
   return year;
+}
+function afficherSpecialite(s) {
+  if (!s) return ''
+  const m = { devweb: 'Développement web', creation: 'Création numérique', gestion: 'Gestion de projet' }
+  return m[s] || s
 }
 
 // Fonction pour gérer les erreurs de chargement d'image
