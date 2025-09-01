@@ -80,6 +80,10 @@
           </label>
         </div>
         <div class="preview" :style="{ background: gradCss }"></div>
+        <!-- Aperçu direct de la bordure (3px) -->
+        <div :style="borderPreviewOuter" style="display:inline-block;margin-left:12px;">
+          <div :style="borderPreviewInner"></div>
+        </div>
       </div>
       <input v-model="borderForm.color" type="hidden" />
       <input v-model="borderForm.gradient" type="hidden" />
