@@ -10,6 +10,7 @@ const { verifyToken, requireRole } = require('../middlewares/auth');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const mongoose = require('mongoose');
 
 // Configuration multer pour l'upload d'avatars
 const storage = multer.diskStorage({
@@ -271,11 +272,52 @@ router.get('/admin', verifyToken, requireRole(['admin']), async (req, res) => {
   }
 });
 
+// Persister/récupérer les variantes d'items dynamiques (Map<number, number>)
+// IMPORTANT: placé AVANT la route '/:id' pour éviter les collisions de routing
+router.get('/dynamic-item-variants', verifyToken, async (req, res) => {
+  try {
+    // @ts-ignore
+    const userId = req.user.id || req.user._id
+    const user = await User.findById(userId)
+    if (!user) return res.status(404).json({ success: false, message: 'Utilisateur non trouvé' })
+    const variants = user.dynamicItemVariants || {}
+    res.json({ success: true, variants })
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Erreur serveur' })
+  }
+})
+
+router.post('/dynamic-item-variants', verifyToken, async (req, res) => {
+  try {
+    // @ts-ignore
+    const userId = req.user.id || req.user._id
+    const { itemId, variantIndex } = req.body || {}
+    const id = Number(itemId)
+    const idx = Number(variantIndex)
+    if (!Number.isFinite(id) || !Number.isFinite(idx)) {
+      return res.status(400).json({ success: false, message: 'Paramètres invalides' })
+    }
+    const user = await User.findById(userId)
+    if (!user) return res.status(404).json({ success: false, message: 'Utilisateur non trouvé' })
+    if (!user.dynamicItemVariants) user.dynamicItemVariants = {}
+    // @ts-ignore Map ou objet
+    user.dynamicItemVariants.set ? user.dynamicItemVariants.set(String(id), idx) : (user.dynamicItemVariants[id] = idx)
+    await user.save()
+    res.json({ success: true })
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Erreur serveur' })
+  }
+})
+
 // Route pour récupérer les informations d'un utilisateur (sans mot de passe)
 router.get('/:id', verifyToken, async (req, res) => {
   console.log('--- Appel API /api/users/:id ---');
   console.log('Paramètre id reçu :', req.params.id);
   try {
+    // Valider l'ObjectId pour éviter des 500 sur un id arbitraire (ex: "dynamic-item-variants")
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: 'ID invalide' });
+    }
     const user = await User.findById(req.params.id).select('-password');
     if (!user) {
       console.log('Utilisateur non trouvé pour id =', req.params.id);
@@ -1018,41 +1060,7 @@ router.post('/ack-gift/:itemId', verifyToken, async (req, res) => {
 
 
 
-// Persister/récupérer les variantes d'items dynamiques (Map<number, number>)
- router.get('/dynamic-item-variants', verifyToken, async (req, res) => {
-     try {
-       // @ts-ignore
-       const userId = req.user.id || req.user._id
-       const user = await User.findById(userId)
-       if (!user) return res.status(404).json({ success: false, message: 'Utilisateur non trouvé' })
-       const variants = user.dynamicItemVariants || {}
-       res.json({ success: true, variants })
-     } catch (e) {
-       res.status(500).json({ success: false, message: 'Erreur serveur' })
-     }
-   })
-   
-   router.post('/dynamic-item-variants', verifyToken, async (req, res) => {
-     try {
-       // @ts-ignore
-       const userId = req.user.id || req.user._id
-       const { itemId, variantIndex } = req.body || {}
-       const id = Number(itemId)
-       const idx = Number(variantIndex)
-       if (!Number.isFinite(id) || !Number.isFinite(idx)) {
-         return res.status(400).json({ success: false, message: 'Paramètres invalides' })
-       }
-       const user = await User.findById(userId)
-      if (!user) return res.status(404).json({ success: false, message: 'Utilisateur non trouvé' })
-       if (!user.dynamicItemVariants) user.dynamicItemVariants = {}
-      // @ts-ignore Map ou objet
-      user.dynamicItemVariants.set ? user.dynamicItemVariants.set(String(id), idx) : (user.dynamicItemVariants[id] = idx)
-       await user.save()
-       res.json({ success: true })
-     } catch (e) {
-      res.status(500).json({ success: false, message: 'Erreur serveur' })
-     }
-   })
+// (Supprimé: doublon de routes dynamic-item-variants déplacées plus haut pour éviter collisions)
 
 // Route pour retirer un item d'un utilisateur
 router.post('/:id/remove-item', verifyToken, requireRole(['admin']), async (req, res) => {
