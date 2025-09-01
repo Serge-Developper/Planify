@@ -4349,10 +4349,10 @@ const sortedLeaderboardUsers = computed(() => {
   }
   .coeur-img-shop {
     position: absolute;
-    top: -5px;
-    left: 8px;
+    top: 7px;
+    left: 7px;
     width: 80%;
-    height: 112%;
+    height: 80%;
     object-fit: contain;
   }
   /* Alpha = clone des propriétés Galaxie */
@@ -4363,10 +4363,10 @@ const sortedLeaderboardUsers = computed(() => {
   }
   .alpha-img-shop {
     position: absolute;
-    top: -5px;
+    top: 15px;
     left: 15px;
     width: 65%;
-    height: 112%;
+    height: 65%;
     object-fit: contain;
   }
   /* Admin Planify = clone des propriétés Galaxie */
@@ -4377,10 +4377,10 @@ const sortedLeaderboardUsers = computed(() => {
   }
   .admin-planify-img-shop {
     position: absolute;
-    top: -5px;
+    top: 13px;
     left: 15px;
     width: 65%;
-    height: 112%;
+    height: 65%;
     object-fit: contain;
   }
 
