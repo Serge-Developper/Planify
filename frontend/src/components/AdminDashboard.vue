@@ -213,8 +213,8 @@
               <div class="give-item-form checkboxes">
                 <div class="checkbox-grid">
                   <label v-for="(it, idx) in itemsCatalog.filter(Boolean)" :key="(it && it.id) ?? idx" class="item-checkbox">
-+                     <input type="checkbox" :value="it?.id" v-model="selectedItemsToGive" />
-+                     <span>{{ it?.name || ('Item ' + ((it && it.id) ?? idx)) }}</span>
+                    <input type="checkbox" :value="it?.id" v-model="selectedItemsToGive" />
+                    <span>{{ sanitizeName(it?.name || ('Item ' + ((it && it.id) ?? idx))) }}</span>
                   </label>
                 </div>
                 
@@ -517,6 +517,17 @@ function getAvailableQuestions(index) {
     { id: 230, name: 'Ambre Nuit' },
     { id: 231, name: 'Émeraude Nuit' }
   ]);
+  // Nettoyage visuel de noms potentiellement pollués par des marqueurs de merge ou symboles
+  function sanitizeName(name) {
+    const s = String(name || '')
+      .replace(/<<<<<<<.*?>>>>>>>/gs, '')
+      .replace(/<<<<<<<|=======|>>>>>>>/g, '')
+      .replace(/\bCurrent\b|\bYour changes\b|\bIncoming\b|\bBackground Agent changes\b/gi, '')
+      .replace(/[+]{2,}/g, '+')
+      .replace(/\s{2,}/g, ' ')
+      .trim()
+    return s || 'Item'
+  }
   // Conserver la liste de base (statiques) pour pouvoir purger proprement les dynamiques
   const baseStaticIds = new Set(itemsCatalog.value.map(x => x.id))
   // Injecter les items dynamiques créés via l'éditeur
@@ -527,11 +538,14 @@ function getAvailableQuestions(index) {
         const raw = Array.isArray(res.items) ? res.items : []
         const extra = raw
           .filter(it => it && (typeof it.legacyId === 'number' || typeof it.id === 'number'))
-          .map(it => ({ id: (typeof it.legacyId === 'number' ? it.legacyId : it.id), name: it.name || `Item ${(it && (it.legacyId ?? it.id)) || ''}` }))
+          .map(it => ({ id: (typeof it.legacyId === 'number' ? it.legacyId : it.id), name: sanitizeName(it.name || `Item ${(it && (it.legacyId ?? it.id)) || ''}`) }))
         const existing = new Map(itemsCatalog.value.map(x => [x.id, x]))
         for (const e of extra) {
           if (existing.has(e.id)) {
-            existing.get(e.id).name = e.name
+            // Ne pas écraser les libellés statiques de base (couleurs/fixes)
+            if (!baseStaticIds.has(e.id)) {
+              existing.get(e.id).name = e.name
+            }
           } else {
             itemsCatalog.value.push(e)
           }
