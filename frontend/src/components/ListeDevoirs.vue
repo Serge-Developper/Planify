@@ -408,6 +408,7 @@ import closeHoverImg from '@/assets/img/bouton_supprimer_cocher.png';
 import notifIcon from '@/assets/notif.png';
 import supprimerIcon from '@/assets/supprimer.svg';
 import { API_URL } from '@/api';
+import { useSubjectsStore } from '@/stores/subjects';
 
 const props = defineProps({
   events: { type: Array, required: true }
@@ -423,8 +424,8 @@ if (localStorage.getItem('user')) {
 const isAdmin = computed(() => user.value && user.value.role === 'admin');
 const matiereArchive = ref('');
 
-// Liste officielle MMI
-const mmiMatieres = [
+// Matières: mélange des officielles + dynamiques remontées par l'admin (avec couleurs)
+const officialMatieres = [
   "Anglais",
   "Culture artistique",
   "Culture numérique",
@@ -444,6 +445,37 @@ const mmiMatieres = [
   "Représentation et traitement de l'information",
   "Economie et droit du numérique"
 ];
+const subjectsStore = useSubjectsStore();
+subjectsStore.initializeStore?.();
+
+function normalizeYearClient(y) {
+  if (!y) return '';
+  const v = String(y).replace(/\s+/g, '').toUpperCase();
+  if (v === 'BUT1' || v === '1') return 'BUT1';
+  if (v === 'BUT2' || v === '2') return 'BUT2';
+  if (v === 'BUT3' || v === '3') return 'BUT3';
+  return v;
+}
+
+const mmiMatieres = computed(() => {
+  const dynList = (subjectsStore.getSubjects?.value ?? subjectsStore.subjects?.value ?? []);
+  const userYear = normalizeYearClient(user.value?.year);
+  const userGroup = (user.value?.groupe || '').toUpperCase();
+  const dynNames = dynList
+    .filter((s: any) => {
+      const years = Array.isArray(s.yearsAllowed) ? s.yearsAllowed.map(normalizeYearClient) : [];
+      const groups = Array.isArray(s.groupsAllowed) ? s.groupsAllowed.map((g: string) => g.toUpperCase()) : [];
+      const yearOk = years.length === 0 || years.includes(userYear);
+      const groupOk = groups.length === 0 || groups.includes('PROMO') || groups.includes(userGroup);
+      return yearOk && groupOk;
+    })
+    .map((s: any) => s.name)
+    .filter(Boolean);
+  // Inclure aussi toutes les matières présentes parmi les événements visibles (ex: "test")
+  const eventNames = Array.isArray(props.events) ? Array.from(new Set(props.events.map((e:any)=>e.matiere).filter(Boolean))) : [];
+  const set = new Set<string>([...officialMatieres, ...dynNames, ...eventNames]);
+  return Array.from(set);
+});
 
 // Génère une clé unique stable pour un event
 const eventKey = (e) => (e && (e._id || (e.titre + e.date + e.heure)));
@@ -547,6 +579,19 @@ function setSort(type) {
 }
 
 function stringToColor(str, type) {
+  // 1) Prend la couleur/dégradé défini dans le store des matières dynamiques s'il existe
+  try {
+    const all = (subjectsStore.getSubjects as any) || subjectsStore.subjects || [];
+    const subject = (Array.isArray(all) ? all : []).find((s: any) => (s?.name || '').toLowerCase() === (str || '').toLowerCase());
+    if (subject) {
+      const c1 = subject.color;
+      const c2 = subject.color2;
+      const angle = typeof subject.gradientAngle === 'number' ? subject.gradientAngle : 90;
+      if (c1 && c2) return `linear-gradient(${angle}deg, ${c1} 0%, ${c2} 100%)`;
+      if (c1) return c1;
+    }
+  } catch {}
+
   if (str === "Gestion de projet") {
     return "linear-gradient(90deg, rgba(83,198,77,0.88) 0%, rgba(126,252,173,0.89) 100%)";
   }

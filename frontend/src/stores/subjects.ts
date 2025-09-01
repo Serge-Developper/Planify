@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
+import { secureApiCall } from '@/api';
 
 export interface Subject {
   _id?: string;
@@ -31,14 +32,28 @@ export const useSubjectsStore = defineStore('subjects', () => {
     if (loading.value && !force) return;
     loading.value = true; error.value = null;
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
-      // Si plus tard on expose un endpoint backend, on l'emploiera ici. Pour l'instant: pas d'API sur IONOS → liste vide.
-      subjects.value = [];
+      // Essaye de récupérer depuis l'API de l'hébergeur IONOS (ou Netlify)
+      // Structure attendue: [{ name, color, color2?, gradientAngle?, yearsAllowed?, groupsAllowed?, specialitesAllowed? }]
+      const res = await secureApiCall('/subjects');
+      const arr = Array.isArray(res) ? res : (Array.isArray(res?.subjects) ? res.subjects : []);
+      subjects.value = arr.map((s: any) => ({
+        _id: s._id,
+        name: s.name || s.matiere || s.title || '',
+        color: s.color || '#6db4ff',
+        color2: s.color2 || s.secondaryColor || undefined,
+        gradientAngle: typeof s.gradientAngle === 'number' ? s.gradientAngle : (typeof s.angle === 'number' ? s.angle : 90),
+        colorOpacity: s.colorOpacity,
+        color2Opacity: s.color2Opacity,
+        yearsAllowed: Array.isArray(s.yearsAllowed) ? s.yearsAllowed : [],
+        groupsAllowed: Array.isArray(s.groupsAllowed) ? s.groupsAllowed : [],
+        specialitesAllowed: Array.isArray(s.specialitesAllowed) ? s.specialitesAllowed : [],
+        createdAt: s.createdAt ? new Date(s.createdAt) : undefined,
+        updatedAt: s.updatedAt ? new Date(s.updatedAt) : undefined,
+      }));
       initialized.value = true;
-      clearTimeout(timeoutId);
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Erreur inconnue';
+      // Fallback silencieux: on laisse la liste vide si l'endpoint n'existe pas
       subjects.value = [];
     } finally {
       loading.value = false;
