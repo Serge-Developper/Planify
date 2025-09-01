@@ -1695,7 +1695,11 @@ const lockBodyScroll = () => {
 const unlockBodyScroll = () => {
   try { document.body.style.overflow = '' } catch (e) {}
 }
-const openColorPicker = () => {
+const openColorPicker = async () => {
+  try {
+    // Recharger l'inventaire pour prendre en compte un don récent (débloque les couleurs)
+    await coinsStore.loadInventory()
+  } catch {}
   isColorPickerOpen.value = true
   lockBodyScroll()
 }
