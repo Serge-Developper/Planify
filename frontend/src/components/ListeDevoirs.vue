@@ -1508,6 +1508,21 @@ function cancelDelete() {
   color: #000;
   box-shadow: 0 4px 16px rgba(255, 77, 77, 0.45);
 }
+@media (min-width: 320px) and (max-width: 1024px) {
+  /* Actions en colonne comme Netlify */
+  .actions-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    flex-direction: column;
+  }
+  /* Supprimer la marge verticale supplémentaire pour rapprocher les deux boutons */
+  .btn-vider-retards {
+    margin: 0px 0px 0px 0px;
+    width: 250.96px;
+  }
+}
 .devoir-card-liste.archive {
   opacity: 0.8;
   filter: grayscale(0.7);
@@ -1644,6 +1659,17 @@ function cancelDelete() {
   background: linear-gradient(90deg, #6EFF78 0%, #39ff7a 100%);
   color: #000;
   box-shadow: 0 4px 16px #39ff7a55;
+}
+/* Variante rouge pour le bouton "Vider les retards" (après .btn-ajouter-tache pour écraser le vert) */
+.btn-ajouter-tache.btn-vider-retards {
+  background: linear-gradient(90deg, #ff4d4d, #ff5252);
+  color: #111;
+  box-shadow: 0 2px 12px rgba(255, 77, 77, 0.35);
+}
+.btn-ajouter-tache.btn-vider-retards:hover {
+  background: linear-gradient(90deg, #ff4d4d, #ff5252);
+  color: #000;
+  box-shadow: 0 4px 16px rgba(255, 77, 77, 0.45);
 }
 .popup-overlay {
   position: fixed;
