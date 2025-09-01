@@ -659,14 +659,14 @@
                       :src="jojo" 
                       alt="Jojo"
                       class="equipped-jojo-inside"
-                      :key="'lb-jojo-'+coinsStore.jojoVariantIndex"
+                      :key="'lb-jojo-'+getJojoVariantIndexForUser(user)"
                     />
                     <img 
-              v-if="getUserEquippedItemData(user).name === 'Jojo' && coinsStore.jojoVariantIndex === 1" 
+              v-if="getUserEquippedItemData(user).name === 'Jojo' && getJojoVariantIndexForUser(user) === 1" 
                       :src="jojotext" 
                       alt="Jojo text"
                       class="equipped-jojotext-inside"
-                      :key="'lb-jojotext-'+coinsStore.jojoVariantIndex"
+                      :key="'lb-jojotext-'+getJojoVariantIndexForUser(user)"
                     />
                     <!-- Item Discord rendu au niveau du container -->
                     <img 
@@ -2313,6 +2313,16 @@ const getAvatarBorderStyle = (user) => {
   // Si Discord est équipé, pas de bordure
   if (getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'discord') {
     return { border: 'none', background: 'transparent' }
+  }
+
+  // Récupère l'index de variante Jojo pour un utilisateur (0: sans texte, 1: avec texte)
+  const getJojoVariantIndexForUser = (user) => {
+    try {
+      const raw = String(user && user.selectedBorderColor ? user.selectedBorderColor : '')
+      const part = raw.split('|').find(p => p.startsWith('jv='))
+      const val = part ? Number(part.split('=')[1]) : 0
+      return val === 1 ? 1 : 0
+    } catch { return 0 }
   }
   // Extraire l'id de base si encodé avec variantes (ex: "red|dv=1|jv=0")
   const raw = user && user.selectedBorderColor ? String(user.selectedBorderColor) : ''
