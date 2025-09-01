@@ -403,7 +403,8 @@ const editForm = ref({
   password: '',
   role: 'eleve',
   groupe: '',
-  year: ''
+  year: '',
+  specialite: ''
 });
 const editFormMessage = ref('');
 const editFormLoading = ref(false);
@@ -844,6 +845,7 @@ function cancelEdit() {
     role: 'eleve',
     groupe: '',
     year: '',
+    specialite: '',
     coins: 0
   };
   editFormMessage.value = '';
