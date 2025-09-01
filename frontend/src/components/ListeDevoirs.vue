@@ -456,7 +456,7 @@ const availableMatieres = computed(() => {
     const uYear = u.year || ''
     const uGroup = u.groupe || ''
     const dyn = (subjectsStore.subjects || [])
-      .filter((s:any) => {
+      .filter((s) => {
         const years = Array.isArray(s.yearsAllowed) ? s.yearsAllowed : []
         const groups = Array.isArray(s.groupsAllowed) ? s.groupsAllowed : []
         const specs = Array.isArray(s.specialitesAllowed) ? s.specialitesAllowed : []
@@ -471,9 +471,9 @@ const availableMatieres = computed(() => {
         }
         return true
       })
-      .map((s:any) => s.name)
+      .map((s) => s.name)
       .filter(Boolean)
-    const merged = Array.from(new Set<string>([...base, ...dyn]))
+    const merged = Array.from(new Set([...base, ...dyn]))
     return merged
   } catch {
     return base
