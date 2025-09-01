@@ -454,6 +454,43 @@ const allMatieres = computed(() => {
   try { return Array.from(new Set([ ...mmiMatieres, ...dynamicMatieres.value ])) } catch { return mmiMatieres }
 })
 
+// Styles de couleurs pour matières dynamiques
+function hexToRgba(hex, opacity) {
+  try {
+    if (!hex || typeof hex !== 'string') return hex;
+    if (hex.startsWith('rgb') || hex.startsWith('hsl')) return hex;
+    const clean = hex.replace('#', '');
+    const bigint = parseInt(clean.length === 3 ? clean.split('').map(c => c + c).join('') : clean, 16);
+    const r = (bigint >> 16) & 255;
+    const g = (bigint >> 8) & 255;
+    const b = bigint & 255;
+    const a = Number.isFinite(Number(opacity)) ? Number(opacity) : 1;
+    return `rgba(${r}, ${g}, ${b}, ${a})`;
+  } catch { return hex }
+}
+
+function buildSubjectStyle(subj) {
+  if (!subj) return null;
+  const c1 = subj.color ? hexToRgba(subj.color, subj.colorOpacity) : null;
+  const c2 = subj.color2 ? hexToRgba(subj.color2, subj.color2Opacity) : null;
+  const angle = Number.isFinite(Number(subj.gradientAngle)) ? Number(subj.gradientAngle) : 135;
+  if (c1 && c2) return `linear-gradient(${angle}deg, ${c1} 0%, ${c2} 100%)`;
+  if (c1) return c1;
+  return null;
+}
+
+const subjectStyleMap = computed(() => {
+  const map = new Map();
+  try {
+    for (const s of subjectsStore.subjects || []) {
+      if (!s || !s.name) continue;
+      const style = buildSubjectStyle(s);
+      if (style) map.set(String(s.name).toLowerCase(), style);
+    }
+  } catch {}
+  return map;
+})
+
 // Génère une clé unique stable pour un event
 const eventKey = (e) => (e && (e._id || (e.titre + e.date + e.heure)));
 
@@ -556,6 +593,11 @@ function setSort(type) {
 }
 
 function stringToColor(str, type) {
+  // D'abord: couleur dynamique définie dans l'Admin (si disponible)
+  try {
+    const dyn = subjectStyleMap.value && subjectStyleMap.value.get(String(str || '').toLowerCase());
+    if (dyn) return dyn;
+  } catch {}
   if (str === "Gestion de projet") {
     return "linear-gradient(90deg, rgba(83,198,77,0.88) 0%, rgba(126,252,173,0.89) 100%)";
   }
