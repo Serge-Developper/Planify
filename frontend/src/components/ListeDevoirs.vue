@@ -1768,9 +1768,10 @@ function cancelDelete() {
   box-shadow: 0 2px 8px #6eff7833;
   transition: background 0.2s, color 0.2s, box-shadow 0.2s;
 }
-.btn-valider-ajout:hover {
+.btn-valider-ajout:hover,
+.popup-content-ajout-tache button[type="submit"]:hover {
   background: linear-gradient(90deg, #6EFF78 0%, #39ff7a 100%);
-  color: #000;
+  color: #fff;
   box-shadow: 0 4px 16px #39ff7a55;
 }
 .groupes-checkboxes {
