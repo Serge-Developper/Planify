@@ -210,6 +210,14 @@
             <!-- Section pour donner des items (cases à cocher) -->
             <div class="give-items-section">
               <h4>Donner des items</h4>
+              <!-- Sélection rapide par catégorie -->
+              <div class="category-actions">
+                <button type="button" class="toggle-all-btn" @click="selectCategory('static')">Sélectionner items statiques</button>
+                <button type="button" class="toggle-all-btn" @click="selectCategory('colors-plain')">Sélectionner bordures (couleurs unies)</button>
+                <button type="button" class="toggle-all-btn" @click="selectCategory('colors-gradients')">Sélectionner bordures (dégradés)</button>
+                <button type="button" class="toggle-all-btn" @click="selectCategory('colors-all')">Sélectionner toutes les bordures</button>
+                <button type="button" class="toggle-all-btn" @click="selectedItemsToGive = []">Tout désélectionner</button>
+              </div>
               <div class="give-item-form checkboxes">
                 <div class="checkbox-grid">
                   <label v-for="(it, idx) in itemsCatalog.filter(Boolean)" :key="(it && it.id) ?? idx" class="item-checkbox">
@@ -240,6 +248,9 @@
                   </button>
                   <button type="button" class="toggle-all-btn" @click="selectMissingOnly" title="Ne sélectionner que les items non possédés">
                     Sélectionner uniquement les manquants
+                  </button>
+                  <button type="button" class="toggle-all-btn" @click="giveCategory('colors-all')" title="Donner toutes les bordures (unies + dégradés)">
+                    Donner toutes les bordures
                   </button>
                   <button @click="giveSelectedItemsToUser" :disabled="selectedItemsToGive.length === 0" class="give-item-btn">
                     Donner les items ({{ selectedItemsToGive.length }})
@@ -1182,6 +1193,52 @@ function selectMissingOnly() {
   selectedItemsToGive.value = itemsCatalog.value
     .map(i => i.id)
     .filter(id => !ownedIds.has(id))
+}
+
+// Sélections rapides par catégories
+function selectCategory(cat) {
+  const staticIds = new Set([
+    0,1,2,3,4,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28
+  ])
+  const plainColorIds = new Set([
+    100,101,102,103,104,105,106,107,108,109,110,111,112,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,132,133,143
+  ])
+  const gradientIds = new Set([
+    134,135,136,137,138,139,140,141,142,
+    200,201,202,203,204,205,206,207,208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223,224,225,226,227,228,229,230,231
+  ])
+  let ids = []
+  switch (cat) {
+    case 'static':
+      ids = itemsCatalog.value.map(i=>i.id).filter(id => staticIds.has(id));
+      break;
+    case 'colors-plain':
+      ids = itemsCatalog.value.map(i=>i.id).filter(id => plainColorIds.has(id));
+      break;
+    case 'colors-gradients':
+      ids = itemsCatalog.value.map(i=>i.id).filter(id => gradientIds.has(id));
+      break;
+    case 'colors-all':
+      ids = itemsCatalog.value.map(i=>i.id).filter(id => plainColorIds.has(id) || gradientIds.has(id));
+      break;
+    default:
+      ids = []
+  }
+  selectedItemsToGive.value = ids
+}
+
+// Donner directement une catégorie (bordures) en filtrant les manquants
+async function giveCategory(cat) {
+  if (!viewingUserItems.value) return
+  const ownedIds = new Set((viewingUserItems.value.purchasedItems || []).map(pi => pi.itemId))
+  selectCategory(cat)
+  const idsToGive = selectedItemsToGive.value.filter(id => !ownedIds.has(id))
+  if (!idsToGive.length) {
+    alert("Aucune nouvelle attribution dans cette catégorie.")
+    return
+  }
+  // Utiliser le flux existant (séquentiel)
+  await giveSelectedItemsToUser()
 }
 
 // Donner plusieurs items (séquentiel)

@@ -563,6 +563,8 @@ async initialize() {
     return;
   }
   // Connecté: charger depuis le backend + état coins
+  // Fusionner les couleurs dynamiques depuis l'API avant de synchroniser l'inventaire
+  await this.mergeBorderColorsFromApi();
   await this.loadDynamicItemVariants();
   await this.loadBalance();
   await this.loadSpinStatus();
@@ -656,6 +658,33 @@ async initialize() {
         { id: 'g230', name: 'Ambre Nuit', color: '#060002', gradient: 'linear-gradient(135deg,#f77500,#060002)', unlocked: false },
         { id: 'g231', name: 'Émeraude Nuit', color: '#1c231f', gradient: 'linear-gradient(135deg,#01f9a0,#1c231f)', unlocked: false }
       ];
+    },
+
+    // Fusionner les couleurs dynamiques depuis l'API (connecté uniquement)
+    async mergeBorderColorsFromApi() {
+      try {
+        const res = await secureApiCall('/border-colors')
+        if (!res || !res.success || !Array.isArray(res.colors)) return
+        const existingById = new Map(this.borderColors.map(c => [String(c.id), c]))
+        for (const srv of res.colors) {
+          const id = String(srv.id)
+          const name = String(srv.name || id)
+          const color = srv.color || null
+          const gradient = srv.gradient || null
+          const base = { id, name, color: color || '#000000', gradient: gradient || undefined, unlocked: false }
+          if (existingById.has(id)) {
+            const loc = existingById.get(id)!
+            // Mettre à jour les propriétés connues sans toucher au statut unlocked
+            loc.name = base.name
+            if (base.color) loc.color = base.color
+            if (base.gradient) loc.gradient = base.gradient
+          } else {
+            this.borderColors.push(base)
+          }
+        }
+      } catch (e) {
+        // Ignorer silencieusement en cas d'erreur réseau/auth
+      }
     },
 
     // Débloquer une couleur de bordure
