@@ -968,6 +968,7 @@
               <div><strong>Rôle :</strong> {{ selectedUser?.role ? afficherRole(selectedUser.role) : '—' }}</div>
               <div><strong>Année :</strong> {{ selectedUser?.year ? afficherAnnee(selectedUser.year) : '—' }}</div>
               <div><strong>Groupe :</strong> {{ selectedUser?.groupe || '—' }}</div>
+              <div v-if="selectedUser?.specialite"><strong>Spécialité :</strong> {{ afficherSpecialite(selectedUser.specialite) }}</div>
               <div class="coins-profile-row">
                 <strong>PlanifyCoins :</strong>
                 <span class="coins-value">{{ selectedUser?.coins ?? 0 }}</span>
@@ -1834,6 +1835,13 @@ function afficherAnnee(year) {
   if (!year) return '—'
   const map = { BUT1: '1ère année', BUT2: '2ème année', BUT3: '3ème année' }
   return map[year] || String(year)
+}
+
+function afficherSpecialite(s) {
+  if (!s) return '—'
+  const key = String(s).toLowerCase()
+  const map = { devweb: 'Développement web', creation: 'Création numérique', gestion: 'Gestion de projet' }
+  return map[key] || String(s)
 }
 
 // Items de la boutique
