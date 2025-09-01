@@ -798,6 +798,7 @@ function editUser(user) {
     role: user.role === 'etudiant' ? 'eleve' : (user.role || 'eleve'), // Convertir 'etudiant' en 'eleve'
     groupe: user.groupe || '',
     year: user.year || '',
+    specialite: user.specialite || '',
     coins: user.coins || 0
   };
   
