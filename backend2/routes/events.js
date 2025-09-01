@@ -4,6 +4,7 @@ const router = express.Router();
 const Event = require('../models/Event');
 const { verifyToken, requireRole } = require('../middlewares/auth');
 const fs = require('fs');
+const StaticSubjectRule = require('../models/StaticSubjectRule');
 
 // Handler OPTIONS pour toutes les routes de ce router
 router.options('*', (req, res) => {
@@ -300,6 +301,46 @@ router.get('/', verifyToken, async (req, res) => {
         ]
       };
     }
+
+    // Filtrage matière via règles statiques (si l'événement correspond à une matière statique connue)
+    try {
+      const rules = await StaticSubjectRule.find({}).lean();
+      const rulesByName = new Map(rules.map(r => [String(r.subjectName).toLowerCase(), r]));
+      const candidateEvents = await Event.find({
+        ...query,
+        $or: [
+          { deletedBy: { $exists: false } },
+          { deletedBy: { $size: 0 } },
+          { deletedBy: { $nin: [req.user.id] } }
+        ]
+      });
+      const filtered = candidateEvents.filter(ev => {
+        const rule = rulesByName.get(String(ev.matiere || '').toLowerCase());
+        if (!rule) return true; // pas de règle → visible si passe les autres filtres
+        // Filtre années
+        const years = Array.isArray(rule.yearsAllowed) ? rule.yearsAllowed : [];
+        if (years.length && !years.includes(year)) return false;
+        // Filtre groupes
+        const grs = Array.isArray(rule.groupsAllowed) ? rule.groupsAllowed : [];
+        const gNorm = (groupe || '').toString();
+        if (grs.length && !(grs.includes('Promo') || grs.includes(gNorm))) return false;
+        // Filtre spécialités
+        const specs = Array.isArray(rule.specialitesAllowed) ? rule.specialitesAllowed : [];
+        if (specs.length) {
+          if (!specialite) return false; // si l'user n'a pas de spécialité, ne voit pas les matières ciblées
+          if (!specs.includes(specialite)) return false;
+        }
+        return true;
+      });
+      const eventsWithStatus = filtered.map(event => {
+        const isArchived = event.archivedBy && event.archivedBy.map(id => id.toString()).includes(userId);
+        const isChecked = event.checkedBy && event.checkedBy.map(id => id.toString()).includes(userId);
+        return { ...event.toObject(), archived: isArchived, checked: isChecked };
+      });
+      return res.json(eventsWithStatus);
+    } catch (e) {
+      // En cas d'erreur règles, fallback au comportement précédent
+    }
     // Pour les profs et admins : pas de filtre (voient tous les événements)
     if (role === 'prof' || role === 'admin') {
       console.log(`${role === 'prof' ? 'Professeur' : 'Admin'} - Affichage de tous les événements`);
@@ -307,6 +348,7 @@ router.get('/', verifyToken, async (req, res) => {
     }
     fs.appendFileSync('debug.log', 'Query utilisée: ' + JSON.stringify(query) + '\\n');
     // Exclure les événements "supprimés" individuellement par cet utilisateur
+    // Si on arrive ici, on renvoie sans filtre statique (sécurité)
     const events = await Event.find({
       ...query,
       $or: [
@@ -315,14 +357,11 @@ router.get('/', verifyToken, async (req, res) => {
         { deletedBy: { $nin: [req.user.id] } }
       ]
     });
-    console.log(`${events.length} événements trouvés pour l'utilisateur ${req.user.username}`);
-    
     const eventsWithStatus = events.map(event => {
       const isArchived = event.archivedBy && event.archivedBy.map(id => id.toString()).includes(userId);
       const isChecked = event.checkedBy && event.checkedBy.map(id => id.toString()).includes(userId);
       return { ...event.toObject(), archived: isArchived, checked: isChecked };
     });
-    
     res.json(eventsWithStatus);
   } catch (error) {
     console.error('Erreur critique dans GET /events:', error);
