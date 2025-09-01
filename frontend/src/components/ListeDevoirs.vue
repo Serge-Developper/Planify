@@ -447,7 +447,7 @@ const mmiMatieres = [
 
 // Matières disponibles pour l'utilisateur: liste statique + dynamiques filtrées par règles/specialités
 import { useSubjectsStore } from '@/stores/subjects'
-import { onMounted } from 'vue'
+// onMounted déjà importé en haut du fichier
 const subjectsStore = useSubjectsStore()
 const availableMatieres = computed(() => {
   const base = [...mmiMatieres]
