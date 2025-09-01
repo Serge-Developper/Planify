@@ -951,7 +951,8 @@ async function submitAddTask() {
       description: newTask.value.description,
       groupes: newTask.value.groupes,
       groupe: newTask.value.groupes[0], // toujours une valeur valide
-      year: userData.role === 'prof' ? newTask.value.year : (userData.year || 'BUT1') // Utiliser l'année sélectionnée pour les profs
+      year: userData.role === 'prof' ? newTask.value.year : (userData.year || 'BUT1'), // Utiliser l'année sélectionnée pour les profs
+      specialite: userData.specialite || ''
     };
     const token = userData.token;
     await axios.post(`${API_URL}/events`, eventToSend, {

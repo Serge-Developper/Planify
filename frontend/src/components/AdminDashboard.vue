@@ -370,7 +370,8 @@ const userForm = ref({
   password: '',
   role: 'eleve',
   groupe: 'A',
-  year: 'BUT1'
+  year: 'BUT1',
+  specialite: ''
 });
 const userFormMessage = ref('');
 const userFormLoading = ref(false);
@@ -786,6 +787,7 @@ function editUser(user) {
     role: user.role === 'etudiant' ? 'eleve' : (user.role || 'eleve'), // Convertir 'etudiant' en 'eleve'
     groupe: user.groupe || '',
     year: user.year || '',
+    specialite: user.specialite || '',
     coins: user.coins || 0
   };
   
@@ -801,6 +803,7 @@ function editUser(user) {
     role: userData.role,
     groupe: userData.groupe,
     year: userData.year,
+    specialite: userData.specialite || '',
     coins: userData.coins || 0
   };
   
@@ -832,6 +835,7 @@ function cancelEdit() {
     role: 'eleve',
     groupe: '',
     year: '',
+    specialite: '',
     coins: 0
   };
   editFormMessage.value = '';

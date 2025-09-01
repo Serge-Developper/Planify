@@ -746,8 +746,8 @@ router.get('/', verifyToken, async (req, res) => {
 // Création d'utilisateurs
 router.post('/register', async (req, res) => {
   try {
-    const { username, password, role, groupe, year } = req.body;
-    const user = new User({ username, password, role, groupe, year });
+    const { username, password, role, groupe, year, specialite } = req.body;
+    const user = new User({ username, password, role, groupe, year, specialite });
     
     // Ajouter automatiquement l'item "Bordure Classique" aux nouveaux utilisateurs
     user.purchasedItems.push({
@@ -791,7 +791,7 @@ router.post('/secret-questions', async (req, res) => {
 router.put('/:id', verifyToken, requireRole(['admin']), async (req, res) => {
   try {
     const { id } = req.params;
-    const { username, password, role, groupe, year } = req.body;
+    const { username, password, role, groupe, year, specialite } = req.body;
     
     const user = await User.findById(id);
     if (!user) {
@@ -808,6 +808,7 @@ router.put('/:id', verifyToken, requireRole(['admin']), async (req, res) => {
     if (role) user.role = role;
     if (groupe !== undefined) user.groupe = groupe;
     if (year !== undefined) user.year = year;
+    if (specialite !== undefined) user.specialite = specialite;
     // plus de mises à jour de variantes ici (on évite d'ajouter ces champs en DB)
     
     await user.save();
