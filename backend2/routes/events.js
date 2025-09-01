@@ -416,6 +416,19 @@ router.delete('/:id', verifyToken, async (req, res) => {
   }
 });
 
+// Suppression globale d'un événement (admin seulement)
+router.delete('/:id/hard', verifyToken, requireRole(['admin']), async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.id);
+    if (!event) return res.status(404).json({ message: 'Événement non trouvé' });
+    await Event.deleteOne({ _id: req.params.id });
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('Erreur suppression HARD:', error);
+    return res.status(500).json({ message: 'Erreur suppression' });
+  }
+});
+
 // Modifier un événement
 router.put('/:id', verifyToken, requireRole(['admin']), async (req, res) => {
   const payload = { ...req.body };
