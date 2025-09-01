@@ -5,8 +5,8 @@ const { verifyToken, requireRole } = require('../middlewares/auth')
 const Subject = require('../models/Subject')
 const StaticSubjectRule = require('../models/StaticSubjectRule')
 
-// Liste des matières
-router.get('/', verifyToken, requireRole(['admin', 'prof']), async (req, res) => {
+// Liste des matières (public)
+router.get('/', async (req, res) => {
   try {
     const list = await Subject.find({}).sort({ createdAt: -1 }).lean()
     res.json({ success: true, subjects: list })
@@ -60,8 +60,8 @@ router.delete('/:id', verifyToken, requireRole(['admin', 'prof']), async (req, r
   }
 })
 
-// Règles statiques (CRUD minimal)
-router.get('/static-rules', verifyToken, requireRole(['admin', 'prof']), async (_req, res) => {
+// Règles statiques (lecture publique)
+router.get('/static-rules', async (_req, res) => {
   try {
     const rules = await StaticSubjectRule.find({}).lean()
     res.json({ success: true, rules })
