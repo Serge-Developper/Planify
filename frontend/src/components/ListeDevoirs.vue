@@ -588,8 +588,9 @@ const toDoEvents = computed(() => {
   return filtered;
 });
 
+// Afficher toutes les tâches archivées, même si la matière n'est plus visible.
 const archives = computed(() => 
-  props.events.filter(e => isEventSubjectVisible(e) && e.archived && (!selectedMatiere.value || e.matiere === selectedMatiere.value))
+  props.events.filter(e => e.archived && (!selectedMatiere.value || e.matiere === selectedMatiere.value))
 );
 
 const lateEvents = computed(() =>
