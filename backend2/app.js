@@ -15,6 +15,7 @@ const usersAdminRoutes = require('./routes/users-admin');
 const coinsRoutes = require('./routes/coins-simple');
 const itemsRoutes = require('./routes/items');
 const borderColorsRouter = require('./routes/border-colors');
+const subjectsRouter = require('./routes/subjects');
 
 const app = express();
 let lastMongoError = null;
@@ -145,6 +146,7 @@ app.use('/api/coins', requireDb, coinsRoutes);
 app.use('/api/items', requireDb, itemsRoutes);
 app.use('/api/users-admin', requireDb, usersAdminRoutes);
 app.use('/api/border-colors', borderColorsRouter);
+app.use('/api/subjects', requireDb, subjectsRouter);
 
 // Endpoint de diagnostic simple
 app.get('/api/health', async (req, res) => {
