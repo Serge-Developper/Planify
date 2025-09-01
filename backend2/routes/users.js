@@ -489,7 +489,8 @@ router.post('/login', loginLimiter, async (req, res) => {
         username: user.username,
         role: user.role,
         year: user.year,
-        groupe: user.groupe
+        groupe: user.groupe,
+        specialite: user.specialite || ''
       },
       process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production',
       { 
@@ -508,6 +509,7 @@ router.post('/login', loginLimiter, async (req, res) => {
       role: user.role,
       groupe: user.groupe,
       year: user.year,
+      specialite: user.specialite || '',
       avatar: user.avatar, // Ajouter l'avatar dans la réponse
 
       token: token,
