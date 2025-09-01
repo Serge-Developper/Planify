@@ -3423,6 +3423,10 @@ const sortedLeaderboardUsers = computed(() => {
     margin-top: 20px !important;
     padding: 0 15px !important;
   }
+
+  .leaderboard-container {
+    max-width: 250px !important;
+  }
   
   .shop-item {
     width: 100% !important;
@@ -3918,7 +3922,6 @@ const sortedLeaderboardUsers = computed(() => {
   border-radius: 15px;
   padding: 20px;
   margin-top: 20px;
-  max-width: 250px !important;
 }
 
 .leaderboard-filters {
