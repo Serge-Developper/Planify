@@ -53,7 +53,7 @@
           <button class="cancel-btn" @click="() => { staticEditName = ''; clearStaticForm(); }">Fermer</button>
         </div>
       </div>
-      <div class="règles-liste" style="margin-top:12px;">
+      <div class="règles-liste" style="margin-top:12px; color: black;">
         <h4>Règles existantes</h4>
         <ul style="display: flex; flex-direction: column; gap: 20px;">
           <li v-for="r in subjectsStore.staticRules" :key="r.subjectName" style="display:flex;gap:8px;align-items:center;">
