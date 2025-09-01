@@ -18,7 +18,7 @@
           </select>
           <select v-model="newTask.matiere" required>
             <option value="" disabled>Matière</option>
-            <option v-for="matiere in mmiMatieres" :key="matiere" :value="matiere">{{ matiere }}</option>
+            <option v-for="matiere in allMatieres" :key="matiere" :value="matiere">{{ matiere }}</option>
           </select>
           <div class="input-floating">
             <input v-model="newTask.date" type="date" required id="date-input" placeholder=" " class="mobile-date-input" @input="updateDatePlaceholder" />
@@ -86,7 +86,7 @@
         <span class="tri-label">Matière :</span>
         <select v-model="selectedMatiere" class="matiere-select">
           <option value="">Toutes</option>
-          <option v-for="matiere in mmiMatieres" :key="matiere" :value="matiere">{{ matiere }}</option>
+          <option v-for="matiere in allMatieres" :key="matiere" :value="matiere">{{ matiere }}</option>
         </select>
       </div>
     </div>
@@ -408,6 +408,7 @@ import closeHoverImg from '@/assets/img/bouton_supprimer_cocher.png';
 import notifIcon from '@/assets/notif.png';
 import supprimerIcon from '@/assets/supprimer.svg';
 import { API_URL } from '@/api';
+import { useSubjectsStore } from '@/stores/subjects';
 
 const props = defineProps({
   events: { type: Array, required: true }
@@ -444,6 +445,14 @@ const mmiMatieres = [
   "Représentation et traitement de l'information",
   "Economie et droit du numérique"
 ];
+
+// Matières dynamiques (Subjects) + fusion avec liste statique
+const subjectsStore = useSubjectsStore();
+onMounted(async () => { try { await subjectsStore.initializeStore(); } catch {} })
+const dynamicMatieres = computed(() => (subjectsStore.subjects || []).map((s:any) => s && s.name).filter(Boolean))
+const allMatieres = computed(() => {
+  try { return Array.from(new Set([ ...mmiMatieres, ...dynamicMatieres.value ])) } catch { return mmiMatieres }
+})
 
 // Génère une clé unique stable pour un event
 const eventKey = (e) => (e && (e._id || (e.titre + e.date + e.heure)));
