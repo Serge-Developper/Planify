@@ -9,7 +9,7 @@
         v-if="sortBy === 'enretard' && lateEvents.length > 0" 
         class="btn-ajouter-tache btn-vider-retards" 
         @click="viderRetards">
-        <img class="btn-icon" :src="supprimerIcon" alt="Vider" />
+        <img class="btn-icon" :src="canIcon" alt="Vider" />
         Vider les retards
       </button>
     </div>
@@ -416,6 +416,7 @@ import closeImg from '@/assets/img/bouton_supprimer_decocher.png';
 import closeHoverImg from '@/assets/img/bouton_supprimer_cocher.png';
 import notifIcon from '@/assets/notif.png';
 import supprimerIcon from '@/assets/supprimer.svg';
+import canIcon from '@/assets/can.png';
 import { API_URL } from '@/api';
 
 const props = defineProps({
