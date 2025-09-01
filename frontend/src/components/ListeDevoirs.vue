@@ -784,13 +784,16 @@ async function archiverTout() {
   }
 }
 
-const userId = user.value && (user.value._id || user.value.id);
-const archivesFiltered = computed(() =>
-  props.events.filter(e =>
-    e.archivedBy && e.archivedBy.some(id => id === userId || (id._id && id._id === userId))
-    && (!selectedMatiere.value || e.matiere === selectedMatiere.value)
-  )
-);
+const userId = String((user.value && (user.value._id || user.value.id)) || '');
+const archivesFiltered = computed(() => {
+  return props.events.filter(e => {
+    const arr = Array.isArray(e.archivedBy) ? e.archivedBy : []
+    const isArchivedForUser = arr.some(v => String((v && v._id) ? v._id : v) === userId)
+    if (!isArchivedForUser) return false
+    if (selectedMatiere.value) return e.matiere === selectedMatiere.value
+    return true
+  })
+})
 
 async function viderArchive() {
   if (!user.value) return alert('Non connecté');
