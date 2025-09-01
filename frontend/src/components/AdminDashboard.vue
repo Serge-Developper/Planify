@@ -358,15 +358,26 @@ const matieres = [
 
 const selectedMatiere = ref(matieres[0]);
 const allMatieres = ref([...matieres])
-// Injecter les matières dynamiques dans la liste latérale (sans muter directement le tableau constant)
+
+function updateAllMatieres() {
+  try {
+    const dynamicNames = (subjectsStore.subjects || []).map((s:any) => s && s.name).filter(Boolean)
+    const merged = Array.from(new Set([ ...matieres, ...dynamicNames ]))
+    allMatieres.value = merged as any
+  } catch {
+    allMatieres.value = [...matieres]
+  }
+}
+
+// Injecter/rafraîchir les matières dynamiques dans la liste latérale
 onMounted(async () => {
   try { await subjectsStore.initializeStore() } catch {}
-  try {
-    const dynamicNames = (subjectsStore.subjects || []).map(s => s.name).filter(Boolean)
-    const merged = new Set<string>([...matieres, ...dynamicNames])
-    allMatieres.value = Array.from(merged)
-  } catch { allMatieres.value = [...matieres] }
+  updateAllMatieres()
 })
+
+watch(() => subjectsStore.subjects, () => {
+  updateAllMatieres()
+}, { deep: true })
 const showUserForm = ref(false);
 const showUserManagement = ref(false);
 const userForm = ref({
