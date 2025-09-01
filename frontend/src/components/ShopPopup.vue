@@ -3610,9 +3610,8 @@ const sortedLeaderboardUsers = computed(() => {
   overflow-x: hidden !important;
 }
 
-@media (min-width: 340px) and (max-width: 1024px) {
 
-  .jojo-text-preview {
+.jojo-text-preview {
     position: absolute !important;
     top: 0px !important;
     left: 8px !important;
@@ -3647,6 +3646,10 @@ const sortedLeaderboardUsers = computed(() => {
     height: 65% !important;
     object-fit: contain !important;
    }
+
+@media (min-width: 340px) and (max-width: 1024px) {
+
+ 
   
   .leaderboard-item {
     display: flex;
