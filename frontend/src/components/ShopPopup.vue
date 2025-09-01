@@ -3918,6 +3918,7 @@ const sortedLeaderboardUsers = computed(() => {
   border-radius: 15px;
   padding: 20px;
   margin-top: 20px;
+  max-width: 250px !important;
 }
 
 .leaderboard-filters {
