@@ -357,7 +357,7 @@ const matieres = [
 ];
 
 const selectedMatiere = ref(matieres[0]);
-const allMatieres = ref<string[]>([...matieres])
+const allMatieres = ref([...matieres])
 // Injecter les matières dynamiques dans la liste latérale (sans muter directement le tableau constant)
 onMounted(async () => {
   try { await subjectsStore.initializeStore() } catch {}
