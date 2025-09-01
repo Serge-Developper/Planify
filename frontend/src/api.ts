@@ -30,7 +30,10 @@ export const secureApiCall = async (url: string, options: RequestInit = {}) => {
     if (!response.ok) {
       if (response.status === 401) {
         localStorage.removeItem('user');
-        if (!hasRedirectedFor401) {
+        // Rediriger uniquement depuis des pages protégées (évite les boucles sur les pages publiques)
+        const path = (typeof window !== 'undefined' && window.location && window.location.pathname) ? window.location.pathname : '';
+        const isProtected = /^\/(admin|dashboard|profil|profile|account|compte)/i.test(path);
+        if (isProtected && !hasRedirectedFor401) {
           hasRedirectedFor401 = true;
           try { window.location.href = '/'; } catch {}
         }
