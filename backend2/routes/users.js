@@ -989,13 +989,13 @@ router.put('/:id/coins', verifyToken, requireRole(['admin']), async (req, res) =
 router.post('/:id/give-item', verifyToken, requireRole(['admin']), async (req, res) => {
   try {
     const { id } = req.params;
-    const { itemId, itemName, adminMessage } = req.body;
+    let { itemId, itemName, adminMessage } = req.body;
     
     console.log(`🎁 Don d'item ${itemId} (${itemName}) pour utilisateur ${id}${adminMessage ? ' avec message' : ''}`);
     
     // Valider correctement l'ID 0 (ne pas utiliser une vérification falsy)
-    const isItemIdMissing = itemId === undefined || itemId === null || Number.isNaN(itemId)
-    if (isItemIdMissing || !itemName) {
+    const isItemIdMissing = itemId === undefined || itemId === null || Number.isNaN(Number(itemId))
+    if ((isItemIdMissing && !(typeof itemName === 'string' && /^DYNCOLOR:/.test(itemName))) || !itemName) {
       return res.status(400).json({ message: 'ID et nom de l\'item requis' });
     }
     
@@ -1004,15 +1004,34 @@ router.post('/:id/give-item', verifyToken, requireRole(['admin']), async (req, r
       return res.status(404).json({ message: 'Utilisateur non trouvé' });
     }
     
-    // Vérifier si l'utilisateur a déjà cet item
-    const alreadyHasItem = user.purchasedItems.some(item => item.itemId === itemId);
+    // Gestion spéciale des couleurs dynamiques envoyées au format DYNCOLOR:<colorId>
+    if (typeof itemName === 'string' && /^DYNCOLOR:/.test(itemName)) {
+      const colorId = String(itemName).split(':')[1] || ''
+      // Générer un ID stable pour éviter les collisions tout en restant déterministe
+      if (isItemIdMissing) {
+        const str = String(colorId)
+        let hash = 0
+        for (let i = 0; i < str.length; i++) hash = (hash * 131 + str.charCodeAt(i)) >>> 0
+        itemId = 700000 + (hash % 200000)
+      } else {
+        itemId = Number(itemId)
+      }
+      // Éviter doublons: par itemId OU par nom DYNCOLOR:colorId
+      const alreadyHasDyn = (user.purchasedItems || []).some(pi => pi.itemId === itemId || String(pi.itemName || '').toUpperCase() === `DYNCOLOR:${colorId}`.toUpperCase())
+      if (alreadyHasDyn) {
+        return res.status(400).json({ message: 'L\'utilisateur possède déjà cette couleur' })
+      }
+    }
+
+    // Vérifier si l'utilisateur a déjà cet item (cas générique)
+    const alreadyHasItem = (user.purchasedItems || []).some(item => item.itemId === Number(itemId));
     if (alreadyHasItem) {
       return res.status(400).json({ message: 'L\'utilisateur possède déjà cet item' });
     }
     
     // Ajouter l'item à l'utilisateur avec le message optionnel
     user.purchasedItems.push({
-      itemId: itemId,
+      itemId: Number(itemId),
       itemName: itemName,
       purchaseDate: new Date(),
       equipped: false,
