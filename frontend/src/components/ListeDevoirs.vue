@@ -515,14 +515,14 @@ const toDoEvents = computed(() => {
 
   if (sortBy.value === 'passe') {
     filtered = filtered.sort((a, b) => {
-      const dateA = new Date(a.date + 'T' + (a.heure ? a.heure : '00:00'));
-      const dateB = new Date(b.date + 'T' + (b.heure ? b.heure : '00:00'));
+      const dateA = new Date(a.date + 'T' + (a.heure ? a.heure.replace('h', ':') : '00:00'));
+      const dateB = new Date(b.date + 'T' + (b.heure ? b.heure.replace('h', ':') : '00:00'));
       return dateB - dateA;
     });
   } else {
     filtered = filtered.sort((a, b) => {
-      const dateA = new Date(a.date + 'T' + (a.heure ? a.heure : '00:00'));
-      const dateB = new Date(b.date + 'T' + (b.heure ? b.heure : '00:00'));
+      const dateA = new Date(a.date + 'T' + (a.heure ? a.heure.replace('h', ':') : '00:00'));
+      const dateB = new Date(b.date + 'T' + (b.heure ? b.heure.replace('h', ':') : '00:00'));
       return dateA - dateB;
     });
   }
@@ -603,7 +603,7 @@ function displayGroup(event) {
 }
 function timeLeft(date, heure) {
   if (!date || !heure) return '';
-  const [h, m] = heure.split(':');
+  const [h, m] = (typeof heure === 'string' ? heure.replace('h', ':') : '').split(':');
   const target = new Date(date);
   target.setHours(Number(h), Number(m || 0), 0, 0);
   const now = new Date();
@@ -673,7 +673,7 @@ function getGroupeImage(event) {
 }
 
 function isLate(event) {
-  const [h, m] = (event.heure || '').split(':');
+  const [h, m] = ((event.heure || '').replace('h', ':')).split(':');
   const target = new Date(event.date);
   target.setHours(Number(h), Number(m || 0), 0, 0);
   const now = new Date();
@@ -698,11 +698,9 @@ async function archiverTout() {
 }
 
 const userId = user.value && (user.value._id || user.value.id);
+// Utilise le booléen e.archived fourni par l'API pour l'utilisateur courant
 const archivesFiltered = computed(() =>
-  props.events.filter(e =>
-    e.archivedBy && e.archivedBy.some(id => id === userId || (id._id && id._id === userId))
-    && (!selectedMatiere.value || e.matiere === selectedMatiere.value)
-  )
+  props.events.filter(e => e.archived && (!selectedMatiere.value || e.matiere === selectedMatiere.value))
 );
 
 async function viderArchive() {
