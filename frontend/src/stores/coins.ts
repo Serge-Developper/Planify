@@ -389,9 +389,18 @@ export const useCoinsStore = defineStore('coins', {
     syncUnlockedBorderColorsFromInventory() {
       if (!Array.isArray(this.purchasedItems)) return;
       for (const invItem of this.purchasedItems) {
+        // 1) Mapping classique (items statiques -> couleurs)
         const colorId = this.getBorderColorIdFromItem({ id: invItem.itemId, name: invItem.itemName });
         if (colorId) {
           this.unlockBorderColor(colorId);
+          continue;
+        }
+        // 2) Déverrouillage via libellé DYNCOLOR:<id> (couleurs dynamiques)
+        const name = String(invItem.itemName || '')
+        const m = /^DYNCOLOR:(.+)$/i.exec(name)
+        if (m && m[1]) {
+          const dynId = m[1]
+          this.unlockBorderColor(dynId)
         }
       }
     },

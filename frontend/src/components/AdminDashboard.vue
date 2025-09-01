@@ -210,13 +210,23 @@
             <!-- Section pour donner des items (cases à cocher) -->
             <div class="give-items-section">
               <h4>Donner des items</h4>
-              <!-- Sélection rapide par catégorie -->
-              <div class="category-actions">
-                <button type="button" class="toggle-all-btn" @click="selectCategory('static')">Sélectionner items statiques</button>
-                <button type="button" class="toggle-all-btn" @click="selectCategory('colors-plain')">Sélectionner bordures (couleurs unies)</button>
-                <button type="button" class="toggle-all-btn" @click="selectCategory('colors-gradients')">Sélectionner bordures (dégradés)</button>
-                <button type="button" class="toggle-all-btn" @click="selectCategory('colors-all')">Sélectionner toutes les bordures</button>
-                <button type="button" class="toggle-all-btn" @click="selectedItemsToGive = []">Tout désélectionner</button>
+              <!-- Sections dynamiques comme Netlify: couleurs dynamiques puis items dynamiques -->
+              <div class="dynamic-sections">
+                <h5 style="margin:10px 0 6px; color:#000;">Couleurs de bordure dynamiques</h5>
+                <div class="checkbox-grid">
+                  <label v-for="c in dynamicBorderColors" :key="c.id" class="item-checkbox">
+                    <input type="checkbox" :value="c.legacyIdForGive" v-model="selectedItemsToGive" />
+                    <span>{{ c.name }} ({{ c.id }})</span>
+                  </label>
+                </div>
+
+                <h5 style="margin:16px 0 6px; color:#000;">Items dynamiques</h5>
+                <div class="checkbox-grid">
+                  <label v-for="d in dynamicItems" :key="d.id" class="item-checkbox">
+                    <input type="checkbox" :value="d.id" v-model="selectedItemsToGive" />
+                    <span>{{ d.name }} ({{ d.id }})</span>
+                  </label>
+                </div>
               </div>
               <div class="give-item-form checkboxes">
                 <div class="checkbox-grid">
@@ -393,6 +403,9 @@ const showUserItems = ref(false);
 // Recharger la liste dynamique lors de l'ouverture de la modale des items
 watch(showUserItems, (v) => { if (v) loadAdminDynamicItems() })
 const itemToGive = ref('');
+// Sections dynamiques pour l'UI
+const dynamicBorderColors = ref([])
+const dynamicItems = ref([])
 
 // Gestion des questions secrètes
 const showUserSecrets = ref(false);
@@ -566,6 +579,25 @@ function getAvailableQuestions(index) {
         itemsCatalog.value = itemsCatalog.value.filter(Boolean).filter(x => baseStaticIds.has(x.id) || extraIds.has(x.id))
         // tri par id pour stabilité
         itemsCatalog.value = [...itemsCatalog.value].sort((a,b)=>a.id-b.id)
+
+        // Construire les listes dynamiques pour l'UI (couleurs dynamiques et items dynamiques)
+        try {
+          const colorPrefix = 'DYNCOLOR:'
+          dynamicBorderColors.value = raw
+            .filter(it => it && typeof it.id === 'string' && it.id.startsWith('bc:'))
+            .map(it => ({
+              id: String(it.id).replace(/^bc:/, ''),
+              name: sanitizeName(it.name || it.id),
+              // Pour permettre le give via le mapping existant, on encode dans itemName côté don
+              legacyIdForGive: it.legacyId ?? 0
+            }))
+            .filter(c => c.id)
+
+          dynamicItems.value = raw
+            .filter(it => it && typeof it.legacyId === 'number' && !(String(it.id||'').startsWith('bc:')))
+            .map(it => ({ id: it.legacyId, name: sanitizeName(it.name || String(it.legacyId)) }))
+            .sort((a,b)=>a.id-b.id)
+        } catch {}
       }
     } catch {}
   }
@@ -1099,6 +1131,7 @@ async function giveItemToUser() {
     }
     
     // Récupérer le nom de l'item depuis le catalogue (inclut dynamiques)
+    const dynamicColorGiveMap = Object.fromEntries(dynamicBorderColors.value.map(c => [c.legacyIdForGive, `DYNCOLOR:${c.id}`]))
     const nameById = Object.fromEntries(itemsCatalog.value.map(i => [i.id, i.name]))
     
     const response = await fetch(`${API_URL}/users/${viewingUserItems.value._id}/give-item`, {
@@ -1282,7 +1315,7 @@ async function giveSelectedItemsToUser() {
           credentials: 'include',
           body: JSON.stringify({ 
             itemId: id, 
-            itemName: nameById[id],
+            itemName: dynamicColorGiveMap[id] || nameById[id],
             adminMessage: adminMessage.value.trim() || null
           })
         })
