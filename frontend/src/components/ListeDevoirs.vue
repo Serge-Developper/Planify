@@ -447,6 +447,7 @@ const mmiMatieres = [
 
 // Matières disponibles pour l'utilisateur: liste statique + dynamiques filtrées par règles/specialités
 import { useSubjectsStore } from '@/stores/subjects'
+import { onMounted } from 'vue'
 const subjectsStore = useSubjectsStore()
 const availableMatieres = computed(() => {
   const base = [...mmiMatieres]
@@ -478,6 +479,11 @@ const availableMatieres = computed(() => {
   } catch {
     return base
   }
+})
+
+// S'assurer que les matières dynamiques sont chargées
+onMounted(async () => {
+  try { await subjectsStore.initializeStore() } catch {}
 })
 
 // Génère une clé unique stable pour un event
@@ -582,6 +588,20 @@ function setSort(type) {
 }
 
 function stringToColor(str, type) {
+  // 1) Style depuis matière dynamique si définie
+  try {
+    const subj = (subjectsStore.subjects || []).find(s => String(s.name).toLowerCase() === String(str).toLowerCase())
+    if (subj && subj.color) {
+      const color1 = rgbaColor(subj.color, (subj.colorOpacity ?? 1))
+      if (subj.useGradient && subj.color2) {
+        const color2 = rgbaColor(subj.color2, (subj.color2Opacity ?? 1))
+        const angle = typeof subj.gradientAngle === 'number' ? subj.gradientAngle : 135
+        return `linear-gradient(${angle}deg, ${color1}, ${color2})`
+      }
+      return color1
+    }
+  } catch {}
+  // 2) Fallback mapping statique
   if (str === "Gestion de projet") {
     return "linear-gradient(90deg, rgba(83,198,77,0.88) 0%, rgba(126,252,173,0.89) 100%)";
   }
@@ -623,6 +643,18 @@ function stringToColor(str, type) {
   }
   const h = Math.abs(hash) % 360;
   return `hsl(${h}, 80%, 75%)`;
+}
+
+// helpers couleurs
+function hexToRgb(hex) {
+  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex || '')
+  return m ? { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) } : null
+}
+function rgbaColor(hex, alpha) {
+  const rgb = hexToRgb(hex)
+  if (!rgb) return hex || '#000000'
+  const a = typeof alpha === 'number' ? Math.min(1, Math.max(0, alpha)) : 1
+  return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${a})`
 }
 function formatDate(dateStr) {
   if (!dateStr) return '';
