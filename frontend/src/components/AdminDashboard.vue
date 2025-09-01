@@ -361,9 +361,9 @@ const allMatieres = ref([...matieres])
 
 function updateAllMatieres() {
   try {
-    const dynamicNames = (subjectsStore.subjects || []).map((s:any) => s && s.name).filter(Boolean)
+    const dynamicNames = (subjectsStore.subjects || []).map((s) => s && s.name).filter(Boolean)
     const merged = Array.from(new Set([ ...matieres, ...dynamicNames ]))
-    allMatieres.value = merged as any
+    allMatieres.value = merged
   } catch {
     allMatieres.value = [...matieres]
   }
