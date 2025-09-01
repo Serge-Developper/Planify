@@ -1708,10 +1708,9 @@ onMounted(async () => {
     loadUserAvatar();
   }
   
-  if (user.value) {
-    await coinsStore.initialize();
-    checkSpinAvailability();
-  }
+  // Initialiser le store coins même en invité (sans appels protégés)
+  await coinsStore.initialize();
+  if (user.value) checkSpinAvailability();
   
   setInterval(updateSpinTimer, 60000);
 });

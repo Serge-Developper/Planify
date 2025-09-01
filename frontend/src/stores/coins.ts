@@ -548,11 +548,22 @@ export const useCoinsStore = defineStore('coins', {
     // Initialiser le store
 async initialize() {
   const auth = useAuthStore();
-  // Toujours initialiser la palette + variantes locales
+  // Toujours initialiser la palette locale
   this.initializeBorderColors();
+  // Visiteur: uniquement localStorage, aucun appel backend
+  if (!auth?.user?.token) {
+    try {
+      const stored = localStorage.getItem('dynamicItemVariants');
+      if (stored) {
+        const variants = JSON.parse(stored) as Record<string, number>;
+        const entries: [number, number][] = Object.entries(variants).map(([k, v]) => [Number(k), Number(v)] as [number, number]);
+        this.dynamicItemVariants = new Map<number, number>(entries);
+      }
+    } catch {}
+    return;
+  }
+  // Connecté: charger depuis le backend + état coins
   await this.loadDynamicItemVariants();
-  // Si pas de token, ne pas appeler d'API protégées
-  if (!auth?.user?.token) return;
   await this.loadBalance();
   await this.loadSpinStatus();
   await this.loadInventory();
