@@ -449,7 +449,39 @@ const mmiMatieres = [
 // Matières dynamiques (Subjects) + fusion avec liste statique
 const subjectsStore = useSubjectsStore();
 onMounted(async () => { try { await subjectsStore.initializeStore(); } catch {} })
-const dynamicMatieres = computed(() => (subjectsStore.subjects || []).map((s) => s && s.name).filter(Boolean))
+// Profil utilisateur (si disponible)
+const userYear = computed(() => (user.value && user.value.year) ? String(user.value.year) : null)
+const userGroup = computed(() => (user.value && user.value.groupe) ? String(user.value.groupe) : null)
+const userSpec = computed(() => {
+  const u = user.value || {};
+  return (u.specialite || u.speciality || u.spec || '').toString() || null;
+})
+
+function subjectMatchesUser(s) {
+  if (!s) return true;
+  try {
+    // Années: si renseigné côté sujet, il faut que l'année de l'utilisateur soit dedans
+    if (Array.isArray(s.yearsAllowed) && s.yearsAllowed.length > 0) {
+      if (userYear.value && !s.yearsAllowed.includes(userYear.value)) return false;
+    }
+    // Groupes: si renseigné, on vérifie; 'Promo' signifie tous
+    if (Array.isArray(s.groupsAllowed) && s.groupsAllowed.length > 0) {
+      if (!s.groupsAllowed.includes('Promo')) {
+        if (userGroup.value && !s.groupsAllowed.includes(userGroup.value)) return false;
+      }
+    }
+    // Spécialités: si renseigné côté sujet et si l'utilisateur a une spécialité, on exige la correspondance
+    if (Array.isArray(s.specialitesAllowed) && s.specialitesAllowed.length > 0) {
+      if (userSpec.value && !s.specialitesAllowed.includes(userSpec.value)) return false;
+    }
+  } catch {}
+  return true;
+}
+
+const dynamicMatieres = computed(() => (subjectsStore.subjects || [])
+  .filter((s) => subjectMatchesUser(s))
+  .map((s) => s && s.name)
+  .filter(Boolean))
 const allMatieres = computed(() => {
   try { return Array.from(new Set([ ...mmiMatieres, ...dynamicMatieres.value ])) } catch { return mmiMatieres }
 })
