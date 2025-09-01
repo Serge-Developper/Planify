@@ -218,15 +218,14 @@
               <h4>Donner des items</h4>
               <!-- Sections dynamiques comme Netlify: couleurs dynamiques puis items dynamiques -->
               <div class="dynamic-sections">
-                <h5 style="margin:10px 0 6px; color:#000;">Couleurs de bordure dynamiques</h5>
+                <h5 class="dyn-section-title">Couleurs de bordure dynamiques</h5>
                 <div class="checkbox-grid">
                   <label v-for="c in dynamicBorderColors" :key="c.id" class="item-checkbox">
-                    <input type="checkbox" :value="c.legacyIdForGive" v-model="selectedItemsToGive" />
+                    <input type="checkbox" :value="c.itemIdGive" v-model="selectedItemsToGive" />
                     <span>{{ c.name }} ({{ c.id }})</span>
                   </label>
                 </div>
-
-                <h5 style="margin:16px 0 6px; color:#000;">Items dynamiques</h5>
+                <h5 class="dyn-section-title" style="margin-top:14px;">Items dynamiques</h5>
                 <div class="checkbox-grid">
                   <label v-for="d in dynamicItems" :key="d.id" class="item-checkbox">
                     <input type="checkbox" :value="d.id" v-model="selectedItemsToGive" />
@@ -588,24 +587,34 @@ function getAvailableQuestions(index) {
         // tri par id pour stabilité
         itemsCatalog.value = [...itemsCatalog.value].sort((a,b)=>a.id-b.id)
 
-        // Construire les listes dynamiques pour l'UI (couleurs dynamiques et items dynamiques)
+        // Construire la liste des items dynamiques (hors couleurs)
         try {
-          const colorPrefix = 'DYNCOLOR:'
-          dynamicBorderColors.value = raw
-            .filter(it => it && typeof it.id === 'string' && it.id.startsWith('bc:'))
-            .map(it => ({
-              id: String(it.id).replace(/^bc:/, ''),
-              name: sanitizeName(it.name || it.id),
-              // Pour permettre le give via le mapping existant, on encode dans itemName côté don
-              legacyIdForGive: it.legacyId ?? 0
-            }))
-            .filter(c => c.id)
-
           dynamicItems.value = raw
             .filter(it => it && typeof it.legacyId === 'number' && !(String(it.id||'').startsWith('bc:')))
             .map(it => ({ id: it.legacyId, name: sanitizeName(it.name || String(it.legacyId)) }))
             .sort((a,b)=>a.id-b.id)
         } catch {}
+      }
+    } catch {}
+
+    // Charger les couleurs de bordure dynamiques depuis l'API dédiée
+    try {
+      const colorsRes = await secureApiCall('/border-colors')
+      if (colorsRes && colorsRes.success && Array.isArray(colorsRes.colors)) {
+        // mapping déterministe id couleur -> itemId numérique stable pour éviter les doublons
+        const computeStableId = (s) => {
+          try {
+            const str = String(s || '')
+            let hash = 0
+            for (let i=0;i<str.length;i++) hash = (hash * 131 + str.charCodeAt(i)) >>> 0
+            return 700000 + (hash % 200000) // plage 700000-899999
+          } catch { return Math.floor(Math.random()*1e6) }
+        }
+        dynamicBorderColors.value = colorsRes.colors.map(c => ({
+          id: String(c.id),
+          name: sanitizeName(c.name || c.id),
+          itemIdGive: computeStableId(c.id)
+        }))
       }
     } catch {}
   }
@@ -1143,7 +1152,7 @@ async function giveItemToUser() {
     }
     
     // Récupérer le nom de l'item depuis le catalogue (inclut dynamiques)
-    const dynamicColorGiveMap = Object.fromEntries(dynamicBorderColors.value.map(c => [c.legacyIdForGive, `DYNCOLOR:${c.id}`]))
+    const dynamicColorGiveMap = Object.fromEntries(dynamicBorderColors.value.map(c => [c.itemIdGive, `DYNCOLOR:${c.id}`]))
     const nameById = Object.fromEntries(itemsCatalog.value.map(i => [i.id, i.name]))
     
     const response = await fetch(`${API_URL}/users/${viewingUserItems.value._id}/give-item`, {
@@ -1712,6 +1721,15 @@ async function removeItemFromUser(userId, itemId) {
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 10px 14px;
   color: black !important;
+}
+.dynamic-sections {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed #e5e7eb;
+}
+.dyn-section-title {
+  margin: 6px 0 8px;
+  color: #111;
 }
 .item-checkbox {
   display: flex;
