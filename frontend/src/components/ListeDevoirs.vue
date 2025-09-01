@@ -449,7 +449,7 @@ const mmiMatieres = [
 // Matières dynamiques (Subjects) + fusion avec liste statique
 const subjectsStore = useSubjectsStore();
 onMounted(async () => { try { await subjectsStore.initializeStore(); } catch {} })
-const dynamicMatieres = computed(() => (subjectsStore.subjects || []).map((s:any) => s && s.name).filter(Boolean))
+const dynamicMatieres = computed(() => (subjectsStore.subjects || []).map((s) => s && s.name).filter(Boolean))
 const allMatieres = computed(() => {
   try { return Array.from(new Set([ ...mmiMatieres, ...dynamicMatieres.value ])) } catch { return mmiMatieres }
 })
