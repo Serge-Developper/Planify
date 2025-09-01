@@ -213,8 +213,8 @@
               <div class="give-item-form checkboxes">
                 <div class="checkbox-grid">
                   <label v-for="(it, idx) in itemsCatalog.filter(Boolean)" :key="(it && it.id) ?? idx" class="item-checkbox">
-+                     <input type="checkbox" :value="it?.id" v-model="selectedItemsToGive" />
-+                     <span>{{ it?.name || ('Item ' + ((it && it.id) ?? idx)) }}</span>
+                    <input type="checkbox" :value="it?.id" v-model="selectedItemsToGive" />
+                    <span>{{ it?.name || ('Item ' + ((it && it.id) ?? idx)) }}</span>
                   </label>
                 </div>
                 
@@ -541,6 +541,19 @@ function getAvailableQuestions(index) {
         itemsCatalog.value = itemsCatalog.value.filter(Boolean).filter(x => baseStaticIds.has(x.id) || extraIds.has(x.id))
         // tri par id pour stabilité
         itemsCatalog.value = [...itemsCatalog.value].sort((a,b)=>a.id-b.id)
+        // 2) Ajouter aussi les couleurs de bordure dynamiques enregistrées (backend stub / futur CRUD)
+        try {
+          const bc = await secureApiCall('/border-colors')
+          const colors = (bc && bc.success && Array.isArray(bc.colors)) ? bc.colors : []
+          const exists = new Map(itemsCatalog.value.map(x => [x.id, x]))
+          for (const c of colors) {
+            const colorId = typeof c.legacyId === 'number' ? c.legacyId : Number(c.id)
+            if (!Number.isFinite(colorId)) continue
+            const name = c.name || (c.colorId || c.id || `Couleur ${colorId}`)
+            if (!exists.has(colorId)) itemsCatalog.value.push({ id: colorId, name })
+          }
+          itemsCatalog.value = [...itemsCatalog.value].filter(Boolean).sort((a,b)=>a.id-b.id)
+        } catch {}
       }
     } catch {}
   }
