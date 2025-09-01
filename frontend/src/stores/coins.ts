@@ -389,10 +389,15 @@ export const useCoinsStore = defineStore('coins', {
     syncUnlockedBorderColorsFromInventory() {
       if (!Array.isArray(this.purchasedItems)) return;
       for (const invItem of this.purchasedItems) {
-        const colorId = this.getBorderColorIdFromItem({ id: invItem.itemId, name: invItem.itemName });
-        if (colorId) {
-          this.unlockBorderColor(colorId);
+        const id = typeof invItem === 'number' ? invItem : (typeof invItem === 'string' ? Number(invItem) : Number(invItem?.itemId));
+        const name = (invItem && typeof invItem === 'object') ? invItem.itemName : undefined;
+        const directColorId = (invItem && typeof invItem === 'object' && (invItem as any).colorId) ? String((invItem as any).colorId) : null;
+        let colorId = directColorId || this.getBorderColorIdFromItem({ id, name } as any);
+        if (!colorId && name) {
+          const found = this.borderColors.find(c => String(c.name).toLowerCase() === String(name).toLowerCase());
+          if (found) colorId = found.id;
         }
+        if (colorId) this.unlockBorderColor(colorId);
       }
     },
 

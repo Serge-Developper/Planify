@@ -1076,11 +1076,13 @@ async function giveItemToUser() {
     // Récupérer le nom de l'item depuis le catalogue (inclut dynamiques)
     const nameById = Object.fromEntries(itemsCatalog.value.map(i => [i.id, i.name]))
     
-    const response = await fetch(`${API_URL}/users/${viewingUserItems.value._id}/give-item`, {
+    const response = await fetch(`${API_URL}/users-admin`, {
       method: 'POST',
       headers: headers,
       credentials: 'include',
       body: JSON.stringify({
+        action: 'give-item',
+        userId: viewingUserItems.value._id,
         itemId: parseInt(itemToGive.value),
         itemName: nameById[itemToGive.value] || String(itemToGive.value),
         adminMessage: (adminMessage.value || '').trim() || null
@@ -1205,12 +1207,14 @@ async function giveSelectedItemsToUser() {
     let failedCount = 0
     for (const id of idsToGive) {
       try {
-        const response = await fetch(`${API_URL}/users/${viewingUserItems.value._id}/give-item`, {
+        const response = await fetch(`${API_URL}/users-admin`, {
           method: 'POST',
           headers,
           credentials: 'include',
-          body: JSON.stringify({ 
-            itemId: id, 
+          body: JSON.stringify({
+            action: 'give-item',
+            userId: viewingUserItems.value._id,
+            itemId: id,
             itemName: nameById[id],
             adminMessage: adminMessage.value.trim() || null
           })
