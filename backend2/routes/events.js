@@ -270,7 +270,7 @@ function normalizeGroupe(groupe) {
 // Récupérer tous les événements avec filtrage
 router.get('/', verifyToken, async (req, res) => {
   try {
-    const { id: userId, role, year, groupe } = req.user;
+    const { id: userId, role, year, groupe, specialite } = req.user;
     console.log(`=== RÉCUPÉRATION ÉVÉNEMENTS ===`);
     console.log(`Utilisateur: ${req.user.username}, Rôle: ${role}, Année: ${year}, Groupe: ${groupe}`);
     fs.appendFileSync('debug.log', `User: ${req.user.username}, Role: ${role}, Year: ${year}, Groupe: ${groupe}\\n`);
@@ -294,7 +294,9 @@ router.get('/', verifyToken, async (req, res) => {
               { groupe: 'Promo' },
               { groupes: { $in: [groupe, 'Promo'] } }
             ]
-          }
+          },
+          // Filtrage par spécialité: si l'utilisateur a une spécialité, accepter événements sans spécialité ou même spécialité
+          ...(specialite ? [{ $or: [ { specialite: { $in: [null, ''] } }, { specialite } ] }] : [])
         ]
       };
     }
@@ -343,7 +345,10 @@ router.get('/all', async (req, res) => {
 
 // Ajouter un événement
 router.post('/', verifyToken, requireRole(['admin', 'prof', 'delegue']), async (req, res) => {
-  const event = new Event({ ...req.body, createdBy: req.user.id });
+  const payload = { ...req.body };
+  // Nettoyage des champs facultatifs
+  if (payload.specialite === undefined) payload.specialite = '';
+  const event = new Event({ ...payload, createdBy: req.user.id });
   await event.save();
   res.json(event);
 });
@@ -374,7 +379,9 @@ router.delete('/:id', verifyToken, async (req, res) => {
 
 // Modifier un événement
 router.put('/:id', verifyToken, requireRole(['admin']), async (req, res) => {
-  const event = await Event.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  const payload = { ...req.body };
+  if (payload.specialite === undefined) payload.specialite = '';
+  const event = await Event.findByIdAndUpdate(req.params.id, payload, { new: true });
   res.json(event);
 });
 

@@ -450,6 +450,7 @@ router.post('/login', loginLimiter, async (req, res) => {
     console.log('Utilisateur trouvé:', { 
       username: user.username, 
       role: user.role, 
+      specialite: user.specialite,
       passwordStartsWith: user.password.substring(0, 4) 
     });
     
@@ -494,7 +495,8 @@ router.post('/login', loginLimiter, async (req, res) => {
         username: user.username,
         role: user.role,
         year: user.year,
-        groupe: user.groupe
+        groupe: user.groupe,
+        specialite: user.specialite || ''
       },
       process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production',
       { 
@@ -512,6 +514,7 @@ router.post('/login', loginLimiter, async (req, res) => {
       username: user.username,
       role: user.role,
       groupe: user.groupe,
+      specialite: user.specialite || '',
       year: user.year,
       avatar: user.avatar, // Ajouter l'avatar dans la réponse
 
@@ -702,7 +705,10 @@ router.put('/:id', async (req, res) => {
       delete updateData.password;
     }
     
-    const user = await User.findByIdAndUpdate(id, updateData, { new: true });
+    const user = await User.findByIdAndUpdate(id, {
+      ...updateData,
+      ...(updateData.specialite !== undefined ? { specialite: String(updateData.specialite || '') } : {})
+    }, { new: true });
     
     if (!user) {
       return res.status(404).json({ message: 'Utilisateur non trouvé' });
@@ -788,8 +794,8 @@ router.get('/', verifyToken, async (req, res) => {
 // Création d'utilisateurs
 router.post('/register', async (req, res) => {
   try {
-    const { username, password, role, groupe, year } = req.body;
-    const user = new User({ username, password, role, groupe, year });
+    const { username, password, role, groupe, year, specialite } = req.body;
+    const user = new User({ username, password, role, groupe, year, specialite: String(specialite || '') });
     
     // Ajouter automatiquement l'item "Bordure Classique" aux nouveaux utilisateurs
     user.purchasedItems.push({

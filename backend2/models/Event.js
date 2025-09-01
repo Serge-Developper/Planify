@@ -8,6 +8,8 @@ const eventSchema = new mongoose.Schema({
   groupes: [{ type: String }], // Nouveau champ pour supporter plusieurs groupes
   type: { type: String, required: true }, // 'exam' ou 'devoir'
   matiere: { type: String, required: true },
+  // Spécialité MMI ciblée (devweb, creation, gestion). Vide = toutes spécialités
+  specialite: { type: String, default: '' },
   year: { type: String, required: true }, // Changé de Number à String pour correspondre aux utilisateurs (BUT1, BUT2, etc.)
   archivedBy: [{ type: require('mongoose').Schema.Types.ObjectId, ref: 'User' }],
   checkedBy: [{ type: require('mongoose').Schema.Types.ObjectId, ref: 'User' }],

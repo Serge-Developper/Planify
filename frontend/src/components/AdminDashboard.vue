@@ -362,7 +362,8 @@ const userForm = ref({
   password: '',
   role: 'eleve',
   groupe: 'A',
-  year: 'BUT1'
+  year: 'BUT1',
+  specialite: ''
 });
 const userFormMessage = ref('');
 const userFormLoading = ref(false);
@@ -556,7 +557,8 @@ const eventForm = ref({
   type: 'exam',
   matiere: matieres[0],
   year: 'BUT1',
-  description: ''
+  description: '',
+  specialite: ''
 });
 
 const editingIndex = ref(null);
@@ -631,6 +633,7 @@ function editEvent(event, idx) {
     eventForm.value.matiere = event.matiere || '';
     eventForm.value.year = event.year || '';
     eventForm.value.description = event.description || '';
+    eventForm.value.specialite = event.specialite || '';
   }
 }
 
@@ -652,7 +655,7 @@ async function addEvent() {
       const res = await axios.post(`${API_URL}/events`, eventForm.value);
       events.value.push(res.data);
     }
-    eventForm.value = { titre: '', date: '', heure: '', groupe: 'A', type: 'exam', matiere: selectedMatiere.value, year: 'BUT1', description: '', groupes: [] };
+    eventForm.value = { titre: '', date: '', heure: '', groupe: 'A', type: 'exam', matiere: selectedMatiere.value, year: 'BUT1', description: '', specialite: '', groupes: [] };
   } catch (err) {
     alert('Erreur lors de l\'ajout ou modification : ' + (err.response?.data?.message || err.message));
   }
