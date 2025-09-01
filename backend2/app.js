@@ -14,11 +14,7 @@ const contactRoutes = require('./routes/contact');
 const usersAdminRoutes = require('./routes/users-admin');
 const coinsRoutes = require('./routes/coins-simple');
 const itemsRoutes = require('./routes/items');
-// Stub de compatibilité pour couleurs dynamiques (Netlify) - pourra être remplacé par un CRUD complet
-const borderColorsRouter = express.Router();
-borderColorsRouter.get('/', (req, res) => {
-  res.json({ success: true, colors: [] });
-});
+const borderColorsRouter = require('./routes/border-colors');
 
 const app = express();
 let lastMongoError = null;

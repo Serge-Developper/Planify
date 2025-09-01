@@ -108,7 +108,12 @@
                          :style="getDynAssetStyle(a)" />
                   </template>
                   <!-- Fallback image unique -->
-                  <img v-else :src="resolveImg(it)" :alt="it.name" class="item-img" />
+                  <template v-else>
+                    <!-- Si l'item représente une couleur de bordure envoyée dynamiquement (avec colorId ou trouvable par nom),
+                         on rend un disque rempli au lieu d'une image -->
+                    <div v-if="isBorderVariant(it)" class="classic-border-preview" :style="getBorderFillStyle(it)"></div>
+                    <img v-else :src="resolveImg(it)" :alt="it.name" class="item-img" />
+                  </template>
                 </div>
               </div>
             </div>

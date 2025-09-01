@@ -650,6 +650,21 @@ async initialize() {
         { id: 'g230', name: 'Ambre Nuit', color: '#060002', gradient: 'linear-gradient(135deg,#f77500,#060002)', unlocked: false },
         { id: 'g231', name: 'Émeraude Nuit', color: '#1c231f', gradient: 'linear-gradient(135deg,#01f9a0,#1c231f)', unlocked: false }
       ];
+      // Charger aussi les couleurs dynamiques si l'API est dispo
+      try { this.fetchDynamicBorderColors && this.fetchDynamicBorderColors() } catch {}
+    },
+
+    // Charger les couleurs dynamiques depuis l'API
+    async fetchDynamicBorderColors() {
+      try {
+        const res = await secureApiCall('/border-colors')
+        const list = (res && res.success && Array.isArray(res.colors)) ? res.colors : []
+        for (const c of list) {
+          if (!c || !c.id) continue
+          const exists = this.borderColors.find(b => b.id === c.id)
+          if (!exists) this.borderColors.push({ id: c.id, name: c.name || c.id, color: c.color || '#000000', unlocked: false, gradient: c.gradient || undefined })
+        }
+      } catch {}
     },
 
     // Débloquer une couleur de bordure
