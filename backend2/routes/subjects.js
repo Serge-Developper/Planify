@@ -7,7 +7,8 @@ const StaticSubjectRule = require('../models/StaticSubjectRule');
 const router = express.Router();
 
 // CRUD matières dynamiques (admin)
-router.get('/', verifyToken, requireRole(['admin']), async (req, res) => {
+// Liste publique (lecture) pour permettre l'affichage des matières aux non-admins
+router.get('/', async (req, res) => {
   const list = await Subject.find({}).sort({ createdAt: -1 });
   res.json({ success: true, subjects: list });
 });
@@ -29,7 +30,8 @@ router.delete('/:id', verifyToken, requireRole(['admin']), async (req, res) => {
 });
 
 // Règles matières statiques (admin)
-router.get('/static-rules', verifyToken, requireRole(['admin']), async (req, res) => {
+// Lecture publique des règles (lecture seule)
+router.get('/static-rules', async (req, res) => {
   const rules = await StaticSubjectRule.find({}).sort({ subjectName: 1 });
   res.json({ success: true, rules });
 });

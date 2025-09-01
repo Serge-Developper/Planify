@@ -333,6 +333,8 @@ onUnmounted(() => {
   try { window.removeEventListener('items-changed', loadAdminDynamicItems) } catch {}
 })
 
+import { useSubjectsStore } from '@/stores/subjects'
+const subjectsStore = useSubjectsStore()
 const matieres = [
   "Anglais",
   "Culture artistique",
@@ -355,6 +357,14 @@ const matieres = [
 ];
 
 const selectedMatiere = ref(matieres[0]);
+// Injecter les matières dynamiques dans la liste latérale
+onMounted(async () => {
+  try { await subjectsStore.initializeStore() } catch {}
+  try {
+    const dynamicNames = (subjectsStore.subjects || []).map(s => s.name).filter(Boolean)
+    for (const n of dynamicNames) if (!matieres.includes(n)) matieres.push(n)
+  } catch {}
+})
 const showUserForm = ref(false);
 const showUserManagement = ref(false);
 const userForm = ref({
