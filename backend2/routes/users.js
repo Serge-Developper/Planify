@@ -252,6 +252,43 @@ router.get('/list-avatars', async (req, res) => {
   }
 });
 
+// Persister/récupérer les variantes d'items dynamiques (Map<number, number>)
+// IMPORTANT: cette route doit être déclarée AVANT la route générique "/:id"
+router.get('/dynamic-item-variants', verifyToken, async (req, res) => {
+  try {
+    // @ts-ignore
+    const userId = req.user.id || req.user._id
+    const user = await User.findById(userId)
+    if (!user) return res.status(404).json({ success: false, message: 'Utilisateur non trouvé' })
+    const variants = user.dynamicItemVariants || {}
+    res.json({ success: true, variants })
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Erreur serveur' })
+  }
+})
+
+router.post('/dynamic-item-variants', verifyToken, async (req, res) => {
+  try {
+    // @ts-ignore
+    const userId = req.user.id || req.user._id
+    const { itemId, variantIndex } = req.body || {}
+    const id = Number(itemId)
+    const idx = Number(variantIndex)
+    if (!Number.isFinite(id) || !Number.isFinite(idx)) {
+      return res.status(400).json({ success: false, message: 'Paramètres invalides' })
+    }
+    const user = await User.findById(userId)
+    if (!user) return res.status(404).json({ success: false, message: 'Utilisateur non trouvé' })
+    if (!user.dynamicItemVariants) user.dynamicItemVariants = {}
+    // @ts-ignore Map ou objet
+    user.dynamicItemVariants.set ? user.dynamicItemVariants.set(String(id), idx) : (user.dynamicItemVariants[id] = idx)
+    await user.save()
+    res.json({ success: true })
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Erreur serveur' })
+  }
+})
+
 // Route pour récupérer tous les utilisateurs (pour l'admin dashboard)
 router.get('/admin', verifyToken, requireRole(['admin']), async (req, res) => {
   try {
@@ -1018,41 +1055,7 @@ router.post('/ack-gift/:itemId', verifyToken, async (req, res) => {
 
 
 
-// Persister/récupérer les variantes d'items dynamiques (Map<number, number>)
- router.get('/dynamic-item-variants', verifyToken, async (req, res) => {
-     try {
-       // @ts-ignore
-       const userId = req.user.id || req.user._id
-       const user = await User.findById(userId)
-       if (!user) return res.status(404).json({ success: false, message: 'Utilisateur non trouvé' })
-       const variants = user.dynamicItemVariants || {}
-       res.json({ success: true, variants })
-     } catch (e) {
-       res.status(500).json({ success: false, message: 'Erreur serveur' })
-     }
-   })
-   
-   router.post('/dynamic-item-variants', verifyToken, async (req, res) => {
-     try {
-       // @ts-ignore
-       const userId = req.user.id || req.user._id
-       const { itemId, variantIndex } = req.body || {}
-       const id = Number(itemId)
-       const idx = Number(variantIndex)
-       if (!Number.isFinite(id) || !Number.isFinite(idx)) {
-         return res.status(400).json({ success: false, message: 'Paramètres invalides' })
-       }
-       const user = await User.findById(userId)
-      if (!user) return res.status(404).json({ success: false, message: 'Utilisateur non trouvé' })
-       if (!user.dynamicItemVariants) user.dynamicItemVariants = {}
-      // @ts-ignore Map ou objet
-      user.dynamicItemVariants.set ? user.dynamicItemVariants.set(String(id), idx) : (user.dynamicItemVariants[id] = idx)
-       await user.save()
-       res.json({ success: true })
-     } catch (e) {
-      res.status(500).json({ success: false, message: 'Erreur serveur' })
-     }
-   })
+// (supprimé: doublon dynamic-item-variants, désormais déclaré plus haut avant \/:id)
 
 // Route pour retirer un item d'un utilisateur
 router.post('/:id/remove-item', verifyToken, requireRole(['admin']), async (req, res) => {
