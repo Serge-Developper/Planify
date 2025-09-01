@@ -1,3 +1,4 @@
+
 <template>
   <div v-if="show" class="shop-overlay" @click.self="$emit('close')">
     <div class="shop-modal">
@@ -659,14 +660,14 @@
                       :src="jojo" 
                       alt="Jojo"
                       class="equipped-jojo-inside"
-                      :key="'lb-jojo-'+coinsStore.jojoVariantIndex"
+                      :key="'lb-jojo-'+getJojoVariantIndexForUser(user)"
                     />
                     <img 
-              v-if="getUserEquippedItemData(user).name === 'Jojo' && coinsStore.jojoVariantIndex === 1" 
+              v-if="getUserEquippedItemData(user).name === 'Jojo' && getJojoVariantIndexForUser(user) === 1" 
                       :src="jojotext" 
                       alt="Jojo text"
                       class="equipped-jojotext-inside"
-                      :key="'lb-jojotext-'+coinsStore.jojoVariantIndex"
+                      :key="'lb-jojotext-'+getJojoVariantIndexForUser(user)"
                     />
                     <!-- Item Discord rendu au niveau du container -->
                     <img 
@@ -2314,6 +2315,16 @@ const getAvatarBorderStyle = (user) => {
   if (getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'discord') {
     return { border: 'none', background: 'transparent' }
   }
+
+  // Récupère l'index de variante Jojo pour un utilisateur (0: sans texte, 1: avec texte)
+  const getJojoVariantIndexForUser = (user) => {
+    try {
+      const raw = String(user && user.selectedBorderColor ? user.selectedBorderColor : '')
+      const part = raw.split('|').find(p => p.startsWith('jv='))
+      const val = part ? Number(part.split('=')[1]) : 0
+      return val === 1 ? 1 : 0
+    } catch { return 0 }
+  }
   // Extraire l'id de base si encodé avec variantes (ex: "red|dv=1|jv=0")
   const raw = user && user.selectedBorderColor ? String(user.selectedBorderColor) : ''
   const baseId = raw.split('|')[0] || ''
@@ -2959,11 +2970,13 @@ const sortedLeaderboardUsers = computed(() => {
   }
   .leaderboard-container .equipped-coeur{
     position: absolute !important;
-    top: -19px !important;
-    left: -18px !important;
-    width: 170% !important;
-    height: 176% !important;
-    z-index: 4 !important;
+    top: -6px !important;
+    left: -6px !important;
+    width: 122% !important;
+    height: 125% !important;
+    object-fit: contain !important;
+    pointer-events: none !important;
+    z-index: 15 !important;
   }
   .leaderboard-container .equipped-alpha{
     position: absolute !important;
@@ -3557,7 +3570,7 @@ const sortedLeaderboardUsers = computed(() => {
   /* Correction du leaderboard container pour mobile */
   .leaderboard-container {
     width: 100% !important;
-    max-width: 100% !important;
+    max-width: 250px !important;
     margin: 0 auto !important;
     padding: 0 15px !important;
     display: flex !important;
@@ -3598,6 +3611,43 @@ const sortedLeaderboardUsers = computed(() => {
 }
 
 @media (min-width: 340px) and (max-width: 1024px) {
+
+  .jojo-text-preview {
+    position: absolute !important;
+    top: 0px !important;
+    left: 8px !important;
+    width: 72% !important;
+    height: auto !important;
+    object-fit: contain !important;
+  }
+
+  .jojo-img-shop {
+    position: absolute !important;
+    top: 50px !important;
+    left: 78px !important;
+    width: 90% !important;
+    height: auto !important;
+    object-fit: contain;
+  }
+
+  .discord-img-shop {
+    position: absolute !important;
+    top: -3px !important;
+    left: 12px !important;
+    width: 65% !important;
+    height: 112% !important;
+    object-fit: contain;
+  }
+
+   .admin-planify-img-shop {
+    position: absolute !important;
+    top: 13px !important;
+    left: 13px !important;
+    width: 65% !important;
+    height: 65% !important;
+    object-fit: contain !important;
+   }
+  
   .leaderboard-item {
     display: flex;
     align-items: center;
@@ -4339,10 +4389,10 @@ const sortedLeaderboardUsers = computed(() => {
   }
   .coeur-img-shop {
     position: absolute;
-    top: -5px;
-    left: 8px;
+    left: 7px;
+    top: 7px;
     width: 80%;
-    height: 112%;
+    height: 80%;
     object-fit: contain;
   }
   /* Alpha = clone des propriétés Galaxie */
@@ -4353,10 +4403,10 @@ const sortedLeaderboardUsers = computed(() => {
   }
   .alpha-img-shop {
     position: absolute;
-    top: -5px;
+    top: 15px;
     left: 15px;
     width: 65%;
-    height: 112%;
+    height: 65%;
     object-fit: contain;
   }
   /* Admin Planify = clone des propriétés Galaxie */
@@ -4367,10 +4417,10 @@ const sortedLeaderboardUsers = computed(() => {
   }
   .admin-planify-img-shop {
     position: absolute;
-    top: -5px;
+    top: 13px;
     left: 15px;
     width: 65%;
-    height: 112%;
+    height: 65%;
     object-fit: contain;
   }
 
