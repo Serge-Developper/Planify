@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { secureApiCall } from '@/api';
+import { secureApiCall, getValidAuthToken } from '@/api';
 import { useAuthStore } from './auth';
 
 // Import des images
@@ -777,7 +777,8 @@ async initialize() {
       const auth = useAuthStore();
       // 1) Essai côté serveur
       try {
-        if (auth?.user?.token) {
+        const token = getValidAuthToken();
+        if (token) {
           const res = await secureApiCall('/users/dynamic-item-variants');
           if (res && res.success && res.variants) {
             const entries: [number, number][] =
