@@ -92,6 +92,17 @@
         <button class="btn outline" style="margin-left:8px;" @click="testBorderColorWeekly">Tester en boutique hebdo</button>
         <button class="btn danger" style="margin-left:8px;" @click="removeBorderColorFromWeekly">Retirer de la boutique hebdo</button>
       </div>
+      <div class="existing" v-if="borderColorsList.length" style="margin-top:12px;">
+        <h4>Couleurs enregistrées</h4>
+        <ul>
+          <li v-for="c in borderColorsList" :key="c.id" style="display:flex;gap:10px;align-items:center;">
+            <div :style="{ width:'18px', height:'18px', borderRadius:'4px', background: c.gradient || c.color || '#000' }"></div>
+            <span>#{{ c.id }} — {{ c.name }}</span>
+            <button class="btn tiny" @click="editBorderColor(c)">Éditer</button>
+            <button class="btn tiny danger" @click="deleteBorderColor(c)">Supprimer</button>
+          </li>
+        </ul>
+      </div>
     </div>
 
     <div class="canvas-section" v-if="editorMode==='items'">
@@ -322,14 +333,64 @@ const gradCss = computed(() => {
   return rgba(grad.value.c1, grad.value.o1)
 })
 
+const borderColorsList = ref([])
+const editingBorderId = ref('')
+
+async function loadBorderColors() {
+  try {
+    const res = await secureApiCall('/border-colors')
+    borderColorsList.value = (res && res.success && Array.isArray(res.colors)) ? res.colors : []
+  } catch {
+    borderColorsList.value = []
+  }
+}
+
+function editBorderColor(c) {
+  if (!c) return
+  editingBorderId.value = String(c.id)
+  borderForm.value.legacyId = Number(borderForm.value.legacyId) || 100
+  borderForm.value.name = c.name || ''
+  borderForm.value.colorId = c.id || ''
+  borderForm.value.color = c.color || '#000000'
+  borderForm.value.gradient = c.gradient || ''
+  borderForm.value.price = typeof c.price === 'number' ? c.price : 0
+}
+
+async function deleteBorderColor(c) {
+  if (!c || !c.id) return
+  if (!confirm(`Supprimer la couleur "${c.name}" ?`)) return
+  const res = await secureApiCall(`/border-colors?id=${encodeURIComponent(c.id)}`, { method: 'DELETE' })
+  if (res && res.success) await loadBorderColors()
+}
+
 async function saveBorderColor() {
   try {
-    // Préparer les champs de sortie à partir du picker
+    // Préparer à partir du picker
     borderForm.value.color = grad.value.enabled ? grad.value.c1 : gradCss.value
     borderForm.value.gradient = grad.value.enabled ? gradCss.value : ''
-    alert('Couleur préparée. (Persistance serveur complète à implémenter)')
+    const body = {
+      id: borderForm.value.colorId || String(borderForm.value.legacyId),
+      name: borderForm.value.name || (borderForm.value.colorId || 'Couleur'),
+      color: borderForm.value.color || null,
+      gradient: borderForm.value.gradient || null,
+      price: Number(borderForm.value.price) || 0
+    }
+    let res
+    if (editingBorderId.value) {
+      res = await secureApiCall(`/border-colors?id=${encodeURIComponent(editingBorderId.value)}`, { method: 'PUT', body: JSON.stringify(body) })
+    } else {
+      res = await secureApiCall('/border-colors', { method: 'POST', body: JSON.stringify(body) })
+    }
+    if (res && res.success) {
+      await loadBorderColors()
+      alert(editingBorderId.value ? 'Couleur mise à jour !' : 'Couleur enregistrée !')
+      editingBorderId.value = ''
+      borderForm.value = { legacyId: null, name: '', price: 0, colorId: '', color: '#000000', gradient: '', availableInDailyShop: false }
+    } else {
+      alert(res?.message || 'Erreur enregistrement couleur')
+    }
   } catch (e) {
-    alert('Erreur lors de la préparation de la couleur')
+    alert('Erreur lors de l\'enregistrement')
   }
 }
 
@@ -885,7 +946,7 @@ async function saveItem() {
   }
 }
 
-onMounted(async () => { await loadExisting() })
+onMounted(async () => { await loadExisting(); await loadBorderColors(); })
 
 async function loadExisting() {
   try {

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
+import { secureApiCall } from '@/api';
 
 export interface Subject {
   _id?: string;
@@ -31,12 +32,9 @@ export const useSubjectsStore = defineStore('subjects', () => {
     if (loading.value && !force) return;
     loading.value = true; error.value = null;
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
-      // Si plus tard on expose un endpoint backend, on l'emploiera ici. Pour l'instant: pas d'API sur IONOS → liste vide.
-      subjects.value = [];
+      const res = await secureApiCall('/subjects');
+      subjects.value = (res && res.success && Array.isArray(res.subjects)) ? res.subjects : [];
       initialized.value = true;
-      clearTimeout(timeoutId);
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Erreur inconnue';
       subjects.value = [];
@@ -54,10 +52,7 @@ export const useSubjectsStore = defineStore('subjects', () => {
 
   const refreshSubjects = async () => fetchSubjects(true);
 
-  const fetchStaticRules = async () => {
-    // Pas d'endpoint IONOS actuellement; persistance en mémoire uniquement
-    staticRules.value = staticRules.value || [];
-  };
+  const fetchStaticRules = async () => { staticRules.value = staticRules.value || []; };
 
   // Placeholders avec signatures compatibles, persistance en mémoire
   const saveStaticRule = async (
@@ -75,22 +70,20 @@ export const useSubjectsStore = defineStore('subjects', () => {
   };
 
   const createSubject = async (subject: Omit<Subject, '_id' | 'createdAt' | 'updatedAt'>) => {
-    const newSubject: Subject = {
-      ...subject,
-      _id: Math.random().toString(36).slice(2),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    subjects.value.push(newSubject);
-    return newSubject;
+    const res = await secureApiCall('/subjects', { method: 'POST', body: JSON.stringify(subject) });
+    if (res && res.success && res.subject) subjects.value.unshift(res.subject);
+    return res?.subject;
   };
   const updateSubject = async (id: string, updates: Partial<Subject>) => {
-    const idx = subjects.value.findIndex(s => s._id === id);
-    if (idx === -1) return;
-    subjects.value[idx] = { ...subjects.value[idx], ...updates, updatedAt: new Date() } as Subject;
+    const res = await secureApiCall(`/subjects/${id}`, { method: 'PUT', body: JSON.stringify(updates) });
+    if (res && res.success && res.subject) {
+      const idx = subjects.value.findIndex(s => s._id === id);
+      if (idx >= 0) subjects.value.splice(idx, 1, res.subject);
+    }
   };
   const deleteSubject = async (id: string) => {
-    subjects.value = subjects.value.filter(s => s._id !== id);
+    const res = await secureApiCall(`/subjects/${id}`, { method: 'DELETE' });
+    if (res && res.success) subjects.value = subjects.value.filter(s => s._id !== id);
   };
 
   const clearError = () => { error.value = null; };
