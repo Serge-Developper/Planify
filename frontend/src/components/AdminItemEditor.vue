@@ -290,6 +290,79 @@ const form = ref({
   variants: []
 })
 
+// --- Formulaire Couleurs de bordure (éviter les accès undefined) ---
+const borderForm = ref({
+  legacyId: null,
+  name: '',
+  price: 0,
+  colorId: '',
+  color: '#000000',
+  gradient: '',
+  availableInDailyShop: false
+})
+
+const grad = ref({
+  c1: '#ff4d4d',
+  o1: 1,
+  c2: '#ff5252',
+  o2: 1,
+  angle: 135,
+  enabled: true
+})
+
+const gradCss = computed(() => {
+  const rgba = (hex, a) => {
+    const { r, g, b } = hexToRgb(hex || '#000000')
+    const alpha = typeof a === 'number' ? Math.max(0, Math.min(1, a)) : 1
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`
+  }
+  if (grad.value.enabled && grad.value.c2) {
+    return `linear-gradient(${Number(grad.value.angle) || 0}deg, ${rgba(grad.value.c1, grad.value.o1)}, ${rgba(grad.value.c2, grad.value.o2)})`
+  }
+  return rgba(grad.value.c1, grad.value.o1)
+})
+
+async function saveBorderColor() {
+  try {
+    // Préparer les champs de sortie à partir du picker
+    borderForm.value.color = grad.value.enabled ? grad.value.c1 : gradCss.value
+    borderForm.value.gradient = grad.value.enabled ? gradCss.value : ''
+    alert('Couleur préparée. (Persistance serveur complète à implémenter)')
+  } catch (e) {
+    alert('Erreur lors de la préparation de la couleur')
+  }
+}
+
+async function testBorderColorWeekly() {
+  try {
+    const id = Number(borderForm.value.legacyId)
+    if (!id || Number.isNaN(id)) { alert('Définis un ID (legacy) numérique.'); return }
+    const res = await secureApiCall('/coins/weekly-items/test-add', {
+      method: 'POST',
+      body: JSON.stringify({ legacyId: id })
+    })
+    if (res && res.success) alert('Ajouté pour test dans la boutique hebdo.')
+    else alert('Impossible d\'ajouter pour test.')
+  } catch (e) {
+    alert('Erreur ajout test: ' + (e && e.message ? e.message : e))
+  }
+}
+
+async function removeBorderColorFromWeekly() {
+  try {
+    const id = Number(borderForm.value.legacyId)
+    if (!id || Number.isNaN(id)) { alert('Définis un ID (legacy) numérique.'); return }
+    const res = await secureApiCall('/coins/weekly-items/test-remove', {
+      method: 'POST',
+      body: JSON.stringify({ legacyId: id })
+    })
+    if (res && res.success) alert('Retiré de la boutique hebdo.')
+    else alert('Impossible de retirer.')
+  } catch (e) {
+    alert('Erreur retrait test: ' + (e && e.message ? e.message : e))
+  }
+}
+
 const canvasStyle = computed(() => {
   // Dimensions: Collection = 90 (desktop) / 80 (mobile) — Leaderboard = 50 — Navbar = 57 — Popup Style = 120.5x64
   let size = 220
