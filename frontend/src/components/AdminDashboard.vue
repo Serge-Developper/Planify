@@ -1258,8 +1258,8 @@ async function giveSelectedItemsToUser() {
     // Ne donner que les items manquants (y compris variantes de bordure)
     const idsToGive = selectedItemsToGive.value.filter(id => !ownedIds.has(id))
 
-    if (idsToGive.length === 0) {
-      alert("Aucun nouvel item à donner: l'utilisateur possède déjà tous les items sélectionnés.")
+    if (idsToGive.length === 0 && selectedBorderToGiveList.value.length === 0) {
+      alert("Aucun nouvel don à effectuer: aucun item ni couleur sélectionné(e).")
       itemsLoading.value = false
       return
     }
