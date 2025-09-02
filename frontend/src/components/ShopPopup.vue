@@ -1595,6 +1595,7 @@ const weeklyItems = ref([])
 const timeUntilReset = ref('')
 const showWeeklyResetNotification = ref(false)
 let weeklyTimer = null
+const nextResetAt = ref(0)
 
 // Popup infos items spéciaux (non vendus)
 const isInfoOpen = ref(false)
@@ -2438,6 +2439,8 @@ const getJojoVariantIndexForUser = (user) => {
         })
         weeklyItems.value = patched
         timeUntilReset.value = response.timeUntilReset || ''
+        try { nextResetAt.value = Date.parse(response.nextReset) || 0 } catch { nextResetAt.value = 0 }
+        updateWeeklyTimer()
         console.log('✅ Items hebdomadaires chargés:', weeklyItems.value.length, 'items')
      } else {
         console.error('❌ Erreur API:', response.message)
@@ -2453,21 +2456,16 @@ const getJojoVariantIndexForUser = (user) => {
    }
    
    weeklyTimer = setInterval(() => {
-  const now = new Date()
-  // Cible: 01:00 Europe/Paris
-  const parisNow = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Paris' }))
-  const target = new Date(parisNow)
-  target.setHours(1, 0, 0, 0)
-  if (parisNow.getHours() >= 1) target.setDate(target.getDate() + 1)
-  
-  const timeLeft = target.getTime() - parisNow.getTime()
+  const targetMs = Number(nextResetAt.value) || 0
+  if (!targetMs) return
+  const timeLeft = targetMs - Date.now()
   const hours = Math.floor(timeLeft / (1000 * 60 * 60))
   const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60))
   const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000)
-  
-  timeUntilReset.value = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-  
+  timeUntilReset.value = `${Math.max(0,hours).toString().padStart(2,'0')}:${Math.max(0,minutes).toString().padStart(2,'0')}:${Math.max(0,seconds).toString().padStart(2,'0')}`
   if (timeLeft <= 0) {
+    clearInterval(weeklyTimer)
+    weeklyTimer = null
     loadWeeklyItems()
   }
    }, 1000)
