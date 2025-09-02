@@ -234,19 +234,19 @@
         <!-- Contrôle de position pour le leaderboard -->
         <div v-if="activeCanvas==='leaderboard' && selectedIndex !== null" class="layer-controls">
           <span>Position sur le leaderboard :</span>
-          <button class="btn tiny" @click="setLeaderboardPlacement('below')">Derrière</button>
-          <button class="btn tiny" @click="setLeaderboardPlacement('inside')">Dans l'avatar</button>
-          <button class="btn tiny" @click="setLeaderboardPlacement('above')">Au-dessus</button>
+          <button class="btn tiny" :class="{ primary: isLeaderboardPlacement('below') }" @click="setLeaderboardPlacement('below')">Derrière</button>
+          <button class="btn tiny" :class="{ primary: isLeaderboardPlacement('inside') }" @click="setLeaderboardPlacement('inside')">Dans l'avatar</button>
+          <button class="btn tiny" :class="{ primary: isLeaderboardPlacement('above') }" @click="setLeaderboardPlacement('above')">Au-dessus</button>
         </div>
         <!-- Contrôle de position pour la Navbar -->
         <div v-if="activeCanvas==='navbar' && selectedIndex !== null" class="layer-controls">
           <span>Position dans la Navbar :</span>
-          <button class="btn tiny" @click="setNavbarPlacement('below')">Derrière</button>
-          <button class="btn tiny" @click="setNavbarPlacement('inside')">Dans l'avatar</button>
-          <button class="btn tiny" @click="setNavbarPlacement('above')">Au-dessus</button>
+          <button class="btn tiny" :class="{ primary: isNavbarPlacement('below') }" @click="setNavbarPlacement('below')">Derrière</button>
+          <button class="btn tiny" :class="{ primary: isNavbarPlacement('inside') }" @click="setNavbarPlacement('inside')">Dans l'avatar</button>
+          <button class="btn tiny" :class="{ primary: isNavbarPlacement('above') }" @click="setNavbarPlacement('above')">Au-dessus</button>
           <span style="margin-left:8px;">Cible (classe) :</span>
-          <button class="btn tiny" @click="setNavbarTarget('avatar-image-container')">avatar-image-container</button>
-          <button class="btn tiny" @click="setNavbarTarget('account-btn')">account-btn</button>
+          <button class="btn tiny" :class="{ primary: isNavbarTarget('avatar-image-container') }" @click="setNavbarTarget('avatar-image-container')">avatar-image-container</button>
+          <button class="btn tiny" :class="{ primary: isNavbarTarget('account-btn') }" @click="setNavbarTarget('account-btn')">account-btn</button>
         </div>
       </div>
     </div>
@@ -910,6 +910,27 @@ function setNavbarTarget(target) {
   if (!asset.meta) asset.meta = {}
   // Cible autorisée: 'avatar-image-container' ou 'account-btn'
   asset.meta.navbarTarget = (target === 'account-btn') ? 'account-btn' : 'avatar-image-container'
+}
+
+function getSelectedAsset() {
+  if (selectedIndex.value === null) return null
+  const assets = activeAssets()
+  return Array.isArray(assets) ? assets[selectedIndex.value] : null
+}
+function isNavbarPlacement(val) {
+  const a = getSelectedAsset()
+  const cur = (a && a.meta && a.meta.navbarPlacement) || 'below'
+  return cur === val
+}
+function isNavbarTarget(val) {
+  const a = getSelectedAsset()
+  const cur = (a && a.meta && a.meta.navbarTarget) || 'avatar-image-container'
+  return cur === val
+}
+function isLeaderboardPlacement(val) {
+  const a = getSelectedAsset()
+  const cur = (a && a.meta && a.meta.leaderboardPlacement) || 'below'
+  return cur === val
 }
 
 async function handleFiles(e) {}
