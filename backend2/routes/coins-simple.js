@@ -505,14 +505,12 @@ router.get('/weekly-items', verifyToken, async (req, res) => {
       { id: 24, name: 'Jojo', price: 170, img: '/src/assets/img/tobecontinued.png' }
     ];
 
-    // Fonction pour obtenir la seed du jour avec seuil de rotation à 03:15 (heure Europe/Paris)
+    // Fonction pour obtenir la seed du jour avec seuil de rotation à 01:00 (heure Europe/Paris)
     function getCurrentDaySeed() {
       const now = new Date();
       const parisNow = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Paris' }));
-      // Avant 03:15, on considère encore le jour précédent pour la seed
-      const h = parisNow.getHours();
-      const m = parisNow.getMinutes();
-      if (h < 3 || (h === 3 && m < 15)) {
+      // Avant 01:00, on considère encore le jour précédent pour la seed
+      if (parisNow.getHours() < 1) {
         parisNow.setDate(parisNow.getDate() - 1);
       }
       const formatter = new Intl.DateTimeFormat('fr-CA', { timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit' });
@@ -733,12 +731,12 @@ router.get('/weekly-items', verifyToken, async (req, res) => {
     // Combiner les items normaux avec les couleurs de bordures
     weeklyItems = [...weeklyItems, ...selectedBorderColors];
 
-    // Calculer le temps jusqu'à la prochaine rotation à 03:15 (heure Europe/Paris)
+    // Calculer le temps jusqu'à la prochaine rotation à 01:00 (heure Europe/Paris)
     const now = new Date();
     const parisNow = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Paris' }));
     const parisTarget = new Date(parisNow);
-    parisTarget.setHours(3, 15, 0, 0);
-    if (parisNow.getHours() > 3 || (parisNow.getHours() === 3 && parisNow.getMinutes() >= 15)) {
+    parisTarget.setHours(1, 0, 0, 0);
+    if (parisNow.getHours() >= 1) {
       parisTarget.setDate(parisTarget.getDate() + 1);
     }
     const timeLeft = parisTarget.getTime() - parisNow.getTime();
