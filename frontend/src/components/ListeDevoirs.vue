@@ -408,10 +408,12 @@ import closeHoverImg from '@/assets/img/bouton_supprimer_cocher.png';
 import notifIcon from '@/assets/notif.png';
 import supprimerIcon from '@/assets/supprimer.svg';
 import { API_URL } from '@/api';
+import { useSubjectsStore } from '@/stores/subjects';
 
 const props = defineProps({
   events: { type: Array, required: true }
 });
+const subjectsStore = useSubjectsStore();
 const sortBy = ref('date');
 const selectedMatiere = ref('');
 const hoveredCheck = ref(null);
@@ -423,8 +425,8 @@ if (localStorage.getItem('user')) {
 const isAdmin = computed(() => user.value && user.value.role === 'admin');
 const matiereArchive = ref('');
 
-// Liste officielle MMI
-const mmiMatieres = [
+// Liste des matières statiques
+const matieresStatiques = [
   "Anglais",
   "Culture artistique",
   "Culture numérique",
@@ -444,6 +446,56 @@ const mmiMatieres = [
   "Représentation et traitement de l'information",
   "Economie et droit du numérique"
 ];
+
+// Liste des matières : statiques + dynamiques
+const mmiMatieres = computed(() => {
+  const userYear = user.value?.year || '';
+  const userGroup = user.value?.groupe || '';
+  const userSpec = user.value?.specialite || '';
+  
+  // Filtrer les matières dynamiques par année, groupe et spécialité
+  const dynamicSubjects = subjectsStore.getSubjects
+    .filter((s) => {
+      // Vérifier l'année
+      const years = Array.isArray(s?.yearsAllowed) ? s.yearsAllowed : [];
+      if (years.length > 0 && userYear && !years.includes(userYear)) return false;
+      
+      // Vérifier le groupe
+      const groups = Array.isArray(s?.groupsAllowed) ? s.groupsAllowed : [];
+      if (groups.length > 0 && userGroup && !groups.includes(userGroup)) return false;
+      
+      // Vérifier la spécialité
+      const specs = Array.isArray(s?.specialitesAllowed) ? s.specialitesAllowed : [];
+      if (specs.length > 0 && userSpec && !specs.includes(userSpec)) return false;
+      
+      return true;
+    })
+    .map(s => s.name);
+
+  // Filtrage des matières statiques selon les règles
+  const staticsFiltered = matieresStatiques.filter((name) => {
+    const rule = (subjectsStore.staticRules || []).find(r => 
+      String(r.subjectName).toLowerCase() === String(name).toLowerCase()
+    );
+    if (!rule) return true; // Si pas de règle, la matière est visible pour tous
+    
+    // Appliquer les mêmes filtres que pour les matières dynamiques
+    const years = Array.isArray(rule.yearsAllowed) ? rule.yearsAllowed : [];
+    if (years.length > 0 && userYear && !years.includes(userYear)) return false;
+    
+    const groups = Array.isArray(rule.groupsAllowed) ? rule.groupsAllowed : [];
+    if (groups.length > 0 && userGroup && !groups.includes(userGroup)) return false;
+    
+    const specs = Array.isArray(rule.specialitesAllowed) ? rule.specialitesAllowed : [];
+    if (specs.length > 0 && userSpec && !specs.includes(userSpec)) return false;
+    
+    return true;
+  });
+
+  // Combiner et dédupliquer
+  const allSubjects = [...staticsFiltered, ...dynamicSubjects];
+  return [...new Set(allSubjects)].sort();
+});
 
 // Génère une clé unique stable pour un event
 const eventKey = (e) => (e && (e._id || (e.titre + e.date + e.heure)));
@@ -887,20 +939,11 @@ async function submitAddTask() {
   }
 }
 
-// Si tu veux utiliser ce composant de façon autonome (hors EmploiDuTemps), décommente ce qui suit :
-// onMounted(async () => {
-//   if (!props.events || props.events.length === 0) {
-//     try {
-//       const token = localStorage.getItem('token');
-//       const res = await axios.get('https://3e44-91-169-88-35.ngrok-free.app/api/events', {
-//         headers: { Authorization: token }
-//       });
-//       // events.value = res.data; // à utiliser si events est ref local
-//     } catch (e) {
-//       // events.value = [];
-//     }
-//   }
-// });
+// Initialiser le store des matières au montage
+onMounted(async () => {
+  // Charger les matières dynamiques et les règles statiques
+  await subjectsStore.initializeStore();
+});
 
 function isNewTask(event) {
   if (!event || !event._id) return false;
