@@ -2334,6 +2334,16 @@ const getAvatarBorderStyle = (user) => {
   return {}
 }
 
+// Variante Jojo pour un utilisateur (0: sans texte, 1: avec texte)
+const getJojoVariantIndexForUser = (user) => {
+  try {
+    const raw = String(user && user.selectedBorderColor ? user.selectedBorderColor : '')
+    const part = raw.split('|').find(p => p.startsWith('jv='))
+    const val = part ? Number(part.split('=')[1]) : 0
+    return val === 1 ? 1 : 0
+  } catch { return 0 }
+}
+
  // Fonctions pour la boutique hebdomadaire
  const switchToWeeklyTab = async () => {
   activeTab.value = 'weekly'
