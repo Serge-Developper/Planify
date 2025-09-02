@@ -464,7 +464,7 @@ const mmiMatieres = computed(() => {
   const dynNames = dynList
     .filter((s) => {
       const years = Array.isArray(s.yearsAllowed) ? s.yearsAllowed.map(normalizeYearClient) : [];
-      const groups = Array.isArray(s.groupsAllowed) ? s.groupsAllowed.map((g: string) => g.toUpperCase()) : [];
+      const groups = Array.isArray(s.groupsAllowed) ? s.groupsAllowed.map((g) => String(g).toUpperCase()) : [];
       const yearOk = years.length === 0 || years.includes(userYear);
       const groupOk = groups.length === 0 || groups.includes('PROMO') || groups.includes(userGroup);
       return yearOk && groupOk;
