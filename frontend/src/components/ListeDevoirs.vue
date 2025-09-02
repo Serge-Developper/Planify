@@ -462,25 +462,32 @@ function normalizeYearClient(y) {
 
 const mmiMatieres = computed(() => {
   const dynList = (subjectsStore.getSubjects || subjectsStore.subjects || []);
-  const userYear = normalizeYearClient(user.value?.year);
-  const userGroup = (user.value?.groupe || '').toUpperCase();
-  const dynNames = dynList
-    .filter((s) => {
-      const years = Array.isArray(s.yearsAllowed) ? s.yearsAllowed.map(normalizeYearClient) : [];
-      const groups = Array.isArray(s.groupsAllowed) ? s.groupsAllowed.map((g) => String(g).toUpperCase()) : [];
-      const yearOk = years.length === 0 || years.includes(userYear);
-      const groupOk = groups.length === 0 || groups.includes('PROMO') || groups.includes(userGroup);
-      return yearOk && groupOk;
-    })
-    .map((s) => s.name)
-    .filter(Boolean);
-  // Le sélecteur n'affiche que les matières officielles + dynamiques autorisées
+  const isProf = !!(user.value && (user.value.role === 'prof' || user.value.role === 'admin'));
+  let dynNames;
+  if (isProf) {
+    dynNames = (Array.isArray(dynList) ? dynList : []).map((s) => s && s.name).filter(Boolean);
+  } else {
+    const userYear = normalizeYearClient(user.value?.year);
+    const userGroup = (user.value?.groupe || '').toUpperCase();
+    dynNames = (Array.isArray(dynList) ? dynList : [])
+      .filter((s) => {
+        const years = Array.isArray(s.yearsAllowed) ? s.yearsAllowed.map(normalizeYearClient) : [];
+        const groups = Array.isArray(s.groupsAllowed) ? s.groupsAllowed.map((g) => String(g).toUpperCase()) : [];
+        const yearOk = years.length === 0 || years.includes(userYear);
+        const groupOk = groups.length === 0 || groups.includes('PROMO') || groups.includes(userGroup);
+        return yearOk && groupOk;
+      })
+      .map((s) => s && s.name)
+      .filter(Boolean);
+  }
   const set = new Set([...officialMatieres, ...dynNames]);
   return Array.from(set);
 });
 
 // Aide: une matière est-elle visible pour l'utilisateur dans le sélecteur ?
 function isSubjectAllowedForUser(name) {
+  // Prof/Admin: accès à toutes les matières et tâches
+  if (user.value && (user.value.role === 'prof' || user.value.role === 'admin')) return true;
   try {
     const list = (mmiMatieres && mmiMatieres.value) ? mmiMatieres.value : (Array.isArray(mmiMatieres) ? mmiMatieres : []);
     return !name || (Array.isArray(list) && list.includes(name));
