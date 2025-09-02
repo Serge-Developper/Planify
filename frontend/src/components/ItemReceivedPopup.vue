@@ -230,13 +230,28 @@ function isDynamic(item) {
   return !!(item.isDynamic || (Array.isArray(item.assets) && item.assets.length))
 }
 
+import { API_URL } from '@/api'
+
 function resolveAssetSrc(path) {
   try {
-    if (typeof path === 'string' && path.startsWith('/uploads/')) {
-      const api = import.meta.env && import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : '/api'
-      const base = api.endsWith('/api') ? api.slice(0, -4) : api.replace('/api','')
-      return base + path
+    if (typeof path !== 'string' || !path) return ''
+    // URL absolue déjà valide
+    if (/^https?:\/\//i.test(path)) return path
+    // Normaliser le chemin uploads
+    let p = path.startsWith('/uploads/') ? path : (path.startsWith('uploads/') ? '/' + path : path)
+    if (!p.startsWith('/uploads/')) return p
+    // Base depuis API_URL corrigée (schéma + host + pas de /api)
+    let base = (API_URL || '').replace(/\/?api\/?$/i, '')
+    if (!/^https?:\/\//i.test(base)) {
+      // Corriger schéma tronqué (ex: "https//...")
+      base = base.replace(/^([a-z]+)(?=\/\/)/i, '$1:')
     }
+    // Fallback: origin du site si base invalide
+    if (!/^https?:\/\//i.test(base)) {
+      try { base = window.location.origin } catch { base = '' }
+    }
+    // Joindre proprement sans doubles slashs
+    return (base.replace(/\/$/, '')) + p
   } catch {}
   return path || ''
 }
