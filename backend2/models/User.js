@@ -6,6 +6,8 @@ const userSchema = new mongoose.Schema({
   role: { type: String, enum: ['admin', 'prof', 'delegue', 'eleve', 'etudiant'], required: true },
   groupe: { type: String, enum: ['A', "A'", 'A"', 'B', "B'", 'B"', 'Promo'], default: null },
   year: { type: String, default: null },
+  // Spécialité MMI de l'utilisateur (devweb, creation, gestion)
+  specialite: { type: String, default: '' },
   avatar: { type: String, default: null }, // Chemin vers l'image de profil
   coins: { type: Number, default: 0 }, // PlanifyCoins
   completedTasks: { type: Number, default: 0 }, // Nombre de tâches complétées
