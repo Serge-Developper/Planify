@@ -599,6 +599,31 @@ function setSort(type) {
 }
 
 function stringToColor(str, type) {
+  // 1) Matières dynamiques: utiliser la couleur/dégradé défini dans l'admin
+  const dyn = subjectsStore.getSubjectByName(str);
+  if (dyn) {
+    const c1 = dyn.color;
+    const c2 = (dyn.useGradient === false) ? null : dyn.color2;
+    const a1 = typeof dyn.colorOpacity === 'number' ? dyn.colorOpacity : 1;
+    const a2 = typeof dyn.color2Opacity === 'number' ? dyn.color2Opacity : 1;
+    const angle = typeof dyn.gradientAngle === 'number' ? dyn.gradientAngle : 135;
+    if (c2) {
+      const hexToRgb = (hex) => {
+        const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex || '');
+        return m ? { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) } : null;
+      };
+      const rgba = (hex, alpha) => {
+        const rgb = hexToRgb(hex);
+        if (!rgb) return hex || '#000000';
+        const a = typeof alpha === 'number' ? Math.min(1, Math.max(0, alpha)) : 1;
+        return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${a})`;
+      };
+      return `linear-gradient(${angle}deg, ${rgba(c1, a1)}, ${rgba(c2, a2)})`;
+    }
+    return c1;
+  }
+
+  // 2) Matières statiques: palette existante
   if (str === "Gestion de projet") {
     return "linear-gradient(90deg, rgba(83,198,77,0.88) 0%, rgba(126,252,173,0.89) 100%)";
   }
