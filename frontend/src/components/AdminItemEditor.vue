@@ -244,6 +244,9 @@
           <button class="btn tiny" @click="setNavbarPlacement('below')">Derrière</button>
           <button class="btn tiny" @click="setNavbarPlacement('inside')">Dans l'avatar</button>
           <button class="btn tiny" @click="setNavbarPlacement('above')">Au-dessus</button>
+          <span style="margin-left:8px;">Cible (classe) :</span>
+          <button class="btn tiny" @click="setNavbarTarget('avatar-image-container')">avatar-image-container</button>
+          <button class="btn tiny" @click="setNavbarTarget('account-btn')">account-btn</button>
         </div>
       </div>
     </div>
@@ -891,6 +894,16 @@ function setNavbarPlacement(placement) {
   if (!asset.meta) asset.meta = {}
   if (placement !== 'above' && placement !== 'inside') placement = 'below'
   asset.meta.navbarPlacement = placement
+}
+
+function setNavbarTarget(target) {
+  if (selectedIndex.value === null) return
+  const assets = activeAssets()
+  const asset = Array.isArray(assets) ? assets[selectedIndex.value] : null
+  if (!asset) return
+  if (!asset.meta) asset.meta = {}
+  // Cible autorisée: 'avatar-image-container' ou 'account-btn'
+  asset.meta.navbarTarget = (target === 'account-btn') ? 'account-btn' : 'avatar-image-container'
 }
 
 async function handleFiles(e) {}
