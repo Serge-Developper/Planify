@@ -762,12 +762,24 @@ router.get('/weekly-items', verifyToken, async (req, res) => {
     }
 
     // Calculer le temps jusqu'à la prochaine rotation à 00:00 (heure Europe/Paris)
-    const now = new Date();
-    const parisNow = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Paris' }));
-    const parisTarget = new Date(parisNow);
-    parisTarget.setHours(0, 0, 0, 0);
-    if (parisNow.getTime() >= parisTarget.getTime()) parisTarget.setDate(parisTarget.getDate() + 1);
-    const timeLeft = parisTarget.getTime() - parisNow.getTime();
+    // Méthode robuste (DST): on extrait les parties de date en Europe/Paris puis on calcule en UTC.
+    function getParisParts(date = new Date()) {
+      const parts = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Europe/Paris',
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+      }).formatToParts(date);
+      const m = {};
+      for (const p of parts) { m[p.type] = p.value; }
+      return {
+        year: Number(m.year), month: Number(m.month), day: Number(m.day),
+        hour: Number(m.hour), minute: Number(m.minute), second: Number(m.second)
+      };
+    }
+    const p = getParisParts();
+    const nowUTC = Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second);
+    const nextResetUTC = Date.UTC(p.year, p.month - 1, p.day + 1, 0, 0, 0);
+    const timeLeft = Math.max(0, nextResetUTC - nowUTC);
     const hours = Math.floor(timeLeft / (1000 * 60 * 60));
     const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
