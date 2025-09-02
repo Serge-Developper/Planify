@@ -247,8 +247,8 @@
                   <button type="button" class="toggle-all-btn" @click="selectMissingOnly" title="Ne sélectionner que les items non possédés">
                     Sélectionner uniquement les manquants
                   </button>
-                  <button @click="giveSelectedItemsToUser" :disabled="selectedItemsToGive.length === 0 && selectedBorderToGiveList.length === 0" class="give-item-btn">
-                    Donner ({{ selectedItemsToGive.length + selectedBorderToGiveList.length }})
+                  <button @click="giveSelectedItemsToUser" :disabled="selectedItemsToGive.length === 0 && selectedBorderToGiveList.length === 0 && selectedDynamicItemsToGive.length === 0" class="give-item-btn">
+                    Donner ({{ selectedItemsToGive.length + selectedBorderToGiveList.length + selectedDynamicItemsToGive.length }})
                   </button>
                 </div>
               </div>
@@ -265,6 +265,19 @@
                       <span :style="{display:'inline-block',width:'14px',height:'14px',borderRadius:'4px',background: c.gradient || c.color || '#000', marginRight: '6px'}"></span>
                       {{ c.name }} ({{ c.id }})
                     </span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Items dynamiques -->
+            <div class="give-items-section" v-if="dynamicItemsCatalog && dynamicItemsCatalog.length">
+              <h4>Items dynamiques</h4>
+              <div class="give-item-form checkboxes">
+                <div class="checkbox-grid">
+                  <label v-for="it in dynamicItemsCatalog" :key="it.id" class="item-checkbox">
+                    <input type="checkbox" :value="it.id" v-model="selectedDynamicItemsToGive" />
+                    <span>{{ it.name }} ({{ it.id }})</span>
                   </label>
                 </div>
               </div>
@@ -595,6 +608,9 @@ function getAvailableQuestions(index) {
         itemsCatalog.value = itemsCatalog.value.filter(Boolean).filter(x => baseStaticIds.has(x.id) || extraIds.has(x.id))
         // tri par id pour stabilité
         itemsCatalog.value = [...itemsCatalog.value].sort((a,b)=>a.id-b.id)
+
+        // Conserver un catalogue séparé pour l'UI "Items dynamiques"
+        dynamicItemsCatalog.value = extra
       }
     } catch {}
   }
@@ -606,6 +622,9 @@ const openBorderGive = ref(false);
 const borderColors = ref([]);
 const selectedBorderToGive = ref('');
 const selectedBorderToGiveList = ref([]);
+// Items dynamiques (catégorie séparée)
+const dynamicItemsCatalog = ref([]);
+const selectedDynamicItemsToGive = ref([]);
 const events = ref([]);
 const eventForm = ref({
   titre: '',
@@ -1236,7 +1255,7 @@ function selectMissingOnly() {
 
 // Donner plusieurs items (séquentiel)
 async function giveSelectedItemsToUser() {
-  if (!viewingUserItems.value || (selectedItemsToGive.value.length === 0 && selectedBorderToGiveList.value.length === 0)) return
+  if (!viewingUserItems.value || (selectedItemsToGive.value.length === 0 && selectedBorderToGiveList.value.length === 0 && selectedDynamicItemsToGive.value.length === 0)) return
   itemsLoading.value = true
   try {
     let token = auth.token || auth.user?.token
@@ -1258,7 +1277,7 @@ async function giveSelectedItemsToUser() {
     // Ne donner que les items manquants (y compris variantes de bordure)
     const idsToGive = selectedItemsToGive.value.filter(id => !ownedIds.has(id))
 
-    if (idsToGive.length === 0 && selectedBorderToGiveList.value.length === 0) {
+    if (idsToGive.length === 0 && selectedBorderToGiveList.value.length === 0 && selectedDynamicItemsToGive.value.length === 0) {
       alert("Aucun nouvel don à effectuer: aucun item ni couleur sélectionné(e).")
       itemsLoading.value = false
       return
@@ -1267,6 +1286,7 @@ async function giveSelectedItemsToUser() {
     let givenCount = 0
     let alreadyOwnedCount = 0
     let failedCount = 0
+    // Donner les items "classiques" (statiques)
     for (const id of idsToGive) {
       try {
         const response = await fetch(`${API_URL}/users/${viewingUserItems.value._id}/give-item`, {
@@ -1301,6 +1321,25 @@ async function giveSelectedItemsToUser() {
     const updatedUser = users.value.find(u => u._id === viewingUserItems.value._id)
     if (updatedUser) viewingUserItems.value = updatedUser
 
+    // Donner les items dynamiques cochés (par legacyId)
+    let dynGiven = 0
+    for (const legacyId of selectedDynamicItemsToGive.value) {
+      try {
+        const dynName = (dynamicItemsCatalog.value.find(x => x.id === legacyId)?.name) || `Item ${legacyId}`
+        const resp = await fetch(`${API_URL}/users/${viewingUserItems.value._id}/give-item`, {
+          method: 'POST', headers, credentials: 'include',
+          body: JSON.stringify({ itemId: legacyId, itemName: dynName, adminMessage: adminMessage.value.trim() || null })
+        })
+        if (!resp.ok) { await resp.text(); continue }
+        dynGiven++
+      } catch {}
+    }
+
+    // Rafraîchir l'utilisateur (après dyn)
+    await fetchUsers()
+    const updatedUserDyn = users.value.find(u => u._id === viewingUserItems.value._id)
+    if (updatedUserDyn) viewingUserItems.value = updatedUserDyn
+
     // Donner les couleurs de bordure cochées
     let colorsGiven = 0
     for (const cid of selectedBorderToGiveList.value) {
@@ -1327,12 +1366,14 @@ async function giveSelectedItemsToUser() {
     if (givenCount) parts.push(`${givenCount} item(s)`) 
     if (alreadyOwnedCount) parts.push(`${alreadyOwnedCount} déjà possédé(s)`) 
     if (failedCount) parts.push(`${failedCount} échec(s)`) 
+    if (dynGiven) parts.push(`${dynGiven} item(s) dynamiques`)
     if (colorsGiven) parts.push(`${colorsGiven} couleur(s) de bordure`)
     alert(parts.length ? `Traitement terminé: ${parts.join(', ')}` : 'Rien à traiter')
     
     // Réinitialiser
     adminMessage.value = ''
     selectedBorderToGiveList.value = []
+    selectedDynamicItemsToGive.value = []
   } catch (err) {
     console.error('Erreur don multiple:', err)
     alert('Erreur lors du don d\'items: ' + (err.message || err))

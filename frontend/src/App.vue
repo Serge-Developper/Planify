@@ -40,6 +40,8 @@ async function checkForNewItemsWithMessages() {
       const byId = new Map<number, any>()
       for (const it of res.items) {
         if (typeof it.legacyId !== 'undefined') byId.set(Number(it.legacyId), it)
+        // Fallback: certains items peuvent ne pas avoir legacyId; utiliser id direct
+        if (typeof it.id === 'number') byId.set(Number(it.id), it)
       }
       list = list.map((lite) => {
         const dyn = byId.get(Number(lite.id))
