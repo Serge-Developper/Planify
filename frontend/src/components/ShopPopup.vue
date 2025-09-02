@@ -2316,15 +2316,7 @@ const getAvatarBorderStyle = (user) => {
     return { border: 'none', background: 'transparent' }
   }
 
-  // Récupère l'index de variante Jojo pour un utilisateur (0: sans texte, 1: avec texte)
-  const getJojoVariantIndexForUser = (user) => {
-    try {
-      const raw = String(user && user.selectedBorderColor ? user.selectedBorderColor : '')
-      const part = raw.split('|').find(p => p.startsWith('jv='))
-      const val = part ? Number(part.split('=')[1]) : 0
-      return val === 1 ? 1 : 0
-    } catch { return 0 }
-  }
+  // (utilise la fonction top-level getJojoVariantIndexForUser)
   // Extraire l'id de base si encodé avec variantes (ex: "red|dv=1|jv=0")
   const raw = user && user.selectedBorderColor ? String(user.selectedBorderColor) : ''
   const baseId = raw.split('|')[0] || ''

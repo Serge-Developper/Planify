@@ -15,11 +15,8 @@ const usersAdminRoutes = require('./routes/users-admin');
 const coinsRoutes = require('./routes/coins-simple');
 const itemsRoutes = require('./routes/items');
 const subjectsRoutes = require('./routes/subjects');
-// Stub de compatibilité pour couleurs dynamiques (Netlify) - pourra être remplacé par un CRUD complet
-const borderColorsRouter = express.Router();
-borderColorsRouter.get('/', (req, res) => {
-  res.json({ success: true, colors: [] });
-});
+// Routeur réel pour les couleurs de bordure
+const borderColorsRoutes = require('./routes/border-colors');
 
 const app = express();
 let lastMongoError = null;
@@ -150,7 +147,7 @@ app.use('/api/coins', requireDb, coinsRoutes);
 app.use('/api/items', requireDb, itemsRoutes);
 app.use('/api/subjects', requireDb, subjectsRoutes);
 app.use('/api/users-admin', requireDb, usersAdminRoutes);
-app.use('/api/border-colors', borderColorsRouter);
+app.use('/api/border-colors', requireDb, borderColorsRoutes);
 
 // Test direct de l'endpoint static-rules pour diagnostiquer le problème
 app.get('/api/subjects/static-rules/test', (req, res) => {
