@@ -12,8 +12,7 @@ export const API_URL = BASE_URL.endsWith('/api') ? BASE_URL : `${BASE_URL}/api`;
 
 // Headers de sécurité par défaut
 export const getAuthHeaders = () => {
-  const user = localStorage.getItem('user');
-  const token = user ? JSON.parse(user).token : null;
+  const token = getValidAuthToken();
   return {
     'Content-Type': 'application/json',
     'Authorization': token ? `Bearer ${token}` : '',
@@ -23,6 +22,40 @@ export const getAuthHeaders = () => {
 
 let hasRedirectedFor401 = false;
 
+// Helpers JWT/token
+function decodeJwtPayload(token?: string): any | null {
+  try {
+    if (!token) return null;
+    const parts = token.split('.');
+    if (parts.length < 2) return null;
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64 + '==='.slice((base64.length + 3) % 4);
+    const json = atob(padded);
+    return JSON.parse(json);
+  } catch { return null; }
+}
+
+function getStoredToken(): string | null {
+  try {
+    const raw = localStorage.getItem('user');
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    return obj?.token || null;
+  } catch { return null; }
+}
+
+export function getValidAuthToken(): string | null {
+  const token = getStoredToken();
+  if (!token) return null;
+  const payload = decodeJwtPayload(token);
+  const exp = payload?.exp ? Number(payload.exp) : 0;
+  if (!exp || Date.now() >= exp * 1000) {
+    try { localStorage.removeItem('user'); } catch {}
+    return null;
+  }
+  return token;
+}
+
 export const secureApiCall = async (url: string, options: RequestInit = {}) => {
   const config = { ...options, headers: { ...getAuthHeaders(), ...options.headers } };
   try {
@@ -30,7 +63,10 @@ export const secureApiCall = async (url: string, options: RequestInit = {}) => {
     if (!response.ok) {
       if (response.status === 401) {
         localStorage.removeItem('user');
-        if (!hasRedirectedFor401) {
+        // Rediriger uniquement depuis des pages protégées (évite les boucles sur les pages publiques)
+        const path = (typeof window !== 'undefined' && window.location && window.location.pathname) ? window.location.pathname : '';
+        const isProtected = /^\/(admin|dashboard|profil|profile|account|compte)/i.test(path);
+        if (isProtected && !hasRedirectedFor401) {
           hasRedirectedFor401 = true;
           try { window.location.href = '/'; } catch {}
         }
