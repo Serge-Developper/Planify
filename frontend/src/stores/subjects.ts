@@ -109,7 +109,12 @@ export const useSubjectsStore = defineStore('subjects', () => {
 
   const fetchStaticRules = async () => {
     try {
-      const response = await fetch(`${API_URL}/subjects/static-rules`, { headers: getAuthHeaders() });
+      // Nouveau endpoint propre (/api/subjects/rules). On garde un fallback silencieux si 404
+      let response = await fetch(`${API_URL}/subjects/rules`, { headers: getAuthHeaders() });
+      if (response.status === 404) {
+        // Ancien endpoint pour compat
+        response = await fetch(`${API_URL}/subjects/static-rules`, { headers: getAuthHeaders() });
+      }
       if (response.status === 404) {
         // Endpoint pas encore déployé côté backend → pas d'erreur console
         const local = loadStaticRulesLocal();
@@ -136,7 +141,10 @@ export const useSubjectsStore = defineStore('subjects', () => {
   ) => {
     const payload = { subjectName, yearsAllowed, specialitesAllowed, groupsAllowed: groupsAllowed || [] } as any;
     try {
-      const res = await fetch(`${API_URL}/subjects/static-rules`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(payload) });
+      let res = await fetch(`${API_URL}/subjects/rules`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(payload) });
+      if (res.status === 404) {
+        res = await fetch(`${API_URL}/subjects/static-rules`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(payload) });
+      }
       if (res.status === 404) {
         // Fallback local
         const idx = staticRules.value.findIndex(r => r.subjectName === subjectName);
@@ -159,7 +167,10 @@ export const useSubjectsStore = defineStore('subjects', () => {
   };
   const deleteStaticRule = async (subjectName: string) => {
     try {
-      const res = await fetch(`${API_URL}/subjects/static-rules/${encodeURIComponent(subjectName)}`, { method: 'DELETE', headers: getAuthHeaders() });
+      let res = await fetch(`${API_URL}/subjects/rules/${encodeURIComponent(subjectName)}`, { method: 'DELETE', headers: getAuthHeaders() });
+      if (res.status === 404) {
+        res = await fetch(`${API_URL}/subjects/static-rules/${encodeURIComponent(subjectName)}`, { method: 'DELETE', headers: getAuthHeaders() });
+      }
       if (res.status === 404) {
         staticRules.value = staticRules.value.filter(r => r.subjectName !== subjectName);
         saveStaticRulesLocal(staticRules.value as any);

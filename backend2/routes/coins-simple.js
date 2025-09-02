@@ -479,10 +479,10 @@ router.get('/weekly-items', verifyToken, async (req, res) => {
     // Tous les items disponibles pour la boutique hebdomadaire (items normaux)
     const allWeeklyItems = [
       // Items normaux
-      { id: 1, name: 'Oreilles de chat', price: 50, img: '/src/assets/img/oreilleschat.gif' },
+      { id: 1, name: 'Oreilles de chat', price: 150, img: '/src/assets/img/oreilleschat.gif' },
       { id: 2, name: 'Clown', price: 80, img: '/src/assets/img/clowncheveux.gif' },
-      { id: 3, name: 'Cash', price: 60, img: '/src/assets/img/cash.gif' },
-      { id: 4, name: 'Cible', price: 100, img: '/src/assets/img/target.gif' },
+      { id: 3, name: 'Cash', price: 70, img: '/src/assets/img/cash.gif' },
+      { id: 4, name: 'Cible', price: 90, img: '/src/assets/img/target.gif' },
       { id: 6, name: 'Roi', price: 90, img: '/src/assets/img/roi.gif' },
       { id: 7, name: 'Matrix', price: 110, img: '/src/assets/img/matrix.gif' },
       { id: 8, name: 'Ange', price: 600, img: '/src/assets/img/angelwings.gif' },

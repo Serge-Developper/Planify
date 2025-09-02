@@ -29,34 +29,41 @@ router.delete('/:id', verifyToken, requireRole(['admin']), async (req, res) => {
   res.json({ success: true });
 });
 
-// Règles matières statiques (admin)
-// Lecture publique des règles (lecture seule)
-router.get('/static-rules', async (req, res) => {
-  console.log('🔍 GET /static-rules appelé');
+// === Nouveau namespace propre pour les règles statiques ===
+// Lecture publique (utilisée côté front pour filtrer les matières statiques)
+router.get('/rules', async (req, res) => {
   try {
-    const rules = await StaticSubjectRule.find({}).sort({ subjectName: 1 });
-    console.log('✅ Règles trouvées:', rules.length);
+    const rules = await StaticSubjectRule.find({}).sort({ subjectName: 1 }).lean();
     res.json({ success: true, rules });
   } catch (error) {
-    console.error('❌ Erreur lors de la récupération des règles:', error);
-    res.status(500).json({ success: false, message: 'Erreur serveur', error: error.message });
+    res.status(500).json({ success: false, message: 'Erreur serveur', error: String(error?.message || error) });
   }
 });
 
-router.post('/static-rules', verifyToken, requireRole(['admin']), async (req, res) => {
-  const { subjectName, yearsAllowed = [], specialitesAllowed = [], groupsAllowed = [] } = req.body || {};
-  if (!subjectName) return res.status(400).json({ success: false, message: 'subjectName requis' });
-  const rule = await StaticSubjectRule.findOneAndUpdate(
-    { subjectName },
-    { subjectName, yearsAllowed, specialitesAllowed, groupsAllowed },
-    { new: true, upsert: true }
-  );
-  res.json({ success: true, rule });
+// Upsert règle (admin)
+router.post('/rules', verifyToken, requireRole(['admin']), async (req, res) => {
+  try {
+    const { subjectName, yearsAllowed = [], specialitesAllowed = [], groupsAllowed = [] } = req.body || {};
+    if (!subjectName) return res.status(400).json({ success: false, message: 'subjectName requis' });
+    const rule = await StaticSubjectRule.findOneAndUpdate(
+      { subjectName },
+      { subjectName, yearsAllowed, specialitesAllowed, groupsAllowed },
+      { new: true, upsert: true }
+    );
+    res.json({ success: true, rule });
+  } catch (e) {
+    res.status(400).json({ success: false, message: 'Erreur enregistrement règle', error: String(e?.message || e) });
+  }
 });
 
-router.delete('/static-rules/:subjectName', verifyToken, requireRole(['admin']), async (req, res) => {
-  await StaticSubjectRule.findOneAndDelete({ subjectName: req.params.subjectName });
-  res.json({ success: true });
+// Suppression règle (admin)
+router.delete('/rules/:subjectName', verifyToken, requireRole(['admin']), async (req, res) => {
+  try {
+    await StaticSubjectRule.findOneAndDelete({ subjectName: req.params.subjectName });
+    res.json({ success: true });
+  } catch (e) {
+    res.status(400).json({ success: false, message: 'Erreur suppression règle', error: String(e?.message || e) });
+  }
 });
 
 module.exports = router;
