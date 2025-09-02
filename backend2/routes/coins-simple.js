@@ -505,15 +505,16 @@ router.get('/weekly-items', verifyToken, async (req, res) => {
       { id: 24, name: 'Jojo', price: 170, img: '/src/assets/img/tobecontinued.png' }
     ];
 
-    // Fonction pour obtenir la seed du jour actuel (heure Europe/Paris)
+    // Fonction pour obtenir la seed du jour avec seuil de rotation à 01:00 (heure Europe/Paris)
     function getCurrentDaySeed() {
-      const formatter = new Intl.DateTimeFormat('fr-CA', {
-        timeZone: 'Europe/Paris',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-      });
-      return formatter.format(new Date()); // format YYYY-MM-DD
+      const now = new Date();
+      const parisNow = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Paris' }));
+      // Avant 01:00, on considère encore le jour précédent pour la seed
+      if (parisNow.getHours() < 1) {
+        parisNow.setDate(parisNow.getDate() - 1);
+      }
+      const formatter = new Intl.DateTimeFormat('fr-CA', { timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit' });
+      return formatter.format(parisNow); // format YYYY-MM-DD
     }
 
     // Mélange déterministe basé sur une seed
