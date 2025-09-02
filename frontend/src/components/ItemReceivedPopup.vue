@@ -277,10 +277,16 @@ const coinsStore = useCoinsStore()
 function isBorderVariant(it) {
   if (!it) return false
   try {
+    if (it.colorId) return true
     if (String(it.name || '').toLowerCase().startsWith('bordure ')) return true
     if (typeof coinsStore.getBorderColorIdFromItem === 'function') {
       const id = coinsStore.getBorderColorIdFromItem({ id: it.id, name: it.name })
       return !!id
+    }
+    // Fallback: si le nom correspond à une couleur dynamique connue
+    if (Array.isArray(coinsStore.borderColors)) {
+      const byName = coinsStore.borderColors.find(c => String(c.name).toLowerCase() === String(it.name || '').toLowerCase())
+      if (byName) return true
     }
   } catch {}
   return false
@@ -288,10 +294,16 @@ function isBorderVariant(it) {
 
 function getBorderFillStyle(it) {
   try {
-    const colorId = typeof coinsStore.getBorderColorIdFromItem === 'function'
-      ? coinsStore.getBorderColorIdFromItem({ id: it.id, name: it.name })
-      : null
-    const color = (coinsStore.borderColors || []).find(c => c.id === colorId)
+    let colorId = null
+    if (it && it.colorId) colorId = String(it.colorId)
+    if (!colorId && typeof coinsStore.getBorderColorIdFromItem === 'function') {
+      colorId = coinsStore.getBorderColorIdFromItem({ id: it.id, name: it.name })
+    }
+    let color = (coinsStore.borderColors || []).find(c => c.id === colorId)
+    // Fallback par nom
+    if (!color) {
+      color = (coinsStore.borderColors || []).find(c => String(c.name).toLowerCase() === String(it.name || '').toLowerCase())
+    }
     if (color) {
       const style = { width: '100%', height: '100%' }
       if (color.gradient) style.background = color.gradient

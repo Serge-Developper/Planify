@@ -19,7 +19,9 @@ const userSchema = new mongoose.Schema({
     purchaseDate: { type: Date, default: Date.now },
     equipped: { type: Boolean, default: false },
     adminMessage: { type: String, default: null }, // Message optionnel de l'admin lors de l'attribution
-    adminGiftRead: { type: Boolean, default: false }
+    adminGiftRead: { type: Boolean, default: false },
+    // Optionnel: identifiant de couleur de bordure dynamique offert (ex: 'g214', 'royal-blue')
+    colorId: { type: String, default: null }
   }],
   equippedItemId: { type: Number, default: null, required: false }, // ID de l'item actuellement équipé
   selectedBorderColor: { type: String, default: 'default' }, // Couleur de bordure choisie (toujours active)

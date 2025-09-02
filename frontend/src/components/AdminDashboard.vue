@@ -1311,7 +1311,7 @@ async function giveSelectedItemsToUser() {
           if (userFromStorage) token = JSON.parse(userFromStorage).token
         }
         const headers = { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'Authorization': `Bearer ${token}` }
-        const resp = await fetch(`${API_URL}/users-admin`, { method: 'POST', headers, credentials: 'include', body: JSON.stringify({ action: 'set-border-color', userId: viewingUserItems.value._id, colorId: cid }) })
+        const resp = await fetch(`${API_URL}/users-admin`, { method: 'POST', headers, credentials: 'include', body: JSON.stringify({ action: 'set-border-color', userId: viewingUserItems.value._id, colorId: cid, adminMessage: (adminMessage.value || '').trim() || null }) })
         if (!resp.ok) { await resp.text(); continue }
         colorsGiven++
       } catch {}

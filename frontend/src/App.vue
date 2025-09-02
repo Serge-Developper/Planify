@@ -30,8 +30,8 @@ async function checkForNewItemsWithMessages() {
   const unread = (coinsStore.purchasedItems || []).filter((pi: any) => pi && pi.adminGiftRead === false && Number(pi.itemId) !== 0)
   if (!unread.length) return
 
-  // Normaliser vers { id, name }
-  let list: any[] = unread.map((it: any) => ({ id: Number(it.itemId), name: it.itemName }))
+  // Normaliser vers { id, name, colorId? }
+  let list: any[] = unread.map((it: any) => ({ id: Number(it.itemId), name: it.itemName, colorId: (it as any).colorId || null }))
 
   // Enrichir avec les items dynamiques (créés via Admin Editor)
   try {

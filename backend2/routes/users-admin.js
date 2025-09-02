@@ -4,6 +4,7 @@ const router = express.Router()
 const bcrypt = require('bcryptjs')
 const User = require('../models/User')
 const { verifyToken, requireRole } = require('../middlewares/auth')
+const BorderColor = require('../models/BorderColor')
 
 // Vérifier admin (admin ou prof)
 const requireAdminOrProf = [verifyToken, requireRole(['admin', 'prof'])]
@@ -74,8 +75,42 @@ router.post('/', requireAdminOrProf, async (req, res) => {
       }
       case 'set-border-color': {
         const colorId = (data && typeof data.colorId === 'string') ? data.colorId.trim() : ''
+        const adminMessage = (data && typeof data.adminMessage === 'string' && data.adminMessage.trim()) ? String(data.adminMessage).trim() : null
         if (!colorId) return res.status(400).json({ success: false, error: 'colorId requis' })
+
+        // Définir la couleur sélectionnée immédiate
         user.selectedBorderColor = colorId
+
+        // Chercher la couleur pour le nom/legacyId
+        let colorDoc = null
+        try { colorDoc = await BorderColor.findOne({ id: colorId }).lean() } catch {}
+
+        const itemName = (colorDoc && colorDoc.name) ? colorDoc.name : `Couleur ${colorId}`
+        // ID numérique pour le suivi dans purchasedItems
+        let numericId = (colorDoc && typeof colorDoc.legacyId === 'number') ? Number(colorDoc.legacyId) : null
+        if (!Number.isFinite(numericId)) {
+          // Générer un id négatif déterministe basé sur colorId
+          let h = 0
+          for (let i = 0; i < colorId.length; i++) { h = (h * 31 + colorId.charCodeAt(i)) >>> 0 }
+          numericId = - (100000 + (h % 100000))
+        }
+
+        // Éviter les doublons si déjà offert
+        const hasAlready = (Array.isArray(user.purchasedItems) ? user.purchasedItems : []).some(pi => String(pi.colorId || '') === colorId)
+        if (!hasAlready) {
+          const list = Array.isArray(user.purchasedItems) ? user.purchasedItems : []
+          list.push({
+            itemId: Number(numericId),
+            itemName,
+            purchaseDate: new Date(),
+            equipped: false,
+            adminMessage,
+            adminGiftRead: false,
+            colorId
+          })
+          user.purchasedItems = list
+        }
+
         await user.save()
         return res.json({ success: true, selectedBorderColor: user.selectedBorderColor })
       }
