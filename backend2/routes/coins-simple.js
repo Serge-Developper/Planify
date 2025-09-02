@@ -505,15 +505,13 @@ router.get('/weekly-items', verifyToken, async (req, res) => {
       { id: 24, name: 'Jojo', price: 170, img: '/src/assets/img/tobecontinued.png' }
     ];
 
-    // Fonction pour obtenir la seed du jour actuel (heure Europe/Paris)
+    // Fonction pour obtenir la seed du jour avec seuil de rotation à 00:00 (heure Europe/Paris)
     function getCurrentDaySeed() {
-      const formatter = new Intl.DateTimeFormat('fr-CA', {
-        timeZone: 'Europe/Paris',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-      });
-      return formatter.format(new Date()); // format YYYY-MM-DD
+      const now = new Date();
+      const parisNow = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Paris' }));
+      // À minuit, la seed change automatiquement (pas de décalage)
+      const formatter = new Intl.DateTimeFormat('fr-CA', { timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit' });
+      return formatter.format(parisNow); // format YYYY-MM-DD
     }
 
     // Mélange déterministe basé sur une seed
@@ -730,14 +728,12 @@ router.get('/weekly-items', verifyToken, async (req, res) => {
     // Combiner les items normaux avec les couleurs de bordures
     weeklyItems = [...weeklyItems, ...selectedBorderColors];
 
-    // Calculer le temps jusqu'à la prochaine rotation à 01:00 (heure Europe/Paris)
+    // Calculer le temps jusqu'à la prochaine rotation à 00:00 (heure Europe/Paris)
     const now = new Date();
     const parisNow = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Paris' }));
     const parisTarget = new Date(parisNow);
-    parisTarget.setHours(1, 0, 0, 0);
-    if (parisNow.getHours() >= 1) {
-      parisTarget.setDate(parisTarget.getDate() + 1);
-    }
+    parisTarget.setHours(0, 0, 0, 0);
+    if (parisNow.getTime() >= parisTarget.getTime()) parisTarget.setDate(parisTarget.getDate() + 1);
     const timeLeft = parisTarget.getTime() - parisNow.getTime();
     const hours = Math.floor(timeLeft / (1000 * 60 * 60));
     const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
