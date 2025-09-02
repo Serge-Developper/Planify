@@ -33,6 +33,7 @@
 import { ref, onMounted } from 'vue'
 import ListeDevoirs from '@/components/ListeDevoirs.vue'
 import { secureApiCall } from '@/api'
+import { useSubjectsStore } from '@/stores/subjects'
 import { useAuthStore } from '@/stores/auth'
 import LoginPopup from '@/components/LoginPopup.vue'
 import closeImg from '@/assets/img/bouton_supprimer_decocher.png'
@@ -53,6 +54,8 @@ const loadEvents = async () => {
       events.value = []
       return
     }
+    // S'assurer que les matières dynamiques sont chargées pour alimenter le sélecteur
+    try { useSubjectsStore().initializeStore?.() } catch {}
     const res = await secureApiCall('/events')
     const raw = Array.isArray(res) ? res : (Array.isArray(res?.events) ? res.events : [])
     const userId = authStore.user?.id || authStore.user?._id
@@ -63,12 +66,16 @@ const loadEvents = async () => {
       const titre = e.titre ?? e.title ?? ''
       const matiere = e.matiere ?? e.subject ?? ''
       const date = e.date ?? (e.dueDate ? new Date(e.dueDate).toISOString().slice(0,10) : '')
-      const heure = e.heure ?? ''
+      const heureRaw = e.heure ?? ''
+      // Normalise les formats "09h00" -> "09:00" pour éviter les calculs NaN côté UI
+      const heure = typeof heureRaw === 'string' ? heureRaw.replace('h', ':') : ''
       let type = (e.type ?? '').toLowerCase()
       if (type === 'examen') type = 'exam'
       if (!type) type = 'devoir'
-      const checked = Array.isArray(e.checkedBy) ? e.checkedBy.includes(userId) : !!e.isCompleted
-      const archived = Array.isArray(e.archivedBy) ? e.archivedBy.includes(userId) : false
+      // Le backend renvoie déjà les statuts spécifiques à l'utilisateur courant.
+      // On garde cependant une compatibilité si seule la liste des IDs est fournie.
+      const checked = (typeof e.checked === 'boolean') ? e.checked : (Array.isArray(e.checkedBy) ? e.checkedBy.includes(userId) : !!e.isCompleted)
+      const archived = (typeof e.archived === 'boolean') ? e.archived : (Array.isArray(e.archivedBy) ? e.archivedBy.includes(userId) : false)
       const hidden = Array.isArray(e.hiddenBy) ? e.hiddenBy.includes(userId) : false
       return {
         _id: e._id,
@@ -84,20 +91,16 @@ const loadEvents = async () => {
         checked,
         archived,
         hidden,
+        archivedBy: Array.isArray(e.archivedBy) ? e.archivedBy : [],
+        checkedBy: Array.isArray(e.checkedBy) ? e.checkedBy : [],
+        createdBy: e.createdBy ?? e.creatorId ?? null,
       }
     })
 
-    const role = (authStore.user && authStore.user.role) || ''
-    if (role === 'admin' || role === 'prof') {
-      events.value = normalized
-    } else {
-      events.value = normalized.filter(ev => {
-        const okYear = !ev.year || !userYear || ev.year === userYear
-        const allowedGroups = new Set([userGroup, 'Promo'])
-        const okGroup = allowedGroups.has(ev.groupe) || ev.groupes.some(g => allowedGroups.has(g))
-        return okYear && okGroup
-      })
-    }
+    // Le backend applique déjà les règles d'accès (année/groupe) pour les rôles non-admin/non-prof.
+    // Pour éviter d'exclure à tort des événements (ex: formats d'année différents "BUT2" vs "2"),
+    // on fait confiance à l'API et on n'applique pas de filtre supplémentaire côté client.
+    events.value = normalized
   } catch (error) {
     console.error('Erreur lors du chargement des events:', error)
     events.value = []
@@ -197,4 +200,3 @@ function handleLoginSuccess(payload) {
 .slide-fade-leave-from { opacity: 1; transform: translateY(0); }
 .slide-fade-leave-to { opacity: 0; transform: translateY(-40px); }
 </style>
-
