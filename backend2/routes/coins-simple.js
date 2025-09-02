@@ -473,9 +473,10 @@ router.post('/spin-wheel', verifyToken, async (req, res) => {
   }
 });
 
-// Récupérer les items de la boutique hebdomadaire (synchronisés pour tous)
+// Récupérer les items de la boutique quotidienne (figés pour la journée, reset à minuit Europe/Paris)
 router.get('/weekly-items', verifyToken, async (req, res) => {
   try {
+    const DailyShop = require('../models/DailyShop')
     // Tous les items disponibles pour la boutique hebdomadaire (items normaux)
     const allWeeklyItems = [
       // Items normaux
@@ -537,7 +538,7 @@ router.get('/weekly-items', verifyToken, async (req, res) => {
       return shuffled.slice(0, count);
     }
 
-    // Générer les items hebdomadaires pour aujourd'hui
+    // Générer/charger la sélection quotidienne pour aujourd'hui (Europe/Paris)
     const daySeed = getCurrentDaySeed();
     // Empêcher la répétition immédiate (J vs J-1) pour les items normaux
     function getPreviousDaySeed() {
@@ -573,25 +574,35 @@ router.get('/weekly-items', verifyToken, async (req, res) => {
     const prevItems = getRandomItemsFromSeed(prevSeed, 3, combinedPool);
     const prevIds = new Set(prevItems.map(i => i.id));
 
-    const shuffledToday = getShuffledItemsFromSeed(daySeed, combinedPool);
-    const todaySelection = [];
-    for (const it of shuffledToday) {
-      if (!prevIds.has(it.id)) {
-        todaySelection.push(it);
-        if (todaySelection.length === 3) break;
-      }
-    }
-    // Sécurité: si jamais il manque (très improbable), compléter sans la contrainte
-    while (todaySelection.length < 3) {
+    // Lire cache existant
+    let cached = await DailyShop.findOne({ daySeed }).lean()
+    let selectedItemIds = []
+    let selectedColorIds = []
+
+    if (!cached) {
+      // Calcul initial déterministe (éviter la répétition immédiate vs J-1)
+      const shuffledToday = getShuffledItemsFromSeed(daySeed, combinedPool);
+      const todaySelection = [];
       for (const it of shuffledToday) {
-        if (!todaySelection.find(x => x.id === it.id)) {
+        if (!prevIds.has(it.id)) {
           todaySelection.push(it);
           if (todaySelection.length === 3) break;
         }
       }
+      while (todaySelection.length < 3) {
+        for (const it of shuffledToday) {
+          if (!todaySelection.find(x => x.id === it.id)) {
+            todaySelection.push(it);
+            if (todaySelection.length === 3) break;
+          }
+        }
+      }
+      selectedItemIds = todaySelection.map(it => Number(it.id))
+      // Les couleurs seront calculées ci-dessous (selectedColorIds)
+    } else {
+      selectedItemIds = Array.isArray(cached.itemIds) ? cached.itemIds.map(Number) : []
+      selectedColorIds = Array.isArray(cached.colorIds) ? cached.colorIds.map(Number) : []
     }
-
-    let weeklyItems = todaySelection;
     // Ajouts de test (mémoire process, non persistant)
     if (global.__WEEKLY_TEST_IDS__ && global.__WEEKLY_TEST_IDS__.size) {
       const ids = Array.from(global.__WEEKLY_TEST_IDS__)
@@ -724,9 +735,36 @@ router.get('/weekly-items', verifyToken, async (req, res) => {
       }
     }
     const selectedBorderColors = todayColorSelection;
-    
-    // Combiner les items normaux avec les couleurs de bordures
-    weeklyItems = [...weeklyItems, ...selectedBorderColors];
+
+    // Si pas de cache: persister la sélection du jour (items + couleurs)
+    if (!cached) {
+      selectedColorIds = selectedBorderColors.map(c => Number(c.id))
+      try {
+        await DailyShop.create({ daySeed, itemIds: selectedItemIds, colorIds: selectedColorIds })
+      } catch (e) {
+        // si concurrence: relire
+        const again = await DailyShop.findOne({ daySeed }).lean()
+        if (again) {
+          selectedItemIds = Array.isArray(again.itemIds) ? again.itemIds.map(Number) : selectedItemIds
+          selectedColorIds = Array.isArray(again.colorIds) ? again.colorIds.map(Number) : selectedColorIds
+        }
+      }
+    }
+
+    // Reconstruire la réponse à partir des IDs figés (pour ignorer les ajouts/suppressions dans la journée)
+    const pickById = (pool, ids) => {
+      const map = new Map(pool.map(p => [Number(p.id), p]))
+      const out = []
+      for (const id of ids) { if (map.has(Number(id))) out.push(map.get(Number(id))) }
+      return out
+    }
+    let weeklyItems = pickById(combinedPool, selectedItemIds)
+    // Surcharger la sélection couleurs par celle figée si elle existe
+    const colorPool = borderColorItems
+    const colorsOut = selectedColorIds && selectedColorIds.length
+      ? pickById(colorPool, selectedColorIds)
+      : selectedBorderColors
+    weeklyItems = [...weeklyItems, ...colorsOut];
 
     // Calculer le temps jusqu'à la prochaine rotation à 00:00 (heure Europe/Paris)
     const now = new Date();
