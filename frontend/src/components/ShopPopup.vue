@@ -2452,11 +2452,11 @@ const getAvatarBorderStyle = (user) => {
    
    weeklyTimer = setInterval(() => {
   const now = new Date()
-  // Cible: 01:00 Europe/Paris
+  // Cible: 03:30 Europe/Paris (temporaire)
   const parisNow = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Paris' }))
   const target = new Date(parisNow)
-  target.setHours(1, 0, 0, 0)
-  if (parisNow.getHours() >= 1) target.setDate(target.getDate() + 1)
+  target.setHours(3, 30, 0, 0)
+  if (parisNow.getHours() > 3 || (parisNow.getHours() === 3 && parisNow.getMinutes() >= 30)) target.setDate(target.getDate() + 1)
   
   const timeLeft = target.getTime() - parisNow.getTime()
   const hours = Math.floor(timeLeft / (1000 * 60 * 60))
