@@ -687,7 +687,13 @@ function sanitizeAsset(a) {
     avatarStyleMobile: sanitizeStyle(a.avatarStyleMobile),
     navbarStyle: sanitizeStyle(a.navbarStyle),
     navbarStyleMobile: sanitizeStyle(a.navbarStyleMobile),
-    popupStyleStyle: sanitizeStyle(a.popupStyleStyle)
+    popupStyleStyle: sanitizeStyle(a.popupStyleStyle),
+    // Conserver les métadonnées (placements/targets)
+    meta: (a && typeof a.meta === 'object') ? {
+      navbarPlacement: a.meta.navbarPlacement || undefined,
+      leaderboardPlacement: a.meta.leaderboardPlacement || undefined,
+      navbarTarget: a.meta.navbarTarget || undefined
+    } : {}
   }
 }
 
