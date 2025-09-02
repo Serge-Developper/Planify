@@ -471,9 +471,8 @@ const mmiMatieres = computed(() => {
     })
     .map((s) => s.name)
     .filter(Boolean);
-  // Inclure aussi toutes les matières présentes parmi les événements visibles (ex: "test")
-  const eventNames = Array.isArray(props.events) ? Array.from(new Set(props.events.map((e)=>e.matiere).filter((x)=>!!x))) : [];
-  const set = new Set([...officialMatieres, ...dynNames, ...eventNames]);
+  // Le sélecteur n'affiche que les matières officielles + dynamiques autorisées
+  const set = new Set([...officialMatieres, ...dynNames]);
   return Array.from(set);
 });
 
