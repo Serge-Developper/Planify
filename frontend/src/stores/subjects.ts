@@ -24,6 +24,20 @@ export const useSubjectsStore = defineStore('subjects', () => {
   const initialized = ref(false);
   const staticRules = ref<Array<{ subjectName: string; yearsAllowed: string[]; groupsAllowed?: string[]; specialitesAllowed: string[] }>>([]);
 
+  // --- Fallback local si l'API n'est pas disponible (404) ---
+  const STATIC_KEY = 'planify_static_rules';
+  function loadStaticRulesLocal() {
+    try {
+      const raw = localStorage.getItem(STATIC_KEY);
+      if (!raw) return [] as any[];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch { return [] as any[]; }
+  }
+  function saveStaticRulesLocal(rules: any[]) {
+    try { localStorage.setItem(STATIC_KEY, JSON.stringify(rules || [])); } catch {}
+  }
+
   const getSubjects = computed(() => subjects.value);
   const getSubjectById = computed(() => (id: string) => subjects.value.find(subject => subject._id === id));
   const getSubjectByName = computed(() => (name: string) => subjects.value.find(subject => subject.name.toLowerCase() === name.toLowerCase()));
@@ -74,14 +88,18 @@ export const useSubjectsStore = defineStore('subjects', () => {
       const response = await fetch(`${API_URL}/subjects/rules/static`, { headers: getAuthHeaders() });
       if (response.status === 404) {
         // Endpoint pas encore déployé côté backend → pas d'erreur console
-        staticRules.value = staticRules.value || [];
+        const local = loadStaticRulesLocal();
+        staticRules.value = local;
         return;
       }
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const res = await response.json();
       staticRules.value = Array.isArray(res) ? res : (Array.isArray(res?.rules) ? res.rules : []);
+      // synchroniser localement pour avoir un cache en cas d'indispo
+      saveStaticRulesLocal(staticRules.value as any);
     } catch (e) {
-      staticRules.value = staticRules.value || [];
+      const local = loadStaticRulesLocal();
+      staticRules.value = local;
     }
   };
 
@@ -92,22 +110,44 @@ export const useSubjectsStore = defineStore('subjects', () => {
     specialitesAllowed: string[] = [],
     groupsAllowed?: string[]
   ) => {
+    const payload = { subjectName, yearsAllowed, specialitesAllowed, groupsAllowed: groupsAllowed || [] } as any;
     try {
-      const payload = { subjectName, yearsAllowed, specialitesAllowed, groupsAllowed: groupsAllowed || [] } as any;
-      const saved = await secureApiCall('/subjects/rules/static', { method: 'POST', body: JSON.stringify(payload) });
+      const res = await fetch(`${API_URL}/subjects/rules/static`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(payload) });
+      if (res.status === 404) {
+        // Fallback local
+        const idx = staticRules.value.findIndex(r => r.subjectName === subjectName);
+        if (idx >= 0) staticRules.value[idx] = payload as any; else staticRules.value.push(payload as any);
+        saveStaticRulesLocal(staticRules.value as any);
+        return;
+      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const saved = await res.json();
       const idx = staticRules.value.findIndex(r => r.subjectName === subjectName);
       const record = saved || payload;
       if (idx >= 0) staticRules.value[idx] = record as any; else staticRules.value.push(record as any);
+      saveStaticRulesLocal(staticRules.value as any);
     } catch (e) {
-      throw e;
+      // Fallback local en cas d'erreur réseau
+      const idx = staticRules.value.findIndex(r => r.subjectName === subjectName);
+      if (idx >= 0) staticRules.value[idx] = payload as any; else staticRules.value.push(payload as any);
+      saveStaticRulesLocal(staticRules.value as any);
     }
   };
   const deleteStaticRule = async (subjectName: string) => {
     try {
-      await secureApiCall(`/subjects/rules/static/${encodeURIComponent(subjectName)}`, { method: 'DELETE' });
+      const res = await fetch(`${API_URL}/subjects/rules/static/${encodeURIComponent(subjectName)}`, { method: 'DELETE', headers: getAuthHeaders() });
+      if (res.status === 404) {
+        staticRules.value = staticRules.value.filter(r => r.subjectName !== subjectName);
+        saveStaticRulesLocal(staticRules.value as any);
+        return;
+      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       staticRules.value = staticRules.value.filter(r => r.subjectName !== subjectName);
+      saveStaticRulesLocal(staticRules.value as any);
     } catch (e) {
-      throw e;
+      // Fallback local si l'API n'est pas dispo
+      staticRules.value = staticRules.value.filter(r => r.subjectName !== subjectName);
+      saveStaticRulesLocal(staticRules.value as any);
     }
   };
 
