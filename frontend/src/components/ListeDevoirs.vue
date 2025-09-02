@@ -450,10 +450,13 @@ subjectsStore.initializeStore?.();
 
 function normalizeYearClient(y) {
   if (!y) return '';
-  const v = String(y).replace(/\s+/g, '').toUpperCase();
-  if (v === 'BUT1' || v === '1') return 'BUT1';
-  if (v === 'BUT2' || v === '2') return 'BUT2';
-  if (v === 'BUT3' || v === '3') return 'BUT3';
+  // Supprime accents et espaces pour matcher des libellés comme "1ère année"
+  const v = String(y)
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // accents
+    .toUpperCase().replace(/\s+/g, '');
+  if (v === 'BUT1' || v === '1' || v.includes('1ERE') || v.includes('PREMIERE') || v.includes('ANNEE1')) return 'BUT1';
+  if (v === 'BUT2' || v === '2' || v.includes('2EME') || v.includes('DEUXIEME') || v.includes('ANNEE2')) return 'BUT2';
+  if (v === 'BUT3' || v === '3' || v.includes('3EME') || v.includes('TROISIEME') || v.includes('ANNEE3')) return 'BUT3';
   return v;
 }
 
