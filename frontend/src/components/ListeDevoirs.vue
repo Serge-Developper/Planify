@@ -408,6 +408,7 @@ import closeHoverImg from '@/assets/img/bouton_supprimer_cocher.png';
 import notifIcon from '@/assets/notif.png';
 import supprimerIcon from '@/assets/supprimer.svg';
 import { API_URL } from '@/api';
+import { useSubjectsStore } from '@/stores/subjects';
 
 const props = defineProps({
   events: { type: Array, required: true }
@@ -423,8 +424,8 @@ if (localStorage.getItem('user')) {
 const isAdmin = computed(() => user.value && user.value.role === 'admin');
 const matiereArchive = ref('');
 
-// Liste officielle MMI
-const mmiMatieres = [
+// Matières: mélange des officielles + dynamiques remontées par l'admin (avec couleurs)
+const officialMatieres = [
   "Anglais",
   "Culture artistique",
   "Culture numérique",
@@ -444,6 +445,131 @@ const mmiMatieres = [
   "Représentation et traitement de l'information",
   "Economie et droit du numérique"
 ];
+const subjectsStore = useSubjectsStore();
+
+// Initialiser le store des matières au montage du composant
+onMounted(async () => {
+  try {
+    await subjectsStore.initializeStore();
+  } catch (error) {
+    console.error('Erreur lors du chargement des matières:', error);
+  }
+});
+
+// Surveiller les changements dans le store des matières pour mettre à jour la liste
+watch(() => subjectsStore.subjects, () => {
+  // Force la réactivité du computed mmiMatieres
+  nextTick();
+}, { deep: true });
+
+// Surveiller l'état d'initialisation du store
+watch(() => subjectsStore.initialized, (isInitialized) => {
+  if (isInitialized) {
+    console.log('Store des matières initialisé, matières disponibles:', subjectsStore.subjects);
+  }
+});
+
+function normalizeYearClient(y) {
+  if (!y) return '';
+  // Supprime accents et espaces pour matcher des libellés comme "1ère année"
+  const v = String(y)
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // accents
+    .toUpperCase().replace(/\s+/g, '');
+  if (v === 'BUT1' || v === '1' || v.includes('1ERE') || v.includes('PREMIERE') || v.includes('ANNEE1')) return 'BUT1';
+  if (v === 'BUT2' || v === '2' || v.includes('2EME') || v.includes('DEUXIEME') || v.includes('ANNEE2')) return 'BUT2';
+  if (v === 'BUT3' || v === '3' || v.includes('3EME') || v.includes('TROISIEME') || v.includes('ANNEE3')) return 'BUT3';
+  return v;
+}
+
+function normalizeSpec(v) {
+  return String(v || '').trim().toLowerCase();
+}
+
+// Fonction utilitaire pour convertir hex en rgba
+function hexToRgba(hex, alpha) {
+  try {
+    const h = hex.replace('#', '');
+    const r = parseInt(h.length === 3 ? h[0] + h[0] : h.substring(0, 2), 16);
+    const g = parseInt(h.length === 3 ? h[1] + h[1] : h.substring(2, 4), 16);
+    const b = parseInt(h.length === 3 ? h[2] + h[2] : h.substring(4, 6), 16);
+    const a = Math.max(0, Math.min(1, alpha || 1));
+    return `rgba(${r}, ${g}, ${b}, ${a})`;
+  } catch {
+    return hex || '#000000';
+  }
+}
+
+const mmiMatieres = computed(() => {
+  // Récupérer les matières dynamiques du store
+  const dynList = Array.isArray(subjectsStore.subjects) ? subjectsStore.subjects : [];
+  const isProf = !!(user.value && (user.value.role === 'prof' || user.value.role === 'admin'));
+  const userSpec = normalizeSpec(user.value && user.value.specialite);
+  
+  let dynNames = [];
+  
+  if (isProf) {
+    // Les profs/admins voient toutes les matières dynamiques
+    dynNames = dynList.map((s) => s && s.name).filter(Boolean);
+  } else {
+    // Les étudiants voient seulement les matières autorisées pour leur profil
+    const userYear = normalizeYearClient(user.value?.year);
+    const userGroup = (user.value?.groupe || '').toUpperCase();
+    
+    dynNames = dynList
+      .filter((s) => {
+        if (!s || !s.name) return false;
+        
+        const years = Array.isArray(s.yearsAllowed) ? s.yearsAllowed.map(normalizeYearClient) : [];
+        const groups = Array.isArray(s.groupsAllowed) ? s.groupsAllowed.map((g) => String(g).toUpperCase()) : [];
+        const specs = Array.isArray(s.specialitesAllowed) ? s.specialitesAllowed.map(normalizeSpec) : [];
+        
+        // Vérification année
+        const yearOk = years.length === 0 || years.includes(userYear);
+        
+        // Vérification groupe
+        const groupOk = groups.length === 0 || groups.includes('PROMO') || groups.includes(userGroup);
+        
+        // Vérification spécialité
+        const specOk = specs.length === 0 ? true : (userSpec && specs.includes(userSpec));
+        
+        return yearOk && groupOk && specOk;
+      })
+      .map((s) => s.name)
+      .filter(Boolean);
+  }
+  
+  // Combiner matières officielles et dynamiques
+  const allMatieres = [...officialMatieres, ...dynNames];
+  const uniqueMatieres = Array.from(new Set(allMatieres));
+  
+  console.log('Matières dynamiques trouvées:', dynNames);
+  console.log('Toutes les matières disponibles:', uniqueMatieres);
+  
+  return uniqueMatieres;
+});
+
+// Aide: une matière est-elle visible pour l'utilisateur dans le sélecteur ?
+function isSubjectAllowedForUser(name) {
+  // Prof/Admin: accès à toutes les matières et tâches
+  if (user.value && (user.value.role === 'prof' || user.value.role === 'admin')) return true;
+  try {
+    const list = (mmiMatieres && mmiMatieres.value) ? mmiMatieres.value : (Array.isArray(mmiMatieres) ? mmiMatieres : []);
+    return !name || (Array.isArray(list) && list.includes(name));
+  } catch {
+    return true;
+  }
+}
+
+// Filtrage supplémentaire par spécialité au niveau des événements
+function eventMatchesUserSpecialite(ev) {
+  try {
+    const uSpec = (user.value && user.value.specialite) ? String(user.value.specialite) : '';
+    const eSpec = (ev && ev.specialite) ? String(ev.specialite) : '';
+    if (!eSpec) return true; // événement non spécialisé visible par tous
+    if (!uSpec) return false; // utilisateur sans spécialité ne voit pas un événement spécialisé
+    return uSpec === eSpec;
+  } catch { return true; }
+}
 
 // Génère une clé unique stable pour un event
 const eventKey = (e) => (e && (e._id || (e.titre + e.date + e.heure)));
@@ -496,12 +622,19 @@ const sortedEvents = computed(() => {
 });
 
 const doneEvents = computed(() =>
-  props.events.filter(e => e.checked && !e.archived)
+  props.events
+    .filter(e => e.checked && !e.archived)
+    .filter(e => eventMatchesUserSpecialite(e))
+    .filter(e => isSubjectAllowedForUser(e.matiere))
     .filter(e => !selectedMatiere.value || e.matiere === selectedMatiere.value)
 );
 const toDoEvents = computed(() => {
   let filtered = props.events.filter(e => {
     if (e.archived) return false;
+    // Cacher les matières non autorisées pour cet utilisateur
+    if (!isSubjectAllowedForUser(e.matiere)) return false;
+    // Spécialité
+    if (!eventMatchesUserSpecialite(e)) return false;
 
     const t = timeLeft(e.date, e.heure);
     let typeFilter = true;
@@ -515,14 +648,14 @@ const toDoEvents = computed(() => {
 
   if (sortBy.value === 'passe') {
     filtered = filtered.sort((a, b) => {
-      const dateA = new Date(a.date + 'T' + (a.heure ? a.heure : '00:00'));
-      const dateB = new Date(b.date + 'T' + (b.heure ? b.heure : '00:00'));
+      const dateA = new Date(a.date + 'T' + (a.heure ? a.heure.replace('h', ':') : '00:00'));
+      const dateB = new Date(b.date + 'T' + (b.heure ? b.heure.replace('h', ':') : '00:00'));
       return dateB - dateA;
     });
   } else {
     filtered = filtered.sort((a, b) => {
-      const dateA = new Date(a.date + 'T' + (a.heure ? a.heure : '00:00'));
-      const dateB = new Date(b.date + 'T' + (b.heure ? b.heure : '00:00'));
+      const dateA = new Date(a.date + 'T' + (a.heure ? a.heure.replace('h', ':') : '00:00'));
+      const dateB = new Date(b.date + 'T' + (b.heure ? b.heure.replace('h', ':') : '00:00'));
       return dateA - dateB;
     });
   }
@@ -530,7 +663,11 @@ const toDoEvents = computed(() => {
 });
 
 const archives = computed(() => 
-  props.events.filter(e => e.archived && (!selectedMatiere.value || e.matiere === selectedMatiere.value))
+  props.events
+    .filter(e => e.archived)
+    .filter(e => eventMatchesUserSpecialite(e))
+    .filter(e => isSubjectAllowedForUser(e.matiere))
+    .filter(e => !selectedMatiere.value || e.matiere === selectedMatiere.value)
 );
 
 const lateEvents = computed(() =>
@@ -538,6 +675,8 @@ const lateEvents = computed(() =>
     !e.archived &&
     !e.checked &&
     isLate(e) &&
+    eventMatchesUserSpecialite(e) &&
+    isSubjectAllowedForUser(e.matiere) &&
     (!selectedMatiere.value || e.matiere === selectedMatiere.value)
   )
 );
@@ -547,6 +686,33 @@ function setSort(type) {
 }
 
 function stringToColor(str, type) {
+  // 1) Prend la couleur/dégradé défini dans le store des matières dynamiques s'il existe
+  try {
+    const dynList = Array.isArray(subjectsStore.subjects) ? subjectsStore.subjects : [];
+    const subject = dynList.find((s) => s && s.name && s.name.toLowerCase() === (str || '').toLowerCase());
+    
+    if (subject) {
+      const c1 = subject.color;
+      const c2 = subject.color2;
+      const angle = typeof subject.gradientAngle === 'number' ? subject.gradientAngle : 90;
+      const opacity1 = typeof subject.colorOpacity === 'number' ? subject.colorOpacity : 1;
+      const opacity2 = typeof subject.color2Opacity === 'number' ? subject.color2Opacity : 1;
+      
+      if (subject.useGradient && c1 && c2) {
+        // Convertir hex vers rgba avec opacité
+        const rgba1 = hexToRgba(c1, opacity1);
+        const rgba2 = hexToRgba(c2, opacity2);
+        return `linear-gradient(${angle}deg, ${rgba1} 0%, ${rgba2} 100%)`;
+      }
+      
+      if (c1) {
+        return opacity1 < 1 ? hexToRgba(c1, opacity1) : c1;
+      }
+    }
+  } catch (error) {
+    console.error('Erreur lors de la récupération de la couleur de la matière:', error);
+  }
+
   if (str === "Gestion de projet") {
     return "linear-gradient(90deg, rgba(83,198,77,0.88) 0%, rgba(126,252,173,0.89) 100%)";
   }
@@ -603,7 +769,7 @@ function displayGroup(event) {
 }
 function timeLeft(date, heure) {
   if (!date || !heure) return '';
-  const [h, m] = heure.split(':');
+  const [h, m] = (typeof heure === 'string' ? heure.replace('h', ':') : '').split(':');
   const target = new Date(date);
   target.setHours(Number(h), Number(m || 0), 0, 0);
   const now = new Date();
@@ -673,7 +839,7 @@ function getGroupeImage(event) {
 }
 
 function isLate(event) {
-  const [h, m] = (event.heure || '').split(':');
+  const [h, m] = ((event.heure || '').replace('h', ':')).split(':');
   const target = new Date(event.date);
   target.setHours(Number(h), Number(m || 0), 0, 0);
   const now = new Date();
@@ -698,11 +864,9 @@ async function archiverTout() {
 }
 
 const userId = user.value && (user.value._id || user.value.id);
+// Utilise le booléen e.archived fourni par l'API pour l'utilisateur courant
 const archivesFiltered = computed(() =>
-  props.events.filter(e =>
-    e.archivedBy && e.archivedBy.some(id => id === userId || (id._id && id._id === userId))
-    && (!selectedMatiere.value || e.matiere === selectedMatiere.value)
-  )
+  props.events.filter(e => e.archived && (!selectedMatiere.value || e.matiere === selectedMatiere.value))
 );
 
 async function viderArchive() {
