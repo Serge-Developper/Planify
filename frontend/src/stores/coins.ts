@@ -389,10 +389,15 @@ export const useCoinsStore = defineStore('coins', {
     syncUnlockedBorderColorsFromInventory() {
       if (!Array.isArray(this.purchasedItems)) return;
       for (const invItem of this.purchasedItems) {
-        const colorId = this.getBorderColorIdFromItem({ id: invItem.itemId, name: invItem.itemName });
-        if (colorId) {
-          this.unlockBorderColor(colorId);
+        const id = typeof invItem === 'number' ? invItem : (typeof invItem === 'string' ? Number(invItem) : Number(invItem?.itemId));
+        const name = (invItem && typeof invItem === 'object') ? invItem.itemName : undefined;
+        const directColorId = (invItem && typeof invItem === 'object' && (invItem as any).colorId) ? String((invItem as any).colorId) : null;
+        let colorId = directColorId || this.getBorderColorIdFromItem({ id, name } as any);
+        if (!colorId && name) {
+          const found = this.borderColors.find(c => String(c.name).toLowerCase() === String(name).toLowerCase());
+          if (found) colorId = found.id;
         }
+        if (colorId) this.unlockBorderColor(colorId);
       }
     },
 
@@ -645,6 +650,21 @@ async initialize() {
         { id: 'g230', name: 'Ambre Nuit', color: '#060002', gradient: 'linear-gradient(135deg,#f77500,#060002)', unlocked: false },
         { id: 'g231', name: 'Émeraude Nuit', color: '#1c231f', gradient: 'linear-gradient(135deg,#01f9a0,#1c231f)', unlocked: false }
       ];
+      // Charger aussi les couleurs dynamiques si l'API est dispo
+      try { this.fetchDynamicBorderColors && this.fetchDynamicBorderColors() } catch {}
+    },
+
+    // Charger les couleurs dynamiques depuis l'API
+    async fetchDynamicBorderColors() {
+      try {
+        const res = await secureApiCall('/border-colors')
+        const list = (res && res.success && Array.isArray(res.colors)) ? res.colors : []
+        for (const c of list) {
+          if (!c || !c.id) continue
+          const exists = this.borderColors.find(b => b.id === c.id)
+          if (!exists) this.borderColors.push({ id: c.id, name: c.name || c.id, color: c.color || '#000000', unlocked: false, gradient: c.gradient || undefined })
+        }
+      } catch {}
     },
 
     // Débloquer une couleur de bordure
