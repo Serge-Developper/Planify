@@ -70,8 +70,12 @@ export const useSubjectsStore = defineStore('subjects', () => {
   const refreshSubjects = async () => fetchSubjects(true);
 
   const fetchStaticRules = async () => {
-    // Pas d'endpoint IONOS actuellement; persistance en mémoire uniquement
-    staticRules.value = staticRules.value || [];
+    try {
+      const res = await secureApiCall('/subjects/rules/static');
+      staticRules.value = Array.isArray(res) ? res : (Array.isArray(res?.rules) ? res.rules : []);
+    } catch (e) {
+      staticRules.value = staticRules.value || [];
+    }
   };
 
   // Placeholders avec signatures compatibles, persistance en mémoire
@@ -81,30 +85,36 @@ export const useSubjectsStore = defineStore('subjects', () => {
     specialitesAllowed: string[] = [],
     groupsAllowed?: string[]
   ) => {
-    const idx = staticRules.value.findIndex(r => r.subjectName === subjectName);
-    const record = { subjectName, yearsAllowed, specialitesAllowed, groupsAllowed: groupsAllowed || [] };
-    if (idx >= 0) staticRules.value[idx] = record as any; else staticRules.value.push(record as any);
+    try {
+      const payload = { subjectName, yearsAllowed, specialitesAllowed, groupsAllowed: groupsAllowed || [] } as any;
+      const saved = await secureApiCall('/subjects/rules/static', { method: 'POST', body: JSON.stringify(payload) });
+      const idx = staticRules.value.findIndex(r => r.subjectName === subjectName);
+      const record = saved || payload;
+      if (idx >= 0) staticRules.value[idx] = record as any; else staticRules.value.push(record as any);
+    } catch (e) {
+      throw e;
+    }
   };
   const deleteStaticRule = async (subjectName: string) => {
-    staticRules.value = staticRules.value.filter(r => r.subjectName !== subjectName);
+    try {
+      await secureApiCall(`/subjects/rules/static/${encodeURIComponent(subjectName)}`, { method: 'DELETE' });
+      staticRules.value = staticRules.value.filter(r => r.subjectName !== subjectName);
+    } catch (e) {
+      throw e;
+    }
   };
 
   const createSubject = async (subject: Omit<Subject, '_id' | 'createdAt' | 'updatedAt'>) => {
-    const newSubject: Subject = {
-      ...subject,
-      _id: Math.random().toString(36).slice(2),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    subjects.value.push(newSubject);
-    return newSubject;
+    const saved = await secureApiCall('/subjects', { method: 'POST', body: JSON.stringify(subject as any) });
+    await fetchSubjects(true);
+    return saved as any;
   };
   const updateSubject = async (id: string, updates: Partial<Subject>) => {
-    const idx = subjects.value.findIndex(s => s._id === id);
-    if (idx === -1) return;
-    subjects.value[idx] = { ...subjects.value[idx], ...updates, updatedAt: new Date() } as Subject;
+    await secureApiCall(`/subjects/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(updates as any) });
+    await fetchSubjects(true);
   };
   const deleteSubject = async (id: string) => {
+    await secureApiCall(`/subjects/${encodeURIComponent(id)}`, { method: 'DELETE' });
     subjects.value = subjects.value.filter(s => s._id !== id);
   };
 
