@@ -540,6 +540,9 @@ router.get('/weekly-items', verifyToken, async (req, res) => {
 
     // Générer/charger la sélection quotidienne pour aujourd'hui (Europe/Paris)
     const daySeed = getCurrentDaySeed();
+    const seedForToday = (global.__DAILY_REROLL_SALT__ && String(global.__DAILY_REROLL_SALT__).length)
+      ? `${daySeed}|${global.__DAILY_REROLL_SALT__}`
+      : daySeed
     // Empêcher la répétition immédiate (J vs J-1) pour les items normaux
     function getPreviousDaySeed() {
       const now = new Date();
@@ -581,7 +584,7 @@ router.get('/weekly-items', verifyToken, async (req, res) => {
 
     if (!cached) {
       // Calcul initial déterministe (éviter la répétition immédiate vs J-1)
-      const shuffledToday = getShuffledItemsFromSeed(daySeed, combinedPool);
+      const shuffledToday = getShuffledItemsFromSeed(seedForToday, combinedPool);
       const todaySelection = [];
       for (const it of shuffledToday) {
         if (!prevIds.has(it.id)) {
@@ -698,7 +701,7 @@ router.get('/weekly-items', verifyToken, async (req, res) => {
     const prevColors = getShuffledItemsFromSeed(prevSeed, borderColorItems).slice(0, 3);
     const prevColorIds = new Set(prevColors.map(c => c.id));
 
-    const shuffledTodayColors = getShuffledItemsFromSeed(daySeed, borderColorItems);
+    const shuffledTodayColors = getShuffledItemsFromSeed(seedForToday, borderColorItems);
     const todayColorSelection = [];
     for (const c of shuffledTodayColors) {
       if (!prevColorIds.has(c.id)) {
@@ -846,7 +849,9 @@ router.post('/weekly-items/reroll', verifyToken, requireRole(['admin']), async (
     }
     const seed = getCurrentDaySeed()
     await DailyShop.deleteOne({ daySeed: seed })
-    res.json({ success: true, message: 'Sélection quotidienne supprimée. Le prochain appel recalculera immédiatement.' })
+    // Changer le sel en mémoire pour modifier la sélection même le même jour
+    global.__DAILY_REROLL_SALT__ = Math.random().toString(36).slice(2)
+    res.json({ success: true, message: 'Sélection supprimée et reroll déclenché. Rouvrez la boutique pour voir la nouvelle sélection.' })
   } catch (e) {
     res.status(500).json({ success: false, message: 'Erreur lors du re-roll', error: String(e) })
   }
