@@ -33,12 +33,32 @@ export const useSubjectsStore = defineStore('subjects', () => {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
-      // Si plus tard on expose un endpoint backend, on l'emploiera ici. Pour l'instant: pas d'API sur IONOS → liste vide.
-      subjects.value = [];
-      initialized.value = true;
+      
+      const apiUrl = import.meta.env.VITE_API_URL || 'https://api.planifymmi.fr';
+      const response = await fetch(`${apiUrl}/api/subjects`, {
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
       clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error('Erreur lors du chargement des matières');
+      }
+      
+      const data = await response.json();
+      subjects.value = data;
+      initialized.value = true;
+      console.log('Matières chargées:', data.length, 'matières');
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Erreur inconnue';
+      if (err instanceof Error && err.name === 'AbortError') {
+        error.value = 'Délai d\'attente dépassé. Vérifiez votre connexion.';
+      } else {
+        error.value = err instanceof Error ? err.message : 'Erreur inconnue';
+      }
+      console.error('Erreur fetchSubjects:', err);
       subjects.value = [];
     } finally {
       loading.value = false;
@@ -55,42 +75,127 @@ export const useSubjectsStore = defineStore('subjects', () => {
   const refreshSubjects = async () => fetchSubjects(true);
 
   const fetchStaticRules = async () => {
-    // Pas d'endpoint IONOS actuellement; persistance en mémoire uniquement
-    staticRules.value = staticRules.value || [];
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'https://api.planifymmi.fr';
+      const res = await fetch(`${apiUrl}/api/subjects/static-rules/all`);
+      if (!res.ok) throw new Error('Erreur chargement règles statiques');
+      const data = await res.json();
+      staticRules.value = Array.isArray(data) ? data : [];
+    } catch (e) {
+      console.warn('fetchStaticRules:', e);
+      staticRules.value = [];
+    }
   };
 
-  // Placeholders avec signatures compatibles, persistance en mémoire
   const saveStaticRule = async (
     subjectName: string,
     yearsAllowed: string[] = [],
     specialitesAllowed: string[] = [],
     groupsAllowed?: string[]
   ) => {
-    const idx = staticRules.value.findIndex(r => r.subjectName === subjectName);
-    const record = { subjectName, yearsAllowed, specialitesAllowed, groupsAllowed: groupsAllowed || [] };
-    if (idx >= 0) staticRules.value[idx] = record as any; else staticRules.value.push(record as any);
+    const apiUrl = import.meta.env.VITE_API_URL || 'https://api.planifymmi.fr';
+    const payload: any = { subjectName, yearsAllowed, specialitesAllowed };
+    if (groupsAllowed) payload.groupsAllowed = groupsAllowed;
+    const res = await fetch(`${apiUrl}/api/subjects/static-rules`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Erreur sauvegarde règle statique');
+    await fetchStaticRules();
   };
   const deleteStaticRule = async (subjectName: string) => {
-    staticRules.value = staticRules.value.filter(r => r.subjectName !== subjectName);
+    const apiUrl = import.meta.env.VITE_API_URL || 'https://api.planifymmi.fr';
+    const res = await fetch(`${apiUrl}/api/subjects/static-rules/${encodeURIComponent(subjectName)}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Erreur suppression règle statique');
+    await fetchStaticRules();
   };
 
   const createSubject = async (subject: Omit<Subject, '_id' | 'createdAt' | 'updatedAt'>) => {
-    const newSubject: Subject = {
-      ...subject,
-      _id: Math.random().toString(36).slice(2),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    subjects.value.push(newSubject);
-    return newSubject;
+    loading.value = true;
+    error.value = null;
+    
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'https://api.planifymmi.fr';
+      const response = await fetch(`${apiUrl}/api/subjects`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(subject),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erreur lors de la création');
+      }
+
+      const newSubject = await response.json();
+      subjects.value.push(newSubject);
+      return newSubject;
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Erreur inconnue';
+      console.error('Erreur createSubject:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
   };
   const updateSubject = async (id: string, updates: Partial<Subject>) => {
-    const idx = subjects.value.findIndex(s => s._id === id);
-    if (idx === -1) return;
-    subjects.value[idx] = { ...subjects.value[idx], ...updates, updatedAt: new Date() } as Subject;
+    loading.value = true;
+    error.value = null;
+    
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'https://api.planifymmi.fr';
+      const response = await fetch(`${apiUrl}/api/subjects/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updates),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erreur lors de la mise à jour');
+      }
+
+      const updatedSubject = await response.json();
+      const index = subjects.value.findIndex(subject => subject._id === id);
+      if (index !== -1) {
+        subjects.value[index] = updatedSubject;
+      }
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Erreur inconnue';
+      console.error('Erreur updateSubject:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
   };
   const deleteSubject = async (id: string) => {
-    subjects.value = subjects.value.filter(s => s._id !== id);
+    loading.value = true;
+    error.value = null;
+    
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'https://api.planifymmi.fr';
+      const response = await fetch(`${apiUrl}/api/subjects/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erreur lors de la suppression');
+      }
+
+      subjects.value = subjects.value.filter(subject => subject._id !== id);
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Erreur inconnue';
+      console.error('Erreur deleteSubject:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
   };
 
   const clearError = () => { error.value = null; };
