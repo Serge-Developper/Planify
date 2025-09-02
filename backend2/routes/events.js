@@ -2,6 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const Event = require('../models/Event');
+const Subject = require('../models/Subject');
 const { verifyToken, requireRole } = require('../middlewares/auth');
 const fs = require('fs');
 const StaticSubjectRule = require('../models/StaticSubjectRule');
@@ -306,6 +307,10 @@ router.get('/', verifyToken, async (req, res) => {
     try {
       const rules = await StaticSubjectRule.find({}).lean();
       const rulesByName = new Map(rules.map(r => [String(r.subjectName).toLowerCase(), r]));
+      // Charger aussi les matières dynamiques pour appliquer leurs règles (années / groupes / spécialités)
+      const subjects = await Subject.find({}).lean();
+      const dynByName = new Map(subjects.map(s => [String(s.name).toLowerCase(), s]));
+
       const candidateEvents = await Event.find({
         ...query,
         $or: [
@@ -315,22 +320,33 @@ router.get('/', verifyToken, async (req, res) => {
         ]
       });
       const filtered = candidateEvents.filter(ev => {
-        const rule = rulesByName.get(String(ev.matiere || '').toLowerCase());
-        if (!rule) return true; // pas de règle → visible si passe les autres filtres
-        // Filtre années
-        const years = Array.isArray(rule.yearsAllowed) ? rule.yearsAllowed : [];
-        if (years.length && !years.includes(year)) return false;
-        // Filtre groupes
-        const grs = Array.isArray(rule.groupsAllowed) ? rule.groupsAllowed : [];
-        const gNorm = (groupe || '').toString();
-        if (grs.length && !(grs.includes('Promo') || grs.includes(gNorm))) return false;
-        // Filtre spécialités
-        const specs = Array.isArray(rule.specialitesAllowed) ? rule.specialitesAllowed : [];
-        if (specs.length) {
-          if (!specialite) return false; // si l'user n'a pas de spécialité, ne voit pas les matières ciblées
-          if (!specs.includes(specialite)) return false;
+        const matiereKey = String(ev.matiere || '').toLowerCase();
+        const dyn = dynByName.get(matiereKey);
+        const rule = rulesByName.get(matiereKey);
+
+        // Helper pour évaluer une règle (statique ou dynamique)
+        function passesRule(r) {
+          if (!r) return true;
+          // Années
+          const years = Array.isArray(r.yearsAllowed) ? r.yearsAllowed : [];
+          if (years.length && !years.includes(year)) return false;
+          // Groupes
+          const allowedGroups = Array.isArray(r.groupsAllowed) ? r.groupsAllowed : [];
+          const gNorm = (groupe || '').toString();
+          if (allowedGroups.length && !(allowedGroups.includes('Promo') || allowedGroups.includes(gNorm))) return false;
+          // Spécialités
+          const specs = Array.isArray(r.specialitesAllowed) ? r.specialitesAllowed : [];
+          if (specs.length) {
+            if (!specialite) return false;
+            if (!specs.includes(specialite)) return false;
+          }
+          return true;
         }
-        return true;
+
+        // Appliquer la règle dynamique si elle existe, sinon la statique; si les deux existent, exiger les deux
+        const dynOk = passesRule(dyn);
+        const statOk = passesRule(rule);
+        return dynOk && statOk;
       });
       const eventsWithStatus = filtered.map(event => {
         const isArchived = event.archivedBy && event.archivedBy.map(id => id.toString()).includes(userId);
