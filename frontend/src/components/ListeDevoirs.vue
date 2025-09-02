@@ -461,7 +461,7 @@ function normalizeYearClient(y) {
 }
 
 const mmiMatieres = computed(() => {
-  const dynList = (subjectsStore.getSubjects?.value ?? subjectsStore.subjects?.value ?? []);
+  const dynList = (subjectsStore.getSubjects || subjectsStore.subjects || []);
   const userYear = normalizeYearClient(user.value?.year);
   const userGroup = (user.value?.groupe || '').toUpperCase();
   const dynNames = dynList
@@ -601,9 +601,7 @@ function setSort(type) {
 function stringToColor(str, type) {
   // 1) Prend la couleur/dégradé défini dans le store des matières dynamiques s'il existe
   try {
-    const all = (subjectsStore.getSubjects && (subjectsStore.getSubjects.value || subjectsStore.getSubjects))
-      || (subjectsStore.subjects && (subjectsStore.subjects.value || subjectsStore.subjects))
-      || [];
+    const all = (subjectsStore.getSubjects || subjectsStore.subjects || []);
     const subject = (Array.isArray(all) ? all : []).find((s) => ((s && s.name) ? s.name : '').toLowerCase() === (str || '').toLowerCase());
     if (subject) {
       const c1 = subject.color;

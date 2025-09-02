@@ -33,6 +33,7 @@
 import { ref, onMounted } from 'vue'
 import ListeDevoirs from '@/components/ListeDevoirs.vue'
 import { secureApiCall } from '@/api'
+import { useSubjectsStore } from '@/stores/subjects'
 import { useAuthStore } from '@/stores/auth'
 import LoginPopup from '@/components/LoginPopup.vue'
 import closeImg from '@/assets/img/bouton_supprimer_decocher.png'
@@ -53,6 +54,8 @@ const loadEvents = async () => {
       events.value = []
       return
     }
+    // S'assurer que les matières dynamiques sont chargées pour alimenter le sélecteur
+    try { useSubjectsStore().initializeStore?.() } catch {}
     const res = await secureApiCall('/events')
     const raw = Array.isArray(res) ? res : (Array.isArray(res?.events) ? res.events : [])
     const userId = authStore.user?.id || authStore.user?._id
