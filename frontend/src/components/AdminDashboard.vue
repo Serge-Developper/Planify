@@ -211,6 +211,16 @@
           <!-- Actions globales sur l'inventaire de l'utilisateur -->
           <div class="global-actions">
             <button class="remove-all-btn" @click="removeAllItemsAndBorderColor(viewingUserItems._id)">Retirer tous les items et réinitialiser la bordure</button>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;">
+              <input
+                v-model="avatarUrlInput"
+                placeholder="URL avatar (/uploads/avatars/.. ou https://..)"
+                class="admin-message-input"
+                style="max-width:360px;"
+              />
+              <button class="give-item-btn" @click="setUserAvatar" :disabled="!avatarUrlInput || itemsLoading">Définir avatar</button>
+              <button class="toggle-all-btn" @click="rerollDailyShop" :disabled="rerollLoading">Re‑roll boutique du jour</button>
+            </div>
           </div>
 
             <!-- Section pour donner des items (cases à cocher) -->
@@ -622,6 +632,9 @@ const openBorderGive = ref(false);
 const borderColors = ref([]);
 const selectedBorderToGive = ref('');
 const selectedBorderToGiveList = ref([]);
+// Avatar / Reroll
+const avatarUrlInput = ref('');
+const rerollLoading = ref(false);
 // Items dynamiques (catégorie séparée)
 const dynamicItemsCatalog = ref([]);
 const selectedDynamicItemsToGive = ref([]);
@@ -1233,6 +1246,54 @@ async function removeAllItemsAndBorderColor(userId) {
   } finally {
     itemsLoading.value = false;
   }
+}
+
+// Définir l'avatar d'un utilisateur via URL
+async function setUserAvatar() {
+  if (!viewingUserItems.value || !avatarUrlInput.value) return
+  itemsLoading.value = true
+  try {
+    let token = auth.token || auth.user?.token
+    if (!token) {
+      const userFromStorage = localStorage.getItem('user')
+      if (userFromStorage) {
+        const userData = JSON.parse(userFromStorage)
+        token = userData.token
+      }
+    }
+    const headers = { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'Authorization': `Bearer ${token}` }
+    const resp = await fetch(`${API_URL}/users-admin`, {
+      method: 'POST', headers, credentials: 'include',
+      body: JSON.stringify({ action: 'set-avatar-url', userId: viewingUserItems.value._id, avatar: avatarUrlInput.value.trim() })
+    })
+    const data = await resp.json().catch(()=>({}))
+    if (!resp.ok || !data?.success) throw new Error(data?.error || 'Erreur API')
+    await fetchUsers()
+    const updatedUser = users.value.find(u => u._id === viewingUserItems.value._id)
+    if (updatedUser) viewingUserItems.value = updatedUser
+    alert('Avatar mis à jour !')
+  } catch (e) {
+    alert('Erreur avatar: ' + (e?.message || e))
+  } finally { itemsLoading.value = false }
+}
+
+// Re-roll boutique quotidienne (admin)
+async function rerollDailyShop() {
+  rerollLoading.value = true
+  try {
+    let token = auth.token || auth.user?.token
+    if (!token) {
+      const userFromStorage = localStorage.getItem('user')
+      if (userFromStorage) token = JSON.parse(userFromStorage).token
+    }
+    const headers = { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'Authorization': `Bearer ${token}` }
+    const resp = await fetch(`${API_URL}/coins/weekly-items/reroll`, { method: 'POST', headers, credentials: 'include' })
+    const data = await resp.json().catch(()=>({}))
+    if (!resp.ok || !data?.success) throw new Error(data?.message || 'Erreur API')
+    alert('Boutique rerollée. Rouvre la boutique pour voir la nouvelle sélection.')
+  } catch (e) {
+    alert('Erreur re‑roll: ' + (e?.message || e))
+  } finally { rerollLoading.value = false }
 }
 
 // Sélection/désélection de toutes les cases
