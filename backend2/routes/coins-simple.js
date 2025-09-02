@@ -505,16 +505,11 @@ router.get('/weekly-items', verifyToken, async (req, res) => {
       { id: 24, name: 'Jojo', price: 170, img: '/src/assets/img/tobecontinued.png' }
     ];
 
-    // Fonction pour obtenir la seed du jour avec seuil de rotation à 03:30 (heure Europe/Paris)
+    // Fonction pour obtenir la seed du jour avec seuil de rotation à 00:00 (heure Europe/Paris)
     function getCurrentDaySeed() {
       const now = new Date();
       const parisNow = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Paris' }));
-      // Avant 03:30, on considère encore le jour précédent pour la seed (temporaire)
-      const h = parisNow.getHours();
-      const m = parisNow.getMinutes();
-      if (h < 3 || (h === 3 && m < 30)) {
-        parisNow.setDate(parisNow.getDate() - 1);
-      }
+      // À minuit, la seed change automatiquement (pas de décalage)
       const formatter = new Intl.DateTimeFormat('fr-CA', { timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit' });
       return formatter.format(parisNow); // format YYYY-MM-DD
     }
@@ -733,14 +728,12 @@ router.get('/weekly-items', verifyToken, async (req, res) => {
     // Combiner les items normaux avec les couleurs de bordures
     weeklyItems = [...weeklyItems, ...selectedBorderColors];
 
-    // Calculer le temps jusqu'à la prochaine rotation à 03:30 (heure Europe/Paris) — temporaire
+    // Calculer le temps jusqu'à la prochaine rotation à 00:00 (heure Europe/Paris)
     const now = new Date();
     const parisNow = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Paris' }));
     const parisTarget = new Date(parisNow);
-    parisTarget.setHours(3, 30, 0, 0);
-    if (parisNow.getHours() > 3 || (parisNow.getHours() === 3 && parisNow.getMinutes() >= 30)) {
-      parisTarget.setDate(parisTarget.getDate() + 1);
-    }
+    parisTarget.setHours(0, 0, 0, 0);
+    if (parisNow.getTime() >= parisTarget.getTime()) parisTarget.setDate(parisTarget.getDate() + 1);
     const timeLeft = parisTarget.getTime() - parisNow.getTime();
     const hours = Math.floor(timeLeft / (1000 * 60 * 60));
     const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
