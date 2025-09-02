@@ -126,6 +126,13 @@ router.post('/', requireAdminOrProf, async (req, res) => {
         await user.save()
         return res.json({ success: true, message: 'Coins mis à jour' })
       }
+      case 'set-avatar-url': {
+        const avatarUrl = (data && typeof data.avatar === 'string') ? data.avatar.trim() : ''
+        if (!avatarUrl) return res.status(400).json({ success: false, error: 'avatar requis' })
+        user.avatar = avatarUrl
+        await user.save()
+        return res.json({ success: true, avatar: user.avatar })
+      }
       case 'update-role': {
         const role = String(data.role || '')
         const allowed = ['admin', 'prof', 'delegue', 'eleve', 'etudiant', 'user']

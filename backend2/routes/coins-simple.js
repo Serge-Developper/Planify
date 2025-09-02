@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
-const { verifyToken } = require('../middlewares/auth');
+const { verifyToken, requireRole } = require('../middlewares/auth');
 
 // Route de test simple
 router.get('/test', (req, res) => {
@@ -830,6 +830,25 @@ router.post('/weekly-items/test-remove', verifyToken, async (req, res) => {
     res.json({ success: true })
   } catch (e) {
     res.json({ success: false, message: 'Erreur retrait test' })
+  }
+})
+
+// Admin: re-roll immédiat de la boutique quotidienne (supprime la sélection figée du seed courant)
+router.post('/weekly-items/reroll', verifyToken, requireRole(['admin']), async (req, res) => {
+  try {
+    const DailyShop = require('../models/DailyShop')
+    // Seed du jour Europe/Paris
+    function getCurrentDaySeed() {
+      const now = new Date();
+      const parisNow = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Paris' }));
+      const formatter = new Intl.DateTimeFormat('fr-CA', { timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit' });
+      return formatter.format(parisNow);
+    }
+    const seed = getCurrentDaySeed()
+    await DailyShop.deleteOne({ daySeed: seed })
+    res.json({ success: true, message: 'Sélection quotidienne supprimée. Le prochain appel recalculera immédiatement.' })
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Erreur lors du re-roll', error: String(e) })
   }
 })
 
