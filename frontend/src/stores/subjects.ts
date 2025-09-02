@@ -38,6 +38,20 @@ export const useSubjectsStore = defineStore('subjects', () => {
     try { localStorage.setItem(STATIC_KEY, JSON.stringify(rules || [])); } catch {}
   }
 
+  // --- Fallback local pour les matières dynamiques quand l'API n'est pas disponible ---
+  const SUBJECTS_KEY = 'planify_subjects';
+  function loadSubjectsLocal(): Subject[] {
+    try {
+      const raw = localStorage.getItem(SUBJECTS_KEY);
+      if (!raw) return [] as Subject[];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch { return [] as Subject[]; }
+  }
+  function saveSubjectsLocal(list: Subject[]) {
+    try { localStorage.setItem(SUBJECTS_KEY, JSON.stringify(list || [])); } catch {}
+  }
+
   const getSubjects = computed(() => subjects.value);
   const getSubjectById = computed(() => (id: string) => subjects.value.find(subject => subject._id === id));
   const getSubjectByName = computed(() => (name: string) => subjects.value.find(subject => subject.name.toLowerCase() === name.toLowerCase()));
@@ -48,7 +62,15 @@ export const useSubjectsStore = defineStore('subjects', () => {
     try {
       // Essaye de récupérer depuis l'API de l'hébergeur IONOS (ou Netlify)
       // Structure attendue: [{ name, color, color2?, gradientAngle?, yearsAllowed?, groupsAllowed?, specialitesAllowed? }]
-      const res = await secureApiCall('/subjects');
+      const response = await fetch(`${API_URL}/subjects`, { headers: getAuthHeaders() });
+      if (response.status === 404) {
+        const local = loadSubjectsLocal();
+        subjects.value = local;
+        initialized.value = true;
+        return;
+      }
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const res = await response.json();
       const arr = Array.isArray(res) ? res : (Array.isArray(res?.subjects) ? res.subjects : []);
       subjects.value = arr.map((s: any) => ({
         _id: s._id,
@@ -65,10 +87,12 @@ export const useSubjectsStore = defineStore('subjects', () => {
         updatedAt: s.updatedAt ? new Date(s.updatedAt) : undefined,
       }));
       initialized.value = true;
+      saveSubjectsLocal(subjects.value as any);
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Erreur inconnue';
-      // Fallback silencieux: on laisse la liste vide si l'endpoint n'existe pas
-      subjects.value = [];
+      // Fallback: charger depuis localStorage
+      const local = loadSubjectsLocal();
+      subjects.value = local;
     } finally {
       loading.value = false;
     }
@@ -152,17 +176,65 @@ export const useSubjectsStore = defineStore('subjects', () => {
   };
 
   const createSubject = async (subject: Omit<Subject, '_id' | 'createdAt' | 'updatedAt'>) => {
-    const saved = await secureApiCall('/subjects', { method: 'POST', body: JSON.stringify(subject as any) });
-    await fetchSubjects(true);
-    return saved as any;
+    try {
+      const res = await fetch(`${API_URL}/subjects`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(subject as any) });
+      if (res.status === 404) {
+        const local = loadSubjectsLocal();
+        const newSubject: Subject = { ...subject, _id: Math.random().toString(36).slice(2), createdAt: new Date(), updatedAt: new Date() } as any;
+        const next = [...local, newSubject];
+        saveSubjectsLocal(next);
+        subjects.value = next;
+        return newSubject as any;
+      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await fetchSubjects(true);
+      return await res.json();
+    } catch (e) {
+      // Fallback local en cas d'erreur réseau
+      const local = loadSubjectsLocal();
+      const newSubject: Subject = { ...subject, _id: Math.random().toString(36).slice(2), createdAt: new Date(), updatedAt: new Date() } as any;
+      const next = [...local, newSubject];
+      saveSubjectsLocal(next);
+      subjects.value = next;
+      return newSubject as any;
+    }
   };
   const updateSubject = async (id: string, updates: Partial<Subject>) => {
-    await secureApiCall(`/subjects/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(updates as any) });
-    await fetchSubjects(true);
+    try {
+      const res = await fetch(`${API_URL}/subjects/${encodeURIComponent(id)}`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(updates as any) });
+      if (res.status === 404) {
+        const local = loadSubjectsLocal();
+        const next = local.map(s => s._id === id ? ({ ...s, ...updates, updatedAt: new Date() } as any) : s);
+        saveSubjectsLocal(next);
+        subjects.value = next;
+        return;
+      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await fetchSubjects(true);
+    } catch (e) {
+      const local = loadSubjectsLocal();
+      const next = local.map(s => s._id === id ? ({ ...s, ...updates, updatedAt: new Date() } as any) : s);
+      saveSubjectsLocal(next);
+      subjects.value = next;
+    }
   };
   const deleteSubject = async (id: string) => {
-    await secureApiCall(`/subjects/${encodeURIComponent(id)}`, { method: 'DELETE' });
-    subjects.value = subjects.value.filter(s => s._id !== id);
+    try {
+      const res = await fetch(`${API_URL}/subjects/${encodeURIComponent(id)}`, { method: 'DELETE', headers: getAuthHeaders() });
+      if (res.status === 404) {
+        const next = (subjects.value || []).filter(s => s._id !== id);
+        saveSubjectsLocal(next as any);
+        subjects.value = next;
+        return;
+      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      subjects.value = subjects.value.filter(s => s._id !== id);
+      saveSubjectsLocal(subjects.value as any);
+    } catch (e) {
+      const next = (subjects.value || []).filter(s => s._id !== id);
+      saveSubjectsLocal(next as any);
+      subjects.value = next;
+    }
   };
 
   const clearError = () => { error.value = null; };
