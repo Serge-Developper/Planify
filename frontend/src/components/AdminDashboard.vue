@@ -219,8 +219,8 @@
               <div class="give-item-form checkboxes">
                 <div class="checkbox-grid">
                   <label v-for="(it, idx) in itemsCatalog.filter(Boolean)" :key="(it && it.id) ?? idx" class="item-checkbox">
-+                     <input type="checkbox" :value="it?.id" v-model="selectedItemsToGive" />
-+                     <span>{{ it?.name || ('Item ' + ((it && it.id) ?? idx)) }}</span>
+                    <input type="checkbox" :value="it?.id" v-model="selectedItemsToGive" />
+                    <span>{{ it?.name || ('Item ' + ((it && it.id) ?? idx)) }}</span>
                   </label>
                 </div>
                 
@@ -250,6 +250,27 @@
                   <button @click="giveSelectedItemsToUser" :disabled="selectedItemsToGive.length === 0" class="give-item-btn">
                     Donner les items ({{ selectedItemsToGive.length }})
                   </button>
+                  <button type="button" class="toggle-all-btn" @click="openBorderGive = true">Donner une couleur de bordure</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Popup donner une couleur de bordure -->
+            <div v-if="openBorderGive" class="modal items-overlay" @click.self="openBorderGive = false">
+              <div class="user-items-modal">
+                <h4 style="color:#000;margin-bottom:12px;">Donner une couleur de bordure</h4>
+                <div class="checkbox-grid">
+                  <label v-for="c in borderColors" :key="c.id" class="item-checkbox">
+                    <input type="radio" name="border-to-give" :value="c.id" v-model="selectedBorderToGive" />
+                    <span>
+                      <span :style="{display:'inline-block',width:'14px',height:'14px',borderRadius:'4px',background: c.gradient || c.color || '#000', marginRight: '6px'}"></span>
+                      #{{ c.id }} — {{ c.name }}
+                    </span>
+                  </label>
+                </div>
+                <div class="checkbox-actions" style="margin-top:12px;">
+                  <button class="give-item-btn" :disabled="!selectedBorderToGive" @click="giveBorderColorToUser">Donner la couleur</button>
+                  <button class="toggle-all-btn" @click="openBorderGive = false">Fermer</button>
                 </div>
               </div>
             </div>
@@ -334,6 +355,13 @@ const showSubjectsManagement = ref(false)
 onMounted(() => {
   loadAdminDynamicItems()
   try { window.addEventListener('items-changed', loadAdminDynamicItems) } catch {}
+})
+// Charger la liste des couleurs de bordure disponibles
+onMounted(async () => {
+  try {
+    const res = await secureApiCall('/border-colors')
+    if (res && res.success && Array.isArray(res.colors)) borderColors.value = res.colors
+  } catch { borderColors.value = [] }
 })
 onUnmounted(() => {
   try { window.removeEventListener('items-changed', loadAdminDynamicItems) } catch {}
@@ -578,6 +606,10 @@ function getAvailableQuestions(index) {
   const selectedItemsToGive = ref([]);
 const itemsLoading = ref(false);
 const adminMessage = ref(''); // Message optionnel de l'admin lors de l'attribution d'items
+// Donner des couleurs de bordure
+const openBorderGive = ref(false);
+const borderColors = ref([]);
+const selectedBorderToGive = ref('');
 const events = ref([]);
 const eventForm = ref({
   titre: '',
@@ -1285,6 +1317,38 @@ async function giveSelectedItemsToUser() {
   } catch (err) {
     console.error('Erreur don multiple:', err)
     alert('Erreur lors du don d\'items: ' + (err.message || err))
+  } finally {
+    itemsLoading.value = false
+  }
+}
+
+// Donner une couleur de bordure sélectionnée via popup
+async function giveBorderColorToUser() {
+  if (!viewingUserItems.value || !selectedBorderToGive.value) return
+  itemsLoading.value = true
+  try {
+    let token = auth.token || auth.user?.token
+    if (!token) {
+      const userFromStorage = localStorage.getItem('user')
+      if (userFromStorage) token = JSON.parse(userFromStorage).token
+    }
+    const headers = { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'Authorization': `Bearer ${token}` }
+    const response = await fetch(`${API_URL}/users-admin`, {
+      method: 'POST', headers, credentials: 'include',
+      body: JSON.stringify({ action: 'set-border-color', userId: viewingUserItems.value._id, colorId: selectedBorderToGive.value })
+    })
+    if (!response.ok) {
+      const txt = await response.text();
+      throw new Error(txt || 'Erreur API')
+    }
+    // Rafraîchir liste des utilisateurs pour refléter la bordure
+    await fetchUsers()
+    const updatedUser = users.value.find(u => u._id === viewingUserItems.value._id)
+    if (updatedUser) viewingUserItems.value = updatedUser
+    openBorderGive.value = false
+    alert('Couleur de bordure donnée avec succès')
+  } catch (e) {
+    alert('Erreur: ' + (e.message || e))
   } finally {
     itemsLoading.value = false
   }

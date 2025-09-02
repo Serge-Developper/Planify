@@ -72,6 +72,18 @@ router.post('/', requireAdminOrProf, async (req, res) => {
         await user.save()
         return res.json({ success: true, message: 'Item retiré avec succès' })
       }
+      case 'set-border-color': {
+        const colorId = (data && typeof data.colorId === 'string') ? data.colorId.trim() : ''
+        if (!colorId) return res.status(400).json({ success: false, error: 'colorId requis' })
+        user.selectedBorderColor = colorId
+        await user.save()
+        return res.json({ success: true, selectedBorderColor: user.selectedBorderColor })
+      }
+      case 'clear-border-color': {
+        user.selectedBorderColor = 'default'
+        await user.save()
+        return res.json({ success: true, selectedBorderColor: user.selectedBorderColor })
+      }
       case 'update-coins': {
         const coins = Number(data.coins)
         if (!Number.isFinite(coins)) return res.status(400).json({ success: false, error: 'Nombre de coins requis' })
