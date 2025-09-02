@@ -476,6 +476,16 @@ const mmiMatieres = computed(() => {
   return Array.from(set);
 });
 
+// Aide: une matière est-elle visible pour l'utilisateur dans le sélecteur ?
+function isSubjectAllowedForUser(name) {
+  try {
+    const list = (mmiMatieres && mmiMatieres.value) ? mmiMatieres.value : (Array.isArray(mmiMatieres) ? mmiMatieres : []);
+    return !name || (Array.isArray(list) && list.includes(name));
+  } catch {
+    return true;
+  }
+}
+
 // Génère une clé unique stable pour un event
 const eventKey = (e) => (e && (e._id || (e.titre + e.date + e.heure)));
 
@@ -527,12 +537,16 @@ const sortedEvents = computed(() => {
 });
 
 const doneEvents = computed(() =>
-  props.events.filter(e => e.checked && !e.archived)
+  props.events
+    .filter(e => e.checked && !e.archived)
+    .filter(e => isSubjectAllowedForUser(e.matiere))
     .filter(e => !selectedMatiere.value || e.matiere === selectedMatiere.value)
 );
 const toDoEvents = computed(() => {
   let filtered = props.events.filter(e => {
     if (e.archived) return false;
+    // Cacher les matières non autorisées pour cet utilisateur
+    if (!isSubjectAllowedForUser(e.matiere)) return false;
 
     const t = timeLeft(e.date, e.heure);
     let typeFilter = true;
@@ -561,7 +575,10 @@ const toDoEvents = computed(() => {
 });
 
 const archives = computed(() => 
-  props.events.filter(e => e.archived && (!selectedMatiere.value || e.matiere === selectedMatiere.value))
+  props.events
+    .filter(e => e.archived)
+    .filter(e => isSubjectAllowedForUser(e.matiere))
+    .filter(e => !selectedMatiere.value || e.matiere === selectedMatiere.value)
 );
 
 const lateEvents = computed(() =>
@@ -569,6 +586,7 @@ const lateEvents = computed(() =>
     !e.archived &&
     !e.checked &&
     isLate(e) &&
+    isSubjectAllowedForUser(e.matiere) &&
     (!selectedMatiere.value || e.matiere === selectedMatiere.value)
   )
 );
