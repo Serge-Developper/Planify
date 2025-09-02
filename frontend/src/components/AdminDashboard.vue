@@ -4,7 +4,7 @@
     <template v-if="!showEmploi">
       <aside class="matieres-list">
         <button
-          v-for="matiere in matieres"
+          v-for="matiere in allMatieres"
           :key="matiere"
           @click="selectMatiere(matiere)"
           :class="{ selected: matiere === selectedMatiere }"
@@ -163,13 +163,19 @@
                  <option value="BUT2">2ème année</option>
                  <option value="BUT3">3ème année</option>
                </select>
-              <div v-if="editForm.role === 'prof'" style="font-size: 0.9em; color: #6b7280; font-style: italic;">
-                ⓘ Les professeurs travaillent avec toute la promo (toutes les années)
-              </div>
-              <div class="edit-actions">
-                <button type="submit" :disabled="editFormLoading">Sauvegarder</button>
-                <button type="button" @click="cancelEdit">Annuler</button>
-              </div>
+               <select v-model="editForm.specialite" :disabled="editForm.role === 'prof'" :class="{ 'disabled-field': editForm.role === 'prof' }">
+                 <option value="">Aucune spécialité</option>
+                 <option value="devweb">Développement web</option>
+                 <option value="creation">Création numérique</option>
+                 <option value="gestion">Gestion de projet</option>
+               </select>
+               <div v-if="editForm.role === 'prof'" style="font-size: 0.9em; color: #6b7280; font-style: italic;">
+                 ⓘ Les professeurs travaillent avec toute la promo (toutes les années)
+               </div>
+               <div class="edit-actions">
+                 <button type="submit" :disabled="editFormLoading">Sauvegarder</button>
+                 <button type="button" @click="cancelEdit">Annuler</button>
+               </div>
             </form>
             <div v-if="editFormMessage" :style="{color: editFormMessage.includes('succès') ? 'green' : 'red'}">{{ editFormMessage }}</div>
                      </div>
@@ -333,6 +339,8 @@ onUnmounted(() => {
   try { window.removeEventListener('items-changed', loadAdminDynamicItems) } catch {}
 })
 
+import { useSubjectsStore } from '@/stores/subjects'
+const subjectsStore = useSubjectsStore()
 const matieres = [
   "Anglais",
   "Culture artistique",
@@ -355,6 +363,27 @@ const matieres = [
 ];
 
 const selectedMatiere = ref(matieres[0]);
+const allMatieres = ref([...matieres])
+
+function updateAllMatieres() {
+  try {
+    const dynamicNames = (subjectsStore.subjects || []).map((s) => s && s.name).filter(Boolean)
+    const merged = Array.from(new Set([ ...matieres, ...dynamicNames ]))
+    allMatieres.value = merged
+  } catch {
+    allMatieres.value = [...matieres]
+  }
+}
+
+// Injecter/rafraîchir les matières dynamiques dans la liste latérale
+onMounted(async () => {
+  try { await subjectsStore.initializeStore() } catch {}
+  updateAllMatieres()
+})
+
+watch(() => subjectsStore.subjects, () => {
+  updateAllMatieres()
+}, { deep: true })
 const showUserForm = ref(false);
 const showUserManagement = ref(false);
 const userForm = ref({
@@ -362,7 +391,8 @@ const userForm = ref({
   password: '',
   role: 'eleve',
   groupe: 'A',
-  year: 'BUT1'
+  year: 'BUT1',
+  specialite: ''
 });
 const userFormMessage = ref('');
 const userFormLoading = ref(false);
@@ -373,7 +403,8 @@ const editForm = ref({
   password: '',
   role: 'eleve',
   groupe: '',
-  year: ''
+  year: '',
+  specialite: ''
 });
 const editFormMessage = ref('');
 const editFormLoading = ref(false);
@@ -556,7 +587,8 @@ const eventForm = ref({
   type: 'exam',
   matiere: matieres[0],
   year: 'BUT1',
-  description: ''
+  description: '',
+  specialite: ''
 });
 
 const editingIndex = ref(null);
@@ -631,6 +663,7 @@ function editEvent(event, idx) {
     eventForm.value.matiere = event.matiere || '';
     eventForm.value.year = event.year || '';
     eventForm.value.description = event.description || '';
+    eventForm.value.specialite = event.specialite || '';
   }
 }
 
@@ -652,7 +685,7 @@ async function addEvent() {
       const res = await axios.post(`${API_URL}/events`, eventForm.value);
       events.value.push(res.data);
     }
-    eventForm.value = { titre: '', date: '', heure: '', groupe: 'A', type: 'exam', matiere: selectedMatiere.value, year: 'BUT1', description: '', groupes: [] };
+    eventForm.value = { titre: '', date: '', heure: '', groupe: 'A', type: 'exam', matiere: selectedMatiere.value, year: 'BUT1', description: '', specialite: '', groupes: [] };
   } catch (err) {
     alert('Erreur lors de l\'ajout ou modification : ' + (err.response?.data?.message || err.message));
   }
@@ -765,6 +798,7 @@ function editUser(user) {
     role: user.role === 'etudiant' ? 'eleve' : (user.role || 'eleve'), // Convertir 'etudiant' en 'eleve'
     groupe: user.groupe || '',
     year: user.year || '',
+    specialite: user.specialite || '',
     coins: user.coins || 0
   };
   
@@ -780,6 +814,7 @@ function editUser(user) {
     role: userData.role,
     groupe: userData.groupe,
     year: userData.year,
+    specialite: userData.specialite || '',
     coins: userData.coins || 0
   };
   
@@ -811,6 +846,7 @@ function cancelEdit() {
     role: 'eleve',
     groupe: '',
     year: '',
+    specialite: '',
     coins: 0
   };
   editFormMessage.value = '';
