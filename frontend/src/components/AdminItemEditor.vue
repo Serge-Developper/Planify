@@ -80,6 +80,10 @@
           </label>
         </div>
         <div class="preview" :style="{ background: gradCss }"></div>
+        <!-- Aperçu direct de la bordure (3px) -->
+        <div :style="borderPreviewOuter" style="display:inline-block;margin-left:12px;">
+          <div :style="borderPreviewInner"></div>
+        </div>
       </div>
       <input v-model="borderForm.color" type="hidden" />
       <input v-model="borderForm.gradient" type="hidden" />
@@ -91,6 +95,17 @@
         <button class="btn primary" @click="saveBorderColor">Enregistrer la couleur</button>
         <button class="btn outline" style="margin-left:8px;" @click="testBorderColorWeekly">Tester en boutique hebdo</button>
         <button class="btn danger" style="margin-left:8px;" @click="removeBorderColorFromWeekly">Retirer de la boutique hebdo</button>
+      </div>
+      <div class="existing" v-if="borderColorsList.length" style="margin-top:12px;">
+        <h4>Couleurs enregistrées</h4>
+        <ul>
+          <li v-for="c in borderColorsList" :key="c.id" style="display:flex;gap:10px;align-items:center;">
+            <div :style="{ width:'18px', height:'18px', borderRadius:'4px', background: c.gradient || c.color || '#000' }"></div>
+            <span>#{{ c.id }} — {{ c.name }}</span>
+            <button class="btn tiny" @click="editBorderColor(c)">Éditer</button>
+            <button class="btn tiny danger" @click="deleteBorderColor(c)">Supprimer</button>
+          </li>
+        </ul>
       </div>
     </div>
 
@@ -171,7 +186,7 @@
         <h4>Items enregistrés</h4>
         <ul>
           <li v-for="(it, idx) in existingItems" :key="(it && (it.legacyId ?? it.id)) ?? it?._id ?? idx">
-             <span v-if="it">#{{ (it?.legacyId ?? it?.id) }} — {{ it?.name || 'Item' }} ({{ ((it?.variants || []).length) || 0 }} styles)</span>
+             <span v-if="it">#{{ (it?.legacyId ?? it?.id) }} — {{ sanitizeName(it?.name || 'Item') }} ({{ ((it?.variants || []).length) || 0 }} styles)</span>
             <button class="btn tiny" @click="editItem(it)">Éditer</button>
             <button class="btn tiny danger" @click="removeItem(it)">Supprimer</button>
           </li>
@@ -242,6 +257,17 @@ import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
 const isAdmin = computed(() => auth.user && auth.user.role === 'admin')
+// Nettoyage visuel de noms potentiellement pollués
+function sanitizeName(name) {
+  const s = String(name || '')
+    .replace(/<<<<<<<.*?>>>>>>>/gs, '')
+    .replace(/<<<<<<<|=======|>>>>>>>/g, '')
+    .replace(/\bCurrent\b|\bYour changes\b|\bIncoming\b|\bBackground Agent changes\b/gi, '')
+    .replace(/[+]{2,}/g, '+')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+  return s || 'Item'
+}
 
 // Mode de l'éditeur: items dynamiques par défaut
 const editorMode = ref('items')
@@ -278,6 +304,129 @@ const form = ref({
   backgrounds: { collection: null, leaderboard: null, avatar: null, navbar: null },
   variants: []
 })
+
+// --- Formulaire Couleurs de bordure (éviter les accès undefined) ---
+const borderForm = ref({
+  legacyId: null,
+  name: '',
+  price: 0,
+  colorId: '',
+  color: '#000000',
+  gradient: '',
+  availableInDailyShop: false
+})
+
+const grad = ref({
+  c1: '#ff4d4d',
+  o1: 1,
+  c2: '#ff5252',
+  o2: 1,
+  angle: 135,
+  enabled: true
+})
+
+const gradCss = computed(() => {
+  const rgba = (hex, a) => {
+    const { r, g, b } = hexToRgb(hex || '#000000')
+    const alpha = typeof a === 'number' ? Math.max(0, Math.min(1, a)) : 1
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`
+  }
+  if (grad.value.enabled && grad.value.c2) {
+    return `linear-gradient(${Number(grad.value.angle) || 0}deg, ${rgba(grad.value.c1, grad.value.o1)}, ${rgba(grad.value.c2, grad.value.o2)})`
+  }
+  return rgba(grad.value.c1, grad.value.o1)
+})
+
+const borderColorsList = ref([])
+const editingBorderId = ref('')
+
+async function loadBorderColors() {
+  try {
+    const res = await secureApiCall('/border-colors')
+    borderColorsList.value = (res && res.success && Array.isArray(res.colors)) ? res.colors : []
+  } catch {
+    borderColorsList.value = []
+  }
+}
+
+function editBorderColor(c) {
+  if (!c) return
+  editingBorderId.value = String(c.id)
+  borderForm.value.legacyId = Number(borderForm.value.legacyId) || 100
+  borderForm.value.name = c.name || ''
+  borderForm.value.colorId = c.id || ''
+  borderForm.value.color = c.color || '#000000'
+  borderForm.value.gradient = c.gradient || ''
+  borderForm.value.price = typeof c.price === 'number' ? c.price : 0
+}
+
+async function deleteBorderColor(c) {
+  if (!c || !c.id) return
+  if (!confirm(`Supprimer la couleur "${c.name}" ?`)) return
+  const res = await secureApiCall(`/border-colors?id=${encodeURIComponent(c.id)}`, { method: 'DELETE' })
+  if (res && res.success) await loadBorderColors()
+}
+
+async function saveBorderColor() {
+  try {
+    // Préparer à partir du picker
+    borderForm.value.color = grad.value.enabled ? grad.value.c1 : gradCss.value
+    borderForm.value.gradient = grad.value.enabled ? gradCss.value : ''
+    const body = {
+      id: borderForm.value.colorId || String(borderForm.value.legacyId),
+      name: borderForm.value.name || (borderForm.value.colorId || 'Couleur'),
+      color: borderForm.value.color || null,
+      gradient: borderForm.value.gradient || null,
+      price: Number(borderForm.value.price) || 0
+    }
+    let res
+    if (editingBorderId.value) {
+      res = await secureApiCall(`/border-colors?id=${encodeURIComponent(editingBorderId.value)}`, { method: 'PUT', body: JSON.stringify(body) })
+    } else {
+      res = await secureApiCall('/border-colors', { method: 'POST', body: JSON.stringify(body) })
+    }
+    if (res && res.success) {
+      await loadBorderColors()
+      alert(editingBorderId.value ? 'Couleur mise à jour !' : 'Couleur enregistrée !')
+      editingBorderId.value = ''
+      borderForm.value = { legacyId: null, name: '', price: 0, colorId: '', color: '#000000', gradient: '', availableInDailyShop: false }
+    } else {
+      alert(res?.message || 'Erreur enregistrement couleur')
+    }
+  } catch (e) {
+    alert('Erreur lors de l\'enregistrement')
+  }
+}
+
+async function testBorderColorWeekly() {
+  try {
+    const id = Number(borderForm.value.legacyId)
+    if (!id || Number.isNaN(id)) { alert('Définis un ID (legacy) numérique.'); return }
+    const res = await secureApiCall('/coins/weekly-items/test-add', {
+      method: 'POST',
+      body: JSON.stringify({ legacyId: id })
+    })
+    if (res && res.success) alert('Ajouté pour test dans la boutique hebdo.')
+    else alert('Impossible d\'ajouter pour test.')
+  } catch (e) {
+    alert('Erreur ajout test: ' + (e && e.message ? e.message : e))
+  }
+}
+
+async function removeBorderColorFromWeekly() {
+  try {
+    const id = Number(borderForm.value.legacyId)
+    if (!id || Number.isNaN(id)) { alert('Définis un ID (legacy) numérique.'); return }
+    const res = await secureApiCall('/coins/weekly-items/test-remove', {
+      method: 'POST',
+      body: JSON.stringify({ legacyId: id })
+    })
+    if (res && res.success) alert('Retiré de la boutique hebdo.')
+    else alert('Impossible de retirer.')
+  } catch (e) {
+    alert('Erreur retrait test: ' + (e && e.message ? e.message : e))
+  }
+}
 
 const canvasStyle = computed(() => {
   // Dimensions: Collection = 90 (desktop) / 80 (mobile) — Leaderboard = 50 — Navbar = 57 — Popup Style = 120.5x64
@@ -801,7 +950,7 @@ async function saveItem() {
   }
 }
 
-onMounted(async () => { await loadExisting() })
+onMounted(async () => { await loadExisting(); await loadBorderColors(); })
 
 async function loadExisting() {
   try {
