@@ -555,7 +555,7 @@
                 <!-- Overlays externes (état d'origine) -->
                 <img 
                   v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'discord'"
-                  :src="discordVariants[coinsStore.discordVariantIndex]"
+                  :src="discordVariants[getDiscordVariantForUser(user)]"
                   :alt="'Discord'"
                   class="equipped-discord"
                 />
@@ -662,7 +662,7 @@
                       :key="'lb-jojo-'+coinsStore.jojoVariantIndex"
                     />
                     <img 
-              v-if="getUserEquippedItemData(user).name === 'Jojo' && coinsStore.jojoVariantIndex === 1" 
+              v-if="getUserEquippedItemData(user).name === 'Jojo' && getJojoVariantForUser(user) === 1" 
                       :src="jojotext" 
                       alt="Jojo text"
                       class="equipped-jojotext-inside"
@@ -719,7 +719,7 @@
                 <!-- Overlays Discord/Galaxie/Coeur rendus à l'intérieur de l'avatar -->
                 <img 
                   v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'discord'"
-                  :src="discordVariants[coinsStore.discordVariantIndex]"
+                  :src="discordVariants[getDiscordVariantForUser(user)]"
                   alt="Discord"
                   class="equipped-discord"
                 />
@@ -1753,10 +1753,17 @@ const getColorSwatchStyle = (c) => {
   return style
 }
 
-// Obtenir le prix courant d'un item (priorité au prix hebdomadaire s'il existe)
+// Obtenir le prix de base d'un item (même prix en Collection et en Boutique)
+// On ignore volontairement tout override hebdomadaire pour conserver 600/400
 const getItemPrice = (item) => {
-  const override = weeklyPriceMap.value.get(item.id)
-  return typeof override !== 'undefined' ? override : item.price
+  // Chercher dans le catalogue statique
+  const s = shopItems.find((si) => Number(si.id) === Number(item?.id))
+  if (s && typeof s.price !== 'undefined') return s.price
+  // Sinon, chercher dans les items dynamiques chargés
+  const d = dynamicItems.value.find((di) => Number(di.id) === Number(item?.id))
+  if (d && typeof d.price !== 'undefined') return d.price
+  // Fallback: prix fourni par l'item
+  return typeof item?.price !== 'undefined' ? item.price : 0
 }
 
 // Style pour le cercle d'aperçu dans les variantes hebdomadaires
@@ -2060,6 +2067,22 @@ const discordDisplayImg = computed(() => {
   const idx = coinsStore.discordVariantIndex || 0
   return discordVariants[idx] || discordon
 })
+
+// Extraire l'index de variante (dv/jv) depuis selectedBorderColor d'un utilisateur
+function getVariantIndexFromSelectedColor(user, key) {
+  try {
+    const raw = String(user && user.selectedBorderColor || '')
+    const parts = raw.split('|')
+    const p = parts.find((s) => String(s).startsWith(`${key}=`))
+    if (!p) return 0
+    const v = Number(p.split('=')[1])
+    return Number.isFinite(v) ? v : 0
+  } catch {
+    return 0
+  }
+}
+function getJojoVariantForUser(user) { return getVariantIndexFromSelectedColor(user, 'jv') }
+function getDiscordVariantForUser(user) { const i = getVariantIndexFromSelectedColor(user, 'dv'); return [0,1,2].includes(i) ? i : 0 }
 
 
 

@@ -45,13 +45,15 @@ onMounted(async () => {
   }
   try {
     const res = await secureApiCall('/events');
-    if (Array.isArray(res)) {
-      events.value = res.map(event => ({
-        ...event,
-        start: new Date(event.start),
-        end: new Date(event.end),
-      }));
-    }
+    const dataEvents = Array.isArray(res) ? res : (Array.isArray(res?.events) ? res.events : []);
+    const currentUserId = String((auth?.user && (auth.user.id || auth.user._id || auth.user.userId)) || '');
+    events.value = dataEvents.map((ev) => {
+      const checked = Array.isArray(ev?.checkedBy) && ev.checkedBy.some((id) => String(id) === currentUserId);
+      const archived = Array.isArray(ev?.archivedBy) && ev.archivedBy.some((id) => String(id) === currentUserId);
+      const hidden = Array.isArray(ev?.hiddenBy) && ev.hiddenBy.some((id) => String(id) === currentUserId);
+      const createdBy = ev?.createdBy || ev?.userId || '';
+      return { ...ev, checked, archived, hidden, createdBy };
+    });
   } catch (e) {
     console.error('Erreur lors du chargement des événements:', e);
     events.value = [];
@@ -65,13 +67,15 @@ const filteredEvents = computed(() => {
 async function reloadEvents() {
   try {
     const res = await secureApiCall('/events');
-    if (Array.isArray(res)) {
-      events.value = res.map(event => ({
-        ...event,
-        start: new Date(event.start),
-        end: new Date(event.end),
-      }));
-    }
+    const dataEvents = Array.isArray(res) ? res : (Array.isArray(res?.events) ? res.events : []);
+    const currentUserId = String((auth?.user && (auth.user.id || auth.user._id || auth.user.userId)) || '');
+    events.value = dataEvents.map((ev) => {
+      const checked = Array.isArray(ev?.checkedBy) && ev.checkedBy.some((id) => String(id) === currentUserId);
+      const archived = Array.isArray(ev?.archivedBy) && ev.archivedBy.some((id) => String(id) === currentUserId);
+      const hidden = Array.isArray(ev?.hiddenBy) && ev.hiddenBy.some((id) => String(id) === currentUserId);
+      const createdBy = ev?.createdBy || ev?.userId || '';
+      return { ...ev, checked, archived, hidden, createdBy };
+    });
   } catch (e) {
     console.error('Erreur lors du rechargement des événements:', e);
     events.value = [];
