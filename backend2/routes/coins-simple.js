@@ -603,26 +603,7 @@ router.get('/weekly-items', verifyToken, async (req, res) => {
       selectedItemIds = Array.isArray(cached.itemIds) ? cached.itemIds.map(Number) : []
       selectedColorIds = Array.isArray(cached.colorIds) ? cached.colorIds.map(Number) : []
     }
-    // Ajouts de test (mémoire process, non persistant)
-    if (global.__WEEKLY_TEST_IDS__ && global.__WEEKLY_TEST_IDS__.size) {
-      const ids = Array.from(global.__WEEKLY_TEST_IDS__)
-      // essayer de trouver dans statiques
-      for (const id of ids) {
-        const s = combinedPool.find(x => x.id === id && !x.isDynamic)
-        if (s && !weeklyItems.find(x => x.id === id)) weeklyItems.push(s)
-      }
-      // essayer de trouver dans dynamiques (si exposés via items dynamiques front)
-      try {
-        const ItemModel2 = require('../models/Item')
-        const dynItems = await ItemModel2.find({ active: true }).sort({ createdAt: -1 })
-        for (const d of dynItems) {
-          const id = Number(d.legacyId)
-          if (ids.includes(id) && !weeklyItems.find(x => x.id === id)) {
-            weeklyItems.push({ id, name: d.name, price: Number(d.price) || 0, isDynamic: true, img: '', assets: d.assets || [], backgrounds: d.backgrounds || {} })
-          }
-        }
-      } catch {}
-    }
+    // (les ajouts de test seront fusionnés plus bas une fois weeklyItems construit)
     
     // Ajouter 3 couleurs de bordures aléatoires en plus des items normaux
     // Alignées avec frontend/src/stores/coins.ts -> initializeBorderColors()
@@ -765,6 +746,17 @@ router.get('/weekly-items', verifyToken, async (req, res) => {
       ? pickById(colorPool, selectedColorIds)
       : selectedBorderColors
     weeklyItems = [...weeklyItems, ...colorsOut];
+
+    // Ajouts de test (mémoire process, non persistant) – injecter après construction
+    if (global.__WEEKLY_TEST_IDS__ && global.__WEEKLY_TEST_IDS__.size) {
+      const ids = Array.from(global.__WEEKLY_TEST_IDS__)
+      const hasId = (arr, id) => arr.some(x => Number(x.id) === Number(id))
+      // chercher dans pool statique/dynamique combiné
+      for (const id of ids) {
+        const found = combinedPool.find(x => Number(x.id) === Number(id))
+        if (found && !hasId(weeklyItems, id)) weeklyItems.push(found)
+      }
+    }
 
     // Calculer le temps jusqu'à la prochaine rotation à 00:00 (heure Europe/Paris)
     const now = new Date();
