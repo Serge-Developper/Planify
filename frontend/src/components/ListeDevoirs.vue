@@ -462,18 +462,18 @@ const mmiMatieres = computed(() => {
   const userYear = normalizeYearClient(user.value?.year);
   const userGroup = (user.value?.groupe || '').toUpperCase();
   const dynNames = dynList
-    .filter((s: any) => {
+    .filter((s) => {
       const years = Array.isArray(s.yearsAllowed) ? s.yearsAllowed.map(normalizeYearClient) : [];
       const groups = Array.isArray(s.groupsAllowed) ? s.groupsAllowed.map((g: string) => g.toUpperCase()) : [];
       const yearOk = years.length === 0 || years.includes(userYear);
       const groupOk = groups.length === 0 || groups.includes('PROMO') || groups.includes(userGroup);
       return yearOk && groupOk;
     })
-    .map((s: any) => s.name)
+    .map((s) => s.name)
     .filter(Boolean);
   // Inclure aussi toutes les matières présentes parmi les événements visibles (ex: "test")
-  const eventNames = Array.isArray(props.events) ? Array.from(new Set(props.events.map((e:any)=>e.matiere).filter(Boolean))) : [];
-  const set = new Set<string>([...officialMatieres, ...dynNames, ...eventNames]);
+  const eventNames = Array.isArray(props.events) ? Array.from(new Set(props.events.map((e)=>e.matiere).filter((x)=>!!x))) : [];
+  const set = new Set([...officialMatieres, ...dynNames, ...eventNames]);
   return Array.from(set);
 });
 
@@ -581,8 +581,10 @@ function setSort(type) {
 function stringToColor(str, type) {
   // 1) Prend la couleur/dégradé défini dans le store des matières dynamiques s'il existe
   try {
-    const all = (subjectsStore.getSubjects as any) || subjectsStore.subjects || [];
-    const subject = (Array.isArray(all) ? all : []).find((s: any) => (s?.name || '').toLowerCase() === (str || '').toLowerCase());
+    const all = (subjectsStore.getSubjects && (subjectsStore.getSubjects.value || subjectsStore.getSubjects))
+      || (subjectsStore.subjects && (subjectsStore.subjects.value || subjectsStore.subjects))
+      || [];
+    const subject = (Array.isArray(all) ? all : []).find((s) => ((s && s.name) ? s.name : '').toLowerCase() === (str || '').toLowerCase());
     if (subject) {
       const c1 = subject.color;
       const c2 = subject.color2;
