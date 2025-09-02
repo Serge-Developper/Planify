@@ -463,6 +463,7 @@ function normalizeYearClient(y) {
 const mmiMatieres = computed(() => {
   const dynList = (subjectsStore.getSubjects || subjectsStore.subjects || []);
   const isProf = !!(user.value && (user.value.role === 'prof' || user.value.role === 'admin'));
+  const userSpec = (user.value && user.value.specialite) ? String(user.value.specialite) : '';
   let dynNames;
   if (isProf) {
     dynNames = (Array.isArray(dynList) ? dynList : []).map((s) => s && s.name).filter(Boolean);
@@ -473,9 +474,12 @@ const mmiMatieres = computed(() => {
       .filter((s) => {
         const years = Array.isArray(s.yearsAllowed) ? s.yearsAllowed.map(normalizeYearClient) : [];
         const groups = Array.isArray(s.groupsAllowed) ? s.groupsAllowed.map((g) => String(g).toUpperCase()) : [];
+        const specs = Array.isArray(s.specialitesAllowed) ? s.specialitesAllowed.map((v) => String(v)) : [];
         const yearOk = years.length === 0 || years.includes(userYear);
         const groupOk = groups.length === 0 || groups.includes('PROMO') || groups.includes(userGroup);
-        return yearOk && groupOk;
+        // Règle spécialité: si l'utilisateur a une spécialité, elle doit correspondre; sinon on ignore ce critère
+        const specOk = !userSpec || specs.length === 0 || specs.includes(userSpec);
+        return yearOk && groupOk && specOk;
       })
       .map((s) => s && s.name)
       .filter(Boolean);
@@ -494,6 +498,17 @@ function isSubjectAllowedForUser(name) {
   } catch {
     return true;
   }
+}
+
+// Filtrage supplémentaire par spécialité au niveau des événements
+function eventMatchesUserSpecialite(ev) {
+  try {
+    const uSpec = (user.value && user.value.specialite) ? String(user.value.specialite) : '';
+    const eSpec = (ev && ev.specialite) ? String(ev.specialite) : '';
+    if (!eSpec) return true; // événement non spécialisé visible par tous
+    if (!uSpec) return false; // utilisateur sans spécialité ne voit pas un événement spécialisé
+    return uSpec === eSpec;
+  } catch { return true; }
 }
 
 // Génère une clé unique stable pour un event
@@ -549,6 +564,7 @@ const sortedEvents = computed(() => {
 const doneEvents = computed(() =>
   props.events
     .filter(e => e.checked && !e.archived)
+    .filter(e => eventMatchesUserSpecialite(e))
     .filter(e => isSubjectAllowedForUser(e.matiere))
     .filter(e => !selectedMatiere.value || e.matiere === selectedMatiere.value)
 );
@@ -557,6 +573,8 @@ const toDoEvents = computed(() => {
     if (e.archived) return false;
     // Cacher les matières non autorisées pour cet utilisateur
     if (!isSubjectAllowedForUser(e.matiere)) return false;
+    // Spécialité
+    if (!eventMatchesUserSpecialite(e)) return false;
 
     const t = timeLeft(e.date, e.heure);
     let typeFilter = true;
@@ -587,6 +605,7 @@ const toDoEvents = computed(() => {
 const archives = computed(() => 
   props.events
     .filter(e => e.archived)
+    .filter(e => eventMatchesUserSpecialite(e))
     .filter(e => isSubjectAllowedForUser(e.matiere))
     .filter(e => !selectedMatiere.value || e.matiere === selectedMatiere.value)
 );
@@ -596,6 +615,7 @@ const lateEvents = computed(() =>
     !e.archived &&
     !e.checked &&
     isLate(e) &&
+    eventMatchesUserSpecialite(e) &&
     isSubjectAllowedForUser(e.matiere) &&
     (!selectedMatiere.value || e.matiere === selectedMatiere.value)
   )
