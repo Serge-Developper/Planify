@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { secureApiCall } from '@/api';
+import { secureApiCall, API_URL, getAuthHeaders } from '@/api';
 
 export interface Subject {
   _id?: string;
@@ -71,7 +71,14 @@ export const useSubjectsStore = defineStore('subjects', () => {
 
   const fetchStaticRules = async () => {
     try {
-      const res = await secureApiCall('/subjects/rules/static');
+      const response = await fetch(`${API_URL}/subjects/rules/static`, { headers: getAuthHeaders() });
+      if (response.status === 404) {
+        // Endpoint pas encore déployé côté backend → pas d'erreur console
+        staticRules.value = staticRules.value || [];
+        return;
+      }
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const res = await response.json();
       staticRules.value = Array.isArray(res) ? res : (Array.isArray(res?.rules) ? res.rules : []);
     } catch (e) {
       staticRules.value = staticRules.value || [];
