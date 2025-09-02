@@ -146,6 +146,39 @@
 
               </div>
             </button>
+            <!-- Items dynamiques ciblés sur account-btn (en-dehors de avatar-image-container) -->
+            <template v-if="equippedDynItem && Array.isArray(equippedDynItem.variants) && equippedDynItem.variants.length > 0">
+              <img
+                v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
+                v-if="a && a.meta && a.meta.navbarTarget === 'account-btn' && a.meta.navbarPlacement === 'below'"
+                :key="'dyn-nb-acc-below-'+ai+'-'+navbarVariantUpdateKey"
+                :src="resolveDynSrc(a.src)"
+                :style="getDynNavbarAssetStyle(a)"
+              />
+              <img
+                v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
+                v-if="a && a.meta && a.meta.navbarTarget === 'account-btn' && a.meta.navbarPlacement === 'inside'"
+                :key="'dyn-nb-acc-inside-'+ai+'-'+navbarVariantUpdateKey"
+                :src="resolveDynSrc(a.src)"
+                :style="getDynNavbarAssetStyle(a)"
+              />
+            </template>
+            <template v-else-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
+              <img
+                v-for="(a, ai) in equippedDynItem.assets"
+                v-if="a && a.meta && a.meta.navbarTarget === 'account-btn' && a.meta.navbarPlacement === 'below'"
+                :key="'dyn-nb-acc-below-'+ai"
+                :src="resolveDynSrc(a.src)"
+                :style="getDynNavbarAssetStyle(a)"
+              />
+              <img
+                v-for="(a, ai) in equippedDynItem.assets"
+                v-if="a && a.meta && a.meta.navbarTarget === 'account-btn' && a.meta.navbarPlacement === 'inside'"
+                :key="'dyn-nb-acc-inside-'+ai"
+                :src="resolveDynSrc(a.src)"
+                :style="getDynNavbarAssetStyle(a)"
+              />
+            </template>
             <!-- Items dynamiques: "above" au-dessus du bouton account -->
             <template v-if="equippedDynItem && Array.isArray(equippedDynItem.variants) && equippedDynItem.variants.length > 0">
               <img
