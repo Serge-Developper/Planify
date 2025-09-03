@@ -239,8 +239,8 @@
           <button class="btn tiny" @click="setLeaderboardPlacement('above')">Au-dessus</button>
           <!-- Cible du rendu: avatar vs conteneur -->
           <span style="margin-left:12px;">Cible :</span>
-          <button class="btn tiny" :class="{ active: getActiveAssetLeaderboardTarget() === 'user-avatar' }" @click="setLeaderboardTarget('user-avatar')">Avatar</button>
-          <button class="btn tiny" :class="{ active: getActiveAssetLeaderboardTarget() === 'user-avatar-container' }" @click="setLeaderboardTarget('user-avatar-container')">Conteneur</button>
+          <button class="btn tiny" :class="{ active: getActiveAssetLeaderboardTarget() === 'user-avatar-container' }" @click="setLeaderboardTarget('user-avatar-container')">Dans le conteneur</button>
+          <button class="btn tiny" :class="{ active: getActiveAssetLeaderboardTarget() === 'user-avatar' }" @click="setLeaderboardTarget('user-avatar')">(Ancien) Dans l'avatar</button>
         </div>
         <!-- Contrôle de position pour la Navbar -->
         <div v-if="activeCanvas==='navbar' && selectedIndex !== null" class="layer-controls">
@@ -906,10 +906,6 @@ function setLeaderboardPlacement(placement) {
   if (!asset.meta) asset.meta = {}
   if (placement !== 'above' && placement !== 'inside') placement = 'below'
   asset.meta.leaderboardPlacement = placement
-  // TEMP: forcer la cible conteneur pour le canvas leaderboard
-  if (activeCanvas.value === 'leaderboard') {
-    asset.meta.leaderboardTarget = 'user-avatar-container'
-  }
 }
 
 function setNavbarPlacement(placement) {
