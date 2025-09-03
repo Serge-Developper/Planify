@@ -609,14 +609,14 @@
                     <!-- Items dynamiques placés derrière l'avatar (sous bordure) -->
                     <template v-if="getUserEquippedItemData(user).isDynamic && Array.isArray(getUserEquippedItemData(user).variants) && getUserEquippedItemData(user).variants.length > 0">
                       <img v-for="(a, ai) in getDynVariantAssetsForLeaderboard(getUserEquippedItemData(user))"
-                           v-if="a && a.meta && a.meta.leaderboardPlacement === 'below'"
+                           v-if="a && a.meta && a.meta.leaderboardPlacement === 'below' && (!a.meta.leaderboardTarget || a.meta.leaderboardTarget === 'user-avatar')"
                            :key="'dyn-lb-below-'+ai+'-'+dynamicVariantsState"
                            :src="resolveAssetSrc(a.src)"
                            :style="getDynLeaderboardAssetStyle(a)" />
                     </template>
                     <template v-else-if="getUserEquippedItemData(user).isDynamic">
                       <img v-for="(a, ai) in getUserEquippedItemData(user).assets"
-                           v-if="a && a.meta && a.meta.leaderboardPlacement === 'below'"
+                           v-if="a && a.meta && a.meta.leaderboardPlacement === 'below' && (!a.meta.leaderboardTarget || a.meta.leaderboardTarget === 'user-avatar')"
                            :key="'dyn-below-'+ai"
                            :src="resolveAssetSrc(a.src)"
                            :style="getDynLeaderboardAssetStyle(a)" />
@@ -787,14 +787,14 @@
                     <!-- Items dynamiques placés à l'intérieur de l'avatar -->
                     <template v-if="getUserEquippedItemData(user).isDynamic && Array.isArray(getUserEquippedItemData(user).variants) && getUserEquippedItemData(user).variants.length > 0">
                       <img v-for="(a, ai) in getDynVariantAssetsForLeaderboard(getUserEquippedItemData(user))"
-                           v-if="a && a.meta && a.meta.leaderboardPlacement === 'inside'"
+                           v-if="a && a.meta && a.meta.leaderboardPlacement === 'inside' && (!a.meta.leaderboardTarget || a.meta.leaderboardTarget === 'user-avatar')"
                            :key="'dyn-lb-inside-'+ai+'-'+dynamicVariantsState"
                            :src="resolveAssetSrc(a.src)"
                            :style="getDynLeaderboardAssetStyle(a)" />
                     </template>
                     <template v-else-if="getUserEquippedItemData(user).isDynamic">
                       <img v-for="(a, ai) in getUserEquippedItemData(user).assets"
-                           v-if="a && a.meta && a.meta.leaderboardPlacement === 'inside'"
+                           v-if="a && a.meta && a.meta.leaderboardPlacement === 'inside' && (!a.meta.leaderboardTarget || a.meta.leaderboardTarget === 'user-avatar')"
                            :key="'dyn-inside-'+ai"
                            :src="resolveAssetSrc(a.src)"
                            :style="getDynLeaderboardAssetStyle(a)" />
@@ -802,20 +802,30 @@
                     <!-- Items dynamiques placés au-dessus de l'avatar (par-dessus bordure) -->
                     <template v-if="getUserEquippedItemData(user).isDynamic && Array.isArray(getUserEquippedItemData(user).variants) && getUserEquippedItemData(user).variants.length > 0">
                       <img v-for="(a, ai) in getDynVariantAssetsForLeaderboard(getUserEquippedItemData(user))"
-                           v-if="!a || !a.meta || a.meta.leaderboardPlacement === 'above' || (!a.meta.leaderboardPlacement)"
+                           v-if="(!a || !a.meta || a.meta.leaderboardPlacement === 'above' || (!a.meta.leaderboardPlacement)) && (!a.meta || !a.meta.leaderboardTarget || a.meta.leaderboardTarget === 'user-avatar')"
                            :key="'dyn-lb-above-'+ai+'-'+dynamicVariantsState"
                            :src="resolveAssetSrc(a.src)"
                            :style="getDynLeaderboardAssetStyle(a)" />
                     </template>
                     <template v-else-if="getUserEquippedItemData(user).isDynamic">
                       <img v-for="(a, ai) in getUserEquippedItemData(user).assets"
-                           v-if="!a || !a.meta || a.meta.leaderboardPlacement === 'above' || (!a.meta.leaderboardPlacement)"
+                           v-if="(!a || !a.meta || a.meta.leaderboardPlacement === 'above' || (!a.meta.leaderboardPlacement)) && (!a.meta || !a.meta.leaderboardTarget || a.meta.leaderboardTarget === 'user-avatar')"
                            :key="'dyn-above-'+ai"
                            :src="resolveAssetSrc(a.src)"
                            :style="getDynLeaderboardAssetStyle(a)" />
                     </template>
                   </template>
                 </div>
+
+                <!-- Cible alternative: user-avatar-container (autour du cercle) -->
+                <template v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).isDynamic">
+                  <img v-for="(a, ai) in (Array.isArray(getUserEquippedItemData(user).variants) && getUserEquippedItemData(user).variants.length>0 ? getDynVariantAssetsForLeaderboard(getUserEquippedItemData(user)) : getUserEquippedItemData(user).assets)"
+                       v-if="a && a.meta && a.meta.leaderboardTarget === 'user-avatar-container'"
+                       :key="'dyn-container-'+ai+'-'+dynamicVariantsState"
+                       :src="resolveAssetSrc(a.src)"
+                       :style="getDynLeaderboardAssetStyle(a)"
+                  />
+                </template>
                 
                 <!-- Item Clown par-dessus l'avatar (positionné en dehors du conteneur) -->
                 <img 

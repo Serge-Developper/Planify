@@ -237,6 +237,9 @@
           <button class="btn tiny" :class="{ primary: isLeaderboardPlacement('below') }" @click="setLeaderboardPlacement('below')">Derrière</button>
           <button class="btn tiny" :class="{ primary: isLeaderboardPlacement('inside') }" @click="setLeaderboardPlacement('inside')">Dans l'avatar</button>
           <button class="btn tiny" :class="{ primary: isLeaderboardPlacement('above') }" @click="setLeaderboardPlacement('above')">Au-dessus</button>
+          <span style="margin-left:8px;">Cible (classe) :</span>
+          <button class="btn tiny" :class="{ primary: isLeaderboardTarget('user-avatar') }" @click="setLeaderboardTarget('user-avatar')">user-avatar</button>
+          <button class="btn tiny" :class="{ primary: isLeaderboardTarget('user-avatar-container') }" @click="setLeaderboardTarget('user-avatar-container')">user-avatar-container</button>
         </div>
         <!-- Contrôle de position pour la Navbar -->
         <div v-if="activeCanvas==='navbar' && selectedIndex !== null" class="layer-controls">
@@ -692,7 +695,8 @@ function sanitizeAsset(a) {
     meta: (a && typeof a.meta === 'object') ? {
       navbarPlacement: a.meta.navbarPlacement || undefined,
       leaderboardPlacement: a.meta.leaderboardPlacement || undefined,
-      navbarTarget: a.meta.navbarTarget || undefined
+      navbarTarget: a.meta.navbarTarget || undefined,
+      leaderboardTarget: a.meta.leaderboardTarget || undefined
     } : {}
   }
 }
@@ -892,6 +896,16 @@ function setLeaderboardPlacement(placement) {
   asset.meta.leaderboardPlacement = placement
 }
 
+function setLeaderboardTarget(target) {
+  if (selectedIndex.value === null) return
+  const assets = activeAssets()
+  const asset = Array.isArray(assets) ? assets[selectedIndex.value] : null
+  if (!asset) return
+  if (!asset.meta) asset.meta = {}
+  // Cible autorisée: 'user-avatar' (à l'intérieur) ou 'user-avatar-container' (autour)
+  asset.meta.leaderboardTarget = (target === 'user-avatar-container') ? 'user-avatar-container' : 'user-avatar'
+}
+
 function setNavbarPlacement(placement) {
   if (selectedIndex.value === null) return
   const assets = activeAssets()
@@ -930,6 +944,12 @@ function isNavbarTarget(val) {
 function isLeaderboardPlacement(val) {
   const a = getSelectedAsset()
   const cur = (a && a.meta && a.meta.leaderboardPlacement) || 'below'
+  return cur === val
+}
+
+function isLeaderboardTarget(val) {
+  const a = getSelectedAsset()
+  const cur = (a && a.meta && a.meta.leaderboardTarget) || 'user-avatar'
   return cur === val
 }
 
