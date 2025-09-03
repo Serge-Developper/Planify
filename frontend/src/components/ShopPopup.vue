@@ -1551,9 +1551,11 @@ function getDynVariantAssetsForLeaderboard(item) {
     // Pour les variantes normales, fusionner également la meta depuis la base si manquante
     const baseAssets = Array.isArray(item.assets) ? item.assets : []
     const bySrc = new Map(baseAssets.map(b => [String(b.src || ''), b]))
-    return variant.assets.map(a => {
-      const base = bySrc.get(String(a && a.src || ''))
-      const mergedMeta = (a && a.meta) ? a.meta : (base && base.meta ? base.meta : {})
+    return variant.assets.map((a, idx) => {
+      const baseBySrc = bySrc.get(String(a && a.src || ''))
+      const baseByIndex = baseAssets[idx]
+      const baseMeta = (baseBySrc && baseBySrc.meta) ? baseBySrc.meta : (baseByIndex && baseByIndex.meta ? baseByIndex.meta : {})
+      const mergedMeta = (a && a.meta) ? { ...baseMeta, ...a.meta } : baseMeta
       return { ...a, meta: mergedMeta }
     })
   } catch (e) {
