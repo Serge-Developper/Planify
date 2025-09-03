@@ -1177,6 +1177,8 @@ function clearForm() {
 .inspector .row { display: flex; gap: 6px; margin-top: 8px; }
 .nudge-row { justify-content: flex-start; }
 .layer-controls { display:flex; gap:8px; align-items:center; margin-top:8px; flex-wrap: wrap; }
+.layer-controls .btn.tiny { transition: background-color .15s ease, color .15s ease, border-color .15s ease; }
+.layer-controls .btn.tiny:hover { background:#f3f4f6; }
 .layer-controls .btn.tiny.active { background:#10b981; color:#fff; border-color:#10b981; }
 /* Ligne du picker de background */
 .bg-picker-row { display: flex; gap: 16px; align-items: center; margin-top: 8px; flex-wrap: wrap; }

@@ -556,8 +556,8 @@
               <template v-if="getUserEquippedItemData(user)">
                 <img
                   v-for="(a, ai) in getEquippedAssetsForLeaderboard(user)"
-                  v-if="isAssetTargetingContainer(getUserEquippedItemData(user), a) && (!a || !a.meta || a.meta.leaderboardPlacement === 'above' || (!a.meta.leaderboardPlacement))"
-                  :key="'container-above-overlay-' + ai + '-' + dynamicVariantsState"
+                  v-if="isAssetTargetingContainer(getUserEquippedItemData(user), a) && (!a || !a.meta || a.meta.leaderboardPlacement !== 'below')"
+                  :key="'container-overlay-' + ai + '-' + dynamicVariantsState"
                   :src="resolveAssetSrc(a.src)"
                   :style="getDynLeaderboardContainerOverlayStyle(a)"
                   class="dynamic-container-overlay"
@@ -571,8 +571,8 @@
                     v-for="(a, ai) in (Array.isArray(getUserEquippedItemData(user).variants) && getUserEquippedItemData(user).variants.length > 0
                       ? getDynVariantAssetsForLeaderboard(getUserEquippedItemData(user))
                       : getUserEquippedItemData(user).assets)"
-                    v-if="isAssetTargetingContainer(getUserEquippedItemData(user), a) && a && a.meta && a.meta.leaderboardPlacement === 'below'"
-                    :key="'dyn-container-below-' + ai + '-' + dynamicVariantsState"
+                    v-if="isAssetTargetingAvatar(getUserEquippedItemData(user), a) && a && a.meta && a.meta.leaderboardPlacement === 'below'"
+                    :key="'dyn-avatar-below-' + ai + '-' + dynamicVariantsState"
                     :src="resolveAssetSrc(a.src)"
                     :style="getDynLeaderboardAssetStyle(a)"
                   />
@@ -848,8 +848,8 @@
                     v-for="(a, ai) in (Array.isArray(getUserEquippedItemData(user).variants) && getUserEquippedItemData(user).variants.length > 0
                       ? getDynVariantAssetsForLeaderboard(getUserEquippedItemData(user))
                       : getUserEquippedItemData(user).assets)"
-                    v-if="isAssetTargetingContainer(getUserEquippedItemData(user), a) && a && a.meta && a.meta.leaderboardPlacement === 'inside'"
-                    :key="'dyn-container-inside-' + ai + '-' + dynamicVariantsState"
+                    v-if="isAssetTargetingAvatar(getUserEquippedItemData(user), a) && a && a.meta && a.meta.leaderboardPlacement === 'inside'"
+                    :key="'dyn-avatar-inside-' + ai + '-' + dynamicVariantsState"
                     :src="resolveAssetSrc(a.src)"
                     :style="getDynLeaderboardAssetStyle(a)"
                   />
