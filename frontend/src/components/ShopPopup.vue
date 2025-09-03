@@ -2199,6 +2199,7 @@ const getUserEquippedItemData = (user) => {
         assets: dyn.assets || [],
         backgrounds: dyn.backgrounds || {},
         variants: dyn.variants || [], // Ajouter les variantes
+        meta: dyn.meta || {}, // IMPORTANT: inclure meta (leaderboardTarget/Placement)
         legacyId: dyn.id // Ajouter legacyId pour la compatibilité
       }
     }
