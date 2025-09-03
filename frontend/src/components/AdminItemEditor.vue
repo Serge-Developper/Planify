@@ -684,7 +684,14 @@ function sanitizeAsset(a) {
     avatarStyleMobile: sanitizeStyle(a.avatarStyleMobile),
     navbarStyle: sanitizeStyle(a.navbarStyle),
     navbarStyleMobile: sanitizeStyle(a.navbarStyleMobile),
-    popupStyleStyle: sanitizeStyle(a.popupStyleStyle)
+    popupStyleStyle: sanitizeStyle(a.popupStyleStyle),
+    // préserver meta et champs utiles (leaderboardPlacement, navbarPlacement, container)
+    meta: {
+      ...(a.meta || {}),
+      leaderboardPlacement: (a.meta && a.meta.leaderboardPlacement) || 'below',
+      navbarPlacement: (a.meta && a.meta.navbarPlacement) || 'below',
+      container: (a.meta && a.meta.container) || ''
+    }
   }
 }
 
@@ -908,7 +915,7 @@ async function uploadAssets() {
   const data = await res.json()
   if (data.success) {
     const target = editingVariantIndex.value === -1 ? form.value.assets : ((form.value.variants[editingVariantIndex.value].assets ||= []))
-    for (const file of data.files) target.push(sanitizeAsset({ src: file.url, style: { top: 0, left: 0, width: 100, height: 100 } }))
+    for (const file of data.files) target.push(sanitizeAsset({ src: file.url, style: { top: 0, left: 0, width: 100, height: 100 }, meta: { leaderboardPlacement: 'below', navbarPlacement: 'below', container: '' } }))
   } else {
     alert('Upload échoué')
   }
@@ -918,7 +925,7 @@ function addAssetFromUrl() {
   const url = prompt('URL de l\'image (déjà sur le serveur)')
   if (!url) return
   const target = editingVariantIndex.value === -1 ? form.value.assets : ((form.value.variants[editingVariantIndex.value].assets ||= []))
-  target.push(sanitizeAsset({ src: url, style: { top: 0, left: 0, width: 100 } }))
+  target.push(sanitizeAsset({ src: url, style: { top: 0, left: 0, width: 100 }, meta: { leaderboardPlacement: 'below', navbarPlacement: 'below', container: '' } }))
 }
 
 async function saveItem() {

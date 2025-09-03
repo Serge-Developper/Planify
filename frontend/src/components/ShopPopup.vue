@@ -1,4 +1,3 @@
-
 <template>
   <div v-if="show" class="shop-overlay" @click.self="$emit('close')">
     <div class="shop-modal">
@@ -626,14 +625,14 @@
                     <!-- Items dynamiques placés derrière l'avatar (sous bordure) -->
                     <template v-if="getUserEquippedItemData(user).isDynamic && Array.isArray(getUserEquippedItemData(user).variants) && getUserEquippedItemData(user).variants.length > 0">
                       <img v-for="(a, ai) in getDynVariantAssetsForLeaderboard(getUserEquippedItemData(user))"
-                           v-if="a && a.meta && a.meta.leaderboardPlacement === 'below'"
+                           v-if="a && a.meta && a.meta.leaderboardPlacement === 'below' && a.meta.container !== 'user-avatar-container'"
                            :key="'dyn-lb-below-'+ai+'-'+dynamicVariantsState"
                            :src="resolveAssetSrc(a.src)"
                            :style="getDynLeaderboardAssetStyle(a)" />
                     </template>
                     <template v-else-if="getUserEquippedItemData(user).isDynamic">
                       <img v-for="(a, ai) in getUserEquippedItemData(user).assets"
-                           v-if="a && a.meta && a.meta.leaderboardPlacement === 'below'"
+                           v-if="a && a.meta && a.meta.leaderboardPlacement === 'below' && a.meta.container !== 'user-avatar-container'"
                            :key="'dyn-below-'+ai"
                            :src="resolveAssetSrc(a.src)"
                            :style="getDynLeaderboardAssetStyle(a)" />
@@ -804,14 +803,14 @@
                     <!-- Items dynamiques placés à l'intérieur de l'avatar -->
                     <template v-if="getUserEquippedItemData(user).isDynamic && Array.isArray(getUserEquippedItemData(user).variants) && getUserEquippedItemData(user).variants.length > 0">
                       <img v-for="(a, ai) in getDynVariantAssetsForLeaderboard(getUserEquippedItemData(user))"
-                           v-if="a && a.meta && a.meta.leaderboardPlacement === 'inside'"
+                           v-if="a && a.meta && a.meta.leaderboardPlacement === 'inside' && a.meta.container !== 'user-avatar-container'"
                            :key="'dyn-lb-inside-'+ai+'-'+dynamicVariantsState"
                            :src="resolveAssetSrc(a.src)"
                            :style="getDynLeaderboardAssetStyle(a)" />
                     </template>
                     <template v-else-if="getUserEquippedItemData(user).isDynamic">
                       <img v-for="(a, ai) in getUserEquippedItemData(user).assets"
-                           v-if="a && a.meta && a.meta.leaderboardPlacement === 'inside'"
+                           v-if="a && a.meta && a.meta.leaderboardPlacement === 'inside' && a.meta.container !== 'user-avatar-container'"
                            :key="'dyn-inside-'+ai"
                            :src="resolveAssetSrc(a.src)"
                            :style="getDynLeaderboardAssetStyle(a)" />
@@ -819,14 +818,14 @@
                     <!-- Items dynamiques placés au-dessus de l'avatar (par-dessus bordure) -->
                     <template v-if="getUserEquippedItemData(user).isDynamic && Array.isArray(getUserEquippedItemData(user).variants) && getUserEquippedItemData(user).variants.length > 0">
                       <img v-for="(a, ai) in getDynVariantAssetsForLeaderboard(getUserEquippedItemData(user))"
-                           v-if="!a || !a.meta || a.meta.leaderboardPlacement === 'above' || (!a.meta.leaderboardPlacement)"
+                           v-if="!a || !a.meta || a.meta.leaderboardPlacement === 'above' || (!a.meta.leaderboardPlacement) && (!a || !a.meta || a.meta.container !== 'user-avatar-container')"
                            :key="'dyn-lb-above-'+ai+'-'+dynamicVariantsState"
                            :src="resolveAssetSrc(a.src)"
                            :style="getDynLeaderboardAssetStyle(a)" />
                     </template>
                     <template v-else-if="getUserEquippedItemData(user).isDynamic">
                       <img v-for="(a, ai) in getUserEquippedItemData(user).assets"
-                           v-if="!a || !a.meta || a.meta.leaderboardPlacement === 'above' || (!a.meta.leaderboardPlacement)"
+                           v-if="!a || !a.meta || a.meta.leaderboardPlacement === 'above' || (!a.meta.leaderboardPlacement) && (!a || !a.meta || a.meta.container !== 'user-avatar-container')"
                            :key="'dyn-above-'+ai"
                            :src="resolveAssetSrc(a.src)"
                            :style="getDynLeaderboardAssetStyle(a)" />
