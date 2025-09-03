@@ -1,3 +1,4 @@
+
 <template>
   <div v-if="show" class="shop-overlay" @click.self="$emit('close')">
     <div class="shop-modal">
@@ -60,9 +61,9 @@
           <div v-if="coinsStore.hasItem(item.id)" class="checkmark-icon">✓</div>
           <!-- Cadenas pour les items verrouillés -->
           <div v-if="!coinsStore.hasItem(item.id)" class="lock-icon">🔒</div>
-          <!-- Palette pour Discord: switch d'apparence -->
+          <!-- Palette pour Discord: switch d'apparence (affichée même si non possédé) -->
           <button 
-            v-if="item.name === 'Discord' && coinsStore.hasItem(item.id)"
+            v-if="item.name === 'Discord'"
             class="palette-icon"
             type="button"
             @click.stop="openDiscordStylePicker(item)"
@@ -70,9 +71,9 @@
           >
             <img :src="styleIcon" alt="Palette" style="width: 18px; height: 18px; object-fit: contain;" />
           </button>
-          <!-- Palette pour Jojo: activer/désactiver le texte -->
+          <!-- Palette pour Jojo: activer/désactiver le texte (affichée même si non possédé) -->
           <button 
-            v-if="item.name === 'Jojo' && coinsStore.hasItem(item.id)"
+            v-if="item.name === 'Jojo'"
             class="palette-icon"
             type="button"
             @click.stop="openJojoStylePicker(item)"
@@ -305,9 +306,9 @@
               <div v-if="coinsStore.hasItem(item.id)" class="checkmark-icon">✓</div>
               <!-- Cadenas pour les items verrouillés -->
               <div v-if="!coinsStore.hasItem(item.id)" class="lock-icon">🔒</div>
-              <!-- Icône palette pour Discord et Jojo (aperçu des styles) -->
+              <!-- Icône palette pour Discord et Jojo (aperçu des styles) - affichée même si non possédé -->
               <button 
-                v-if="item.name === 'Discord' && coinsStore.hasItem(item.id)"
+                v-if="item.name === 'Discord'"
                 class="palette-icon"
                 type="button"
                 @click.stop="openDiscordStylePicker(item)"
@@ -316,7 +317,7 @@
                 <img :src="styleIcon" alt="Palette" style="width: 18px; height: 18px; object-fit: contain;" />
               </button>
               <button 
-                v-if="item.name === 'Jojo' && coinsStore.hasItem(item.id)"
+                v-if="item.name === 'Jojo'"
                 class="palette-icon"
                 type="button"
                 @click.stop="openJojoStylePicker(item)"
@@ -551,7 +552,32 @@
             
                         <!-- Avatar et infos utilisateur -->
             <div class="user-info">
+              <!-- Overlays ciblant user-avatar-container avec placement "above" (rendu hors du conteneur) -->
+              <template v-if="getUserEquippedItemData(user)">
+                <img
+                  v-for="(a, ai) in getEquippedAssetsForLeaderboard(user)"
+                  v-if="isAssetTargetingContainer(getUserEquippedItemData(user), a) && (!a || !a.meta || a.meta.leaderboardPlacement === 'above' || (!a.meta.leaderboardPlacement))"
+                  :key="'container-above-overlay-' + ai + '-' + dynamicVariantsState"
+                  :src="resolveAssetSrc(a.src)"
+                  :style="getDynLeaderboardContainerOverlayStyle(a)"
+                  class="dynamic-container-overlay"
+                />
+              </template>
+
               <div class="user-avatar-container" @click="openLeaderboardProfile(user)">
+                <!-- Items dynamiques ciblant user-avatar-container avec placement "below" (derrière tout) -->
+                <template v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).isDynamic">
+                  <img
+                    v-for="(a, ai) in (Array.isArray(getUserEquippedItemData(user).variants) && getUserEquippedItemData(user).variants.length > 0
+                      ? getDynVariantAssetsForLeaderboard(getUserEquippedItemData(user))
+                      : getUserEquippedItemData(user).assets)"
+                    v-if="isAssetTargetingContainer(getUserEquippedItemData(user), a) && a && a.meta && a.meta.leaderboardPlacement === 'below'"
+                    :key="'dyn-container-below-' + ai + '-' + dynamicVariantsState"
+                    :src="resolveAssetSrc(a.src)"
+                    :style="getDynLeaderboardAssetStyle(a)"
+                  />
+                </template>
+
                 <!-- Discord overlay en premier dans le container -->
                  <img 
                   v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'discord'"
@@ -583,23 +609,6 @@
                   :alt="'Planify'"
                   class="equipped-admin-planify"
                 />
-                <!-- Assets dynamiques rendus AU-DESSUS au niveau du conteneur parent (user-avatar-container) -->
-                <template v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).isDynamic">
-                  <template v-if="Array.isArray(getUserEquippedItemData(user).variants) && getUserEquippedItemData(user).variants.length > 0">
-                    <img v-for="(a, ai) in getDynVariantAssetsForLeaderboard(getUserEquippedItemData(user))"
-                         v-if="a && a.meta && a.meta.leaderboardPlacement === 'above' && a.meta.container === 'user-avatar-container'"
-                         :key="'dyn-lb-container-above-'+ai+'-'+dynamicVariantsState"
-                         :src="resolveAssetSrc(a.src)"
-                         :style="getDynLeaderboardAssetStyle(a)" />
-                  </template>
-                  <template v-else>
-                    <img v-for="(a, ai) in getUserEquippedItemData(user).assets"
-                         v-if="a && a.meta && a.meta.leaderboardPlacement === 'above' && a.meta.container === 'user-avatar-container'"
-                         :key="'dyn-container-above-'+ai"
-                         :src="resolveAssetSrc(a.src)"
-                         :style="getDynLeaderboardAssetStyle(a)" />
-                  </template>
-                </template>
                 <!-- Alpha overlay rendu au niveau du container uniquement ci-dessus -->
                 <template v-if="getUserEquippedItemData(user)">
                     <!-- Item générique -->
@@ -625,14 +634,14 @@
                     <!-- Items dynamiques placés derrière l'avatar (sous bordure) -->
                     <template v-if="getUserEquippedItemData(user).isDynamic && Array.isArray(getUserEquippedItemData(user).variants) && getUserEquippedItemData(user).variants.length > 0">
                       <img v-for="(a, ai) in getDynVariantAssetsForLeaderboard(getUserEquippedItemData(user))"
-                           v-if="a && a.meta && a.meta.leaderboardPlacement === 'below' && a.meta.container !== 'user-avatar-container'"
+                           v-if="a && a.meta && a.meta.leaderboardPlacement === 'below' && isAssetTargetingAvatar(getUserEquippedItemData(user), a)"
                            :key="'dyn-lb-below-'+ai+'-'+dynamicVariantsState"
                            :src="resolveAssetSrc(a.src)"
                            :style="getDynLeaderboardAssetStyle(a)" />
                     </template>
                     <template v-else-if="getUserEquippedItemData(user).isDynamic">
                       <img v-for="(a, ai) in getUserEquippedItemData(user).assets"
-                           v-if="a && a.meta && a.meta.leaderboardPlacement === 'below' && a.meta.container !== 'user-avatar-container'"
+                           v-if="a && a.meta && a.meta.leaderboardPlacement === 'below' && isAssetTargetingAvatar(getUserEquippedItemData(user), a)"
                            :key="'dyn-below-'+ai"
                            :src="resolveAssetSrc(a.src)"
                            :style="getDynLeaderboardAssetStyle(a)" />
@@ -803,14 +812,14 @@
                     <!-- Items dynamiques placés à l'intérieur de l'avatar -->
                     <template v-if="getUserEquippedItemData(user).isDynamic && Array.isArray(getUserEquippedItemData(user).variants) && getUserEquippedItemData(user).variants.length > 0">
                       <img v-for="(a, ai) in getDynVariantAssetsForLeaderboard(getUserEquippedItemData(user))"
-                           v-if="a && a.meta && a.meta.leaderboardPlacement === 'inside' && a.meta.container !== 'user-avatar-container'"
+                           v-if="a && a.meta && a.meta.leaderboardPlacement === 'inside' && isAssetTargetingAvatar(getUserEquippedItemData(user), a)"
                            :key="'dyn-lb-inside-'+ai+'-'+dynamicVariantsState"
                            :src="resolveAssetSrc(a.src)"
                            :style="getDynLeaderboardAssetStyle(a)" />
                     </template>
                     <template v-else-if="getUserEquippedItemData(user).isDynamic">
                       <img v-for="(a, ai) in getUserEquippedItemData(user).assets"
-                           v-if="a && a.meta && a.meta.leaderboardPlacement === 'inside' && a.meta.container !== 'user-avatar-container'"
+                           v-if="a && a.meta && a.meta.leaderboardPlacement === 'inside' && isAssetTargetingAvatar(getUserEquippedItemData(user), a)"
                            :key="'dyn-inside-'+ai"
                            :src="resolveAssetSrc(a.src)"
                            :style="getDynLeaderboardAssetStyle(a)" />
@@ -818,20 +827,33 @@
                     <!-- Items dynamiques placés au-dessus de l'avatar (par-dessus bordure) -->
                     <template v-if="getUserEquippedItemData(user).isDynamic && Array.isArray(getUserEquippedItemData(user).variants) && getUserEquippedItemData(user).variants.length > 0">
                       <img v-for="(a, ai) in getDynVariantAssetsForLeaderboard(getUserEquippedItemData(user))"
-                           v-if="!a || !a.meta || a.meta.leaderboardPlacement === 'above' || (!a.meta.leaderboardPlacement) && (!a || !a.meta || a.meta.container !== 'user-avatar-container')"
+                           v-if="(!a || !a.meta || a.meta.leaderboardPlacement === 'above' || (!a.meta.leaderboardPlacement)) && isAssetTargetingAvatar(getUserEquippedItemData(user), a)"
                            :key="'dyn-lb-above-'+ai+'-'+dynamicVariantsState"
                            :src="resolveAssetSrc(a.src)"
                            :style="getDynLeaderboardAssetStyle(a)" />
                     </template>
                     <template v-else-if="getUserEquippedItemData(user).isDynamic">
                       <img v-for="(a, ai) in getUserEquippedItemData(user).assets"
-                           v-if="!a || !a.meta || a.meta.leaderboardPlacement === 'above' || (!a.meta.leaderboardPlacement) && (!a || !a.meta || a.meta.container !== 'user-avatar-container')"
+                           v-if="(!a || !a.meta || a.meta.leaderboardPlacement === 'above' || (!a.meta.leaderboardPlacement)) && isAssetTargetingAvatar(getUserEquippedItemData(user), a)"
                            :key="'dyn-above-'+ai"
                            :src="resolveAssetSrc(a.src)"
                            :style="getDynLeaderboardAssetStyle(a)" />
                     </template>
                   </template>
                 </div>
+
+                <!-- Items dynamiques ciblant user-avatar-container avec placement "inside" (techniquement équivalent à above car on est déjà dans le container) -->
+                <template v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).isDynamic">
+                  <img
+                    v-for="(a, ai) in (Array.isArray(getUserEquippedItemData(user).variants) && getUserEquippedItemData(user).variants.length > 0
+                      ? getDynVariantAssetsForLeaderboard(getUserEquippedItemData(user))
+                      : getUserEquippedItemData(user).assets)"
+                    v-if="isAssetTargetingContainer(getUserEquippedItemData(user), a) && a && a.meta && a.meta.leaderboardPlacement === 'inside'"
+                    :key="'dyn-container-inside-' + ai + '-' + dynamicVariantsState"
+                    :src="resolveAssetSrc(a.src)"
+                    :style="getDynLeaderboardAssetStyle(a)"
+                  />
+                </template>
                 
                 <!-- Item Clown par-dessus l'avatar (positionné en dehors du conteneur) -->
                 <img 
@@ -1303,6 +1325,8 @@ async function loadDynamicItems() {
         assets: Array.isArray(it.assets) ? it.assets : [],
         backgrounds: it.backgrounds || {},
         variants: Array.isArray(it.variants) ? it.variants : [],
+        // Conserver au passage des metas au niveau item si présents
+        meta: (it && typeof it.meta === 'object') ? it.meta : {},
         variantIndex: 0 // Index par défaut
       }))
       // MAJ des index d'infos pour accès rapide par id/nom
@@ -1436,13 +1460,64 @@ function getDynLeaderboardAssetStyle(asset) {
   }
   // Leaderboard: même style pour desktop et mobile
   const s = (asset && asset.leaderboardStyle) || asset?.style || {}
-  const style = { position: 'absolute', objectFit: s.objectFit || 'contain', zIndex: typeof s.zIndex === 'number' ? s.zIndex : 1 }
+  // Pour être sûr que les overlays "au-dessus" passent bien devant, relever le z-index par défaut
+  const style = { position: 'absolute', objectFit: s.objectFit || 'contain', zIndex: typeof s.zIndex === 'number' ? s.zIndex : 15 }
   if (typeof s.top === 'number') style.top = s.top + 'px'
   if (typeof s.left === 'number') style.left = s.left + 'px'
   if (typeof s.width === 'number') style.width = s.width + 'px'
   if (typeof s.height === 'number') style.height = s.height + 'px'
   if (typeof s.rotate === 'number') style.transform = `rotate(${s.rotate}deg)`
   return style
+}
+
+// Style spécial pour les items dynamiques qui ciblent user-avatar-container avec placement "above"
+// Ces items sont placés en dehors du conteneur pour éviter les contraintes d'overflow
+function getDynLeaderboardContainerOverlayStyle(asset) {
+  if (!asset || typeof asset !== 'object') {
+    return { position: 'absolute', objectFit: 'contain', zIndex: 100, pointerEvents: 'none' }
+  }
+  const s = (asset && asset.leaderboardStyle) || asset?.style || {}
+  // Position absolue par rapport à user-info, avec un z-index très élevé
+  const style = { 
+    position: 'absolute', 
+    objectFit: s.objectFit || 'contain', 
+    zIndex: 100, // Très élevé pour être vraiment au-dessus
+    pointerEvents: 'none' // Pour ne pas bloquer les clics
+  }
+  // Les positions sont relatives à user-info maintenant
+  if (typeof s.top === 'number') style.top = s.top + 'px'
+  if (typeof s.left === 'number') style.left = (s.left + 0) + 'px' // Ajuster si nécessaire
+  if (typeof s.width === 'number') style.width = s.width + 'px'
+  if (typeof s.height === 'number') style.height = s.height + 'px'
+  if (typeof s.rotate === 'number') style.transform = `rotate(${s.rotate}deg)`
+  return style
+}
+
+// Déterminer la cible effective (avatar vs container) pour un asset dynamique
+function getEffectiveLeaderboardTarget(item, asset) {
+  try {
+    const assetTarget = asset && asset.meta && asset.meta.leaderboardTarget
+    if (assetTarget) return String(assetTarget)
+    const itemTarget = item && item.meta && item.meta.leaderboardTarget
+    if (itemTarget) return String(itemTarget)
+  } catch {}
+  return 'user-avatar'
+}
+function isAssetTargetingAvatar(item, asset) {
+  return getEffectiveLeaderboardTarget(item, asset) !== 'user-avatar-container'
+}
+function isAssetTargetingContainer(item, asset) {
+  return getEffectiveLeaderboardTarget(item, asset) === 'user-avatar-container'
+}
+
+// Utilitaire: obtenir les assets de l'item équipé (variante si présente, sinon base)
+function getEquippedAssetsForLeaderboard(user) {
+  const it = getUserEquippedItemData(user)
+  if (!it) return []
+  if (Array.isArray(it.variants) && it.variants.length > 0) {
+    return getDynVariantAssetsForLeaderboard(it)
+  }
+  return Array.isArray(it.assets) ? it.assets : []
 }
 
 function getDynBgStyle(item) {
@@ -1545,12 +1620,25 @@ function getDynVariantAssetsForLeaderboard(item) {
         avatarStyleMobile: variant.assets && variant.assets[0] && variant.assets[0].avatarStyleMobile ? variant.assets[0].avatarStyleMobile : asset.avatarStyleMobile,
         navbarStyle: variant.assets && variant.assets[0] && variant.assets[0].navbarStyle ? variant.assets[0].navbarStyle : asset.navbarStyle,
         navbarStyleMobile: variant.assets && variant.assets[0] && variant.assets[0].navbarStyleMobile ? variant.assets[0].navbarStyleMobile : asset.navbarStyleMobile,
-        popupStyleStyle: variant.assets && variant.assets[0] && variant.assets[0].popupStyleStyle ? variant.assets[0].popupStyleStyle : asset.popupStyleStyle
+        popupStyleStyle: variant.assets && variant.assets[0] && variant.assets[0].popupStyleStyle ? variant.assets[0].popupStyleStyle : asset.popupStyleStyle,
+        // Fusionner meta: préférer la meta de la variante si présente, sinon reprendre celle de la base
+        meta: (variant.assets && variant.assets[0] && variant.assets[0].meta)
+          ? { ...(asset.meta || {}), ...(variant.assets[0].meta || {}) }
+          : (asset.meta || {})
       }))
     }
     
     if (!Array.isArray(variant.assets)) return []
-    return variant.assets
+    // Pour les variantes normales, fusionner également la meta depuis la base si manquante
+    const baseAssets = Array.isArray(item.assets) ? item.assets : []
+    const bySrc = new Map(baseAssets.map(b => [String(b.src || ''), b]))
+    return variant.assets.map((a, idx) => {
+      const baseBySrc = bySrc.get(String(a && a.src || ''))
+      const baseByIndex = baseAssets[idx]
+      const baseMeta = (baseBySrc && baseBySrc.meta) ? baseBySrc.meta : (baseByIndex && baseByIndex.meta ? baseByIndex.meta : {})
+      const mergedMeta = (a && a.meta) ? { ...baseMeta, ...a.meta } : baseMeta
+      return { ...a, meta: mergedMeta }
+    })
   } catch (e) {
     console.error('❌ Erreur dans getDynVariantAssetsForLeaderboard:', e)
     return []
@@ -1611,6 +1699,7 @@ const weeklyItems = ref([])
 const timeUntilReset = ref('')
 const showWeeklyResetNotification = ref(false)
 let weeklyTimer = null
+const nextResetAt = ref(0)
 
 // Popup infos items spéciaux (non vendus)
 const isInfoOpen = ref(false)
@@ -2182,6 +2271,7 @@ const getUserEquippedItemData = (user) => {
         assets: dyn.assets || [],
         backgrounds: dyn.backgrounds || {},
         variants: dyn.variants || [], // Ajouter les variantes
+        meta: dyn.meta || {}, // IMPORTANT: inclure meta (leaderboardTarget/Placement)
         legacyId: dyn.id // Ajouter legacyId pour la compatibilité
       }
     }
@@ -2332,15 +2422,7 @@ const getAvatarBorderStyle = (user) => {
     return { border: 'none', background: 'transparent' }
   }
 
-  // Récupère l'index de variante Jojo pour un utilisateur (0: sans texte, 1: avec texte)
-  const getJojoVariantIndexForUser = (user) => {
-    try {
-      const raw = String(user && user.selectedBorderColor ? user.selectedBorderColor : '')
-      const part = raw.split('|').find(p => p.startsWith('jv='))
-      const val = part ? Number(part.split('=')[1]) : 0
-      return val === 1 ? 1 : 0
-    } catch { return 0 }
-  }
+  // (utilise la fonction top-level getJojoVariantIndexForUser)
   // Extraire l'id de base si encodé avec variantes (ex: "red|dv=1|jv=0")
   const raw = user && user.selectedBorderColor ? String(user.selectedBorderColor) : ''
   const baseId = raw.split('|')[0] || ''
@@ -2356,6 +2438,16 @@ const getAvatarBorderStyle = (user) => {
     return { border: `3px solid ${selected.color}` }
   }
   return {}
+}
+
+// Variante Jojo pour un utilisateur (0: sans texte, 1: avec texte)
+const getJojoVariantIndexForUser = (user) => {
+  try {
+    const raw = String(user && user.selectedBorderColor ? user.selectedBorderColor : '')
+    const part = raw.split('|').find(p => p.startsWith('jv='))
+    const val = part ? Number(part.split('=')[1]) : 0
+    return val === 1 ? 1 : 0
+  } catch { return 0 }
 }
 
  // Fonctions pour la boutique hebdomadaire
@@ -2428,9 +2520,7 @@ const getAvatarBorderStyle = (user) => {
           const fixedImg = assetById[it?.id] || assetByName[it?.name] || it?.img
           // Détecter Discord et attacher les variantes pour le sélecteur
           const isDiscord = (it && it.id === 23) || it?.name === 'Discord'
-          if ((it && it.id === 7) || it?.name === 'Matrix') {
-            return { ...it, price: 500, img: fixedImg }
-          }
+          // Ne pas surcharger le prix: garder les prix renvoyés par l'API
           if (isDiscord) {
             return { ...it, img: fixedImg, variants: [discordon, discordnepasderange, discordderange], variantIndex: coinsStore.discordVariantIndex || 0 }
           }
@@ -2452,6 +2542,8 @@ const getAvatarBorderStyle = (user) => {
         })
         weeklyItems.value = patched
         timeUntilReset.value = response.timeUntilReset || ''
+        try { nextResetAt.value = Date.parse(response.nextReset) || 0 } catch { nextResetAt.value = 0 }
+        updateWeeklyTimer()
         console.log('✅ Items hebdomadaires chargés:', weeklyItems.value.length, 'items')
      } else {
         console.error('❌ Erreur API:', response.message)
@@ -2467,21 +2559,16 @@ const getAvatarBorderStyle = (user) => {
    }
    
    weeklyTimer = setInterval(() => {
-  const now = new Date()
-  // Cible: 01:00 Europe/Paris
-  const parisNow = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Paris' }))
-  const target = new Date(parisNow)
-  target.setHours(1, 0, 0, 0)
-  if (parisNow.getHours() >= 1) target.setDate(target.getDate() + 1)
-  
-  const timeLeft = target.getTime() - parisNow.getTime()
+  const targetMs = Number(nextResetAt.value) || 0
+  if (!targetMs) return
+  const timeLeft = targetMs - Date.now()
   const hours = Math.floor(timeLeft / (1000 * 60 * 60))
   const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60))
   const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000)
-  
-  timeUntilReset.value = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-  
+  timeUntilReset.value = `${Math.max(0,hours).toString().padStart(2,'0')}:${Math.max(0,minutes).toString().padStart(2,'0')}:${Math.max(0,seconds).toString().padStart(2,'0')}`
   if (timeLeft <= 0) {
+    clearInterval(weeklyTimer)
+    weeklyTimer = null
     loadWeeklyItems()
   }
    }, 1000)
@@ -4053,12 +4140,20 @@ const sortedLeaderboardUsers = computed(() => {
   align-items: center;
   gap: 20px;
   flex: 1;
+  position: relative; /* Nécessaire pour les items dynamiques overlay */
 }
 
 .user-avatar-container {
   position: relative;
   width: 50px;
   height: 50px;
+}
+
+/* Items dynamiques placés par-dessus le conteneur */
+.dynamic-container-overlay {
+  position: absolute !important;
+  z-index: 100 !important;
+  pointer-events: none !important;
 }
 
 .user-avatar {
