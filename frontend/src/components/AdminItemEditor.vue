@@ -703,6 +703,8 @@ function sanitizeAsset(a) {
 
 function sanitizeItem(it) {
   const clone = JSON.parse(JSON.stringify(it || {}))
+  // Préserver meta global si présent
+  if (clone && typeof clone.meta !== 'object') clone.meta = {}
   if (!Array.isArray(clone.assets)) clone.assets = []
   clone.assets = clone.assets.map(sanitizeAsset)
   if (!clone.backgrounds) clone.backgrounds = { collection: null, leaderboard: null, avatar: null, navbar: null, 'popup-style': null }
@@ -887,23 +889,50 @@ function nudge(dx, dy) {
 
 
 function setLeaderboardPlacement(placement) {
-  if (selectedIndex.value === null) return
+  if (placement !== 'above' && placement !== 'inside') placement = 'below'
+  if (selectedIndex.value === null) {
+    // Pas d'asset sélectionné: appliquer au niveau global de l'item (fallback)
+    if (!form.value.meta) form.value.meta = {}
+    form.value.meta.leaderboardPlacement = placement
+    // Optionnel: appliquer à tous les assets existants
+    const assets = activeAssets()
+    if (Array.isArray(assets)) {
+      assets.forEach(a => {
+        if (!a.meta) a.meta = {}
+        a.meta.leaderboardPlacement = a.meta.leaderboardPlacement || placement
+      })
+    }
+    return
+  }
   const assets = activeAssets()
   const asset = Array.isArray(assets) ? assets[selectedIndex.value] : null
   if (!asset) return
   if (!asset.meta) asset.meta = {}
-  if (placement !== 'above' && placement !== 'inside') placement = 'below'
   asset.meta.leaderboardPlacement = placement
 }
 
 function setLeaderboardTarget(target) {
-  if (selectedIndex.value === null) return
+  const normalized = (target === 'user-avatar-container') ? 'user-avatar-container' : 'user-avatar'
+  if (selectedIndex.value === null) {
+    // Pas d'asset sélectionné: enregistrer au niveau global de l'item
+    if (!form.value.meta) form.value.meta = {}
+    form.value.meta.leaderboardTarget = normalized
+    // Optionnel: appliquer à tous les assets existants
+    const assets = activeAssets()
+    if (Array.isArray(assets)) {
+      assets.forEach(a => {
+        if (!a.meta) a.meta = {}
+        if (!a.meta.leaderboardTarget) a.meta.leaderboardTarget = normalized
+      })
+    }
+    return
+  }
   const assets = activeAssets()
   const asset = Array.isArray(assets) ? assets[selectedIndex.value] : null
   if (!asset) return
   if (!asset.meta) asset.meta = {}
   // Cible autorisée: 'user-avatar' (à l'intérieur) ou 'user-avatar-container' (autour)
-  asset.meta.leaderboardTarget = (target === 'user-avatar-container') ? 'user-avatar-container' : 'user-avatar'
+  asset.meta.leaderboardTarget = normalized
 }
 
 function setNavbarPlacement(placement) {
