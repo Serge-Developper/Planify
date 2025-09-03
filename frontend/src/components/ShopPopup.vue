@@ -826,6 +826,15 @@
                        :style="getDynLeaderboardAssetStyle(a)"
                   />
                 </template>
+                <!-- Fallback: items dynamiques sans meta mais demandés au container via item.meta.leaderboardTarget -->
+                <template v-else-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).isDynamic === true">
+                  <img v-for="(a, ai) in (getUserEquippedItemData(user).assets || [])"
+                       v-if="getUserEquippedItemData(user).meta && getUserEquippedItemData(user).meta.leaderboardTarget === 'user-avatar-container' && (!a.meta || !a.meta.leaderboardTarget)"
+                       :key="'dyn-container-fb-'+ai+'-'+dynamicVariantsState"
+                       :src="resolveAssetSrc(a.src)"
+                       :style="getDynLeaderboardAssetStyle(a)"
+                  />
+                </template>
                 
                 <!-- Item Clown par-dessus l'avatar (positionné en dehors du conteneur) -->
                 <img 
