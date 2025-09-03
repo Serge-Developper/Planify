@@ -1510,6 +1510,11 @@ function getDynLeaderboardContainerOverlayStyle(asset) {
 // Déterminer la cible effective (avatar vs container) pour un asset dynamique
 function getEffectiveLeaderboardTarget(item, asset) {
   try {
+    // Par défaut, les items dynamiques se rendent dans le conteneur du leaderboard
+    if (item && item.isDynamic) {
+      const targetDyn = asset && asset.meta && (asset.meta.leaderboardTarget || (asset.meta.container === 'user-avatar-container' ? 'user-avatar-container' : null))
+      return targetDyn || 'user-avatar-container'
+    }
     const assetTarget = asset && asset.meta && (asset.meta.leaderboardTarget || (asset.meta.container === 'user-avatar-container' ? 'user-avatar-container' : null))
     if (assetTarget) return String(assetTarget)
     const itemTarget = item && item.meta && (item.meta.leaderboardTarget || (item.meta.container === 'user-avatar-container' ? 'user-avatar-container' : null))

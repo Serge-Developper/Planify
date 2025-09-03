@@ -958,7 +958,7 @@ async function uploadAssets() {
   const data = await res.json()
   if (data.success) {
     const target = editingVariantIndex.value === -1 ? form.value.assets : ((form.value.variants[editingVariantIndex.value].assets ||= []))
-    for (const file of data.files) target.push(sanitizeAsset({ src: file.url, style: { top: 0, left: 0, width: 100, height: 100 }, meta: { leaderboardPlacement: 'below', navbarPlacement: 'below', leaderboardTarget: 'user-avatar', container: '' } }))
+    for (const file of data.files) target.push(sanitizeAsset({ src: file.url, style: { top: 0, left: 0, width: 100, height: 100 }, meta: { leaderboardPlacement: 'below', navbarPlacement: 'below', leaderboardTarget: 'user-avatar-container', container: '' } }))
   } else {
     alert('Upload échoué')
   }
@@ -968,13 +968,22 @@ function addAssetFromUrl() {
   const url = prompt('URL de l\'image (déjà sur le serveur)')
   if (!url) return
   const target = editingVariantIndex.value === -1 ? form.value.assets : ((form.value.variants[editingVariantIndex.value].assets ||= []))
-  target.push(sanitizeAsset({ src: url, style: { top: 0, left: 0, width: 100 }, meta: { leaderboardPlacement: 'below', navbarPlacement: 'below', leaderboardTarget: 'user-avatar', container: '' } }))
+  target.push(sanitizeAsset({ src: url, style: { top: 0, left: 0, width: 100 }, meta: { leaderboardPlacement: 'below', navbarPlacement: 'below', leaderboardTarget: 'user-avatar-container', container: '' } }))
 }
 
 async function saveItem() {
   // Synchroniser les modifications avec les assets de la variante avant la sauvegarde
   syncVariantAssets()
   const payload = sanitizeItem(form.value)
+  // Forcer tous les assets à cibler le conteneur du leaderboard pour les dynamiques (temporaire, demandé)
+  try {
+    if (Array.isArray(payload.assets)) {
+      payload.assets.forEach(a => { a.meta = a.meta || {}; a.meta.leaderboardTarget = 'user-avatar-container' })
+    }
+    if (Array.isArray(payload.variants)) {
+      payload.variants.forEach(v => { if (Array.isArray(v.assets)) v.assets.forEach(a => { a.meta = a.meta || {}; a.meta.leaderboardTarget = 'user-avatar-container' }) })
+    }
+  } catch {}
   // Rien à faire de spécial ici: les propriétés *StyleMobile sont déjà dans form.assets via ensureStyle
   const res = await secureApiCall('/items', {
     method: 'POST',
