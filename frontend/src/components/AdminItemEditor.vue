@@ -904,6 +904,10 @@ function setLeaderboardPlacement(placement) {
   if (!asset.meta) asset.meta = {}
   if (placement !== 'above' && placement !== 'inside') placement = 'below'
   asset.meta.leaderboardPlacement = placement
+  // TEMP: forcer la cible conteneur pour le canvas leaderboard
+  if (activeCanvas.value === 'leaderboard') {
+    asset.meta.leaderboardTarget = 'user-avatar-container'
+  }
 }
 
 function setNavbarPlacement(placement) {
