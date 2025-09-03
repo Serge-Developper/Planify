@@ -1496,9 +1496,9 @@ function getDynLeaderboardContainerOverlayStyle(asset) {
 // Déterminer la cible effective (avatar vs container) pour un asset dynamique
 function getEffectiveLeaderboardTarget(item, asset) {
   try {
-    const assetTarget = asset && asset.meta && asset.meta.leaderboardTarget
+    const assetTarget = asset && asset.meta && (asset.meta.leaderboardTarget || (asset.meta.container === 'user-avatar-container' ? 'user-avatar-container' : null))
     if (assetTarget) return String(assetTarget)
-    const itemTarget = item && item.meta && item.meta.leaderboardTarget
+    const itemTarget = item && item.meta && (item.meta.leaderboardTarget || (item.meta.container === 'user-avatar-container' ? 'user-avatar-container' : null))
     if (itemTarget) return String(itemTarget)
   } catch {}
   return 'user-avatar'

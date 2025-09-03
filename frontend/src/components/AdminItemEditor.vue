@@ -690,6 +690,10 @@ function sanitizeAsset(a) {
       ...(a.meta || {}),
       leaderboardPlacement: (a.meta && a.meta.leaderboardPlacement) || 'below',
       navbarPlacement: (a.meta && a.meta.navbarPlacement) || 'below',
+      // Normaliser la cible du leaderboard: utiliser leaderboardTarget, avec fallback depuis l'ancien champ "container"
+      leaderboardTarget: (a.meta && a.meta.leaderboardTarget)
+        ? a.meta.leaderboardTarget
+        : ((a.meta && a.meta.container === 'user-avatar-container') ? 'user-avatar-container' : 'user-avatar'),
       container: (a.meta && a.meta.container) || ''
     }
   }
@@ -741,6 +745,14 @@ function sanitizeItem(it) {
           if (!asset.navbarStyle) asset.navbarStyle = { top: 0, left: 0, width: 100, rotate: 0, objectFit: 'contain', zIndex: 1 }
           if (!asset.navbarStyleMobile) asset.navbarStyleMobile = { top: 0, left: 0, width: 100, rotate: 0, objectFit: 'contain', zIndex: 1 }
           if (!asset.popupStyleStyle) asset.popupStyleStyle = { top: 0, left: 0, width: 100, rotate: 0, objectFit: 'contain', zIndex: 1 }
+          // Normaliser meta pour l'affichage du leaderboard (compat avec ancien champ "container")
+          if (!asset.meta) asset.meta = {}
+          if (asset.meta.leaderboardPlacement !== 'above' && asset.meta.leaderboardPlacement !== 'inside' && asset.meta.leaderboardPlacement !== 'below') {
+            asset.meta.leaderboardPlacement = 'below'
+          }
+          if (!asset.meta.leaderboardTarget) {
+            asset.meta.leaderboardTarget = (asset.meta.container === 'user-avatar-container') ? 'user-avatar-container' : 'user-avatar'
+          }
           return asset
         })
       }
@@ -915,7 +927,7 @@ async function uploadAssets() {
   const data = await res.json()
   if (data.success) {
     const target = editingVariantIndex.value === -1 ? form.value.assets : ((form.value.variants[editingVariantIndex.value].assets ||= []))
-    for (const file of data.files) target.push(sanitizeAsset({ src: file.url, style: { top: 0, left: 0, width: 100, height: 100 }, meta: { leaderboardPlacement: 'below', navbarPlacement: 'below', container: '' } }))
+    for (const file of data.files) target.push(sanitizeAsset({ src: file.url, style: { top: 0, left: 0, width: 100, height: 100 }, meta: { leaderboardPlacement: 'below', navbarPlacement: 'below', leaderboardTarget: 'user-avatar', container: '' } }))
   } else {
     alert('Upload échoué')
   }
@@ -925,7 +937,7 @@ function addAssetFromUrl() {
   const url = prompt('URL de l\'image (déjà sur le serveur)')
   if (!url) return
   const target = editingVariantIndex.value === -1 ? form.value.assets : ((form.value.variants[editingVariantIndex.value].assets ||= []))
-  target.push(sanitizeAsset({ src: url, style: { top: 0, left: 0, width: 100 }, meta: { leaderboardPlacement: 'below', navbarPlacement: 'below', container: '' } }))
+  target.push(sanitizeAsset({ src: url, style: { top: 0, left: 0, width: 100 }, meta: { leaderboardPlacement: 'below', navbarPlacement: 'below', leaderboardTarget: 'user-avatar', container: '' } }))
 }
 
 async function saveItem() {
