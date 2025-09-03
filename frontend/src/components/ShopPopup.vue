@@ -564,6 +564,7 @@
                     :key="'dyn-container-below-' + ai + '-' + dynamicVariantsState"
                     :src="resolveAssetSrc(a.src)"
                     :style="getDynLeaderboardAssetStyle(a)"
+                    :class="getDynLeaderboardAssetClass(a)"
                   />
                 </template>
 
@@ -841,6 +842,20 @@
                     :key="'dyn-container-inside-' + ai + '-' + dynamicVariantsState"
                     :src="resolveAssetSrc(a.src)"
                     :style="getDynLeaderboardAssetStyle(a)"
+                    :class="getDynLeaderboardAssetClass(a)"
+                  />
+                </template>
+                <!-- Items dynamiques ciblant le conteneur : ABOVE -->
+                <template v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).isDynamic">
+                  <img
+                    v-for="(a, ai) in (Array.isArray(getUserEquippedItemData(user).variants) && getUserEquippedItemData(user).variants.length > 0
+                      ? getDynVariantAssetsForLeaderboard(getUserEquippedItemData(user))
+                      : getUserEquippedItemData(user).assets)"
+                    v-if="isAssetTargetingContainer(getUserEquippedItemData(user), a) && (!a || !a.meta || a.meta.leaderboardPlacement === 'above' || (!a.meta.leaderboardPlacement))"
+                    :key="'dyn-container-above-' + ai + '-' + dynamicVariantsState"
+                    :src="resolveAssetSrc(a.src)"
+                    :style="getDynLeaderboardAssetStyle(a)"
+                    :class="getDynLeaderboardAssetClass(a)"
                   />
                 </template>
                 
@@ -1457,6 +1472,16 @@ function getDynLeaderboardAssetStyle(asset) {
   if (typeof s.height === 'number') style.height = s.height + 'px'
   if (typeof s.rotate === 'number') style.transform = `rotate(${s.rotate}deg)`
   return style
+}
+
+// Classe CSS pour mimer l'effet "Discord/Galaxie" depuis un item dynamique ciblant le conteneur
+function getDynLeaderboardAssetClass(asset) {
+  try {
+    const base = String(asset && asset.meta && asset.meta.dynamicClass || '').trim()
+    if (base) return base
+  } catch {}
+  // Classe par défaut pour les dynamiques container: suivez le gabarit Galaxie
+  return 'equipped-galaxie'
 }
 
 // Style spécial pour les items dynamiques qui ciblent user-avatar-container avec placement "above"

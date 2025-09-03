@@ -698,6 +698,8 @@ function sanitizeAsset(a) {
       leaderboardTarget: (a.meta && a.meta.leaderboardTarget)
         ? a.meta.leaderboardTarget
         : ((a.meta && a.meta.container === 'user-avatar-container') ? 'user-avatar-container' : 'user-avatar'),
+      // Classe dynamique optionnelle pour calquer un gabarit leaderboard (par défaut on utilisera equipped-galaxie)
+      dynamicClass: (a.meta && a.meta.dynamicClass) || '',
       container: (a.meta && a.meta.container) || ''
     }
   }
