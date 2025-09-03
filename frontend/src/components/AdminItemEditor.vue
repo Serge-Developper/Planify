@@ -237,6 +237,10 @@
           <button class="btn tiny" @click="setLeaderboardPlacement('below')">Derrière</button>
           <button class="btn tiny" @click="setLeaderboardPlacement('inside')">Dans l'avatar</button>
           <button class="btn tiny" @click="setLeaderboardPlacement('above')">Au-dessus</button>
+          <!-- Cible du rendu: avatar vs conteneur -->
+          <span style="margin-left:12px;">Cible :</span>
+          <button class="btn tiny" :class="{ active: getActiveAssetLeaderboardTarget() === 'user-avatar' }" @click="setLeaderboardTarget('user-avatar')">Avatar</button>
+          <button class="btn tiny" :class="{ active: getActiveAssetLeaderboardTarget() === 'user-avatar-container' }" @click="setLeaderboardTarget('user-avatar-container')">Conteneur</button>
         </div>
         <!-- Contrôle de position pour la Navbar -->
         <div v-if="activeCanvas==='navbar' && selectedIndex !== null" class="layer-controls">
@@ -912,6 +916,27 @@ function setNavbarPlacement(placement) {
   asset.meta.navbarPlacement = placement
 }
 
+function getActiveAssetLeaderboardTarget() {
+  try {
+    if (selectedIndex.value === null) return 'user-avatar'
+    const assets = activeAssets()
+    const asset = Array.isArray(assets) ? assets[selectedIndex.value] : null
+    if (!asset) return 'user-avatar'
+    const t = asset.meta && (asset.meta.leaderboardTarget || (asset.meta.container === 'user-avatar-container' ? 'user-avatar-container' : null))
+    return t || 'user-avatar'
+  } catch { return 'user-avatar' }
+}
+
+function setLeaderboardTarget(target) {
+  if (selectedIndex.value === null) return
+  const assets = activeAssets()
+  const asset = Array.isArray(assets) ? assets[selectedIndex.value] : null
+  if (!asset) return
+  if (!asset.meta) asset.meta = {}
+  const t = (target === 'user-avatar-container') ? 'user-avatar-container' : 'user-avatar'
+  asset.meta.leaderboardTarget = t
+}
+
 async function handleFiles(e) {}
 
 async function uploadAssets() {
@@ -1152,6 +1177,7 @@ function clearForm() {
 .inspector .row { display: flex; gap: 6px; margin-top: 8px; }
 .nudge-row { justify-content: flex-start; }
 .layer-controls { display:flex; gap:8px; align-items:center; margin-top:8px; flex-wrap: wrap; }
+.layer-controls .btn.tiny.active { background:#10b981; color:#fff; border-color:#10b981; }
 /* Ligne du picker de background */
 .bg-picker-row { display: flex; gap: 16px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
 /* cercle + bordure verte en mode collection */
