@@ -584,6 +584,23 @@
                   :alt="'Planify'"
                   class="equipped-admin-planify"
                 />
+                <!-- Assets dynamiques rendus AU-DESSUS au niveau du conteneur parent (user-avatar-container) -->
+                <template v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).isDynamic">
+                  <template v-if="Array.isArray(getUserEquippedItemData(user).variants) && getUserEquippedItemData(user).variants.length > 0">
+                    <img v-for="(a, ai) in getDynVariantAssetsForLeaderboard(getUserEquippedItemData(user))"
+                         v-if="a && a.meta && a.meta.leaderboardPlacement === 'above' && a.meta.container === 'user-avatar-container'"
+                         :key="'dyn-lb-container-above-'+ai+'-'+dynamicVariantsState"
+                         :src="resolveAssetSrc(a.src)"
+                         :style="getDynLeaderboardAssetStyle(a)" />
+                  </template>
+                  <template v-else>
+                    <img v-for="(a, ai) in getUserEquippedItemData(user).assets"
+                         v-if="a && a.meta && a.meta.leaderboardPlacement === 'above' && a.meta.container === 'user-avatar-container'"
+                         :key="'dyn-container-above-'+ai"
+                         :src="resolveAssetSrc(a.src)"
+                         :style="getDynLeaderboardAssetStyle(a)" />
+                  </template>
+                </template>
                 <!-- Alpha overlay rendu au niveau du container uniquement ci-dessus -->
                 <template v-if="getUserEquippedItemData(user)">
                     <!-- Item générique -->
