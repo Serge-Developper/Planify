@@ -1539,12 +1539,23 @@ function getDynVariantAssetsForLeaderboard(item) {
         avatarStyleMobile: variant.assets && variant.assets[0] && variant.assets[0].avatarStyleMobile ? variant.assets[0].avatarStyleMobile : asset.avatarStyleMobile,
         navbarStyle: variant.assets && variant.assets[0] && variant.assets[0].navbarStyle ? variant.assets[0].navbarStyle : asset.navbarStyle,
         navbarStyleMobile: variant.assets && variant.assets[0] && variant.assets[0].navbarStyleMobile ? variant.assets[0].navbarStyleMobile : asset.navbarStyleMobile,
-        popupStyleStyle: variant.assets && variant.assets[0] && variant.assets[0].popupStyleStyle ? variant.assets[0].popupStyleStyle : asset.popupStyleStyle
+        popupStyleStyle: variant.assets && variant.assets[0] && variant.assets[0].popupStyleStyle ? variant.assets[0].popupStyleStyle : asset.popupStyleStyle,
+        // Fusionner meta: préférer la meta de la variante si présente, sinon reprendre celle de la base
+        meta: (variant.assets && variant.assets[0] && variant.assets[0].meta)
+          ? { ...(asset.meta || {}), ...(variant.assets[0].meta || {}) }
+          : (asset.meta || {})
       }))
     }
     
     if (!Array.isArray(variant.assets)) return []
-    return variant.assets
+    // Pour les variantes normales, fusionner également la meta depuis la base si manquante
+    const baseAssets = Array.isArray(item.assets) ? item.assets : []
+    const bySrc = new Map(baseAssets.map(b => [String(b.src || ''), b]))
+    return variant.assets.map(a => {
+      const base = bySrc.get(String(a && a.src || ''))
+      const mergedMeta = (a && a.meta) ? a.meta : (base && base.meta ? base.meta : {})
+      return { ...a, meta: mergedMeta }
+    })
   } catch (e) {
     console.error('❌ Erreur dans getDynVariantAssetsForLeaderboard:', e)
     return []
