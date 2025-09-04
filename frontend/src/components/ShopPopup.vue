@@ -1510,10 +1510,10 @@ function getDynLeaderboardContainerOverlayStyle(asset) {
 // Déterminer la cible effective (avatar vs container) pour un asset dynamique
 function getEffectiveLeaderboardTarget(item, asset) {
   try {
-    // Respecter la cible définie par l'éditeur (conteneur vs avatar) sans forcer
+    // Par défaut pour les dynamiques: conteneur, mais si l'éditeur a explicitement mis "user-avatar", on respecte
     if (item && item.isDynamic) {
       const targetDyn = asset && asset.meta && (asset.meta.leaderboardTarget || (asset.meta.container === 'user-avatar-container' ? 'user-avatar-container' : null))
-      if (targetDyn) return String(targetDyn)
+      return targetDyn || 'user-avatar-container'
     }
     const assetTarget = asset && asset.meta && (asset.meta.leaderboardTarget || (asset.meta.container === 'user-avatar-container' ? 'user-avatar-container' : null))
     if (assetTarget) return String(assetTarget)
