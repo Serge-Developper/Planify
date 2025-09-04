@@ -1480,8 +1480,8 @@ function getDynLeaderboardAssetClass(asset) {
     const base = String(asset && asset.meta && asset.meta.dynamicClass || '').trim()
     if (base) return base
   } catch {}
-  // Classe par défaut pour les dynamiques container: suivez le gabarit Galaxie
-  return 'equipped-galaxie'
+  // Par défaut, ne pas appliquer de classe afin de respecter les styles définis via l'éditeur
+  return ''
 }
 
 // Style spécial pour les items dynamiques qui ciblent user-avatar-container avec placement "above"
