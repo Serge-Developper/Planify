@@ -1512,9 +1512,12 @@ function getEffectiveLeaderboardTarget(item, asset) {
   try {
     // Dyn: si meta.leaderboardTarget est défini, on l'applique. Sinon, fallback conteneur
     if (item && item.isDynamic) {
+      // 1) Priorité asset.meta.leaderboardTarget
       if (asset && asset.meta && asset.meta.leaderboardTarget) return String(asset.meta.leaderboardTarget)
-      const fromContainerFlag = asset && asset.meta && asset.meta.container === 'user-avatar-container'
-      return fromContainerFlag ? 'user-avatar-container' : 'user-avatar-container'
+      // 2) Sinon, si item.meta.leaderboardTarget est posé au niveau item
+      if (item && item.meta && item.meta.leaderboardTarget) return String(item.meta.leaderboardTarget)
+      // 3) Sinon, fallback conteneur
+      return 'user-avatar-container'
     }
     const assetTarget = asset && asset.meta && (asset.meta.leaderboardTarget || (asset.meta.container === 'user-avatar-container' ? 'user-avatar-container' : null))
     if (assetTarget) return String(assetTarget)

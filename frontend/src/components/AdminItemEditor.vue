@@ -280,6 +280,8 @@ const fileInput = ref(null)
 const activeCanvas = ref('collection') // collection | leaderboard | avatar | navbar
 const activeDevice = ref('desktop') // desktop | mobile
 const selectedIndex = ref(null)
+// Mémorise le dernier choix explicite de cible pour le leaderboard
+const lastLeaderboardTarget = ref(null) // 'user-avatar-container' | 'user-avatar' | null
 const DEFAULT_STYLE = { top: 0, left: 0, width: 100, rotate: 0, objectFit: 'contain', zIndex: 1 }
 function getApiOrigin() {
   const api = API_URL || ''
@@ -931,6 +933,7 @@ function getActiveAssetLeaderboardTarget() {
 
 function setLeaderboardTarget(target) {
   const t = (target === 'user-avatar-container') ? 'user-avatar-container' : 'user-avatar'
+  lastLeaderboardTarget.value = t
   // 1) Base assets
   try {
     if (Array.isArray(form.value.assets)) {
@@ -1062,6 +1065,13 @@ async function updateItem() {
   // Synchroniser les modifications avec les assets de la variante avant la sauvegarde
   syncVariantAssets()
   const payload = sanitizeItem(form.value)
+  // Si l'utilisateur a cliqué un bouton de cible, garantir que la cible est posée partout avant PUT
+  try {
+    if (lastLeaderboardTarget.value) {
+      if (Array.isArray(payload.assets)) payload.assets.forEach(a => { a.meta = a.meta || {}; a.meta.leaderboardTarget = lastLeaderboardTarget.value })
+      if (Array.isArray(payload.variants)) payload.variants.forEach(v => { if (Array.isArray(v.assets)) v.assets.forEach(a => { a.meta = a.meta || {}; a.meta.leaderboardTarget = lastLeaderboardTarget.value }) })
+    }
+  } catch {}
   const res = await secureApiCall(`/items/${editingId.value}`, {
     method: 'PUT',
     body: JSON.stringify(payload)
