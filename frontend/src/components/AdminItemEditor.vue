@@ -930,16 +930,30 @@ function getActiveAssetLeaderboardTarget() {
 }
 
 function setLeaderboardTarget(target) {
-  const assets = activeAssets()
   const t = (target === 'user-avatar-container') ? 'user-avatar-container' : 'user-avatar'
-  if (Array.isArray(assets) && assets.length) {
-    // Appliquer sur l'asset sélectionné et, par sécurité, sur tous les assets de l'onglet courant
-    for (const a of assets) {
-      if (!a) continue
-      a.meta = a.meta || {}
-      a.meta.leaderboardTarget = t
+  // 1) Base assets
+  try {
+    if (Array.isArray(form.value.assets)) {
+      for (const a of form.value.assets) {
+        if (!a) continue
+        a.meta = a.meta || {}
+        a.meta.leaderboardTarget = t
+      }
     }
-  }
+  } catch {}
+  // 2) Variants assets
+  try {
+    if (Array.isArray(form.value.variants)) {
+      for (const v of form.value.variants) {
+        if (!v || !Array.isArray(v.assets)) continue
+        for (const a of v.assets) {
+          if (!a) continue
+          a.meta = a.meta || {}
+          a.meta.leaderboardTarget = t
+        }
+      }
+    }
+  } catch {}
 }
 
 async function handleFiles(e) {}
