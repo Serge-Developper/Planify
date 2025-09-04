@@ -62,6 +62,8 @@ const itemSchema = new mongoose.Schema({
   active: { type: Boolean, default: true },
   createdBy: { type: String, default: null },
   createdAt: { type: Date, default: Date.now },
+  // Métadonnées au niveau item (leaderboardTarget, etc.)
+  meta: { type: Object, default: {} },
   // Variantes de style optionnelles (pour sélection de style dans la boutique)
   variants: { type: [variantSchema], default: [] }
 });

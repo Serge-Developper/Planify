@@ -1284,9 +1284,22 @@ async function loadDynamicItems() {
         isDynamic: true,
         infoOnly: !!it.infoOnly,
         infoDescription: it.infoDescription || null,
-        assets: Array.isArray(it.assets) ? it.assets : [],
+        assets: Array.isArray(it.assets) ? it.assets.map(asset => {
+          const assetWithMeta = {
+            ...asset,
+            meta: (asset && typeof asset.meta === 'object') ? asset.meta : {}
+          };
+          console.log('📦 Chargement asset item', it.legacyId, ':', asset.src, 'meta:', assetWithMeta.meta);
+          return assetWithMeta;
+        }) : [],
         backgrounds: it.backgrounds || {},
-        variants: Array.isArray(it.variants) ? it.variants : [],
+        variants: Array.isArray(it.variants) ? it.variants.map(variant => ({
+          ...variant,
+          assets: Array.isArray(variant.assets) ? variant.assets.map(asset => ({
+            ...asset,
+            meta: (asset && typeof asset.meta === 'object') ? asset.meta : {}
+          })) : []
+        })) : [],
         // Conserver au passage des metas au niveau item si présents
         meta: (it && typeof it.meta === 'object') ? it.meta : {},
         variantIndex: 0 // Index par défaut
@@ -1472,11 +1485,18 @@ function getEffectiveLeaderboardTarget(item, asset) {
     if (item && item.isDynamic) {
       // 1) Priorité: valeur explicite fixée par l'éditeur au niveau asset
       const explicit = asset && asset.meta && asset.meta.leaderboardTarget
-      if (explicit) return String(explicit)
+      if (explicit) {
+        console.log('🎯 Item dynamique', item.id, 'asset', asset.src, 'cible explicite:', explicit)
+        return String(explicit)
+      }
       // 2) Compat: ancien champ meta.container
       const legacy = asset && asset.meta && asset.meta.container === 'user-avatar-container'
-      if (legacy) return 'user-avatar-container'
+      if (legacy) {
+        console.log('🎯 Item dynamique', item.id, 'asset', asset.src, 'cible legacy container')
+        return 'user-avatar-container'
+      }
       // 3) Par défaut: avatar (les boutons définissent explicitement la cible si besoin)
+      console.log('🎯 Item dynamique', item.id, 'asset', asset.src, 'cible par défaut: user-avatar')
       return 'user-avatar'
     }
     const assetTarget = asset && asset.meta && (asset.meta.leaderboardTarget || (asset.meta.container === 'user-avatar-container' ? 'user-avatar-container' : null))
@@ -2256,6 +2276,13 @@ const getUserEquippedItemData = (user) => {
         variants: dyn.variants || [], // Ajouter les variantes
         meta: dyn.meta || {}, // IMPORTANT: inclure meta (leaderboardTarget/Placement)
         legacyId: dyn.id // Ajouter legacyId pour la compatibilité
+      }
+      console.log('🎮 getUserEquippedItemData pour', user.username, 'item', dyn.id, ':', dyn.name)
+      console.log('  Meta item:', item.meta)
+      if (item.assets && item.assets.length > 0) {
+        item.assets.forEach((asset, i) => {
+          console.log(`  Asset ${i}:`, asset.src, 'meta:', asset.meta)
+        })
       }
     }
   }

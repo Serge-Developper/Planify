@@ -114,7 +114,7 @@ router.get('/:id', async (req, res) => {
 // Création d'un item (admin)
 router.post('/', verifyToken, requireRole(['admin']), async (req, res) => {
   try {
-    let { legacyId, name, price, type, assets, backgrounds, availableInDailyShop, active, infoOnly, infoDescription, variants } = req.body;
+    let { legacyId, name, price, type, assets, backgrounds, availableInDailyShop, active, infoOnly, infoDescription, variants, meta } = req.body;
 
     // Générer un legacyId si manquant/invalid
     if (typeof legacyId !== 'number' || Number.isNaN(legacyId)) {
@@ -201,6 +201,7 @@ router.post('/', verifyToken, requireRole(['admin']), async (req, res) => {
             infoDescription: (typeof infoDescription === 'string' ? infoDescription.trim() : null),
             assets: sanitizedAssets,
             backgrounds: (backgrounds && typeof backgrounds === 'object') ? backgrounds : {},
+            meta: (meta && typeof meta === 'object') ? meta : {},
             variants: sanitizedVariants,
             availableInDailyShop: !!availableInDailyShop,
             active: active !== false,
@@ -313,6 +314,7 @@ router.put('/:id', verifyToken, requireRole(['admin']), async (req, res) => {
     if (typeof update.infoOnly === 'boolean') doc.infoOnly = update.infoOnly;
     if (typeof update.infoDescription === 'string' || update.infoDescription === null) doc.infoDescription = update.infoDescription;
     if (update.backgrounds && typeof update.backgrounds === 'object') { doc.backgrounds = update.backgrounds; doc.markModified('backgrounds'); }
+    if (update.meta && typeof update.meta === 'object') { doc.meta = update.meta; doc.markModified('meta'); }
     if (typeof update.availableInDailyShop === 'boolean') doc.availableInDailyShop = update.availableInDailyShop;
     if (typeof update.active === 'boolean') doc.active = update.active;
     if (typeof update.legacyId === 'number' && !Number.isNaN(update.legacyId)) doc.legacyId = Number(update.legacyId);
