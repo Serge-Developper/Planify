@@ -1512,12 +1512,14 @@ function getEffectiveLeaderboardTarget(item, asset) {
   try {
     // Dyn: si meta.leaderboardTarget est défini, on l'applique. Sinon, fallback conteneur
     if (item && item.isDynamic) {
-      // 1) Priorité asset.meta.leaderboardTarget
-      if (asset && asset.meta && asset.meta.leaderboardTarget) return String(asset.meta.leaderboardTarget)
-      // 2) Sinon, si item.meta.leaderboardTarget est posé au niveau item
-      if (item && item.meta && item.meta.leaderboardTarget) return String(item.meta.leaderboardTarget)
-      // 3) Sinon, fallback conteneur
-      return 'user-avatar-container'
+      // 1) Priorité: valeur explicite fixée par l'éditeur au niveau asset
+      const explicit = asset && asset.meta && asset.meta.leaderboardTarget
+      if (explicit) return String(explicit)
+      // 2) Compat: ancien champ meta.container
+      const legacy = asset && asset.meta && asset.meta.container === 'user-avatar-container'
+      if (legacy) return 'user-avatar-container'
+      // 3) Par défaut: avatar (les boutons définissent explicitement la cible si besoin)
+      return 'user-avatar'
     }
     const assetTarget = asset && asset.meta && (asset.meta.leaderboardTarget || (asset.meta.container === 'user-avatar-container' ? 'user-avatar-container' : null))
     if (assetTarget) return String(assetTarget)
