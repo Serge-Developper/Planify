@@ -709,6 +709,8 @@ function sanitizeAsset(a) {
 
 function sanitizeItem(it) {
   const clone = JSON.parse(JSON.stringify(it || {}))
+  // Préserver le meta item-level (pour lecture côté ShopPopup si asset-level absent)
+  if (!clone.meta || typeof clone.meta !== 'object') clone.meta = {}
   if (!Array.isArray(clone.assets)) clone.assets = []
   clone.assets = clone.assets.map(sanitizeAsset)
   if (!clone.backgrounds) clone.backgrounds = { collection: null, leaderboard: null, avatar: null, navbar: null, 'popup-style': null }
@@ -934,6 +936,11 @@ function getActiveAssetLeaderboardTarget() {
 function setLeaderboardTarget(target) {
   const t = (target === 'user-avatar-container') ? 'user-avatar-container' : 'user-avatar'
   lastLeaderboardTarget.value = t
+  // Écrire au niveau item pour fallback de lecture
+  try {
+    if (!form.value.meta || typeof form.value.meta !== 'object') form.value.meta = {}
+    form.value.meta.leaderboardTarget = t
+  } catch {}
   // 1) Base assets
   try {
     if (Array.isArray(form.value.assets)) {
