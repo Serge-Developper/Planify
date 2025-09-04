@@ -930,13 +930,16 @@ function getActiveAssetLeaderboardTarget() {
 }
 
 function setLeaderboardTarget(target) {
-  if (selectedIndex.value === null) return
   const assets = activeAssets()
-  const asset = Array.isArray(assets) ? assets[selectedIndex.value] : null
-  if (!asset) return
-  if (!asset.meta) asset.meta = {}
   const t = (target === 'user-avatar-container') ? 'user-avatar-container' : 'user-avatar'
-  asset.meta.leaderboardTarget = t
+  if (Array.isArray(assets) && assets.length) {
+    // Appliquer sur l'asset sélectionné et, par sécurité, sur tous les assets de l'onglet courant
+    for (const a of assets) {
+      if (!a) continue
+      a.meta = a.meta || {}
+      a.meta.leaderboardTarget = t
+    }
+  }
 }
 
 async function handleFiles(e) {}
