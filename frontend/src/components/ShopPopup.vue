@@ -845,13 +845,13 @@
                     :class="getDynLeaderboardAssetClass(a)"
                   />
                 </template>
-                <!-- Items dynamiques ciblant le conteneur : ABOVE -->
+                <!-- Items dynamiques ciblant le conteneur : ABOVE (seulement ceux sans placement spécifique, les 'above' sont maintenant EN DEHORS) -->
                 <template v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).isDynamic">
                   <img
                     v-for="(a, ai) in (Array.isArray(getUserEquippedItemData(user).variants) && getUserEquippedItemData(user).variants.length > 0
                       ? getDynVariantAssetsForLeaderboard(getUserEquippedItemData(user))
                       : getUserEquippedItemData(user).assets)"
-                    v-if="isAssetTargetingContainer(getUserEquippedItemData(user), a) && (!a || !a.meta || a.meta.leaderboardPlacement === 'above' || (!a.meta.leaderboardPlacement))"
+                    v-if="isAssetTargetingContainer(getUserEquippedItemData(user), a) && (!a || !a.meta || (!a.meta.leaderboardPlacement))"
                     :key="'dyn-container-above-' + ai + '-' + dynamicVariantsState"
                     :src="resolveAssetSrc(a.src)"
                     :style="getDynLeaderboardAssetStyle(a)"
@@ -972,7 +972,19 @@
                 />
               </div>
               
-            
+              <!-- Items dynamiques ciblant user-avatar-container avec placement ABOVE - rendus EN DEHORS du conteneur -->
+              <template v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).isDynamic">
+                <img
+                  v-for="(a, ai) in (Array.isArray(getUserEquippedItemData(user).variants) && getUserEquippedItemData(user).variants.length > 0
+                    ? getDynVariantAssetsForLeaderboard(getUserEquippedItemData(user))
+                    : getUserEquippedItemData(user).assets)"
+                  v-if="isAssetTargetingContainer(getUserEquippedItemData(user), a) && a && a.meta && a.meta.leaderboardPlacement === 'above'"
+                  :key="'dyn-container-overlay-' + ai + '-' + dynamicVariantsState"
+                  :src="resolveAssetSrc(a.src)"
+                  :style="getDynLeaderboardContainerOverlayStyle(a)"
+                  :class="getDynLeaderboardAssetClass(a)"
+                />
+              </template>
               
               <div class="user-details">
                 <div class="username">{{ user.username }}</div>
