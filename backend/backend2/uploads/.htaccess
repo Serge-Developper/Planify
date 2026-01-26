@@ -1,0 +1,21 @@
+<IfModule mod_headers.c>
+  # Autoriser l’accès cross-origin aux fichiers statiques (mp3, images…)
+  Header always set Access-Control-Allow-Origin "*"
+  Header always set Access-Control-Allow-Methods "GET, OPTIONS"
+  Header always set Access-Control-Allow-Headers "Range, Content-Type, Authorization, X-Requested-With"
+  Header always set Timing-Allow-Origin "*"
+
+  # Nécessaire si votre page utilise COEP: require-corp
+  Header always set Cross-Origin-Resource-Policy "cross-origin"
+
+  # Aide les navigateurs/lecteurs audio
+  Header always set Accept-Ranges "bytes"
+  Header always set Vary "Origin"
+</IfModule>
+
+<IfModule mod_mime.c>
+  AddType audio/mpeg .mp3
+</IfModule>
+
+# Pas d’index de répertoire
+Options -Indexes

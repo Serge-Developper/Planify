@@ -1,0 +1,11 @@
+# Configuration pour le backend Node.js avec Passenger
+# Content Security Policy pour autoriser eval() - Backend
+<IfModule mod_headers.c>
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https: blob:; connect-src 'self' https://api.planifymmi.fr; font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com; frame-src 'self'; object-src 'none'; base-uri 'self';"
+</IfModule>
+
+# Configuration Passenger
+PassengerNodejs /opt/plesk/node/22.19.0/bin/node
+PassengerAppType node
+PassengerStartupFile app.js
+PassengerAppEnv production
