@@ -1,0 +1,40 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  # Laisser passer les fichiers et dossiers physiques
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+  # Fallback SPA
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+<IfModule mod_headers.c>
+  # Cache long pour les assets fingerprintés
+  <FilesMatch "\.(ico|png|jpe?g|gif|svg|webp|css|js|woff2?)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  # Pas de cache pour index.html
+  <Files "index.html">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+  </Files>
+  
+  # Content Security Policy pour autoriser eval() - Public
+  Header set Content-Security-Policy "default-src 'self'; img-src 'self' data: blob:; media-src 'self' data: blob:; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src 'self' fonts.gstatic.com data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://dev-api.planifymmi.fr https://api.planifymmi.fr https://planifymmi.fr wss:; form-action 'self'; frame-ancestors 'self'; base-uri 'self'"
+  
+</IfModule>
+
+<IfModule mod_headers.c>
+  # Cache long pour les assets fingerprintés
+  <FilesMatch "\.(ico|png|jpe?g|gif|svg|webp|css|js|woff2?)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  # Pas de cache pour index.html
+  <Files "index.html">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+  </Files>
+  
+  # Exemple “domaine précis”
+  Header set Content-Security-Policy "default-src 'self'; img-src 'self' data: blob: https://dev-api.planifymmi.fr https://api.planifymmi.fr https://dev.planifymmi.fr; media-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://dev-api.planifymmi.fr https://api.planifymmi.fr https://planifymmi.fr wss: https://fonts.googleapis.com https://fonts.gstatic.com; form-action 'self'; frame-ancestors 'self'; base-uri 'self'"
+  
+</IfModule>
