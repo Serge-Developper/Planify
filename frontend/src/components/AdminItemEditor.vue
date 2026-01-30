@@ -936,30 +936,40 @@ function getActiveAssetLeaderboardTarget() {
 function setLeaderboardTarget(target) {
   const t = (target === 'user-avatar-container') ? 'user-avatar-container' : 'user-avatar'
   lastLeaderboardTarget.value = t
+  console.log('🎯 setLeaderboardTarget appelé avec:', target, '→', t)
+  
   // Écrire au niveau item pour fallback de lecture
   try {
     if (!form.value.meta || typeof form.value.meta !== 'object') form.value.meta = {}
     form.value.meta.leaderboardTarget = t
+    console.log('✅ Meta item défini:', form.value.meta.leaderboardTarget)
   } catch {}
+  
   // 1) Base assets
   try {
     if (Array.isArray(form.value.assets)) {
+      console.log('🖼️ Mise à jour', form.value.assets.length, 'assets de base')
       for (const a of form.value.assets) {
         if (!a) continue
         a.meta = a.meta || {}
         a.meta.leaderboardTarget = t
+        console.log('  Asset base:', a.src, '→ leaderboardTarget:', a.meta.leaderboardTarget)
       }
     }
   } catch {}
+  
   // 2) Variants assets
   try {
     if (Array.isArray(form.value.variants)) {
+      console.log('🎨 Mise à jour variantes:', form.value.variants.length)
       for (const v of form.value.variants) {
         if (!v || !Array.isArray(v.assets)) continue
+        console.log('  Variante:', v.name, 'avec', v.assets.length, 'assets')
         for (const a of v.assets) {
           if (!a) continue
           a.meta = a.meta || {}
           a.meta.leaderboardTarget = t
+          console.log('    Asset variante:', a.src, '→ leaderboardTarget:', a.meta.leaderboardTarget)
         }
       }
     }
@@ -1057,11 +1067,22 @@ function editItem(it) {
   secureApiCall(`/items/${it._id}`)
     .then((res) => {
       const src = (res && res.success && res.item) ? res.item : it
+      console.log('📝 Édition item', it._id, '- données reçues:', JSON.stringify(src, null, 2))
       form.value = sanitizeItem(src)
       editingVariantIndex.value = -1
+      
+      // Debug des métadonnées après sanitization
+      console.log('🔍 Après sanitizeItem:')
+      console.log('  Meta item:', form.value.meta)
+      if (form.value.assets) {
+        form.value.assets.forEach((asset, i) => {
+          console.log(`  Asset ${i}:`, asset.src, 'meta:', asset.meta)
+        })
+      }
     })
     .catch(() => {
       // Fallback en cas d'erreur réseau
+      console.log('⚠️ Fallback - utilisation données locales pour item', it._id)
       form.value = sanitizeItem(it)
       editingVariantIndex.value = -1
     })
@@ -1072,13 +1093,36 @@ async function updateItem() {
   // Synchroniser les modifications avec les assets de la variante avant la sauvegarde
   syncVariantAssets()
   const payload = sanitizeItem(form.value)
+  
+  console.log('🚀 Mise à jour item', editingId.value, 'avec lastLeaderboardTarget:', lastLeaderboardTarget.value)
+  
   // Si l'utilisateur a cliqué un bouton de cible, garantir que la cible est posée partout avant PUT
   try {
     if (lastLeaderboardTarget.value) {
-      if (Array.isArray(payload.assets)) payload.assets.forEach(a => { a.meta = a.meta || {}; a.meta.leaderboardTarget = lastLeaderboardTarget.value })
-      if (Array.isArray(payload.variants)) payload.variants.forEach(v => { if (Array.isArray(v.assets)) v.assets.forEach(a => { a.meta = a.meta || {}; a.meta.leaderboardTarget = lastLeaderboardTarget.value }) })
+      console.log('🎯 Application de leaderboardTarget:', lastLeaderboardTarget.value)
+      if (Array.isArray(payload.assets)) {
+        payload.assets.forEach(a => { 
+          a.meta = a.meta || {}; 
+          a.meta.leaderboardTarget = lastLeaderboardTarget.value;
+          console.log('  ✅ Asset base mis à jour:', a.src, '→', a.meta.leaderboardTarget);
+        });
+      }
+      if (Array.isArray(payload.variants)) {
+        payload.variants.forEach(v => { 
+          if (Array.isArray(v.assets)) {
+            v.assets.forEach(a => { 
+              a.meta = a.meta || {}; 
+              a.meta.leaderboardTarget = lastLeaderboardTarget.value;
+              console.log('  ✅ Asset variante mis à jour:', a.src, '→', a.meta.leaderboardTarget);
+            });
+          }
+        });
+      }
     }
   } catch {}
+  
+  console.log('📤 Payload envoyé:', JSON.stringify(payload, null, 2))
+  
   const res = await secureApiCall(`/items/${editingId.value}`, {
     method: 'PUT',
     body: JSON.stringify(payload)
