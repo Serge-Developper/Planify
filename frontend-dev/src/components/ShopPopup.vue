@@ -644,8 +644,8 @@
                     <img :src="daftpunk" :alt="purchasePreviewItem.name" class="daftpunk-img-shop" />
                   </div>
                   <div v-else-if="purchasePreviewItem && (purchasePreviewItem.name === 'Jojo' || purchasePreviewItem.displayType === 'jojo')" class="jojo-item-shop" :key="'pp-jojo-container-'+jojoAnimKey">
-                    <img :key="'pp-jojo-'+jojoAnimKey" :src="jojo" :alt="purchasePreviewItem.name" class="jojo-img-shop jojo-swipe jojo-sepia-anim" :style="getJojoImgStyle()" />
-                    <img v-if="coinsStore.jojoVariantIndex === 1" :key="'pp-jojotext-'+jojoAnimKey" :src="jojotext" alt="Jojo texte" class="jojo-text-preview jojotext-fade" :style="getJojoTextStyle()" />
+                    <img :key="'pp-jojo-'+jojoAnimKey" :src="jojo" :alt="purchasePreviewItem.name" class="jojo-img-shop jojo-swipe jojo-sepia-anim" :style="getWeeklyJojoImgStyle()" />
+                    <img v-if="coinsStore.jojoVariantIndex === 1" :key="'pp-jojotext-'+jojoAnimKey" :src="jojotext" alt="Jojo texte" class="jojo-text-preview jojotext-fade" :style="getWeeklyJojoTextStyle()" />
                   </div>
                   <div v-else-if="purchasePreviewItem && (purchasePreviewItem.type === 'border-color' || purchasePreviewItem.type === 'border-gradient')" class="classic-border-preview" :style="getWeeklyClassicFillStyle(purchasePreviewItem)" data-darkreader-ignore></div>
                   <img v-else-if="purchasePreviewItem && purchasePreviewItem.img" :src="(purchasePreviewItem.displayType === 'discord' || purchasePreviewItem.name === 'Discord' || purchasePreviewItem.id == 23) ? discordDisplayImg : purchasePreviewItem.img" :alt="purchasePreviewItem.name" class="item-img" :class="{ 'discord-item-preview': (purchasePreviewItem.displayType === 'discord' || purchasePreviewItem.name === 'Discord' || purchasePreviewItem.id == 23) }" :style="(purchasePreviewItem.displayType === 'discord' || purchasePreviewItem.name === 'Discord' || purchasePreviewItem.id == 23) ? { width: '60%', height: '75%', objectFit: 'contain' } : null" />
@@ -876,7 +876,7 @@
                 </div>
                 <!-- Item Jojo -->
                 <div v-if="item.name === 'Jojo'" class="jojo-item-shop" :key="'w-jojo-container-'+jojoAnimKey">
-                  <img :key="'w-jojo-'+jojoAnimKey" :src="jojo" :alt="item.name" class="jojo-img-shop jojo-swipe jojo-sepia-anim" :style="getJojoImgStyle()" />
+                  <img :key="'w-jojo-'+jojoAnimKey" :src="jojo" :alt="item.name" class="jojo-img-shop jojo-swipe jojo-sepia-anim" :style="getWeeklyJojoImgStyle()" />
                   <img v-if="coinsStore.jojoVariantIndex === 1" :key="'w-jojotext-'+jojoAnimKey" :src="jojotext" alt="Jojo texte" class="jojo-text-preview jojotext-fade" :style="getWeeklyJojoTextStyle()" />
                 </div>
                 <div v-if="item.name === 'Tomb Raider'" class="tombraider-item-shop">
@@ -5894,6 +5894,17 @@ function getJojoImgStyle() {
     objectFit: 'contain'
   }
 }
+function getWeeklyJojoImgStyle() {
+  const p = coinsStore.jojoImgPos || { top: 80, left: 230, width: 80 }
+  return {
+    position: 'absolute',
+    top: '80px',
+    left: '230px',
+    width: p.width + '%',
+    height: 'auto',
+    objectFit: 'contain'
+  }
+}
 function getJojoTextStyle() {
   const p = coinsStore.jojoTextPos || { top: -5, left: 80, width: 90 }
   return {
@@ -5910,7 +5921,7 @@ function getWeeklyJojoTextStyle() {
   return {
     position: 'absolute',
     top: p.top + 'px',
-    left: (p.left + 120) + 'px',
+    left: '64px',
     width: p.width + '%',
     height: 'auto',
     objectFit: 'contain'
@@ -7641,7 +7652,7 @@ onUnmounted(() => {
 .slide-right .suggest-slider-enter-from { transform: translateX(40px); }
 .slide-right .suggest-slider-leave-to { transform: translateX(-40px); }
   .weekly-section:first-child .shop-grid.small-grid { grid-template-columns: repeat(2, 1fr) !important; height: 100%; align-items: stretch; grid-auto-rows: 1fr; gap: 12px !important; width: 658px !important; margin-left: auto; margin-right: auto; }
-  @media (max-width: 480px) {
+  @media (max-width: 768px) {
     .weekly-section:first-child .shop-grid {
       display: flex !important;
       grid-template-columns: repeat(1, 1fr) !important;
