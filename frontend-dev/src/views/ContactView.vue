@@ -204,6 +204,9 @@ const handleSubmit = async () => {
   .about-title {
     font-size: 2.2em;
   }
+  .about-hero-content {
+    padding: 32px 16px 24px;
+  }
 }
 
 /* Content Section */

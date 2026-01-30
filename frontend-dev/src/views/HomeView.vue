@@ -202,6 +202,11 @@ function goToEmploi() {
   background: rgb(255, 255, 255);
   padding: 100px 0 32px 0;
 }
+@media (max-width: 768px) {
+  .odoo-banner {
+    padding: 20px 0 32px;
+  }
+}
 .odoo-banner-inner {
   max-width: 1200px;
   margin: 0 auto;

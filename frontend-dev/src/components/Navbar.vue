@@ -1481,10 +1481,10 @@ onMounted(() => {
        // Sur iOS, on affiche le bouton si on n'est pas en standalone (pour guider)
        // ou si on est en standalone mais pas encore abonné.
        if (!('Notification' in window) || Notification.permission !== 'granted') {
-         showNotificationBtn.value = true;
+         showNotificationBtn.value = isMobile.value;
        }
     } else if ('Notification' in window && Notification.permission === 'default') {
-       showNotificationBtn.value = true;
+       showNotificationBtn.value = isMobile.value;
     }
   } catch {}
 })
@@ -3998,7 +3998,14 @@ function goShop() {
 
 function handleResize() {
   isMobile.value = window.innerWidth <= 1024;
-  if (!isMobile.value) showMobileMenu.value = false;
+  if (!isMobile.value) {
+    showMobileMenu.value = false;
+    showNotificationBtn.value = false;
+  } else {
+    if ('Notification' in window && Notification.permission === 'default') {
+      showNotificationBtn.value = true;
+    }
+  }
 }
 
 function handleDevoirMobile() {
@@ -4124,7 +4131,7 @@ function getBorderStyle() {
 onMounted(async () => {
   if (auth.isLoggedIn && 'Notification' in window) {
     if (Notification.permission === 'default') {
-      showNotificationBtn.value = true;
+      showNotificationBtn.value = isMobile.value;
     } else if (Notification.permission === 'granted') {
       subscribeToPushNotifications().catch(() => {});
     }
@@ -4497,6 +4504,10 @@ body, html {
   .odoo-navbar-bottom {
     display: none !important;
   }
+  .odoo-navbar-top {
+    justify-content: space-between;
+    align-items: center;
+  }
   .odoo-logo {
     height: 44px;
     max-width: 90vw;
@@ -4512,6 +4523,10 @@ body, html {
   }
   .odoo-navbar-bottom {
     display: none !important;
+  }
+  .odoo-navbar-top {
+    justify-content: space-between;
+    align-items: center;
   }
   .odoo-logo {
     height: 44px;
