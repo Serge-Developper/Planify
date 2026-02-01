@@ -4447,6 +4447,15 @@ function getDynProfilePopupAssetStyle(asset) {
 
 function getLargeAvatarHeight(item) {
   try {
+    const name = String(item?.name || '').toLowerCase()
+    const displayType = String(item?.displayType || '').toLowerCase()
+    if (name === 'roi' || displayType === 'roi') return 400
+    if (name === 'gentleman' || displayType === 'gentleman') return 400
+    if (name === 'ange' || displayType === 'angel') return 400
+    if (name === 'tomb raider' || displayType === 'tomb-raider') return 400
+    if (name === 'vinyle' || displayType === 'vinyle') return 400
+    if (name === '2000' || displayType === 'nokia') return 400
+
     const arr = getProfilePopupAssetsUnified(item)
     if (Array.isArray(arr)) {
       for (const a of arr) {
@@ -7382,7 +7391,7 @@ onUnmounted(() => {
 .item-img-container.style-change-anim { animation: styleSwap 220ms ease-in-out; }
 .preview-card.preview-item .discord-item-preview { width: 60% !important; height: 75% !important; object-fit: contain !important; }
 /* Ange (PC) – Cosmétique: image générique ciblée par alt */
-.preview-card.preview-item img.item-img[alt="Ange"] { position: absolute !important; top: -10% !important; width: 85% !important; }
+.preview-card.preview-item img.item-img[alt="Ange"] { position: absolute !important; top: -5% !important; width: 65% !important; left: 19%; }
 .weekly-color-chip { position: absolute; top: 8px; left: 8px; background: #111; color: #fff; border-radius: 6px; padding: 4px 8px; font-size: 12px; font-weight: 700; z-index: 2; }
 
 .coins-balance {
@@ -7713,12 +7722,12 @@ onUnmounted(() => {
   .preview-card.preview-leaderboard { max-width: 390px; }
   .preview-card.preview-avatar { max-width: 390px; }
   .preview-card.preview-popup-style .item-img-wrapper.large { position: relative; width: 120.5px; height: 64px; margin: 0 auto; border-radius: 12px; }
-  .preview-card.preview-avatar .profile-avatar-stage { border: none; border-radius: 30px; width: 351px !important; height: 250px !important; box-sizing: border-box; }
-  .preview-card.preview-avatar .profile-avatar-scaler { width: 351px !important; height: 250px !important; display:flex; align-items:center; justify-content:center; border: 5px solid #5bc682; border-radius: 30px; box-sizing: border-box; margin: 0 auto; position: relative; }
+  .preview-card.preview-avatar:not(.roi-preview) .profile-avatar-stage { border: none; border-radius: 30px; width: 351px !important; height: 250px !important; box-sizing: border-box; }
+  .preview-card.preview-avatar:not(.roi-preview) .profile-avatar-scaler { width: 351px !important; height: 250px !important; display:flex; align-items:center; justify-content:center; border: 5px solid #5bc682; border-radius: 30px; box-sizing: border-box; margin: 0 auto; position: relative; }
   .preview-card.preview-avatar .profile-avatar { width: 150px !important; height: 150px !important; border-width: 5px !important; }
   .preview-card.preview-avatar.roi-preview .profile-avatar-stage { height: 400px !important; }
-  .preview-card.preview-avatar.roi-preview .profile-avatar-scaler { width: 345px !important; height: 400px !important; }
-  .preview-card.preview-avatar.roi-preview .equipped-roi-overlay { top: -27px !important; left: 57px !important; width: 76% !important; height: 43% !important; }
+  .preview-card.preview-avatar.roi-preview .profile-avatar-scaler { width: 345px !important; height: 400px !important; border: 5px solid #5bc682 !important; border-radius: 30px !important; }
+  .preview-card.preview-avatar.roi-preview .equipped-roi-overlay { top: 30px !important; left: 85px !important; width: 55% !important; height: 27% !important; z-index: 15; }
   .preview-card.preview-avatar.gentleman-preview .profile-avatar-stage { height: 400px !important; }
   .preview-card.preview-avatar.gentleman-preview .profile-avatar-scaler { width: 345px !important; height: 400px !important; }
   .preview-card.preview-avatar.vinyle-preview .profile-avatar-stage { height: 400px !important; }
@@ -7746,7 +7755,7 @@ onUnmounted(() => {
 .preview-card.preview-avatar .profile-avatar-scaler .equipped-absolute-cinema-overlay { position: absolute !important; left: 4.5% !important; top: 5% !important; width: 34% !important; height: 70% !important; object-fit: contain !important; z-index: 16 !important; }
 .preview-card.preview-avatar .profile-avatar-scaler .equipped-absolute-cinema-overlay-right { position: absolute !important; left: 61.5% !important; top: 5% !important; width: 34% !important; height: 70% !important; object-fit: contain !important; z-index: 16 !important; }
 .preview-card.preview-avatar .profile-avatar-scaler .equipped-pate-overlay { position: absolute !important; left: 20% !important; top: 78% !important; width: 35% !important; height: 35% !important; object-fit: contain !important; pointer-events: none !important; z-index: 16 !important; }
-.preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { left: 26% !important; }
+.preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { left: 26% !important; z-index: 15; }
 .preview-card.preview-avatar .profile-avatar .equipped-clown-nose { position: absolute !important; left: 50% !important; top: 52% !important; width: 60% !important; height: auto !important; object-fit: contain !important; transform: translate(-50%, -40%) !important; pointer-events: none !important; z-index: 16 !important; }
 .preview-card.preview-avatar .profile-avatar .equipped-moustache-inside { position: absolute !important; left: 50% !important; top: 63% !important; width: 70% !important; transform: translate(-50%, -50%) !important; object-fit: contain !important; z-index: 16 !important; }
 .preview-card.preview-avatar .profile-avatar .equipped-spacestars-inside { position: absolute !important; left: 50% !important; top: 50% !important; width: 100% !important; height: 100% !important; transform: translate(-50%, -50%) !important; object-fit: contain !important; z-index: 14 !important; }
@@ -7791,13 +7800,13 @@ onUnmounted(() => {
   .preview-card.preview-item .discord-item-shop { position: relative !important; width: 100% !important; height: 100% !important; top: 0 !important; left: 0 !important; }
   .preview-card.preview-item .discord-img-shop { position: absolute !important; left: 50% !important; top: 50% !important; width: 31% !important; height: 83% !important; object-fit: contain !important; transform: translate(-50%, -50%) !important; }
   .preview-card.preview-item .gentleman-item-shop { position: relative !important; width: 100% !important; height: 100% !important; top: 0 !important; left: 0 !important; }
-  .preview-card.preview-item .gentleman-img-shop { position: absolute !important; left: 50% !important; top: 15% !important; width: 50% !important; max-width: 55% !important; transform: translateX(-50%) !important; }
-  .preview-card.preview-item .moustache-img-shop { position: absolute !important; left: 50% !important; top: 45% !important; width: 42% !important; max-width: 42% !important; transform: translateX(-50%) !important; }
+  .preview-card.preview-item .gentleman-img-shop { position: absolute !important; left: 50% !important; top: 15% !important; width: 30% !important; max-width: 55% !important; transform: translateX(-50%) !important; }
+  .preview-card.preview-item .moustache-img-shop { position: absolute !important; left: 50% !important; top: 47% !important; width: 23% !important; max-width: 42% !important; transform: translateX(-50%) !important; }
   .preview-card.preview-item .nokia-img-shop { position: absolute !important; left: 40% !important; top: 76% !important; transform: translate(-50%, -50%) !important; width: 17% !important; height: auto !important; object-fit: contain !important; z-index: 1 !important; }
   .preview-card.preview-item .clippy-img-shop { position: absolute !important; left: 57% !important; top: 77% !important; transform: translate(-50%, -50%) !important; width: 13% !important; height: auto !important; object-fit: contain !important; z-index: 2 !important; }
   .preview-card.preview-item .daftpunk-img-shop { position: absolute !important; left: 50% !important; top: 25% !important; transform: translate(-50%, -50%) !important; width: 30% !important; height: auto !important; object-fit: contain !important; z-index: 3 !important; }
-  .preview-card.preview-item .chat-img-shop { max-width: 50% !important; }
-  .preview-card.preview-item .pate-img-shop { left: 30% !important; }
+  .preview-card.preview-item .chat-img-shop { max-width: 50% !important; top: 50% !important; }
+  .preview-card.preview-item .pate-img-shop { left: 30% !important; top: 60% !important; }
   .weekly-preview .item-name,
   .weekly-preview .item-price { background: #fff; border: 5px solid #5bc682; border-radius: 14px; padding: 14px 18px; text-align: center; margin: 10px auto; width: 100%; max-width: 340px; }
   .weekly-preview .item-name { font-size: 22px; }
@@ -8851,6 +8860,15 @@ onUnmounted(() => {
     width: 80% !important;
     top: 10% !important;
   }
+  /* Boutique quotidienne (weekly) — overrides ciblés */
+  .weekly-item .angel-img-shop { top: 10px !important; left: 25px !important; }
+  .weekly-item .discord-img-shop { top: 15px !important; left: 39px !important; }
+  .weekly-item .gentleman-img-shop { top: 25px !important; left: 60px !important; max-width: 40% !important; }
+  .weekly-item .moustache-img-shop { top: 65px !important; left: 70px !important; }
+  .weekly-item .advisory-img-shop { top: 0px !important; }
+  .weekly-item .asteroide-img-shop { left: 20px !important; }
+  .weekly-item .chat-img-shop { top: 50% !important; left: 63% !important; }
+  .weekly-item .pate-img-shop { top: 80px !important; left: 24% !important; }
 
   .discord-img-shop {
     position: absolute !important;
@@ -9552,7 +9570,7 @@ onUnmounted(() => {
 .preview-card.preview-leaderboard .user-avatar-container .equipped-cat-ears { position: absolute !important; left: 56% !important; top: 115% !important; width: 120% !important; height: 120% !important; object-fit: contain !important; transform: translate(-50%, -60%) scale(1.50) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 3 !important; }
 .preview-card.preview-leaderboard .equipped-cat-ears { position: absolute !important; inset: 0 !important; top: -48px !important; width: 100% !important; height: 100% !important; margin: auto !important; object-fit: contain !important; transform: scale(1.15) !important; transform-origin: center top !important; pointer-events: none !important; z-index: 3 !important; }
   .preview-card.preview-leaderboard .equipped-stars-overlay { position: absolute !important; inset: 0 !important; top: -5px !important; left: 3px !important; width: 100% !important; height: 100% !important; margin: auto !important; object-fit: contain !important; transform: scale(1.22) !important; transform-origin: center top !important; pointer-events: none !important; z-index: 3 !important; }
-  .preview-card.preview-leaderboard .user-avatar-container .equipped-royal-frame-overlay { position: absolute !important; left: 56% !important; top: 93% !important; width: 162% !important; height: 160% !important; object-fit: contain !important; transform: translate(-50%, -62%) scale(1.08) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 3 !important; }
+  .preview-card.preview-leaderboard .user-avatar-container .equipped-royal-frame-overlay { position: absolute !important; left: 60% !important; top: 89% !important; width: 162% !important; height: 160% !important; object-fit: contain !important; transform: translate(-50%, -62%) scale(1.08) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 3 !important; }
 .preview-card.preview-leaderboard .user-avatar-container .equipped-vinyle-overlay { position: absolute !important; left: 61% !important; top: -2% !important; width: 120% !important; height: 120% !important; object-fit: contain !important; transform: translate(-50%, -62%) scale(1.05) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 3 !important; }
 .preview-card.preview-leaderboard .user-avatar-container .equipped-dvd-inside, .preview-card.preview-leaderboard .user-avatar .equipped-dvd-inside { position: absolute !important; top: 30%; left: 30%; width: 60% !important; height: 60% !important; object-fit: contain !important; transform: translate(-50%, -50%) !important; pointer-events: none !important; z-index: 3 !important; animation: dvdBounceShop 4s linear infinite !important; will-change: top, left; backface-visibility: hidden; }
 .preview-card.preview-leaderboard .user-avatar-container .equipped-nokia-inside { position: absolute !important; left: 14% !important; top: 99% !important; width: 75% !important; height: 140% !important; object-fit: contain !important; transform: translate(-50%, -62%) !important; pointer-events: none !important; z-index: 2 !important; }
@@ -9805,6 +9823,7 @@ onUnmounted(() => {
   left: 5px;
 }
 
+/* Obsolète: positions par défaut de Gentleman/Moustache
 .moustache-img-shop {
   max-width: 47%;
   max-height: 55%;
@@ -9822,10 +9841,12 @@ onUnmounted(() => {
       top: 20px;
     left: 15px;
 }
+*/
 
 /* Overrides Collection uniquement – placed here to win cascade over base rules */
-.shop-grid .collection-item .gentleman-img-shop { top: 18px !important; left: 13px !important; max-width: 60% !important; max-height: 48% !important; }
-.shop-grid .collection-item .moustache-img-shop { top: 39px !important; left: 14px !important; max-width: 55% !important; max-height: 55% !important; }
+.shop-grid .collection-item .gentleman-img-shop { top: 18px !important; left: 13px !important; max-width: 60% !important; max-height: 48% !important; position: absolute; }
+.shop-grid .collection-item .moustache-img-shop { top: 39px !important; left: 14px !important; max-width: 55% !important; max-height: 55% !important; position: absolute; }
+.shop-grid .collection-item .absolute-cinema-item-shop { gap: 17px !important; }
 
 .vinyle-item-shop {
   width: 100%;
@@ -9840,6 +9861,10 @@ onUnmounted(() => {
   max-height: 100%;
   object-fit: contain;
 }
+
+/* Aperçu Cosmétique uniquement */
+.preview-card.preview-item .spacestars-img-shop { position: absolute !important; top: -3% !important; left: 7% !important; max-width: 81% !important; }
+.preview-card.preview-item .asteroide-img-shop { position: absolute !important; top: 75px !important; left: 75px !important; }
 
 .advisory-item-shop {
   width: 100%;
@@ -9890,7 +9915,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 15px;
+  gap: 45px;
 }
 
 .absolute-cinema-img-shop, .absolute-cinema-img-shop-right {
@@ -10360,11 +10385,11 @@ onUnmounted(() => {
 
 .equipped-pate-inside {
   position: absolute;
-      top: 56%;
+  top: 56%;
   left: 30%;
   width: 18%;
   height: 20%;
-  z-index: 1;
+  z-index: 3 !important;
 }
 
 .equipped-dvd-inside {
@@ -10529,7 +10554,7 @@ onUnmounted(() => {
   left: 30%;
   width: 20%;
   height: 25%;
-  z-index: 3;
+  z-index: 3 !important;
   }
 
 .equipped-chat-overlay {
@@ -10538,7 +10563,7 @@ onUnmounted(() => {
   left: 33%;
   width: 60%;
   height: 50%;
-  z-index: 3;
+  z-index: 3 !important;
   }
 
 .equipped-daftpunk-overlay {
@@ -10966,6 +10991,16 @@ onUnmounted(() => {
 .profile-avatar-wrap { display: flex; justify-content: center; margin: 10px 0 16px; }
 .profile-avatar-stage { position: relative; width: 110px; height: 110px; }
 .profile-avatar-scaler { position: relative; width: 110px; height: 110px; display: flex; align-items: center; justify-content: center; }
+
+/* Weekly overrides — high specificity to win cascade */
+.weekly-section .shop-item.weekly-item.small-card .discord-item-shop .discord-img-shop { position: absolute !important; object-fit: contain !important; top: 15px !important; left: 39px !important; }
+.weekly-section .shop-item.weekly-item.small-card .angel-item-shop .angel-img-shop { position: absolute !important; max-width: 80% !important; max-height: 100% !important; object-fit: contain !important; transform: scale(1.05) !important; top: 10px !important; left: 25px !important; }
+.weekly-section .shop-item.weekly-item.small-card .gentleman-item-shop .gentleman-img-shop { position: absolute !important; max-width: 40% !important; object-fit: contain !important; top: 25px !important; left: 60px !important; }
+.weekly-section .shop-item.weekly-item.small-card .gentleman-item-shop .moustache-img-shop { position: absolute !important; max-width: 47% !important; max-height: 55% !important; object-fit: contain !important; top: 65px !important; left: 70px !important; }
+.weekly-section .shop-item.weekly-item.small-card .advisory-item-shop .advisory-img-shop { position: absolute !important; max-width: 100% !important; max-height: 100% !important; object-fit: contain !important; top: -11% !important; left: 8%;}
+.weekly-section .shop-item.weekly-item.small-card .espace-item-shop .asteroide-img-shop { position: absolute !important; left: 20px !important; top: 70px;}
+.weekly-section .shop-item.weekly-item.small-card .miaou-item-shop .chat-img-shop { position: absolute !important; width: 60% !important; object-fit: contain !important; transform: translate(-50%, -50%) !important; z-index: 2 !important; top: 50% !important; left: 63% !important; }
+.weekly-section .shop-item.weekly-item.small-card .miaou-item-shop .pate-img-shop { position: absolute !important; max-width: 100% !important; max-height: 35% !important; object-fit: contain !important; top: 80px !important; left: 24% !important; }
 .profile-avatar { position: relative; width: 110px; height: 110px; border-radius: 24px !important; overflow: hidden; border: 5px solid #000; background: #fff; }
 .profile-avatar.no-border { border: none !important; background: transparent !important; }
 .profile-avatar .avatar-img { width: 100% !important; height: 100% !important; object-fit: cover !important; }

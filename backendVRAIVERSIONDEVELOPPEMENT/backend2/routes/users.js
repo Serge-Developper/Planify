@@ -1657,4 +1657,66 @@ router.put('/suggest-editor-state', verifyToken, async (req, res) => {
   }
 });
 
+// Proposers: admin-side list of blocked users
+router.get('/blocked-proposers', verifyToken, requireRole(['delegue','prof','admin']), async (req, res) => {
+  try {
+    const users = await User.find({ proposalBlocked: true }).select('_id username groupe year proposalBlocked');
+    res.json({ success: true, users });
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Erreur liste bloqués', error: String(e) });
+  }
+});
+
+// Block/unblock proposals from a user (delegue/prof/admin)
+router.post('/:id([0-9a-fA-F]{24})/block-proposals', verifyToken, requireRole(['delegue','prof','admin']), async (req, res) => {
+  try {
+    const u = await User.findById(req.params.id);
+    if (!u) return res.status(404).json({ success: false, message: 'Utilisateur introuvable' });
+    u.proposalBlocked = true;
+    await u.save();
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Erreur blocage', error: String(e) });
+  }
+});
+router.post('/:id([0-9a-fA-F]{24})/unblock-proposals', verifyToken, requireRole(['delegue','prof','admin']), async (req, res) => {
+  try {
+    const u = await User.findById(req.params.id);
+    if (!u) return res.status(404).json({ success: false, message: 'Utilisateur introuvable' });
+    u.proposalBlocked = false;
+    await u.save();
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Erreur déblocage', error: String(e) });
+  }
+});
+
+// Student-side mute/unmute a proposer (persist per-user)
+router.post('/mute-proposer/:id([0-9a-fA-F]{24})', verifyToken, async (req, res) => {
+  try {
+    const me = await User.findById(req.user.id || req.user._id);
+    if (!me) return res.status(404).json({ success: false, message: 'Utilisateur non trouvé' });
+    me.mutedProposers = Array.isArray(me.mutedProposers) ? me.mutedProposers : [];
+    const target = req.params.id;
+    if (!me.mutedProposers.map(String).includes(String(target))) me.mutedProposers.push(target);
+    await me.save();
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Erreur mute', error: String(e) });
+  }
+});
+router.post('/unmute-proposer/:id([0-9a-fA-F]{24})', verifyToken, async (req, res) => {
+  try {
+    const me = await User.findById(req.user.id || req.user._id);
+    if (!me) return res.status(404).json({ success: false, message: 'Utilisateur non trouvé' });
+    me.mutedProposers = Array.isArray(me.mutedProposers) ? me.mutedProposers : [];
+    const target = req.params.id;
+    me.mutedProposers = me.mutedProposers.filter(x => String(x) !== String(target));
+    await me.save();
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Erreur unmute', error: String(e) });
+  }
+});
+
 module.exports = router;

@@ -144,8 +144,11 @@ router.post('/proposals', verifyToken, async (req, res) => {
 
 router.get('/proposals', verifyToken, requireRole(['delegue','prof','admin']), async (req, res) => {
   try {
-    const list = await EventProposal.find({ status: 'pending' }).sort({ createdAt: -1 });
-    res.json({ success: true, proposals: list });
+    const list = await EventProposal.find({ status: 'pending' })
+      .sort({ createdAt: -1 })
+      .populate('proposedBy', 'username groupe year proposalBlocked');
+    const visible = list.filter(p => !(p?.proposedBy?.proposalBlocked));
+    res.json({ success: true, proposals: visible });
   } catch (e) {
     res.status(500).json({ success: false, message: 'Erreur liste propositions', error: String(e) });
   }
@@ -162,11 +165,24 @@ router.get('/proposals/count', verifyToken, requireRole(['delegue','prof','admin
 
 router.get('/proposals/feed', verifyToken, async (req, res) => {
   try {
-    const all = await EventProposal.find({ status: 'pending' }).sort({ createdAt: -1 });
+    const all = await EventProposal.find({ status: 'pending' })
+      .sort({ createdAt: -1 })
+      .populate('proposedBy', 'username groupe year proposalBlocked');
     const filtered = all.filter(p => canAccessProposal(req.user, p));
     res.json({ success: true, proposals: filtered });
   } catch (e) {
     res.status(500).json({ success: false, message: 'Erreur feed propositions', error: String(e) });
+  }
+});
+
+router.get('/proposals/feed/count', verifyToken, async (req, res) => {
+  try {
+    const all = await EventProposal.find({ status: 'pending' })
+      .populate('proposedBy', 'proposalBlocked');
+    const filtered = all.filter(p => canAccessProposal(req.user, p) && !(p?.proposedBy?.proposalBlocked));
+    res.json({ success: true, count: filtered.length });
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Erreur compteur feed', error: String(e) });
   }
 });
 
@@ -175,7 +191,8 @@ router.get('/proposals/feed', verifyToken, async (req, res) => {
 // Détail d'une proposition (visionnage par délégué/prof/admin)
 router.get('/proposals/:id([0-9a-fA-F]{24})', verifyToken, requireRole(['delegue','prof','admin']), async (req, res) => {
   try {
-    const prop = await EventProposal.findById(req.params.id);
+    const prop = await EventProposal.findById(req.params.id)
+      .populate('proposedBy', 'username groupe year');
     if (!prop) return res.status(404).json({ success: false, message: 'Proposition introuvable' });
     res.json({ success: true, proposal: prop });
   } catch (e) {
@@ -200,12 +217,66 @@ router.post('/proposals/:id/validate', verifyToken, requireRole(['delegue','prof
       createdBy: req.user.id,
       description: sanitizeHtml(prop.description || ''),
       attachments: Array.isArray(prop.attachments) ? prop.attachments : [],
-      submissionEnabled: !!prop.submissionEnabled
+      submissionEnabled: !!prop.submissionEnabled,
+      checkedBy: Array.isArray(prop.checkedBy) ? prop.checkedBy : [],
+      archivedBy: Array.isArray(prop.archivedBy) ? prop.archivedBy : []
     });
     prop.status = 'validated';
     prop.reviewedBy = req.user.id;
     prop.reviewedAt = new Date();
     await prop.save();
+
+    try {
+      if (ev && ev.type !== 'exam') {
+        const [h, m] = (ev.heure || '').split(':');
+        const target = new Date(ev.date);
+        target.setHours(Number(h), Number(m || 0), 0, 0);
+        const now = new Date();
+        const isLate = now > target;
+        if (!isLate && Array.isArray(ev.checkedBy) && ev.checkedBy.length) {
+          for (const uid of ev.checkedBy) {
+            try {
+              const u = await User.findById(uid);
+              if (u) {
+                u.completedTasks = (u.completedTasks || 0) + 1;
+                let isOfficial = false;
+                try {
+                  if (ev && ev.createdBy) {
+                    const creator = await User.findById(ev.createdBy);
+                    isOfficial = !!creator && String(creator.role || '') === 'delegue';
+                  }
+                } catch {}
+                if (isOfficial) {
+                  u.repeatable = u.repeatable || {};
+                  function incAndAward(key, threshold, amount) {
+                    u.repeatable[key] = Math.max(0, Number(u.repeatable[key] || 0)) + 1;
+                    if (u.repeatable[key] >= threshold) {
+                      u.repeatable[key] -= threshold;
+                      u.coins = (u.coins || 0) + amount;
+                      u.achievements = u.achievements || {}; u.achievements.repeatCompleted = Math.max(0, Number(u.achievements.repeatCompleted||0)) + 1;
+                    }
+                  }
+                  incAndAward('tasks10', 10, 50);
+                  incAndAward('tasks25', 25, 120);
+                  incAndAward('tasks50', 50, 300);
+                }
+                function award(id) {
+                  u.achievementsCompleted = Array.isArray(u.achievementsCompleted) ? u.achievementsCompleted : [];
+                  if (!u.achievementsCompleted.includes(id)) u.achievementsCompleted.push(id);
+                }
+                const t = Math.max(0, Number(u.completedTasks||0));
+                if (t === 10) award('tasks-validate-10');
+                if (t === 50) award('tasks-validate-50');
+                if (t === 100) award('tasks-validate-100');
+                if (t === 250) award('tasks-validate-250');
+                await u.save();
+              }
+            } catch {}
+          }
+        }
+      }
+    } catch {}
+
     res.json({ success: true, event: ev });
   } catch (e) {
     res.status(500).json({ success: false, message: 'Erreur validation proposition', error: String(e) });

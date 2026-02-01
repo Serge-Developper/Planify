@@ -41,6 +41,7 @@ const userSchema = new mongoose.Schema({
 
   // Préférence d'apparition dans le leaderboard
   leaderboardEnabled: { type: Boolean, default: leaderboardEnabledDefault },
+  proposalBlocked: { type: Boolean, default: false },
 
   purchasedItems: {
       type: [
@@ -69,6 +70,7 @@ const userSchema = new mongoose.Schema({
 
   // Persistance des variantes d'items dynamiques (ex: Discord/Jojo)
    dynamicItemVariants: { type: Map, of: Number, default: {} },
+  mutedProposers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 
   suggestEditorState: { type: Object, default: {} },
 

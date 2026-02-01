@@ -10,10 +10,11 @@
       </button>
       <button v-if="user && (user.role === 'delegue' || user.role === 'prof' || user.role === 'admin')" class="btn-ajouter-tache btn-voir-taches" @click="openProposals">
         📥 Propositions
-        <span v-if="user && user.role === 'delegue' && proposalsAvailableCount > 0" class="deposit-badge">{{ proposalsAvailableCount }}</span>
+        <span v-if="proposalsCountBadge > 0" class="deposit-badge">{{ proposalsCountBadge }}</span>
       </button>
       <button v-if="user && (user.role === 'eleve' || user.role === 'etudiant')" class="btn-ajouter-tache btn-voir-taches" @click="openProposals">
         📥 Propositions
+        <span v-if="proposalsCountBadge > 0" class="deposit-badge">{{ proposalsCountBadge }}</span>
       </button>
       <!-- Vider les retards: visible en onglet Retard. A droite pour les délégués, centré pour les élèves -->
       <button
@@ -255,11 +256,12 @@
             <div class="devoir-titre-row" style="align-items: center;">
               <div class="devoir-titre" style="flex:1">
                 <div class="matiere-label-liste" :style="{ background: stringToColor(p.matiere, p.type) }">{{ p.matiere }}</div>
+                <div class="devoir-card-title" :title="p.titre">{{ p.titre }}</div>
                 <div class="devoir-type">
                   <span v-if="p.type === 'exam'">📝 Examen</span>
                   <span v-else>📚 Devoir</span>
                 </div>
-                <small v-if="p.proposedByName" class="proposer-name">Par {{ p.proposedByName }}</small>
+                <small v-if="displayProposalProposerName(p)" class="proposer-name">Par {{ displayProposalProposerName(p) }}</small>
               </div>
               <div class="devoir-actions" style="display:flex; gap:8px; flex-wrap:wrap;">
                 <button class="btn-vider-archive btn-pill-common orange" @click="blockProposer(p)">{{ p.proposedByBlocked ? 'Débloquer' : 'Bloquer' }}</button>
@@ -2299,6 +2301,17 @@ function displayProposerName(ev) {
     const createdBy = String(ev?.createdBy || '')
     if (createdBy && myId && createdBy === myId) return (user.value?.username || user.value?.name || 'Vous')
     return ev?.createdByName || ev?.proposedByName || ''
+  } catch { return '' }
+}
+
+
+function displayProposalProposerName(p) {
+  try {
+    if (p?.proposedByName) return p.proposedByName
+    const id = String(p?.proposedById || '')
+    if (!id) return ''
+    const idx = new Map((blockedUsers.value || []).map(u => [String(u._id || u.id || ''), String(u.username || '')]))
+    return idx.get(id) || ''
   } catch { return '' }
 }
 function formatDate(dateStr) {
@@ -4642,11 +4655,9 @@ onMounted(async () => {
   await subjectsStore.initializeStore();
   await fetchMyProposals();
   await fetchMyAcceptedProposals();
-  if (user.value && (user.value.role === 'delegue' || user.value.role === 'prof' || user.value.role === 'admin')) {
-    void 0;
-  }
+  await refreshProposalsCountBadge();
 });
-watch(() => user.value && user.value.token, (tok) => { if (tok) { fetchMyProposals(); fetchMyAcceptedProposals(); } });
+watch(() => user.value && user.value.token, (tok) => { if (tok) { fetchMyProposals(); fetchMyAcceptedProposals(); refreshProposalsCountBadge(); } });
 
 function isNewTask(event) {
   if (!event || !event._id) return false;
@@ -4885,6 +4896,7 @@ async function fetchMyTasks() {
 const showProposalsPopup = ref(false);
 const proposalsLoading = ref(false);
 const proposalsList = ref([]);
+const proposalsCountBadge = ref(0);
 const showBlockedPanel = ref(false);
 const proposalsAvailableCount = computed(() => (Array.isArray(proposalsList.value) ? proposalsList.value.length : 0));
 const proposalsHeaderTitle = computed(() => showBlockedPanel.value ? 'Personnes bloquées' : 'Propositions en attente');
@@ -4893,6 +4905,20 @@ const blockedLoading = ref(false);
 const blockedError = ref('');
 const proposalsError = ref('');
 const proposalLoading = ref(false);
+async function refreshProposalsCountBadge() {
+  try {
+    const role = user.value?.role;
+    const token = user.value?.token;
+    if (role === 'delegue' || role === 'prof' || role === 'admin') {
+      const r = await axios.get(`${API_URL}/events/proposals`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      const arr = Array.isArray(r?.data?.proposals) ? r.data.proposals : (Array.isArray(r?.data) ? r.data : []);
+      proposalsCountBadge.value = Math.max(0, Number(arr.length || 0));
+    } else {
+      const r = await axios.get(`${API_URL}/events/proposals/feed/count`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      proposalsCountBadge.value = Math.max(0, Number(r?.data?.count || 0));
+    }
+  } catch { proposalsCountBadge.value = 0; }
+}
 
 async function openProposalInfo(id) {
   try {
@@ -4900,28 +4926,51 @@ async function openProposalInfo(id) {
     const token = user.value.token;
     const role = user.value.role;
     if (role === 'delegue' || role === 'prof' || role === 'admin') {
-      const res = await axios.get(`${API_URL}/events/proposals/${encodeURIComponent(id)}`, { headers: { Authorization: `Bearer ${token}` } });
-      const p = res.data?.proposal;
-      if (!p) return alert('Proposition introuvable');
-      const evLike = {
-        _id: p._id,
-        titre: p.titre || '',
-        matiere: p.matiere || '',
-        date: p.date || '',
-        heure: typeof p.heure === 'string' ? p.heure.replace('h', ':') : p.heure,
-        type: ((p.type || '').toLowerCase() === 'examen' ? 'exam' : (((p.type || '').toLowerCase() === 'devoir') ? 'devoir' : ((p.type || '').toLowerCase() || 'devoir'))),
-        groupe: p.groupe || 'Promo',
-        groupes: Array.isArray(p.groupes) ? p.groupes : (p.groupe ? [p.groupe] : []),
-        year: p.year || '',
-        specialite: p.specialite || '',
-        description: p.description || '',
-        submissionEnabled: !!p.submissionEnabled,
-        attachments: Array.isArray(p.attachments) ? p.attachments : [],
-        createdBy: p.proposedBy?._id || p.proposedBy,
-        createdByName: p.proposedBy?.username || '',
-        isProposal: true
-      };
-      openPopup(evLike);
+      const pInList = proposalsList.value.find(x => String(x._id) === String(id))
+      if (pInList && pInList.proposedByBlocked) {
+        const evLike = {
+          _id: pInList._id,
+          titre: pInList.titre || '',
+          matiere: pInList.matiere || '',
+          date: pInList.date || '',
+          heure: typeof pInList.heure === 'string' ? pInList.heure.replace('h', ':') : pInList.heure,
+          type: pInList.type || 'devoir',
+          groupe: pInList.groupe || 'Promo',
+          groupes: Array.isArray(pInList.groupes) ? pInList.groupes : [],
+          year: pInList.year || '',
+          specialite: pInList.specialite || '',
+          description: pInList.description || '',
+          submissionEnabled: !!pInList.submissionEnabled,
+          attachments: Array.isArray(pInList.attachments) ? pInList.attachments : [],
+          createdBy: pInList.proposedById,
+          createdByName: pInList.proposedByName || '',
+          isProposal: true
+        };
+        openPopup(evLike);
+      } else {
+        const res = await axios.get(`${API_URL}/events/proposals/${encodeURIComponent(id)}`, { headers: { Authorization: `Bearer ${token}` } });
+        const p = res.data?.proposal;
+        if (!p) return alert('Proposition introuvable');
+        const evLike = {
+          _id: p._id,
+          titre: p.titre || '',
+          matiere: p.matiere || '',
+          date: p.date || '',
+          heure: typeof p.heure === 'string' ? p.heure.replace('h', ':') : p.heure,
+          type: ((p.type || '').toLowerCase() === 'examen' ? 'exam' : (((p.type || '').toLowerCase() === 'devoir') ? 'devoir' : ((p.type || '').toLowerCase() || 'devoir'))),
+          groupe: p.groupe || 'Promo',
+          groupes: Array.isArray(p.groupes) ? p.groupes : (p.groupe ? [p.groupe] : []),
+          year: p.year || '',
+          specialite: p.specialite || '',
+          description: p.description || '',
+          submissionEnabled: !!p.submissionEnabled,
+          attachments: Array.isArray(p.attachments) ? p.attachments : [],
+          createdBy: p.proposedBy?._id || p.proposedBy,
+          createdByName: p.proposedBy?.username || '',
+          isProposal: true
+        };
+        openPopup(evLike);
+      }
     } else {
       const p = proposalsList.value.find(x => String(x._id) === String(id));
       if (!p) { proposalLoading.value = false; return; }
@@ -4951,13 +5000,13 @@ async function openProposalInfo(id) {
     proposalLoading.value = false;
   }
 }
-function openProposals() { if (!user.value) return alert('Non connecté'); showProposalsPopup.value = true; try { if (window.innerWidth > 1024) document.body.style.overflow = 'hidden' } catch {} fetchProposals(); if (showBlockedPanel.value) fetchBlockedUsers(); }
+async function openProposals() { if (!user.value) return alert('Non connecté'); showProposalsPopup.value = true; try { if (window.innerWidth > 1024) document.body.style.overflow = 'hidden' } catch {} await fetchBlockedUsers(); await fetchProposals(); }
 function closeProposals() { showProposalsPopup.value = false; try { if (window.innerWidth > 1024) document.body.style.overflow = '' } catch {} }
 function toggleBlockedPanel() { showBlockedPanel.value = !showBlockedPanel.value; if (showBlockedPanel.value) fetchBlockedUsers(); }
 function openBlockedTab() { showBlockedPanel.value = true; fetchBlockedUsers(); }
-function openProposalsTab() { showBlockedPanel.value = false; fetchProposals(); }
+async function openProposalsTab() { showBlockedPanel.value = false; await fetchBlockedUsers(); await fetchProposals(); }
 async function fetchBlockedUsers() { try { blockedLoading.value = true; blockedError.value = ''; const role = user.value.role; const token = user.value.token; if (role === 'delegue' || role === 'prof' || role === 'admin') { const res = await axios.get(`${API_URL}/users/blocked-proposers`, { headers: { Authorization: `Bearer ${token}` } }); const arr = Array.isArray(res.data?.users) ? res.data.users : (Array.isArray(res.data) ? res.data : []); blockedUsers.value = arr.map(u => ({ _id: u._id || u.id, username: u.username || '', groupe: u.groupe || '', year: u.year || '', proposalBlocked: !!u.proposalBlocked, isMuted: false })); } else { let stored = []; try { const raw = localStorage.getItem('planify_muted_proposers'); stored = raw ? JSON.parse(raw) : []; } catch {} const arr = Array.isArray(stored) ? stored : []; blockedUsers.value = arr.map(u => ({ _id: u._id || u.id, username: u.username || '', groupe: u.groupe || '', year: u.year || '', proposalBlocked: false, isMuted: true })); } } catch (e) { blockedUsers.value = []; blockedError.value = 'Erreur'; } finally { blockedLoading.value = false; } }
-async function toggleBlockUser(u) { try { if (!u?._id) return; const token = user.value.token; const role = user.value.role; if (role === 'delegue' || role === 'prof' || role === 'admin') { if (u.proposalBlocked) { await axios.post(`${API_URL}/users/${u._id}/unblock-proposals`, {}, { headers: { Authorization: `Bearer ${token}` } }); u.proposalBlocked = false; } else { await axios.post(`${API_URL}/users/${u._id}/block-proposals`, { reason: '' }, { headers: { Authorization: `Bearer ${token}` } }); u.proposalBlocked = true; } } else { if (u.isMuted) { await axios.post(`${API_URL}/users/unmute-proposer/${u._id}`, {}, { headers: { Authorization: `Bearer ${token}` } }); try { const raw = localStorage.getItem('planify_muted_proposers'); const arr = raw ? JSON.parse(raw) : []; const next = Array.isArray(arr) ? arr.filter(x => String(x._id || x.id) !== String(u._id)) : []; localStorage.setItem('planify_muted_proposers', JSON.stringify(next)); } catch {} u.isMuted = false; } else { await axios.post(`${API_URL}/users/mute-proposer/${u._id}`, {}, { headers: { Authorization: `Bearer ${token}` } }); try { const raw = localStorage.getItem('planify_muted_proposers'); const arr = raw ? JSON.parse(raw) : []; const entry = { _id: u._id, username: u.username || '' }; const next = Array.isArray(arr) ? [...arr.filter(x => String(x._id || x.id) !== String(u._id)), entry] : [entry]; localStorage.setItem('planify_muted_proposers', JSON.stringify(next)); } catch {} u.isMuted = true; } } try { await fetchProposals(); } catch {} } catch (e) { alert('Action échouée'); } }
+async function toggleBlockUser(u) { try { if (!u?._id) return; const token = user.value.token; const role = user.value.role; if (role === 'delegue' || role === 'prof' || role === 'admin') { if (u.proposalBlocked) { await axios.post(`${API_URL}/users/${u._id}/unblock-proposals`, {}, { headers: { Authorization: `Bearer ${token}` } }); u.proposalBlocked = false; } else { await axios.post(`${API_URL}/users/${u._id}/block-proposals`, { reason: '' }, { headers: { Authorization: `Bearer ${token}` } }); u.proposalBlocked = true; } } else { if (u.isMuted) { await axios.post(`${API_URL}/users/unmute-proposer/${u._id}`, {}, { headers: { Authorization: `Bearer ${token}` } }); try { const raw = localStorage.getItem('planify_muted_proposers'); const arr = raw ? JSON.parse(raw) : []; const next = Array.isArray(arr) ? arr.filter(x => String(x._id || x.id) !== String(u._id)) : []; localStorage.setItem('planify_muted_proposers', JSON.stringify(next)); } catch {} u.isMuted = false; } else { await axios.post(`${API_URL}/users/mute-proposer/${u._id}`, {}, { headers: { Authorization: `Bearer ${token}` } }); try { const raw = localStorage.getItem('planify_muted_proposers'); const arr = raw ? JSON.parse(raw) : []; const entry = { _id: u._id, username: u.username || '' }; const next = Array.isArray(arr) ? [...arr.filter(x => String(x._id || x.id) !== String(u._id)), entry] : [entry]; localStorage.setItem('planify_muted_proposers', JSON.stringify(next)); } catch {} u.isMuted = true; } } try { await fetchBlockedUsers(); await fetchProposals(); } catch {} } catch (e) { alert('Action échouée'); } }
 async function fetchProposals() {
   try {
     proposalsLoading.value = true; proposalsError.value = '';
@@ -4980,9 +5029,22 @@ async function fetchProposals() {
     }))
     // Élèves/étudiants: exclure mes propres propositions
     base = (role === 'delegue' || role === 'prof' || role === 'admin') ? base : base.filter(p => String(p.proposedById || '') !== myId)
-    // Enrichir les noms manquants via /events/proposals/:id
+    // Masquer toute proposition provenant d’un proposant bloqué (sécurité UI)
+    base = base.filter(p => !p.proposedByBlocked)
+    // Remplissages et filtrages liés aux personnes bloquées
+    try {
+      const bIdx = new Map((blockedUsers.value || []).map(u => [String(u._id || u.id || ''), String(u.username || '')]))
+      // Fallback nom via “Personnes bloquées”
+      base = base.map(x => (!x.proposedByName && bIdx.has(String(x.proposedById || ''))) ? { ...x, proposedByName: bIdx.get(String(x.proposedById || '')) || '' } : x)
+      // Fallback blocage: marquer comme bloqué si l’ID figure dans blockedUsers
+      const blockedIdSet = new Set((blockedUsers.value || []).map(u => String(u._id || u.id || '')))
+      base = base.map(x => (!x.proposedByBlocked && blockedIdSet.has(String(x.proposedById || ''))) ? { ...x, proposedByBlocked: true } : x)
+    } catch {}
+    // Masquer les propositions des proposants bloqués (persistance UI)
+    base = base.filter(p => !p.proposedByBlocked)
+    // Enrichir les noms manquants via /events/proposals/:id (rôles autorisés uniquement, et non bloqués)
     async function enrichMissing() {
-      const need = base.filter(x => !x.proposedByName && x.proposedById)
+      const need = base.filter(x => !x.proposedByName && x.proposedById && !x.proposedByBlocked)
       if (!need.length) return
       await Promise.all(need.map(async (x) => {
         try {
@@ -4993,8 +5055,8 @@ async function fetchProposals() {
         } catch {}
       }))
     }
-    await enrichMissing()
-    proposalsList.value = base
+    if (role === 'delegue' || role === 'prof' || role === 'admin') { await enrichMissing() }
+    proposalsList.value = base; proposalsCountBadge.value = base.length
   } catch (e) { proposalsList.value = []; proposalsError.value = 'Erreur'; } finally { proposalsLoading.value = false; }
 }
 async function validateProposal(p) {
@@ -5026,8 +5088,11 @@ async function blockProposer(p) {
         const prev = proposalsList.value;
         proposalsList.value = prev.filter(x => x.proposedById !== uid);
         await axios.post(`${API_URL}/users/${uid}/block-proposals`, { reason: '' }, { headers: { Authorization: `Bearer ${token}` } });
+        await fetchBlockedUsers();
+        await fetchProposals();
       } else {
         await axios.post(`${API_URL}/users/${uid}/unblock-proposals`, {}, { headers: { Authorization: `Bearer ${token}` } });
+        await fetchBlockedUsers();
         await fetchProposals();
       }
     } else {
