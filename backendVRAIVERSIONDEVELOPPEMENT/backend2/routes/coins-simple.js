@@ -786,7 +786,7 @@ router.get('/weekly-items', verifyToken, async (req, res) => {
      * @param {ShopItem[]=} items
      * @returns {ShopItem[]}
      */
-    function getRandomItemsFromSeed(seed, count = 3, items = allWeeklyItems) {
+    function getRandomItemsFromSeed(seed, count = 4, items = allWeeklyItems) {
       const shuffled = getShuffledItemsFromSeed(seed, items);
       return shuffled.slice(0, count);
     }
@@ -835,7 +835,7 @@ router.get('/weekly-items', verifyToken, async (req, res) => {
       }
     } catch {}
 
-    const prevItems = getRandomItemsFromSeed(prevSeed, 3, combinedPool);
+    const prevItems = getRandomItemsFromSeed(prevSeed, 4, combinedPool);
     const prevIds = new Set(prevItems.map(i => i.id));
 
     // Lire cache existant
@@ -850,14 +850,14 @@ router.get('/weekly-items', verifyToken, async (req, res) => {
       for (const it of shuffledToday) {
         if (!prevIds.has(it.id)) {
           todaySelection.push(it);
-          if (todaySelection.length === 3) break;
+          if (todaySelection.length === 4) break;
         }
       }
-      while (todaySelection.length < 3) {
+      while (todaySelection.length < 4) {
         for (const it of shuffledToday) {
           if (!todaySelection.find(x => x.id === it.id)) {
             todaySelection.push(it);
-            if (todaySelection.length === 3) break;
+            if (todaySelection.length === 4) break;
           }
         }
       }
@@ -866,6 +866,16 @@ router.get('/weekly-items', verifyToken, async (req, res) => {
     } else {
       selectedItemIds = Array.isArray(cached.itemIds) ? cached.itemIds.map(Number) : []
       selectedColorIds = Array.isArray(cached.colorIds) ? cached.colorIds.map(Number) : []
+      if (selectedItemIds.length < 4) {
+        const shuffledToday = getShuffledItemsFromSeed(seedForToday, combinedPool);
+        for (const it of shuffledToday) {
+          const id = Number(it.id);
+          if (!prevIds.has(id) && !selectedItemIds.includes(id)) {
+            selectedItemIds.push(id);
+            if (selectedItemIds.length === 4) break;
+          }
+        }
+      }
     }
     // (les ajouts de test seront fusionnés plus bas une fois weeklyItems construit)
     
@@ -959,7 +969,7 @@ router.get('/weekly-items', verifyToken, async (req, res) => {
     
     // Sélectionner 3 couleurs de bordures aléatoires avec la MÊME logique que les items
     // et empêcher la répétition immédiate J vs J-1
-    const prevColors = getShuffledItemsFromSeed(prevSeed, borderColorItems).slice(0, 3);
+    const prevColors = getShuffledItemsFromSeed(prevSeed, borderColorItems).slice(0, 4);
     const prevColorIds = new Set(prevColors.map(c => c.id));
 
     const shuffledTodayColors = getShuffledItemsFromSeed(seedForToday, borderColorItems);
@@ -968,15 +978,15 @@ router.get('/weekly-items', verifyToken, async (req, res) => {
     for (const c of shuffledTodayColors) {
       if (!prevColorIds.has(c.id)) {
         todayColorSelection.push(c);
-        if (todayColorSelection.length === 3) break;
+        if (todayColorSelection.length === 4) break;
       }
     }
-    // Sécurité: si moins de 3 couleurs (cas très rare), compléter sans la contrainte
-    while (todayColorSelection.length < 3) {
+    // Sécurité: si moins de 4 couleurs (cas très rare), compléter sans la contrainte
+    while (todayColorSelection.length < 4) {
       for (const c of shuffledTodayColors) {
         if (!todayColorSelection.find(x => x.id === c.id)) {
           todayColorSelection.push(c);
-          if (todayColorSelection.length === 3) break;
+          if (todayColorSelection.length === 4) break;
         }
       }
     }
@@ -995,6 +1005,15 @@ router.get('/weekly-items', verifyToken, async (req, res) => {
           selectedColorIds = Array.isArray(again.colorIds) ? again.colorIds.map(Number) : selectedColorIds
         }
       }
+    } else {
+      if (selectedColorIds.length < 4) {
+        for (const c of selectedBorderColors) {
+          const id = Number(c.id)
+          if (!selectedColorIds.includes(id)) selectedColorIds.push(id)
+          if (selectedColorIds.length === 4) break
+        }
+      }
+      try { await DailyShop.updateOne({ daySeed }, { $set: { itemIds: selectedItemIds.slice(0,4), colorIds: selectedColorIds.slice(0,4) } }) } catch {}
     }
 
     // Reconstruire la réponse à partir des IDs figés (pour ignorer les ajouts/suppressions dans la journée)
@@ -1132,19 +1151,7 @@ router.post('/weekly-items/reroll', verifyToken, requireRole(['admin']), async (
   try {
     const DailyShop = require('../models/DailyShop')
     // Seed tri-jours Europe/Paris (début de période)
-    function getCurrentTriSeed() {
-      const parts = new Intl.DateTimeFormat('en-GB', {
-        timeZone: 'Europe/Paris',
-        year: 'numeric', month: '2-digit', day: '2-digit'
-      }).formatToParts(new Date());
-      const m = /** @type {Record<string, string>} */ ({ });
-      for (const p of parts) m[/** @type {string} */ (p.type)] = /** @type {string} */ (p.value);
-      const y = Number(m['year']), mo = Number(m['month']), d = Number(m['day']);
-      const cnt = Math.floor(Date.UTC(y, mo - 1, d) / 86400000);
-      const triStart = cnt - (cnt % 3);
-      return new Date(triStart * 86400000).toISOString().slice(0, 10);
-    }
-    const seed = getCurrentTriSeed();
+    const seed = getCurrentDaySeed();
     await DailyShop.deleteOne({ daySeed: seed });
     // Cast global + randomInt pour le sel de reroll
     const G = /** @type {any} */ (global);

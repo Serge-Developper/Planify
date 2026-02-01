@@ -285,4 +285,16 @@ router.post('/total-coins', verifyToken, requireRole(['admin']), async (req, res
 });
 
 // Supprime la route dupliquée /leaderboard qui était après l’export
+
+// POST /api/factions/monthly-balance — déclencheur léger côté serveur
+// Idempotent côté client grâce à localStorage; côté serveur on s'assure juste que les factions existent
+router.post('/monthly-balance', verifyToken, async (req, res) => {
+  try {
+    await ensureFactions();
+    res.json({ success: true, message: 'Balance mensuelle déclenchée' });
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Erreur balance mensuelle' });
+  }
+});
+
 module.exports = router;

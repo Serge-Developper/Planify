@@ -4704,6 +4704,18 @@ function getCosmeticPreviewBgStyle(item) {
 
 function getCollectionDisplayName(item) {
   try {
+    const isDiscord =
+      item && (
+        item.displayType === 'discord' ||
+        item.name === 'Discord' ||
+        item.id == 23 || item.legacyId == 23 ||
+        item.id == 233 || item.legacyId == 233
+      )
+    if (isDiscord) {
+      const raw = String(item?.name || '')
+      const noParen = raw.replace(/\s*\([^)]*\)\s*$/i, '')
+      return noParen || 'Discord'
+    }
     const nm = getCurrentVariantName(item)
     if (nm) return nm
     const raw = String(item?.name || '')
@@ -6593,7 +6605,7 @@ const getJojoVariantIndexForUser = (user) => {
           
           return { ...it, img: fixedImg }
         })
-        weeklyItems.value = patched
+        weeklyItems.value = [...patched].sort((a, b) => { const aid = Number((a.legacyId ?? a.id)); const bid = Number((b.legacyId ?? b.id)); if (Number.isFinite(aid) && Number.isFinite(bid)) return aid - bid; return String(a.name || '').localeCompare(String(b.name || '')); }).sort((a, b) => Number((a.legacyId ?? a.id)) - Number((b.legacyId ?? b.id)))
         timeUntilReset.value = response.timeUntilReset || ''
         try { nextResetAt.value = Date.parse(response.nextReset) || 0 } catch { nextResetAt.value = 0 }
         updateWeeklyTimer()
@@ -7194,7 +7206,7 @@ onUnmounted(() => {
      loadLeaderboardUsers()
    } else if (newTab === 'weekly') {
      loadWeeklyItems()
-     startWeeklyAutoCycle()
+    startWeeklyAutoCycle()
    } else {
      stopWeeklyAutoCycle()
    }
@@ -8782,14 +8794,18 @@ onUnmounted(() => {
   }
 
   /* Overrides Collection uniquement */
-  .shop-grid .collection-item .angel-img-shop { top: 24px !important; left: 13px !important; max-width: 80% !important; }
+  .shop-grid .collection-item .angel-img-shop { top: 24px !important; left: 12px !important; max-width: 80% !important; }
+  .shop-grid .collection-item .gentleman-img-shop { left: 10px !important; top: 18px !important; }
+  .shop-grid .collection-item .moustache-img-shop { left: 11px !important; top: 38px !important; }
+  .shop-grid .collection-item .pate-img-shop { top: 40px !important; left: 20% !important; }
+  .shop-grid .collection-item .chat-img-shop { top: 42%; left: 63%; }
   /* moved: gentleman-img-shop override placed after base definitions */
   /* moved: moustache-img-shop override placed after base definitions */
-  .shop-grid .collection-item .discord-img-shop { left: 15px !important; }
+  .shop-grid .collection-item .discord-img-shop { left: 13px !important; top: 17% !important; }
   .shop-grid .collection-item .daftpunk-img-shop { width: 60% !important; transform: none !important; position: absolute !important; height: auto !important; object-fit: contain !important; left: 20% !important; top: 10% !important; }
   .shop-grid .collection-item .clippy-img-shop { left: 50% !important; top: 60% !important; width: 29% !important; transform: none !important; position: absolute !important; height: auto !important; object-fit: contain !important; }
   .shop-grid .collection-item .nokia-img-shop { left: 13% !important;  top: 50% !important; width: 40% !important; transform: none !important; position: absolute !important; height: auto !important; object-fit: contain !important; }
-  .shop-grid .collection-item .jojo-img-shop.jojo-swipe.jojo-sepia-anim {  top: 50px !important; left: 88px !important; }
+  .shop-grid .collection-item .jojo-img-shop.jojo-swipe.jojo-sepia-anim {  top: 43px !important; left: 76px !important; }
   
   /* Correction du leaderboard container pour mobile */
   .leaderboard-container {
@@ -8840,8 +8856,8 @@ onUnmounted(() => {
 .jojo-text-preview {
     position: absolute !important;
     top: 0px !important;
-    left: 42px !important;
-    width: 50% !important;
+    left: 13px !important;
+    width: 62% !important;
     height: auto !important;
     object-fit: contain !important;
   }
@@ -9844,8 +9860,8 @@ onUnmounted(() => {
 */
 
 /* Overrides Collection uniquement – placed here to win cascade over base rules */
-.shop-grid .collection-item .gentleman-img-shop { top: 18px !important; left: 13px !important; max-width: 60% !important; max-height: 48% !important; position: absolute; }
-.shop-grid .collection-item .moustache-img-shop { top: 39px !important; left: 14px !important; max-width: 55% !important; max-height: 55% !important; position: absolute; }
+.shop-grid .collection-item .gentleman-img-shop { top: 18px; left: 13px; max-width: 60% !important; max-height: 48% !important; position: absolute; }
+.shop-grid .collection-item .moustache-img-shop { top: 39px; left: 14px; max-width: 55% !important; max-height: 55% !important; position: absolute; }
 .shop-grid .collection-item .absolute-cinema-item-shop { gap: 17px !important; }
 
 .vinyle-item-shop {
@@ -11530,7 +11546,7 @@ onUnmounted(() => {
   scrollbar-gutter: stable both-edges;
 }
 .leaderboard-list.faction-leaderboard-list .leaderboard-item {
-  width: 300px !important;
+  width: 270px !important;
   height: 120px !important;
   min-height: 120px !important;
 }
@@ -11539,11 +11555,11 @@ onUnmounted(() => {
     width: 360px !important;
     max-width: 360px !important;
     overflow-x: hidden;
-    padding-right: 12px !important;
+    padding-right: 0 !important;
     scrollbar-gutter: stable both-edges;
   }
   .leaderboard-list.faction-leaderboard-list .leaderboard-item {
-    width: 325px !important;
+    width: 100% !important;
     height: 120px !important;
     min-height: 120px !important;
   }
@@ -11638,8 +11654,8 @@ onUnmounted(() => {
   
   .faction-col {
    padding: 12px;
-        width: 159% !important;
-        max-width: 164.5% !important;
+        width: 100% !important;
+        max-width: 100% !important;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -11648,11 +11664,11 @@ onUnmounted(() => {
 
 
   .faction-member-badge {
-    width: 85%;
+    width: 95%;
   }
 
   .faction-leaderboard-list {
-    width: 270.10px;
+    width: 100%;
   }
   
   .faction-title {
@@ -12298,19 +12314,21 @@ onUnmounted(() => {
   .leaderboard-toggle-bar { margin-bottom: 12px !important; }
   .factions-section { order: 1 !important; width: 100% !important; align-items: center !important; }
   .personal-section { order: 2 !important; width: 100% !important; align-items: center !important; }
+  .leaderboard-container { overflow-x: hidden !important; }
 
   .factions-grid {
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
-    width: 88% !important;
+    width: 111% !important;
     grid-template-columns: none !important;
     gap: 20px !important;
   }
 
   .faction-col {
-    padding: 10px !important;
-    width: 140% !important;
+    padding: 5px !important;
+    width: 100% !important;
+    max-width: 100% !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
@@ -12325,12 +12343,20 @@ onUnmounted(() => {
     margin: 0 auto !important;
   }
 
-  .leaderboard-list,
-  .faction-leaderboard-list {
+  .leaderboard-list {
     width: 280px !important;
     max-width: 280px !important;
     margin: 0 auto !important;
     display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+  .faction-leaderboard-list {
+    width: 300px !important;
+    max-width: 300px !important;
+    margin: 0 auto !important;
+    display: flex !important;
+    padding: 0px 0px 0px 0px;
     flex-direction: column !important;
     align-items: center !important;
   }
