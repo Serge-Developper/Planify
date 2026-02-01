@@ -131,8 +131,8 @@
             </div>
           </div>
           <div class="admin-preview-toolbar preview-slider-controls">
-            <button class="slider-arrow left-arrow" v-if="previewWindowIndex > 0" type="button" @click="prevSuggestPreview">◀</button>
-            <button class="slider-arrow right-arrow" v-if="previewWindowIndex < getSuggestMaxStart()" type="button" @click="nextSuggestPreview">▶</button>
+            <button class="slider-arrow left-arrow" v-if="!isMobile && previewWindowIndex > 0" type="button" @click="prevSuggestPreview">◀</button>
+            <button class="slider-arrow right-arrow" v-if="!isMobile && previewWindowIndex < getSuggestMaxStart()" type="button" @click="nextSuggestPreview">▶</button>
           </div>
           <div class="preview-slider-viewport" :style="sliderViewportStyle">
             <div class="preview-slider-track" :class="slideDirectionClass" :style="sliderTrackStyle">
@@ -140,7 +140,7 @@
               <div class="preview-title">Aperçu Boutique Quotidienne</div>
               <div class="item-img-wrapper large" :class="{ 'mobile-mode': suggestDevice === 'mobile' }">
                 <div class="item-img-container">
-                  <img v-if="suggestAssetSrc" :src="suggestAssetSrc" :class="['item-img','draggable', draggingKey==='dailyShop' ? 'drag-active' : '']" :style="getSuggestStyle('dailyShop')" @click="startDrag('dailyShop', $event)" />
+                  <img v-if="suggestAssetSrc" :src="suggestAssetSrc" :class="['item-img','draggable', draggingKey==='dailyShop' ? 'drag-active' : '']" :style="getSuggestStyle('dailyShop')" @click="startDrag('dailyShop', $event)" @touchstart.prevent.stop="startDragTouch('dailyShop', $event)" />
                 </div>
               </div>
               <div class="item-actions" style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
@@ -154,7 +154,7 @@
               <div class="preview-title">Aperçu Collection</div>
               <div class="item-img-wrapper large" :class="{ 'mobile-mode': suggestDevice === 'mobile' }">
                 <div class="item-img-container">
-                  <img v-if="suggestAssetSrc" :src="suggestAssetSrc" :class="['item-img','draggable', draggingKey==='collectionPreview' ? 'drag-active' : '']" :style="getSuggestStyle('collectionPreview')" @click="startDrag('collectionPreview', $event)" />
+                  <img v-if="suggestAssetSrc" :src="suggestAssetSrc" :class="['item-img','draggable', draggingKey==='collectionPreview' ? 'drag-active' : '']" :style="getSuggestStyle('collectionPreview')" @click="startDrag('collectionPreview', $event)" @touchstart.prevent.stop="startDragTouch('collectionPreview', $event)" />
                 </div>
               </div>
               <div class="preview-actions" style="display:flex;gap:8px;justify-content:center;">
@@ -172,7 +172,7 @@
               <div class="preview-title">Aperçu Cosmétique</div>
               <div class="item-img-wrapper large">
                 <div class="item-img-container">
-                  <img v-if="suggestAssetSrc" :src="suggestAssetSrc" :class="['item-img','draggable', draggingKey==='collection' ? 'drag-active' : '']" :style="getSuggestStyle('collection')" @click="startDrag('collection', $event)" />
+                  <img v-if="suggestAssetSrc" :src="suggestAssetSrc" :class="['item-img','draggable', draggingKey==='collection' ? 'drag-active' : '']" :style="getSuggestStyle('collection')" @click="startDrag('collection', $event)" @touchstart.prevent.stop="startDragTouch('collection', $event)" />
                 </div>
               </div>
               <div class="item-actions" style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
@@ -190,10 +190,10 @@
                   <div class="user-avatar-container">
                     <div class="user-avatar" :class="{ 'no-border': removeLeaderboardBorder }">
                       <div class="avatar-img" style="position:relative;">
-                        <img v-if="suggestAssetSrc && u.isYou && suggestPlacement.leaderboard === 'inside'" :src="suggestAssetSrc" :class="['draggable', draggingKey==='leaderboard' ? 'drag-active' : '']" :style="getSuggestStyle('leaderboard')" @click="startDrag('leaderboard', $event)" />
+                        <img v-if="suggestAssetSrc && u.isYou && suggestPlacement.leaderboard === 'inside'" :src="suggestAssetSrc" :class="['draggable', draggingKey==='leaderboard' ? 'drag-active' : '']" :style="getSuggestStyle('leaderboard')" @click="startDrag('leaderboard', $event)" @touchstart.prevent.stop="startDragTouch('leaderboard', $event)" />
                       </div>
                     </div>
-                    <img v-if="suggestAssetSrc && u.isYou && suggestPlacement.leaderboard === 'above'" :src="suggestAssetSrc" :class="['draggable','overlay-above-leader', draggingKey==='leaderboard' ? 'drag-active' : '']" :style="getSuggestStyle('leaderboard')" @click="startDrag('leaderboard', $event)" />
+                    <img v-if="suggestAssetSrc && u.isYou && suggestPlacement.leaderboard === 'above'" :src="suggestAssetSrc" :class="['draggable','overlay-above-leader', draggingKey==='leaderboard' ? 'drag-active' : '']" :style="getSuggestStyle('leaderboard')" @click="startDrag('leaderboard', $event)" @touchstart.prevent.stop="startDragTouch('leaderboard', $event)" />
                   </div>
                   <div class="user-details"><div class="username">{{ u.name }}</div></div>
                 </div>
@@ -219,10 +219,10 @@
                 <div class="profile-avatar-scaler" :style="`border:none; height: ${suggestAvatarStageHeight}px !important`">
                   <div class="profile-avatar" :class="{ 'no-border': removeAvatarBorder }" style="position:relative;">
                     <div class="avatar-img" style="position:relative; width:150px; height:150px; border-radius:24px; border:none; overflow:hidden;">
-                      <img v-if="suggestAssetSrc && suggestPlacement.avatar === 'inside'" :src="suggestAssetSrc" :class="['draggable', draggingKey==='avatar' ? 'drag-active' : '']" :style="getSuggestStyle('avatar')" @click="startDrag('avatar', $event)" />
+                      <img v-if="suggestAssetSrc && suggestPlacement.avatar === 'inside'" :src="suggestAssetSrc" :class="['draggable', draggingKey==='avatar' ? 'drag-active' : '']" :style="getSuggestStyle('avatar')" @click="startDrag('avatar', $event)" @touchstart.prevent.stop="startDragTouch('avatar', $event)" />
                     </div>
                   </div>
-                  <img v-if="suggestAssetSrc && suggestPlacement.avatar === 'above'" :src="suggestAssetSrc" :class="['draggable','overlay-above', draggingKey==='avatar' ? 'drag-active' : '']" :style="getSuggestStyle('avatar')" @click="startDrag('avatar', $event)" />
+                  <img v-if="suggestAssetSrc && suggestPlacement.avatar === 'above'" :src="suggestAssetSrc" :class="['draggable','overlay-above', draggingKey==='avatar' ? 'drag-active' : '']" :style="getSuggestStyle('avatar')" @click="startDrag('avatar', $event)" @touchstart.prevent.stop="startDragTouch('avatar', $event)" />
                 </div>
               </div>
               <div class="item-actions" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px;">
@@ -247,7 +247,7 @@
 
               <div class="item-img-wrapper large" :style="getPopupWrapperStyle()">
                 <div class="item-img-container">
-                  <img v-if="suggestVariants && suggestVariants[activeVariantIndex] && suggestVariants[activeVariantIndex].assetSrc" :src="suggestVariants[activeVariantIndex].assetSrc" :class="['item-img','draggable', draggingKey==='popupStyle' ? 'drag-active' : '']" :style="getSuggestStyle('popupStyle')" @click="startDrag('popupStyle', $event)" />
+                  <img v-if="suggestVariants && suggestVariants[activeVariantIndex] && suggestVariants[activeVariantIndex].assetSrc" :src="suggestVariants[activeVariantIndex].assetSrc" :class="['item-img','draggable', draggingKey==='popupStyle' ? 'drag-active' : '']" :style="getSuggestStyle('popupStyle')" @click="startDrag('popupStyle', $event)" @touchstart.prevent.stop="startDragTouch('popupStyle', $event)" />
                 </div>
               </div>
               <div class="item-actions" style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
@@ -3760,8 +3760,16 @@ const slideDirection = ref(null)
 const slideDirectionClass = computed(() => slideDirection.value === 'left' ? 'slide-left' : slideDirection.value === 'right' ? 'slide-right' : '')
 const previewCardWidth = ref(390)
 const previewCardGap = ref(6)
-const sliderViewportStyle = computed(() => ({ width: ((previewCardWidth.value * previewWindowSize) + (previewCardGap.value * (previewWindowSize - 1))) + 'px', overflow: 'hidden', margin: '0 auto' }))
-const sliderTrackStyle = computed(() => ({ transform: `translateX(-${previewWindowIndex.value * (previewCardWidth.value + previewCardGap.value)}px)`, transition: 'transform 0.45s ease-in-out' }))
+const sliderViewportStyle = computed(() => (
+  isMobile.value
+    ? { width: '100%', overflow: 'visible', margin: '0 auto' }
+    : { width: ((previewCardWidth.value * previewWindowSize) + (previewCardGap.value * (previewWindowSize - 1))) + 'px', overflow: 'hidden', margin: '0 auto' }
+))
+const sliderTrackStyle = computed(() => (
+  isMobile.value
+    ? { transform: 'none', transition: 'none' }
+    : { transform: `translateX(-${previewWindowIndex.value * (previewCardWidth.value + previewCardGap.value)}px)`, transition: 'transform 0.45s ease-in-out' }
+))
 const suggestPreviewSlides = computed(() => {
   const base = ['dailyShop', 'collection', 'cosmetic', 'leaderboard', 'avatar']
   const hasVariants = Array.isArray(suggestVariants.value) && suggestVariants.value.length > 1
@@ -3951,7 +3959,7 @@ async function deleteUserItem(item) { try { const legacyId = Number((typeof item
 function onSuggestFile(e) { try { const f = e.target.files && e.target.files[0]; if (!f) return; const reader = new FileReader(); reader.onload = () => { const data = reader.result; suggestAssetSrc.value = data; const v = suggestVariants.value[activeVariantIndex.value]; if (v) v.assetSrc = data }; reader.readAsDataURL(f) } catch {} }
 function onSuggestUrl() { try { const u = String(suggestUrl.value || '').trim(); if (!u) return; const raw = u.split('?')[0]; const url = raw + (raw.startsWith('/uploads/') ? `?v=${Date.now()}` : ''); suggestAssetSrc.value = url; const v = suggestVariants.value[activeVariantIndex.value]; if (v) v.assetSrc = url } catch {} }
 function centerSuggest(key) { try { const s = suggestStyles.value[key]; if (!s) return; const root = weeklyContainerRef.value; let el = null; if (key === 'leaderboard') { const sel = (suggestPlacement.value.leaderboard === 'above') ? '.preview-card.preview-leaderboard .leaderboard-item .user-avatar-container' : '.preview-card.preview-leaderboard .avatar-img'; el = root && root.querySelector(sel) } else if (key === 'avatar') { const sel = (suggestPlacement.value.avatar === 'above') ? '.preview-card.preview-avatar .profile-avatar-scaler' : '.preview-card.preview-avatar .avatar-img'; el = root && root.querySelector(sel) } else if (key === 'dailyShop') { el = root && root.querySelector('.preview-card.preview-daily-shop .item-img-container') } else if (key === 'collectionPreview') { el = root && root.querySelector('.preview-card.preview-collection .item-img-container') } else if (key === 'popupStyle') { el = root && root.querySelector('.preview-card.preview-popup-style .item-img-container') } else { el = root && root.querySelector('.preview-card.preview-item .item-img-container') } const rect = el ? el.getBoundingClientRect() : null; const boxW = rect ? rect.width : (key === 'leaderboard' ? 57 : key === 'avatar' ? 150 : key === 'collectionPreview' ? (suggestDevice.value === 'mobile' ? 80 : 90) : key === 'popupStyle' ? 120.5 : key === 'dailyShop' ? 90 : 100); const boxH = rect ? rect.height : (key === 'leaderboard' ? 57 : key === 'avatar' ? 150 : key === 'collectionPreview' ? (suggestDevice.value === 'mobile' ? 80 : 90) : key === 'popupStyle' ? 64 : key === 'dailyShop' ? 90 : 100); const w = Number(s.width) || 50; const h = Number(s.height || s.width) || 50; s.left = Math.round((boxW - w) / 2); s.top = Math.round((boxH - h) / 2) } catch {} }
-function getSuggestStyle(key) { try { const s = suggestStyles.value[key] || {}; const style = { position: 'absolute' }; if (typeof s.top === 'number') style.top = s.top + 'px'; if (typeof s.left === 'number') style.left = s.left + 'px'; if (typeof s.width === 'number') style.width = s.width + 'px'; if (typeof s.height === 'number') style.height = s.height + 'px'; if (typeof s.rotate === 'number') style.transform = `rotate(${s.rotate}deg)`; if (typeof s.zIndex === 'number') style.zIndex = s.zIndex; try { const p = suggestPlacement.value || {}; if (key === 'avatar' && p.avatar === 'above') { style.zIndex = Math.max(Number(style.zIndex || 0), 20) } if (key === 'leaderboard' && p.leaderboard === 'above') { style.zIndex = Math.max(Number(style.zIndex || 0), 20) } } catch {} if (typeof s.objectFit === 'string') style.objectFit = s.objectFit; if (typeof s.margin === 'number') style.margin = s.margin + 'px'; if (typeof s.padding === 'number') style.padding = s.padding + 'px'; if (s.background) style.background = s.background; if (s.boxShadow) style.boxShadow = s.boxShadow; if (typeof s.borderWidth === 'number') style.borderWidth = s.borderWidth + 'px'; if (typeof s.borderStyle === 'string') style.borderStyle = s.borderStyle; if (s.borderColor) style.borderColor = s.borderColor; if (typeof s.borderRadius === 'number') style.borderRadius = s.borderRadius + 'px'; return style } catch { return { position: 'absolute' } } }
+function getSuggestStyle(key) { try { const s = suggestStyles.value[key] || {}; const style = { position: 'absolute' }; if (typeof s.top === 'number') style.top = s.top + 'px'; if (typeof s.left === 'number') style.left = s.left + 'px'; if (typeof s.width === 'number') style.width = s.width + 'px'; if (typeof s.height === 'number') style.height = s.height + 'px'; if (typeof s.rotate === 'number') style.transform = `rotate(${s.rotate}deg)`; if (typeof s.zIndex === 'number') style.zIndex = s.zIndex; try { const p = suggestPlacement.value || {}; if (key === 'avatar' && p.avatar === 'above') { style.zIndex = Math.max(Number(style.zIndex || 0), 100) } if (key === 'leaderboard' && p.leaderboard === 'above') { style.zIndex = Math.max(Number(style.zIndex || 0), 100) } } catch {} if (typeof s.objectFit === 'string') style.objectFit = s.objectFit; if (typeof s.margin === 'number') style.margin = s.margin + 'px'; if (typeof s.padding === 'number') style.padding = s.padding + 'px'; if (s.background) style.background = s.background; if (s.boxShadow) style.boxShadow = s.boxShadow; if (typeof s.borderWidth === 'number') style.borderWidth = s.borderWidth + 'px'; if (typeof s.borderStyle === 'string') style.borderStyle = s.borderStyle; if (s.borderColor) style.borderColor = s.borderColor; if (typeof s.borderRadius === 'number') style.borderRadius = s.borderRadius + 'px'; return style } catch { return { position: 'absolute' } } }
 const suggestPreviewBorderColor = ref(null)
 function refreshSuggestPreviewBorderColor() { try { const root = weeklyContainerRef.value; const sels = ['.preview-card.preview-collection .item-img-wrapper.large', '.preview-card.preview-daily-shop .item-img-wrapper.large', '.preview-card.preview-avatar .profile-avatar-stage']; let color = ''; for (const s of sels) { const el = root && root.querySelector(s); if (!el) continue; const cs = window.getComputedStyle(el); const c = cs.getPropertyValue('border-color') || cs.borderColor || ''; if (c && c !== 'transparent') { color = c; break } } suggestPreviewBorderColor.value = color || '#00FF80' } catch { suggestPreviewBorderColor.value = '#00FF80' } }
 function getPopupWrapperStyle() { try { const c = suggestPreviewBorderColor.value || '#00FF80'; return { borderColor: c } } catch { return {} } }
@@ -3963,6 +3971,9 @@ function startDrag(key, e) { try { if (draggingKey.value === key) { endDrag(); r
 function handleDropClick() { try { endDrag() } catch {} }
 function onDrag(e) { try { if (!draggingKey.value) return; const key = draggingKey.value; const s = suggestStyles.value[key] || {}; const dx = e.clientX - dragStart.value.x; const dy = e.clientY - dragStart.value.y; if (rafId) cancelAnimationFrame(rafId); rafId = requestAnimationFrame(() => { s.left = initialPos.value.left + dx; s.top = initialPos.value.top + dy }) } catch {} }
 function endDrag() { try { draggingKey.value = null; window.removeEventListener('mousemove', onDrag) } catch {} }
+function startDragTouch(key, e) { try { const t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]); if (!t) return; e.preventDefault(); if (draggingKey.value === key) { endDragTouch(); return } draggingKey.value = key; dragStart.value = { x: t.clientX, y: t.clientY }; const s = suggestStyles.value[key] || {}; initialPos.value = { top: Number(s.top)||0, left: Number(s.left)||0 }; window.addEventListener('touchmove', onDragTouch, { passive: false }); window.addEventListener('touchend', endDragTouch, { once: true }) } catch {} }
+function onDragTouch(e) { try { if (!draggingKey.value) return; const t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]); if (!t) return; e.preventDefault(); const key = draggingKey.value; const s = suggestStyles.value[key] || {}; const dx = t.clientX - dragStart.value.x; const dy = t.clientY - dragStart.value.y; if (rafId) cancelAnimationFrame(rafId); rafId = requestAnimationFrame(() => { s.left = initialPos.value.left + dx; s.top = initialPos.value.top + dy }) } catch {} }
+function endDragTouch() { try { draggingKey.value = null; window.removeEventListener('touchmove', onDragTouch) } catch {} }
 function saveSuggestion() {
   try {
     persistBufferIntoActiveVariant()
@@ -3982,9 +3993,9 @@ function saveSuggestion() {
       collectionStyle: { ...(suggestStyles.value.collectionPreviewDesktop || suggestStyles.value.collectionPreview || suggestStyles.value.collection) },
       collectionStyleMobile: { ...(suggestStyles.value.collectionPreviewMobile || suggestStyles.value.collectionPreview || suggestStyles.value.collection) },
       leaderboardStyle: { ...suggestStyles.value.leaderboard },
-      largeAvatarStyle: { ...DEFAULT_SUGGEST_STYLE },
-      largeAvatarStyleMobile: { ...DEFAULT_SUGGEST_STYLE },
-      profilePopupStyle: { ...DEFAULT_SUGGEST_STYLE },
+      largeAvatarStyle: { ...suggestStyles.value.avatar },
+      largeAvatarStyleMobile: { ...suggestStyles.value.avatar },
+      profilePopupStyle: { ...suggestStyles.value.avatar },
       popupStyleStyle: { ...DEFAULT_SUGGEST_STYLE },
       cosmeticPreviewStyle: { ...suggestStyles.value.collection },
       cosmeticPreviewStyleMobile: { ...suggestStyles.value.collection },
@@ -4336,10 +4347,11 @@ function getDynLeaderboardAssetStyle(asset) {
   if (!asset || typeof asset !== 'object') {
     return { position: 'absolute', objectFit: 'contain', zIndex: 1 }
   }
-  // Leaderboard: même style pour desktop et mobile
   const s = (asset && asset.leaderboardStyle) || asset?.style || {}
-  // Pour être sûr que les overlays "au-dessus" passent bien devant, relever le z-index par défaut
-  const style = { position: 'absolute', objectFit: s.objectFit || 'contain', zIndex: typeof s.zIndex === 'number' ? s.zIndex : 15 }
+  const placement = asset && asset.meta && asset.meta.leaderboardPlacement
+  const baseZ = typeof s.zIndex === 'number' ? s.zIndex : (placement === 'above' ? 100 : 15)
+  const style = { position: 'absolute', objectFit: s.objectFit || 'contain', zIndex: baseZ }
+  if (placement === 'above') style.zIndex = Math.max(Number(style.zIndex || 0), 100)
   if (typeof s.top === 'number') style.top = s.top + 'px'
   if (typeof s.left === 'number') style.left = s.left + 'px'
   if (typeof s.width === 'number') style.width = s.width + 'px'
@@ -7668,6 +7680,9 @@ onUnmounted(() => {
 .weekly-shop-container .preview-slider-controls { position: relative; display: flex; gap: 8px; justify-content: center; margin: 8px 0; z-index: 1000; }
 .weekly-shop-container .preview-slider-controls .left-arrow { position: absolute; left: 0; top: -10px; z-index: 1001; }
 .weekly-shop-container .preview-slider-controls .right-arrow { position: absolute; right: 0; top: -10px; z-index: 1001; }
+@media (max-width: 1024px) {
+  .weekly-shop-container .preview-slider-controls { display: none !important; }
+}
 .suggest-slider-enter-active, .suggest-slider-leave-active { transition: transform 0.38s ease-in-out, opacity 0.2s ease-out; will-change: transform; }
 .suggest-slider-enter-from, .suggest-slider-leave-to { opacity: 0; }
 .suggest-slider-move { transition: none !important; }
@@ -7726,8 +7741,13 @@ onUnmounted(() => {
   .preview-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; align-items: stretch; justify-items: center; height: 100%; }
   .preview-card { width: 100%; max-width: 390px; }
   .preview-slider-viewport { overflow: hidden; }
-  .preview-slider-track { display: flex; gap: 6px; align-items: stretch; justify-content: flex-start; will-change: transform; }
-  .preview-slider-track .preview-card { flex: 0 0 390px; max-width: 390px; }
+.preview-slider-track { display: flex; gap: 6px; align-items: stretch; justify-content: flex-start; will-change: transform; }
+.preview-slider-track .preview-card { flex: 0 0 390px; max-width: 390px; }
+@media (max-width: 1024px) {
+  .preview-slider-viewport { overflow: visible !important; width: 100% !important; }
+  .preview-slider-track { flex-direction: column; align-items: center; justify-content: flex-start; }
+  .preview-slider-track .preview-card { flex: 0 0 auto; width: 100%; max-width: 302px; margin: 0 auto; }
+}
   .preview-card.preview-collection .item-img-wrapper.large { position: relative; width: 90px; height: 90px; background: transparent; overflow: hidden; border: 3px solid rgb(61, 220, 132); border-radius: 50%; margin: 0 auto; }
   .preview-card.preview-collection .item-img-wrapper.large.mobile-mode { width: 80px; height: 80px; }
   .preview-card.preview-collection .item-img-container { position: relative; width: 100%; height: 100%; background: transparent; overflow: visible; border: none; }
@@ -7829,13 +7849,14 @@ onUnmounted(() => {
   .weekly-preview .leaderboard-item .user-avatar { width: 50px; height: 50px; }
   .weekly-preview .leaderboard-item .avatar-img { width: 100% !important; height: 100% !important; object-fit: cover !important; }
   .preview-card.preview-leaderboard .preview-list { display: grid; grid-template-rows: repeat(4, 1fr); gap: 6px; width: 100%; height: 100%; padding: 0; margin: 0; align-items: center; justify-items: center; }
+.fenetre-collection .preview-card.preview-leaderboard .user-avatar-container { overflow: visible !important; position: relative !important; }
   .fenetre-collection .preview-card.preview-leaderboard .preview-list { grid-template-rows: 1fr; height: 28% !important; }
   .fenetre-collection .preview-card.preview-leaderboard .preview-list .leaderboard-item { width: 325px !important; height: 120px !important; gap: 30px; }
   .preview-card.preview-leaderboard .user-avatar { border: 3px solid #000; border-radius: 12px !important; background: #fff; box-sizing: border-box !important; position: relative !important; }
   .fenetre-collection .preview-card.preview-avatar .profile-avatar { position: relative; overflow: hidden !important; border-width: 5px !important; border-style: solid !important; border-color: #000 !important; }
   .fenetre-collection .preview-card.preview-avatar .profile-avatar-scaler { position: relative !important; }
-  .fenetre-collection .overlay-above, .fenetre-collection .overlay-above-leader { position: absolute; z-index: 20; pointer-events: auto; }
-  .fenetre-collection .draggable { will-change: top, left; }
+  .fenetre-collection .overlay-above, .fenetre-collection .overlay-above-leader { position: absolute; z-index: 100; pointer-events: auto; }
+  .fenetre-collection .draggable { will-change: top, left; touch-action: none; }
   .fenetre-collection .draggable.drag-active { outline: 2px dashed #5bc682; cursor: grabbing; z-index: 25; transition: none; }
   .fenetre-collection .item-actions { align-items: center !important; }
   .fenetre-collection .placement-btn { background: #f8f9fa !important; border: 2px #5150503d solid !important; border-radius: 10px !important; width: 64px !important; height: 64px !important; padding: 8px !important; display: inline-flex; align-items: center; justify-content: center; }
@@ -7870,6 +7891,12 @@ onUnmounted(() => {
   .preview-list .leaderboard-item { display:flex; align-items:center; gap:10px; background:#fff; border-radius:10px; padding:8px; margin-bottom:8px; }
   .preview-desc { background:#fff; border-radius:10px; padding:10px; color:#666; text-align:center; margin-top:8px; white-space: pre-line; }
   .item-img-wrapper.large { width: 350px; height: 145px; margin: 0 auto 12px; }
+  @media (max-width: 1024px) {
+    .fenetre-collection .preview-card.preview-daily-shop .item-img-wrapper.large {
+      width: 250px !important;
+      height: 250px !important;
+    }
+  }
   .preview-actions { display:flex; justify-content:flex-end; margin-top:10px; }
   .preview-card.preview-leaderboard,
   .preview-card.preview-avatar { height: 100%; min-height: initial; }
@@ -8923,10 +8950,12 @@ onUnmounted(() => {
     max-width: 450px !important;
     margin: 0 auto !important;
   }
-  .preview-card.preview-avatar .profile-avatar-stage {
+  @media (max-width: 1024px) {
+  .fenetre-collection .preview-card.preview-avatar .profile-avatar-stage {
     width: 250px !important;
     margin: 0 auto !important;
   }
+}
   .preview-card.preview-avatar .profile-avatar-scaler {
     width: 100% !important;
     justify-content: center !important;
@@ -11546,7 +11575,7 @@ onUnmounted(() => {
   scrollbar-gutter: stable both-edges;
 }
 .leaderboard-list.faction-leaderboard-list .leaderboard-item {
-  width: 270px !important;
+  width: 325px !important;
   height: 120px !important;
   min-height: 120px !important;
 }
@@ -11559,9 +11588,9 @@ onUnmounted(() => {
     scrollbar-gutter: stable both-edges;
   }
   .leaderboard-list.faction-leaderboard-list .leaderboard-item {
-    width: 100% !important;
-    height: 120px !important;
-    min-height: 120px !important;
+    width: 100%;
+    height: 120px;
+    min-height: 120px;
   }
 }
 

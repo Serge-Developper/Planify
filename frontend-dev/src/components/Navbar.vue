@@ -2217,44 +2217,22 @@ function getDynNavbarOverlayStyle(asset) {
   return style
 }
 
-// Style spécifique pour la popup Profil (peut évoluer indépendamment de la navbar)
+// Style spécifique pour la popup Profil: reproduit exactement l'aperçu Large/Avatar
 function getDynProfilePopupAssetStyle(asset) {
-  // Suppression de la logique largeAvatarStyle comme demandé
-  // On utilise désormais exclusivement profilePopupStyle (édité via Aperçu Profil 340x140)
-  const s = (asset && asset.profilePopupStyle) || asset?.popupStyleStyle || asset?.navbarStyle || asset?.style || {}
-  const style = { position: 'absolute', objectFit: s.objectFit || 'contain', zIndex: typeof s.zIndex === 'number' ? s.zIndex : undefined, pointerEvents: 'none' }
-  
-  // Positions initiales
-  let top = typeof s.top === 'number' ? s.top : undefined
-  let left = typeof s.left === 'number' ? s.left : undefined
-
-  // Offset pour le nouvel éditeur "Aperçu Profil" (340x200) avec avatar centré (150x150)
-  // Si la cible est 'profile-avatar', les coordonnées reçues sont relatives au conteneur 340x200.
-  // Or, le rendu se fait dans la div .profile-avatar (150x150).
-  // Il faut donc soustraire l'offset du début de l'avatar (95px à gauche, 25px en haut).
-  
-  // On détermine la cible effective (comme fait dans le template pour le placement)
-  // Cela permet de gérer le cas où meta.profilePopupTarget est absent (fallback vers profile-avatar)
-  const effectiveTarget = getEffectiveProfilePopupTarget(equippedDynItem.value, asset)
-  
-  if (effectiveTarget === 'profile-avatar') {
-    // Wrap: 340x200. Avatar: 150x150 centré.
-    // Left offset = (340 - 150) / 2 = 95
-    // Top offset = (200 - 150) / 2 = 25
-    const offsetLeft = 95
-    const offsetTop = 25
-    if (typeof top === 'number') top = top - offsetTop
-    if (typeof left === 'number') left = left - offsetLeft
-  }
-
-  if (typeof top === 'number') style.top = top + 'px'
-  if (typeof left === 'number') style.left = left + 'px'
+  const mobile = !!isMobile.value
+  const s = mobile
+    ? (asset?.largeAvatarStyleMobile || asset?.largeAvatarStyle || asset?.profilePopupStyleMobile || asset?.profilePopupStyle || asset?.navbarStyleMobile || asset?.navbarStyle || asset?.style || {})
+    : (asset?.largeAvatarStyle || asset?.profilePopupStyle || asset?.navbarStyle || asset?.style || {})
+  const style = { position: 'absolute', objectFit: s.objectFit || 'contain', pointerEvents: 'none' }
+  if (typeof s.zIndex === 'number') style.zIndex = s.zIndex
+  if (typeof s.top === 'number') style.top = s.top + 'px'
+  if (typeof s.left === 'number') style.left = s.left + 'px'
   if (typeof s.width === 'number') style.width = s.width + 'px'
   if (typeof s.height === 'number') style.height = s.height + 'px'
   if (typeof s.rotate === 'number') style.transform = `rotate(${s.rotate}deg)`
   if (typeof style.zIndex !== 'number') {
-    const placement = asset && asset.meta && (asset.meta.profilePopupPlacement ?? asset.meta.navbarPlacement)
-    style.zIndex = (placement === 'above') ? 15 : 1
+    const placement = asset?.meta?.profilePopupPlacement ?? asset?.meta?.navbarPlacement
+    style.zIndex = (placement === 'above') ? 100 : 1
   }
   return style
 }
