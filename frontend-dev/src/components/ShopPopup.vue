@@ -751,8 +751,8 @@
             <div class="preview-card preview-avatar" :class="{ 'roi-preview': purchasePreviewItem && (purchasePreviewItem.name === 'Roi' || purchasePreviewItem.displayType === 'roi'), 'gentleman-preview': purchasePreviewItem && (purchasePreviewItem.name === 'Gentleman' || purchasePreviewItem.displayType === 'gentleman'), 'vinyle-preview': purchasePreviewItem && (purchasePreviewItem.name === 'Vinyle' || purchasePreviewItem.displayType === 'vinyle'), 'nokia-preview': purchasePreviewItem && (purchasePreviewItem.name === '2000' || purchasePreviewItem.displayType === 'nokia') }">
               <div class="preview-title">Aperçu (Large / Avatar)</div>
               <div class="profile-avatar-wrap">
-                <div class="profile-avatar-stage" :style="`width: 351px !important; height: ${getLargeAvatarHeight(purchasePreviewItem)}px !important; margin: 0 auto`">
-                  <div class="profile-avatar-scaler" :style="`width: 351px; height: ${getLargeAvatarHeight(purchasePreviewItem)}px !important`">
+                <div class="profile-avatar-stage" :style="`width: ${isMobile ? 250 : 351}px !important; height: ${getLargeAvatarHeight(purchasePreviewItem)}px !important; margin: 0 auto`">
+                  <div class="profile-avatar-scaler" :style="`width: ${isMobile ? 250 : 351}px !important; height: ${getLargeAvatarHeight(purchasePreviewItem)}px !important`">
                     <img v-for="(a, ai) in getProfilePopupAssetsForTargetPlacement(purchasePreviewItem, 'profile-avatar-scaler', 'below')" :key="'pp-scaler-below-'+ai" :src="resolveAssetSrc(a.src)" :style="getDynProfilePopupAssetStyle(a)" />
                     <img v-for="(a, ai) in getProfilePopupAssetsForTargetPlacement(purchasePreviewItem, 'profile-avatar-scaler', 'inside')" :key="'pp-scaler-inside-'+ai" :src="resolveAssetSrc(a.src)" :style="getDynProfilePopupAssetStyle(a)" />
                     <img v-if="purchasePreviewItem && (purchasePreviewItem.displayType === 'miaou' || purchasePreviewItem.name === 'Miaou')" :src="pate" :alt="purchasePreviewItem?.name" class="equipped-pate-inside" />
@@ -8768,8 +8768,8 @@ onUnmounted(() => {
     max-height: 80% !important;
     object-fit: contain !important;
     position: absolute !important;
-    top: 0 !important;
-    left: 16px !important;
+    top: 23% !important;
+    left: 50% !important;
   }
   
   .spacestars-img-shop {
@@ -8840,8 +8840,8 @@ onUnmounted(() => {
 .jojo-text-preview {
     position: absolute !important;
     top: 0px !important;
-    left: 8px !important;
-    width: 72% !important;
+    left: 42px !important;
+    width: 50% !important;
     height: auto !important;
     object-fit: contain !important;
   }
@@ -8858,7 +8858,7 @@ onUnmounted(() => {
     left: 50% !important;
     transform: translateX(-50%) !important;
     width: 80% !important;
-    top: 10% !important;
+    top: 65% !important;
   }
   /* Boutique quotidienne (weekly) — overrides ciblés */
   .weekly-item .angel-img-shop { top: 10px !important; left: 25px !important; }
@@ -8874,8 +8874,8 @@ onUnmounted(() => {
     position: absolute !important;
     top: -3px !important;
     left: 12px !important;
-    width: 65% !important;
-    height: 112% !important;
+    width: 64% !important;
+    height: 73% !important;
     object-fit: contain;
   }
 
@@ -10785,6 +10785,10 @@ onUnmounted(() => {
       grid-template-columns: repeat(2, minmax(0, 1fr));
       max-height: 60vh;
     }
+    .preview-card.preview-avatar:not(.roi-preview) .profile-avatar-scaler { width: 250px !important; }
+    .profile-avatar-stage { width: 250px !important; }
+    .profile-avatar-stage { width: 250px !important; }
+    .profile-popup .profile-avatar-stage { width: 250px !important; }
     .preview-card.preview-avatar .profile-avatar-scaler .equipped-cat-ears {
       position: absolute !important;
       left: 49% !important;
@@ -10817,15 +10821,15 @@ onUnmounted(() => {
     .preview-card.preview-leaderboard .equipped-flash-overlay { top: 3% !important; left: -9% !important; width: 50% !important; height: 100% !important; }
     .preview-card.preview-leaderboard .equipped-camera-overlay { top: 47% !important; left: -1% !important; width: 17% !important; height: 90% !important; object-fit: contain !important; }
     .preview-card.preview-item .daftpunk-img-shop { width: 45% !important; }
-    .preview-card.preview-item .nokia-img-shop { width: 30% !important; left: 35% !important; top: 76% !important; }
-    .preview-card.preview-item .clippy-img-shop { width: 25% !important; left: 61% !important; top: 77% !important; }
+    .preview-card.preview-item .nokia-img-shop { width: 30% !important; left: 35% !important; top: 60% !important; }
+    .preview-card.preview-item .clippy-img-shop { width: 25% !important; left: 61% !important; top: 60% !important; }
     .preview-card.preview-item .angel-img-shop { width: 85% !important; }
     .preview-card.preview-item .equipped-angel-wings { width: 85% !important; }
     .preview-card.preview-avatar.nokia-preview .profile-avatar-scaler { width: 250px !important; }
     .preview-card.preview-avatar .profile-avatar-scaler .equipped-discord-overlay { left: 7% !important; top: 16% !important; width: 75% !important; height: 75% !important; }
     .preview-card.preview-item .jojo-img-shop { left: 230px !important; width: 75% !important; }
-    .preview-card.preview-item .miaou-item-shop .chat-img-shop { top: 40% !important; left: 60% !important; }
-    .preview-card.preview-item .miaou-item-shop .pate-img-shop { top: 90px !important; max-height: 25% !important; }
+    .preview-card.preview-item .miaou-item-shop .chat-img-shop { top: 40% !important; left: 63% !important; max-width: 65% !important; }
+    .preview-card.preview-item .miaou-item-shop .pate-img-shop { top: 130px !important; left: 30% !important;  max-height: 20% !important; }
     .preview-card.preview-leaderboard .equipped-chat-overlay { top: -35% !important; left: 5% !important; width: 35% !important; }
     .preview-card.preview-avatar .profile-avatar-scaler .equipped-chat-overlay { top: 1% !important; left: 42% !important; width: 60% !important; }
     .preview-card.preview-avatar .profile-avatar-scaler .equipped-pate-inside { top: 56% !important; left: 23% !important; width: 25% !important; height: 20% !important; }
@@ -10834,7 +10838,21 @@ onUnmounted(() => {
     .preview-card.preview-avatar .profile-avatar-scaler .equipped-clippy-inside { left: 54% !important; top: 48% !important; width: 27% !important; height: 25% !important; }
     .preview-card.preview-leaderboard .equipped-tomb-raider { left: -78px !important; }
     .preview-card.preview-avatar .profile-avatar-scaler .equipped-tomb-raider { left: 34px !important; }
-    .preview-card.preview-item img.item-img[alt="Ange"] { position: absolute !important; top: 5% !important; width: 85% !important; }
+    .preview-card.preview-item img.item-img[alt="Ange"] { position: absolute !important; top: 15% !important; width: 85% !important; left: 8% }
+    .preview-card.preview-item .item-img-wrapper.large { width: 250px !important; height: 250px !important; }
+    .preview-card.preview-item .jojo-text-preview { left: 45px !important; width: 60% !important; }
+    .weekly-section .shop-item.weekly-item.small-card .discord-item-shop .discord-img-shop { top: 15px !important; left: 30px !important; }
+    .preview-card.preview-avatar .profile-avatar-scaler .equipped-angel-wings { top: -66px !important; left: -1px !important; }
+    .weekly-section .shop-item.weekly-item.small-card .gentleman-item-shop .gentleman-img-shop { top: 20px !important; left: 42px !important; max-width: 50% !important; }
+    .weekly-section .shop-item.weekly-item.small-card .gentleman-item-shop .moustache-img-shop { top: 65px !important; left: 50px !important; }
+    .preview-card.preview-item .moustache-img-shop { width: 46% !important; max-width: 46% !important; left: 50% !important; top: 47% !important; }
+    .preview-card.preview-item .gentleman-img-shop { left: 50% !important; top: 15% !important; width: 60% !important; max-width: 60% !important; }
+    .preview-card.preview-avatar .profile-avatar-scaler .equipped-gentleman-overlay { width: 70% !important; top: 32% !important; }
+    .weekly-section .shop-item.weekly-item.small-card .advisory-item-shop .advisory-img-shop { top: -5% !important; left: 0% !important; }
+    .preview-card.preview-item .spacestars-img-shop { top: 9% !important; left: -20% !important; max-width: 129% !important; }
+    .preview-card.preview-item .asteroide-img-shop { top: 128px !important; left: 15px !important; }
+    .weekly-section .shop-item.weekly-item.small-card .miaou-item-shop .chat-img-shop { top: 43% !important; }
+    .preview-card.preview-item .daftpunk-img-shop { left: 50% !important; top: 25% !important; }
   }
 
   .color-swatch {
@@ -10993,10 +11011,10 @@ onUnmounted(() => {
 .profile-avatar-scaler { position: relative; width: 110px; height: 110px; display: flex; align-items: center; justify-content: center; }
 
 /* Weekly overrides — high specificity to win cascade */
-.weekly-section .shop-item.weekly-item.small-card .discord-item-shop .discord-img-shop { position: absolute !important; object-fit: contain !important; top: 15px !important; left: 39px !important; }
+.weekly-section .shop-item.weekly-item.small-card .discord-item-shop .discord-img-shop { position: absolute !important; object-fit: contain !important; top: 15px; left: 39px; }
 .weekly-section .shop-item.weekly-item.small-card .angel-item-shop .angel-img-shop { position: absolute !important; max-width: 80% !important; max-height: 100% !important; object-fit: contain !important; transform: scale(1.05) !important; top: 10px !important; left: 25px !important; }
-.weekly-section .shop-item.weekly-item.small-card .gentleman-item-shop .gentleman-img-shop { position: absolute !important; max-width: 40% !important; object-fit: contain !important; top: 25px !important; left: 60px !important; }
-.weekly-section .shop-item.weekly-item.small-card .gentleman-item-shop .moustache-img-shop { position: absolute !important; max-width: 47% !important; max-height: 55% !important; object-fit: contain !important; top: 65px !important; left: 70px !important; }
+.weekly-section .shop-item.weekly-item.small-card .gentleman-item-shop .gentleman-img-shop { position: absolute !important; max-width: 40%; object-fit: contain !important; top: 25px; left: 60px; }
+.weekly-section .shop-item.weekly-item.small-card .gentleman-item-shop .moustache-img-shop { position: absolute !important; max-width: 47% !important; max-height: 55% !important; object-fit: contain !important; top: 65px !important; left: 70px; }
 .weekly-section .shop-item.weekly-item.small-card .advisory-item-shop .advisory-img-shop { position: absolute !important; max-width: 100% !important; max-height: 100% !important; object-fit: contain !important; top: -11% !important; left: 8%;}
 .weekly-section .shop-item.weekly-item.small-card .espace-item-shop .asteroide-img-shop { position: absolute !important; left: 20px !important; top: 70px;}
 .weekly-section .shop-item.weekly-item.small-card .miaou-item-shop .chat-img-shop { position: absolute !important; width: 60% !important; object-fit: contain !important; transform: translate(-50%, -50%) !important; z-index: 2 !important; top: 50% !important; left: 63% !important; }
