@@ -885,6 +885,7 @@
           <!-- NOUVEAU: wrapper externe pour permettre aux overlays de dépasser -->
           <div
             class="profile-avatar-stage"
+            :style="{ height: getProfilePopupStageHeight(equippedDynItem) + 'px' }"
             :class="{
               'no-border': (equippedItem && (equippedItem.displayType === 'discord' || equippedItem.name === 'Galaxie' || equippedItem.name === 'Coeur' || equippedItem.name === 'Prestige' || equippedItem.name === 'Planify' || equippedItem.name === 'Alpha'))
                           || (equippedDynItem && shouldRemoveProfilePopupBorder(equippedDynItem))
@@ -1035,23 +1036,7 @@
                 :class="getEquippedItemClass(equippedItem.name)"
               />
 
-              <!-- Dyn: above (au-dessus du carré avatar) -->
-              <template v-if="equippedDynItem && Array.isArray(equippedDynItem.variants) && equippedDynItem.variants.length > 0">
-                <img
-                  v-for="(a, ai) in getProfilePopupAssetsForTargetPlacement(equippedDynItem, 'profile-avatar', 'above')"
-                  :key="'profile-dyn-above-'+ai+'-'+dynamicVariantsState"
-                  :src="resolveDynSrc(a.src)"
-                  :style="getDynProfilePopupAssetStyle(a)"
-                />
-              </template>
-              <template v-else-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
-                <img
-                  v-for="(a, ai) in getProfilePopupAssetsForTargetPlacement(equippedDynItem, 'profile-avatar', 'above')"
-                  :key="'profile-base-above-'+ai"
-                  :src="resolveDynSrc(a.src)"
-                  :style="getDynProfilePopupAssetStyle(a)"
-                />
-              </template>
+              <!-- Above “par-dessus” ne se rend plus dans .profile-avatar pour éviter le clipping par la bordure; rendu uniquement dans profile-avatar-scaler. -->
 
               <!-- Extérieur “above” -->
               <template v-if="equippedDynItem">
@@ -2223,16 +2208,18 @@ function getDynProfilePopupAssetStyle(asset) {
   const s = mobile
     ? (asset?.largeAvatarStyleMobile || asset?.largeAvatarStyle || asset?.profilePopupStyleMobile || asset?.profilePopupStyle || asset?.navbarStyleMobile || asset?.navbarStyle || asset?.style || {})
     : (asset?.largeAvatarStyle || asset?.profilePopupStyle || asset?.navbarStyle || asset?.style || {})
+  const placement = asset?.meta?.profilePopupPlacement ?? asset?.meta?.navbarPlacement
   const style = { position: 'absolute', objectFit: s.objectFit || 'contain', pointerEvents: 'none' }
-  if (typeof s.zIndex === 'number') style.zIndex = s.zIndex
   if (typeof s.top === 'number') style.top = s.top + 'px'
   if (typeof s.left === 'number') style.left = s.left + 'px'
   if (typeof s.width === 'number') style.width = s.width + 'px'
   if (typeof s.height === 'number') style.height = s.height + 'px'
   if (typeof s.rotate === 'number') style.transform = `rotate(${s.rotate}deg)`
-  if (typeof style.zIndex !== 'number') {
-    const placement = asset?.meta?.profilePopupPlacement ?? asset?.meta?.navbarPlacement
-    style.zIndex = (placement === 'above') ? 100 : 1
+  if (placement === 'above') {
+    const baseZ = (typeof s.zIndex === 'number') ? s.zIndex : 0
+    style.zIndex = Math.max(baseZ, 100)
+  } else {
+    style.zIndex = (typeof s.zIndex === 'number') ? s.zIndex : 1
   }
   return style
 }
@@ -2272,6 +2259,14 @@ function shouldRemoveProfilePopupBorder(item) {
     if (item.meta && (item.meta.removeProfilePopupBorder === true || item.meta.removeNavbarBorder === true)) return true
   } catch {}
   return false
+}
+
+function getProfilePopupStageHeight(item) {
+  try {
+    const h = Number(item?.meta?.largeAvatarHeight)
+    if (Number.isFinite(h) && h > 0) return h
+    return 250
+  } catch { return 250 }
 }
 
 // Chargement des items dynamiques pour la Navbar
@@ -6598,7 +6593,7 @@ body, html {
 
 .profile-popup .profile-avatar-stage {
   width: 340px !important;
-  height: 200px !important;
+  height: auto;
   box-sizing: border-box;
   border-radius: 12px;
   border: none !important;
@@ -6788,8 +6783,6 @@ body, html {
 }
 
 /* Enforce fixed 100x100 avatar container and image in profile popup */
-.profile-popup .profile-avatar-stage,
-.profile-popup .profile-avatar-scaler,
 .profile-popup .profile-avatar {
   width: var(--profile-avatar-size) !important;
   height: var(--profile-avatar-size) !important;
