@@ -50,12 +50,12 @@
                   <img src="@/assets/img/planicoins.webp" alt="Coins" class="coin-icon" />
                   <span>{{ q.reward }}</span>
                 </div>
-                <div class="duration">{{ durationLabel(q.actions) }}</div>
+                <div class="duration" aria-live="polite">Temps restant: {{ nextDailyResetStr }}</div>
               </div>
 
               <div class="progress-track"><div class="progress-fill green" :class="{ zero: displayQuestPercs[i] <= 0 }" :style="{ width: displayQuestPercs[i] + '%' }"></div></div>
               <div class="inline-reroll">
-                <button class="secondary-btn reroll-btn" @click.stop="openRerollConfirm(i)" :disabled="rerollUsed" :class="{ used: rerollUsed && rerollTargetIdx === i }">
+                <button class="secondary-btn reroll-btn" @click.stop="openRerollConfirm(i)" :disabled="q.done" :class="{ used: rerollUsed && rerollTargetIdx === i }">
                   <span class="dice-icon" aria-hidden="true">🎲</span>
                   <span v-if="rerollUsed && rerollTargetIdx === i">Re-roll utilisé</span>
                   <span v-else>Re-roll</span>
@@ -72,17 +72,17 @@
             <div class="progress-track large"><div class="progress-fill green" :class="{ zero: displayDailyPerc <= 0 }" :style="{ width: displayDailyPerc + '%' }"></div></div>
           </div>
 
-          <div class="bonus-block" :class="{ active: allDailyDone && !rerollUsed, disabled: rerollUsed }">
+          <div class="bonus-block" :class="{ active: allDailyDone }">
             <div class="bonus-title">Bonus journalier
               <button class="bonus-info-btn" type="button" @click="openBonusInfo">
                 <img :src="infoIcon" alt="Infos" class="bonus-info-img" />
               </button>
             </div>
-            <div class="bonus-state" v-if="rerollUsed">Bonus journalier désactivé</div>
-            <div class="bonus-state bonus-inline" v-else-if="allDailyDone">
-              Bonus reçu :
+            <div class="bonus-state bonus-inline" v-if="allDailyDone">
+              Bonus débloqué :
               <span class="amount-text">+{{ DAILY_BONUS_AMOUNT }}</span>
               <img :src="planifyCoin" alt="Planify Coin" class="bonus-inline-coin" />
+              <div class="next-reset">Rotation à minuit: {{ nextDailyResetStr }}</div>
             </div>
             <div class="bonus-state" v-else>Complétez les 3 quêtes pour débloquer le bonus</div>
           </div>
@@ -130,7 +130,7 @@
     <div v-if="showConfirm" class="confirm-overlay" @click.self="cancelReroll">
       <div class="confirm-modal">
         <div class="confirm-title">Confirmer le re-roll</div>
-        <p class="confirm-msg">Êtes-vous sûr de re-roll cette quête ? Cela désactivera le bonus de quêtes journalières.</p>
+        <p class="confirm-msg">Êtes-vous sûr de re-roll cette quête ? Cela réduira le bonus de quêtes journalières.</p>
         <div class="confirm-actions">
           <button class="secondary-btn" @click="cancelReroll">Annuler</button>
           <button class="primary-btn" @click="confirmReroll">Confirmer</button>
@@ -146,7 +146,7 @@
             <img :src="planifyCoin" alt="Planify Coins" class="bonus-coin-large" />
             <div class="coin-base"></div>
           </div>
-          <div class="bonus-amount"><span class="amount-text">+100</span><img src="@/assets/img/planicoins.webp" alt="Coin" class="amount-coin" /></div>
+          <div class="bonus-amount"><span class="amount-text">+{{ bonusAwardAmount }}</span><img src="@/assets/img/planicoins.webp" alt="Coin" class="amount-coin" /></div>
         </div>
         <div class="bonus-actions">
           <button class="ok-cta" @click="showBonusPopup=false">OK</button>
@@ -166,9 +166,9 @@
       <div class="confirm-modal">
         <div class="confirm-title">Bonus des quêtes journalières</div>
         <div class="confirm-msg">
-          <div>Complétez les 3 quêtes journalières pour obtenir un bonus de <img src="@/assets/img/planicoins.webp" alt="Coins" class="coin-icon" /> 150</div>
-          <div>Si vous utilisez un re-roll, le bonus est réduit à <img src="@/assets/img/planicoins.webp" alt="Coins" class="coin-icon" /> 80</div>
-          <div>Vous pouvez re-roll une quête une seule fois par jour.</div>
+          <div>Complétez les 3 quêtes journalières pour obtenir un bonus de <img src="@/assets/img/planicoins.webp" alt="Coins" class="coin-icon" /> 50</div>
+          <div>Si le bonus est désactivé (re-roll ou expiration), il est réduit à <img src="@/assets/img/planicoins.webp" alt="Coins" class="coin-icon" /> 25</div>
+          <div>Le re-roll est possible uniquement sur une quête active (non complétée).</div>
         </div>
         <div class="confirm-actions">
           <button class="primary-btn" @click="closeBonusInfo">Fermer</button>
@@ -191,6 +191,7 @@
         <div class="toast-check">✓</div>
       </div>
     </transition-group>
+
   </div>
 </template>
 
@@ -201,15 +202,19 @@ import planifyCoin from '@/assets/PiècesPlanify.png'
 import closeImg from '@/assets/img/bouton_supprimer_decocher.png'
 import closeHoverImg from '@/assets/img/bouton_supprimer_cocher.png'
 import infoIcon from '@/assets/img/infos_items.webp'
+import { secureApiCall } from '@/api'
+import { useAuthStore } from '@/stores/auth'
+import { useCoinsStore } from '@/stores/coins'
 const props = defineProps({ show: { type: Boolean, default: false } })
 const emit = defineEmits(['close'])
+const coinsStore = useCoinsStore()
 const hoverCloseQuests = ref(false)
-watch(() => props.show, (val) => { if (val) hoverCloseQuests.value = false })
+watch(() => props.show, (val) => { if (val) { hoverCloseQuests.value = false; (async () => { try { await loadAchievementsStatus() } catch {} })() } })
 function handleClose() { hoverCloseQuests.value = false; emit('close') }
 const rerollUsed = ref(false)
 const showConfirm = ref(false)
 const rerollCandidateIdx = ref(null)
-const DAILY_BONUS_AMOUNT = 100
+const DAILY_BONUS_AMOUNT = computed(() => rerollUsed.value ? 25 : 50)
 const showBonusInfo = ref(false)
 function openBonusInfo() { showBonusInfo.value = true }
 function closeBonusInfo() { showBonusInfo.value = false }
@@ -225,20 +230,52 @@ function handleTaskInfoOpened(e) {
     if (three && !three.done && taskInfoVisitedIds.size >= Number(three.actions || 3)) three.done = true
     displayQuestPercs.value = dailyQuests.value.map(questProgress)
     displayDailyPerc.value = dailyProgressPerc.value
+    updateAchievementsProgress()
   } catch {}
 }
 function handleArchivesOpen() { const q = dailyQuests.value.find(q => q.id === 'tasks-archives'); if (q && !q.done) q.done = true }
 function handleExamsOpen() { const q = dailyQuests.value.find(q => q.id === 'tab-exams-open'); if (q && !q.done) q.done = true }
 function handleRetardsOpen() { const q = dailyQuests.value.find(q => q.id === 'tab-retards-open'); if (q && !q.done) q.done = true }
 function handleShopVisited() { const q = dailyQuests.value.find(q => q.id === 'visit-shop'); if (q && !q.done) q.done = true }
-function handleLeaderboardProfileViewed(e) { const q = dailyQuests.value.find(q => q.id === 'leaderboard-profile'); if (q && !q.done) q.done = true }
+function handleLeaderboardProfileViewed(e) { try { const name = String(e?.detail?.username || '').trim().toLowerCase(); const target = String(leaderboardTargetName.value || '').trim().toLowerCase(); const match = !!name && !!target && name === target; const q = dailyQuests.value.find(q => q.id === 'leaderboard-profile'); if (q && !q.done && match) q.done = true } catch {} }
 function handleConnect() { const q = dailyQuests.value.find(q => q.id === 'connect'); if (q && !q.done) q.done = true }
 
-const dailyQuests = ref([
-  { id: 'wheel-2', title: 'Tourner la roue de la fortune 2 fois', reward: 20, actions: 2, done: false },
-  { id: 'devoirs', title: 'Consulter les devoirs', reward: 10, actions: 1, done: false },
-  { id: 'task-info-1', title: 'Cliquer sur “Plus d’infos” sur une tâche', reward: 10, actions: 1, done: false }
-])
+const leaderboardTargetName = ref('')
+function updateLeaderboardQuestTitle(name) {
+  const base = name && String(name).trim().length ? `Consulter le profil de ${name} dans le leaderboard` : 'Consulter le profil d’une personne aléatoire dans le leaderboard'
+  const idx = allDailyOptions.findIndex(o => o.id === 'leaderboard-profile')
+  if (idx !== -1) allDailyOptions[idx].title = base
+  const q = dailyQuests.value.find(q => q.id === 'leaderboard-profile')
+  if (q) q.title = base
+}
+async function loadLeaderboardTargetName() {
+  try {
+    const res = await secureApiCall('/users/leaderboard')
+    const arr = Array.isArray(res?.users) ? res.users : (Array.isArray(res) ? res : [])
+    if (arr.length) {
+      const pick = arr[Math.floor(Math.random() * arr.length)]
+      const name = (pick && (pick.username || pick.name)) || ''
+      leaderboardTargetName.value = String(name)
+      updateLeaderboardQuestTitle(name)
+    }
+  } catch {}
+}
+
+const hydrating = ref(false)
+const dailyQuests = ref([])
+async function loadDailyFromBackend() {
+  try {
+    const res = await secureApiCall('/quests/daily')
+    const qs = Array.isArray(res?.dailyQuests) ? res.dailyQuests : (Array.isArray(res) ? res : [])
+    const meta = res?.meta || {}
+    rerollUsed.value = !!meta.rerollUsed
+    if (meta && meta.targetLeaderboardName) updateLeaderboardQuestTitle(meta.targetLeaderboardName)
+    dailyQuests.value = qs.map(q => ({ ...q }))
+    displayQuestPercs.value = dailyQuests.value.map(questProgress)
+    displayDailyPerc.value = dailyProgressPerc.value
+    ensureWheelQuestsCompletionFromLocalCount()
+  } catch {}
+}
 const showAdmin = ref(false)
 const adminSelectedIds = ref(dailyQuests.value.map(q => q.id))
 const allDailyOptions = [
@@ -259,7 +296,7 @@ function availableOptionsFor(index) {
   const chosen = new Set(adminSelectedIds.value.filter((id,i)=>i!==index))
   return allDailyOptions.filter(opt => !chosen.has(opt.id))
 }
-function applyAdminSelection() {
+async function applyAdminSelection() {
   const uniqueIds = []
   adminSelectedIds.value.forEach((id, i) => {
     const exists = uniqueIds.includes(id)
@@ -271,19 +308,129 @@ function applyAdminSelection() {
   })
   displayQuestPercs.value = dailyQuests.value.map(questProgress)
   displayDailyPerc.value = dailyProgressPerc.value
+  ;(async () => { try { await loadRepeatableStatus(); await loadAchievementsStatus() } catch {} })()
 }
 
 const repeatableQuests = [
-  { id: 'tasks-10', title: 'Valider 10 tâches', reward: 50, actions: 3, progress: 20 },
-  { id: 'tasks-25', title: 'Valider 25 tâches', reward: 120, actions: 3, progress: 40 },
-  { id: 'tasks-50', title: 'Valider 50 tâches', reward: 300, actions: 3, progress: 10 },
-  { id: 'wheel-10', title: 'Tourner la roue de la fortune 10 fois', reward: 100, actions: 3, progress: 60 },
+  { id: 'tasks-10', title: 'Valider 10 tâches', reward: 50, actions: 3, progress: 0 },
+  { id: 'tasks-25', title: 'Valider 25 tâches', reward: 120, actions: 3, progress: 0 },
+  { id: 'tasks-50', title: 'Valider 50 tâches', reward: 300, actions: 3, progress: 0 },
+  { id: 'wheel-10', title: 'Tourner la roue de la fortune 10 fois', reward: 100, actions: 3, progress: 0 },
   { id: 'wheel-25', title: 'Tourner la roue de la fortune 25 fois', reward: 250, actions: 3, progress: 0 },
   { id: 'wheel-50', title: 'Tourner la roue de la fortune 50 fois', reward: 500, actions: 3, progress: 0 },
   { id: 'daily-10', title: 'Compléter 10 quêtes journalières', reward: 50, actions: 3, progress: 0 },
   { id: 'daily-25', title: 'Compléter 25 quêtes journalières', reward: 150, actions: 3, progress: 0 },
   { id: 'daily-50', title: 'Compléter 50 quêtes journalières', reward: 300, actions: 3, progress: 0 }
 ]
+async function loadRepeatableStatus() {
+  try {
+    const r = await secureApiCall('/quests/repeatable')
+    const arr = Array.isArray(r?.repeatable) ? r.repeatable : []
+    const map = new Map(arr.map(x => [x.id, Number(x.progress||0)]))
+    for (const q of repeatableQuests) { q.progress = map.get(q.id) || 0 }
+  } catch {}
+}
+const seenAch = ref(new Set())
+async function loadAchievementsStatus() {
+  try {
+    const r = await secureApiCall('/quests/achievements')
+    const list = Array.isArray(r?.achievements) ? r.achievements : []
+    seenAch.value = new Set(list)
+    for (const id of list) {
+      const a = achievements.value.find(x => x.id === id)
+      if (a) a.progress = 100
+    }
+  } catch {}
+}
+
+const achStats = ref({ completedTasks: 0, wheelSpinTotal: 0, wheelLossTotal: 0, dailyCompleted: 0, repeatCompleted: 0, proposalsCount: 0, wheelWeekendSpinsToday: { ymd: null, count: 0 }, wheelWeekendLossToday: { ymd: null, count: 0 }, faction: null })
+
+async function loadAchievementsCounters() {
+  try {
+    const r = await secureApiCall('/quests/stats')
+    achStats.value = {
+      completedTasks: Math.max(0, Number(r?.completedTasks || 0)),
+      wheelSpinTotal: Math.max(0, Number(r?.wheelSpinTotal || 0)),
+      wheelLossTotal: Math.max(0, Number(r?.wheelLossTotal || 0)),
+      dailyCompleted: Math.max(0, Number(r?.dailyCompleted || 0)),
+      repeatCompleted: Math.max(0, Number(r?.repeatCompleted || 0)),
+      proposalsCount: Math.max(0, Number(r?.proposalsCount || 0)),
+      wheelWeekendSpinsToday: { ymd: r?.wheelWeekendSpinsToday?.ymd || null, count: Math.max(0, Number(r?.wheelWeekendSpinsToday?.count || 0)) },
+      wheelWeekendLossToday: { ymd: r?.wheelWeekendLossToday?.ymd || null, count: Math.max(0, Number(r?.wheelWeekendLossToday?.count || 0)) },
+      faction: r?.faction || null
+    }
+    updateAchievementsProgress()
+  } catch {}
+}
+
+function updateAchievementsProgress() {
+  try {
+    const s = achStats.value || {}
+    const completed = seenAch.value || new Set()
+    function setProgress(id, pct) {
+      const a = achievements.value.find(x => x.id === id)
+      if (a && !completed.has(id)) a.progress = Math.min(100, Math.max(0, Math.round(pct)))
+    }
+    function pct(count, thr) { return thr > 0 ? (count / thr) * 100 : 0 }
+
+    setProgress('tasks-validate-10', pct(Math.max(0, Number(s.completedTasks||0)), 10))
+    setProgress('tasks-validate-50', pct(Math.max(0, Number(s.completedTasks||0)), 50))
+    setProgress('tasks-validate-100', pct(Math.max(0, Number(s.completedTasks||0)), 100))
+    setProgress('tasks-validate-250', pct(Math.max(0, Number(s.completedTasks||0)), 250))
+
+    setProgress('wheel-spin-10', pct(Math.max(0, Number(s.wheelSpinTotal||0)), 10))
+    setProgress('wheel-spin-50', pct(Math.max(0, Number(s.wheelSpinTotal||0)), 50))
+    setProgress('wheel-spin-100', pct(Math.max(0, Number(s.wheelSpinTotal||0)), 100))
+
+    const wl = Math.max(0, Number(s.wheelLossTotal||0))
+    setProgress('wheel-first-loss', wl >= 1 ? 100 : 0)
+    setProgress('wheel-lose-30', pct(wl, 30))
+
+    const ty = getParisYMD()
+    try {
+      const wc = Number(s?.wheelWeekendSpinsToday?.count || 0)
+      const wy = String(s?.wheelWeekendSpinsToday?.ymd || '')
+      setProgress('wheel-weekend-spin-2', wy === ty ? pct(wc, 2) : 0)
+    } catch {}
+    try {
+      const lc = Number(s?.wheelWeekendLossToday?.count || 0)
+      const ly = String(s?.wheelWeekendLossToday?.ymd || '')
+      setProgress('wheel-weekend-lose-2', ly === ty ? pct(lc, 2) : 0)
+    } catch {}
+
+    const dc = Math.max(0, Number(s.dailyCompleted||0))
+    setProgress('daily-complete-5', pct(dc, 5))
+    setProgress('daily-complete-15', pct(dc, 15))
+    setProgress('daily-complete-30', pct(dc, 30))
+    setProgress('daily-complete-50', pct(dc, 50))
+
+    const rc = Math.max(0, Number(s.repeatCompleted||0))
+    setProgress('repeat-complete-5', pct(rc, 5))
+    setProgress('repeat-complete-20', pct(rc, 20))
+    setProgress('repeat-complete-50', pct(rc, 50))
+    setProgress('repeat-complete-100', pct(rc, 100))
+
+    const pc = Math.max(0, Number(s.proposalsCount||0))
+    setProgress('homework-propose-5', pct(pc, 5))
+    setProgress('homework-propose-20', pct(pc, 20))
+    setProgress('homework-propose-50', pct(pc, 50))
+
+    const infoCnt = taskInfoVisitedIds.size || 0
+    setProgress('tasks-info-multi', pct(infoCnt, 3))
+    setProgress('tasks-details-10', pct(infoCnt, 10))
+    setProgress('tasks-details-25', pct(infoCnt, 25))
+
+    const fj = achievements.value.find(x => x.id === 'faction-join')
+    if (fj && s.faction && !completed.has('faction-join')) fj.progress = 100
+  } catch {}
+}
+function showAchToast(id, title, desc) {
+  try { window.dispatchEvent(new CustomEvent('achievement-unlocked', { detail: { id, title, description: desc } })) } catch {}
+  const t = { id: `${id}:${Date.now()}:${Math.random()}`, title, desc }
+  achToasts.value.push(t)
+  setTimeout(() => { achToasts.value = achToasts.value.filter(x => x.id !== t.id) }, 4500)
+}
+
 const achievements = ref([
   // Nouveaux succès
   { id: 'ach-first-quest', title: 'Premier pas', progress: 0, description: 'Compléter votre première quête' },
@@ -326,7 +473,7 @@ const achievements = ref([
   // Re-roll
   { id: 'reroll-used', title: 'Deuxième chance', progress: 0, description: 'Utiliser un re-roll' },
 
-  // Faction (nouveau)
+  // Faction
   { id: 'faction-join', title: 'Nouveau membre', progress: 0, description: 'Rejoindre une faction' },
 
   // Devoirs proposés
@@ -342,6 +489,7 @@ const showAchInfo = ref(false)
 const currentAch = ref(null)
 function openAchInfo(ach) { currentAch.value = ach; showAchInfo.value = true }
 function closeAchInfo() { showAchInfo.value = false; currentAch.value = null }
+function handleAchievementUnlocked(e) { try { const id = String(e?.detail?.id || ''); if (!id) return; const a = achievements.value.find(x => x.id === id); if (a) a.progress = 100 } catch {} }
 
 const allDailyDone = computed(() => dailyQuests.value.every(q => q.done))
 const dailyProgressPerc = computed(() => {
@@ -351,8 +499,9 @@ const dailyProgressPerc = computed(() => {
 })
 const wheelSpinCount = ref(0)
 function getParisYMD() { try { const parisNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Paris' })); const y = parisNow.getFullYear(); const m = String(parisNow.getMonth()+1).padStart(2,'0'); const d = String(parisNow.getDate()).padStart(2,'0'); return `${y}-${m}-${d}` } catch { return '' } }
-function loadWheelSpinCount() { try { const savedDate = localStorage.getItem('wheelSpinsDate') || ''; const today = getParisYMD(); if (!savedDate || savedDate !== today) { localStorage.setItem('wheelSpinsDate', today); localStorage.setItem('wheelSpinsCount', '0'); wheelSpinCount.value = 0 } else { wheelSpinCount.value = Math.max(0, Number(localStorage.getItem('wheelSpinsCount') || 0)) } } catch { wheelSpinCount.value = 0 } }
-function saveWheelSpinCount() { try { localStorage.setItem('wheelSpinsDate', getParisYMD()); localStorage.setItem('wheelSpinsCount', String(Math.max(0, Number(wheelSpinCount.value||0)))) } catch {} }
+function getWheelStorageKey(base) { try { const a = useAuthStore(); const uid = String(a?.user?._id || a?.user?.id || a?.user?.username || '').trim(); return uid ? `${base}:${uid}` : base } catch { return base } }
+function loadWheelSpinCount() { try { const dateKey = getWheelStorageKey('wheelSpinsDate'); const countKey = getWheelStorageKey('wheelSpinsCount'); const savedDate = localStorage.getItem(dateKey) || ''; const today = getParisYMD(); if (!savedDate || savedDate !== today) { localStorage.setItem(dateKey, today); localStorage.setItem(countKey, '0'); wheelSpinCount.value = 0 } else { wheelSpinCount.value = Math.max(0, Number(localStorage.getItem(countKey) || 0)) } } catch { wheelSpinCount.value = 0 } }
+function saveWheelSpinCount() { try { const dateKey = getWheelStorageKey('wheelSpinsDate'); const countKey = getWheelStorageKey('wheelSpinsCount'); localStorage.setItem(dateKey, getParisYMD()); localStorage.setItem(countKey, String(Math.max(0, Number(wheelSpinCount.value||0)))) } catch {} }
 function parseRequiredSpinsFromId(id) { const m = String(id||'').match(/wheel-(\d+)/); return m ? Number(m[1]) : 0 }
 function questProgress(q) {
   if (!q) return 0
@@ -372,7 +521,41 @@ function questProgress(q) {
 }
 const displayDailyPerc = ref(0)
 const displayQuestPercs = ref([])
-function handleWheelSpun() { wheelSpinCount.value = Math.max(0, Number(wheelSpinCount.value || 0)) + 1; saveWheelSpinCount(); try { localStorage.setItem('questsProgressVersion', String(Date.now())) } catch {}; const wheelQuest = dailyQuests.value.find(q => q.id && /^wheel-/.test(q.id)); if (wheelQuest) { const required = parseRequiredSpinsFromId(wheelQuest.id) || Number(wheelQuest.actions || 0) || 0; if (required > 0 && wheelSpinCount.value >= required && !wheelQuest.done) wheelQuest.done = true } displayQuestPercs.value = dailyQuests.value.map(questProgress); displayDailyPerc.value = dailyProgressPerc.value }
+function handleWheelSpun() {
+  wheelSpinCount.value = Math.max(0, Number(wheelSpinCount.value || 0)) + 1
+  saveWheelSpinCount()
+  try { localStorage.setItem('questsProgressVersion', String(Date.now())) } catch {}
+  for (const q of dailyQuests.value) {
+    if (q && q.id && /^wheel-/.test(q.id)) {
+      const required = parseRequiredSpinsFromId(q.id) || Number(q.actions || 0) || 0
+      if (required > 0 && wheelSpinCount.value >= required && !q.done) q.done = true
+    }
+  }
+  displayQuestPercs.value = dailyQuests.value.map(questProgress)
+  displayDailyPerc.value = dailyProgressPerc.value
+  ;(async () => { try { await loadRepeatableStatus(); await loadAchievementsCounters() } catch {} })()
+}
+
+function handleTaskCompleted() { ;(async () => { try { await loadAchievementsCounters() } catch {} })() }
+
+function handleHomeworkProposed() { ;(async () => { try { await loadAchievementsCounters() } catch {} })() }
+
+function ensureWheelQuestsCompletionFromLocalCount() {
+  try {
+    const cnt = Math.max(0, Number(wheelSpinCount.value || 0))
+    let updated = false
+    for (const q of dailyQuests.value) {
+      if (q && q.id && /^wheel-/.test(q.id)) {
+        const required = parseRequiredSpinsFromId(q.id) || Number(q.actions || 0) || 0
+        if (required > 0 && cnt >= required && !q.done) { q.done = true; updated = true }
+      }
+    }
+    if (updated) {
+      displayQuestPercs.value = dailyQuests.value.map(questProgress)
+      displayDailyPerc.value = dailyProgressPerc.value
+    }
+  } catch {}
+}
 
 function durationLabel(actions) {
   if (actions === 1) return 'Durée: 1 jour'
@@ -382,7 +565,8 @@ function durationLabel(actions) {
 
 const rerollTargetIdx = ref(null)
 function openRerollConfirm(idx) {
-  if (rerollUsed.value) return
+  const q = dailyQuests.value[idx]
+  if (q && q.done) return
   rerollCandidateIdx.value = idx
   showConfirm.value = true
 }
@@ -394,29 +578,25 @@ function confirmReroll() {
 }
 function cancelReroll() { showConfirm.value = false; rerollCandidateIdx.value = null }
 function reroll(idx) {
-  if (rerollUsed.value) return
-  rerollUsed.value = true
   rerollTargetIdx.value = idx
-  const pool = [
-    { id: 'connect', title: 'Se connecter à Planify', reward: 10, actions: 1, done: false },
-    { id: 'task-info-1', title: 'Cliquer sur “Plus d’infos” sur une tâche', reward: 10, actions: 1, done: false },
-    { id: 'task-info-3', title: 'Cliquer sur “Plus d’infos” sur 3 tâches différentes', reward: 20, actions: 3, done: false },
-    { id: 'tasks-archives', title: 'Consulter les archives des tâches', reward: 10, actions: 1, done: false },
-    { id: 'tab-exams-open', title: 'Ouvrir l’onglet “Examens”', reward: 10, actions: 1, done: false },
-    { id: 'tab-retards-open', title: 'Ouvrir l’onglet “Retards”', reward: 10, actions: 1, done: false },
-    { id: 'visit-shop', title: 'Visiter la boutique Planify', reward: 10, actions: 1, done: false },
-    { id: 'leaderboard-profile', title: 'Consulter le profil d’une personne aléatoire dans le leaderboard', reward: 10, actions: 1, done: false },
-    { id: 'wheel-1', title: 'Tourner la roue de la fortune 1 fois', reward: 10, actions: 1, done: false },
-    { id: 'wheel-2', title: 'Tourner la roue de la fortune 2 fois', reward: 20, actions: 2, done: false }
-  ]
-  const existingIds = new Set(dailyQuests.value.map((q, i) => (i === idx ? null : q.id)).filter(Boolean))
-  const candidates = pool.filter(p => !existingIds.has(p.id))
-  const source = candidates.length ? candidates : pool
-  const next = source[Math.floor(Math.random() * source.length)]
-  dailyQuests.value[idx] = { ...next }
+  rerollUsed.value = true
+  ;(async () => {
+    try {
+      const res = await secureApiCall('/quests/reroll', { method: 'POST', body: JSON.stringify({ index: idx }) })
+      const qs = Array.isArray(res?.dailyQuests) ? res.dailyQuests : []
+      const meta = res?.meta || {}
+      dailyQuests.value = qs.map(q => ({ ...q }))
+      rerollUsed.value = !!meta.rerollUsed
+      displayQuestPercs.value = dailyQuests.value.map(questProgress)
+      displayDailyPerc.value = dailyProgressPerc.value
+      ensureWheelQuestsCompletionFromLocalCount()
+      try { await loadAchievementsStatus() } catch {}
+    } catch {}
+  })()
 }
 
 const toasts = ref([])
+const achToasts = ref([])
 function showQuestToast(title, reward, id) {
   try {
     window.dispatchEvent(new CustomEvent('quest-completed', { detail: { id, title, reward } }))
@@ -424,9 +604,16 @@ function showQuestToast(title, reward, id) {
   } catch {}
 }
 const prevDone = ref([])
-onMounted(() => {
+onMounted(async () => {
+  hydrating.value = true
+  await loadDailyFromBackend()
   loadWheelSpinCount()
+  await loadAchievementsStatus()
+  await loadAchievementsCounters()
   prevDone.value = dailyQuests.value.map(q => !!q.done)
+  hydrating.value = false
+  try { const auth = useAuthStore(); if (auth.isLoggedIn) handleConnect() } catch {}
+  try { loadLeaderboardTargetName() } catch {}
   window.addEventListener('homework-list-opened', markDevoirsDone)
   try { window.addEventListener('wheel-spun', handleWheelSpun) } catch {}
   try {
@@ -436,7 +623,10 @@ onMounted(() => {
     window.addEventListener('retards-tab-opened', handleRetardsOpen)
     window.addEventListener('shop-visited', handleShopVisited)
     window.addEventListener('leaderboard-profile-viewed', handleLeaderboardProfileViewed)
+    window.addEventListener('achievement-unlocked', handleAchievementUnlocked)
     window.addEventListener('connect', handleConnect)
+    window.addEventListener('task-completed', handleTaskCompleted)
+    window.addEventListener('homework-proposed', handleHomeworkProposed)
   } catch {}
   const version = Number(localStorage.getItem('questsProgressVersion') || 0)
   const seen = Number(localStorage.getItem('questsProgressSeen') || 0)
@@ -447,20 +637,33 @@ onMounted(() => {
     setTimeout(() => {
       displayDailyPerc.value = dailyProgressPerc.value
       displayQuestPercs.value = dailyQuests.value.map(questProgress)
+      ensureWheelQuestsCompletionFromLocalCount()
       setTimeout(() => { try { localStorage.setItem('questsProgressSeen', String(version)) } catch {} }, 800)
     }, 50)
   } else {
     displayDailyPerc.value = dailyProgressPerc.value
     displayQuestPercs.value = dailyQuests.value.map(questProgress)
+    ensureWheelQuestsCompletionFromLocalCount()
   }
 })
-watch(dailyQuests, (qs) => {
-  qs.forEach((q, i) => {
+watch(dailyQuests, async (qs) => {
+  if (hydrating.value) {
+    prevDone.value = qs.map(q => !!q.done)
+    displayQuestPercs.value = qs.map(questProgress)
+    displayDailyPerc.value = dailyProgressPerc.value
+    return
+  }
+  for (let i = 0; i < qs.length; i++) {
+    const q = qs[i]
     const now = !!q.done
     const before = !!prevDone.value[i]
-    if (now && !before) showQuestToast(q.title, q.reward, q.id)
+    if (now && !before) {
+      showQuestToast(q.title, q.reward, q.id)
+      try { await secureApiCall('/quests/complete', { method: 'POST', body: JSON.stringify({ questId: q.id }) }) } catch {}
+      try { await loadRepeatableStatus(); await loadAchievementsStatus() } catch {}
+    }
     prevDone.value[i] = now
-  })
+  }
   displayQuestPercs.value = qs.map(questProgress)
   displayDailyPerc.value = dailyProgressPerc.value
 }, { deep: true })
@@ -479,11 +682,52 @@ function simulateDailyProgress() {
   if (next) next.done = true
 }
 const showBonusPopup = ref(false)
-watch(allDailyDone, (v) => {
-  if (v && !rerollUsed.value) {
-    showBonusPopup.value = true
-  }
-})
+const bonusAwardAmount = ref(0)
+const bonusAwarding = ref(false)
+const nextDailyResetStr = ref('')
+let nextDailyResetTimerId = null
+function updateNextDailyReset() {
+  try {
+    const parisNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Paris' }))
+    const nextMidnight = new Date(parisNow); nextMidnight.setHours(24,0,0,0)
+    const ms = Math.max(0, nextMidnight.getTime() - parisNow.getTime())
+    const h = Math.floor(ms / 3600000)
+    const m = Math.floor((ms % 3600000) / 60000)
+    const s = Math.floor((ms % 60000) / 1000)
+    nextDailyResetStr.value = `${h}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`
+  } catch { nextDailyResetStr.value = '' }
+}
+function startNextDailyResetTimer() { updateNextDailyReset(); try { clearInterval(nextDailyResetTimerId) } catch {}; nextDailyResetTimerId = setInterval(updateNextDailyReset, 1000) }
+function stopNextDailyResetTimer() { try { clearInterval(nextDailyResetTimerId) } catch {}; nextDailyResetTimerId = null }
+async function awardDailyBonusWithRetry() {
+  if (bonusAwarding.value) return
+  bonusAwarding.value = true
+  try {
+    const maxTries = 10
+    for (let i = 0; i < maxTries; i++) {
+      const d = await secureApiCall('/quests/daily')
+      const cnt = Array.isArray(d?.dailyQuests) ? d.dailyQuests.filter(q => !!q.done).length : 0
+      if (cnt === 3) {
+        const r = await secureApiCall('/quests/bonus', { method: 'POST' })
+        ;(async () => { try { await loadAchievementsStatus() } catch {} })()
+        const got = typeof r?.amount === 'number' ? Number(r.amount) : 0
+        const newCoins = typeof r?.coins === 'number' ? Number(r.coins) : null
+        if (newCoins !== null) { coinsStore.balance = newCoins; coinsStore.leaderboardNeedsRefresh = true }
+        if (got > 0) {
+          bonusAwardAmount.value = got; showBonusPopup.value = true
+          try { if (!rerollUsed.value) window.dispatchEvent(new CustomEvent('achievement-unlocked', { detail: { id: 'daily-no-reroll' } })) } catch {}
+        }
+        break
+      }
+      await new Promise(res => setTimeout(res, 200))
+    }
+  } catch {}
+  bonusAwarding.value = false
+}
+watch([allDailyDone, hydrating], async ([v, h]) => {
+  if (!h && v && dailyQuests.value.length === 3) { awardDailyBonusWithRetry() }
+  startNextDailyResetTimer()
+}, { immediate: true })
 onUnmounted(() => {
   window.removeEventListener('homework-list-opened', markDevoirsDone)
   try {
@@ -494,8 +738,12 @@ onUnmounted(() => {
     window.removeEventListener('retards-tab-opened', handleRetardsOpen)
     window.removeEventListener('shop-visited', handleShopVisited)
     window.removeEventListener('leaderboard-profile-viewed', handleLeaderboardProfileViewed)
+    window.removeEventListener('achievement-unlocked', handleAchievementUnlocked)
     window.removeEventListener('connect', handleConnect)
+    window.removeEventListener('task-completed', handleTaskCompleted)
+    window.removeEventListener('homework-proposed', handleHomeworkProposed)
   } catch {}
+  try { stopNextDailyResetTimer() } catch {}
 })
 </script>
 
@@ -521,7 +769,7 @@ onUnmounted(() => {
 .achievement-top { display: flex; align-items: center; gap: 8px; }
 .achievement-icon { width: 24px; height: 24px; }
 .achievement-name { font-weight: 700; color: #fff; }
-.achievement-card .progress-track { height: 8px; background: #1f2937; border-radius: 999px; overflow: hidden; }
+.achievement-card .progress-track { width: 100%; height: 8px; background: #1f2937; border-radius: 999px; overflow: hidden; }
 .achievement-card .progress-fill { height: 100%; transition: width 500ms ease-out; }
 .achievement-progress { display: flex; align-items: center; gap: 8px; }
 .achievement-progress-label { min-width: 36px; text-align: right; font-size: 12px; color: #9ca3af; }

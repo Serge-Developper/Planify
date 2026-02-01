@@ -5564,7 +5564,7 @@ async function openLeaderboardProfile(user) {
 
     selectedUser.value = initial
     showUserProfile.value = true
-    try { window.dispatchEvent(new Event('leaderboard-profile-viewed')) } catch {}
+    try { window.dispatchEvent(new CustomEvent('leaderboard-profile-viewed', { detail: { username: (selectedUser.value && (selectedUser.value.username || selectedUser.value.name)) || '' } })) } catch {}
     lockBodyScroll()
 
     const userId = user?._id || user?.id
@@ -5921,7 +5921,7 @@ function getWeeklyJojoTextStyle() {
   return {
     position: 'absolute',
     top: p.top + 'px',
-    left: '64px',
+    left: '50px',
     width: p.width + '%',
     height: 'auto',
     objectFit: 'contain'
@@ -6943,6 +6943,7 @@ const confirmJoinFaction = async () => {
         }
       } catch {}
 
+      try { window.dispatchEvent(new CustomEvent('achievement-unlocked', { detail: { id: 'faction-join' } })) } catch {}
       try { await coinsStore.loadBalance() } catch {}
       await loadFactionUsers()
     } else {
@@ -6988,6 +6989,7 @@ async function doJoinFaction(factionName, viaConfirm = false) {
         }
       } catch {}
 
+      try { window.dispatchEvent(new CustomEvent('achievement-unlocked', { detail: { id: 'faction-join' } })) } catch {}
       // Rafraîchir le solde du wallet après déduction
       try { await coinsStore.loadBalance() } catch {}
 
@@ -7039,6 +7041,7 @@ const joinFaction = async (factionName) => {
         }
       } catch {}
 
+      try { window.dispatchEvent(new CustomEvent('achievement-unlocked', { detail: { id: 'faction-join' } })) } catch {}
       await loadFactionUsers()
     } else {
       console.error('Erreur lors du join:', response?.message)

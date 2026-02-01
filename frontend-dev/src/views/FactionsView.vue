@@ -4,7 +4,7 @@
 
     <div class="faction-join">
       <p>Choisis ta faction :</p>
-      <button @click="join('Bagna')" :disabled="busy">Rejoindre Bagna</button>
+      <button @click="join('Bagnat')" :disabled="busy">Rejoindre Bagnat</button>
       <button @click="join('Fermier')" :disabled="busy">Rejoindre Fermier</button>
       <span v-if="myFaction">Ta faction: {{ myFaction }}</span>
     </div>
@@ -17,7 +17,7 @@
 
     <div class="totals">
       <div class="total-card">
-        <h3>Bagna</h3>
+        <h3>Bagnat</h3>
         <p>Total coins: {{ totals.bagna }}</p>
         <p>Membres: {{ members.bagna }}</p>
       </div>
@@ -30,7 +30,7 @@
 
     <div class="leaderboards">
       <div class="board">
-        <h3>Bagna</h3>
+        <h3>Bagnat</h3>
         <table>
           <thead><tr><th>#</th><th>Utilisateur</th><th>Coins</th></tr></thead>
           <tbody>
@@ -103,15 +103,16 @@ async function load() {
   const res = await secureApiCall('/factions/leaderboard')
   bagna.value = res?.bagnaTopUsers || []
   fermier.value = res?.fermierTopUsers || []
-  totals.value = { bagna: Number(res?.factions?.find((f:any)=>f.name==='Bagna')?.totalCoins||0), fermier: Number(res?.factions?.find((f:any)=>f.name==='Fermier')?.totalCoins||0) }
-  members.value = { bagna: Number(res?.factions?.find((f:any)=>f.name==='Bagna')?.membersCount||0), fermier: Number(res?.factions?.find((f:any)=>f.name==='Fermier')?.membersCount||0) }
+  totals.value = { bagna: Number(res?.factions?.find((f:any)=>f.name==='Bagnat')?.totalCoins||0), fermier: Number(res?.factions?.find((f:any)=>f.name==='Fermier')?.totalCoins||0) }
+  members.value = { bagna: Number(res?.factions?.find((f:any)=>f.name==='Bagnat')?.membersCount||0), fermier: Number(res?.factions?.find((f:any)=>f.name==='Fermier')?.membersCount||0) }
 }
 
-async function join(name: 'Bagna'|'Fermier') {
+async function join(name: 'Bagnat'|'Fermier') {
   try {
     busy.value = true
     await secureApiCall('/factions/join', { method: 'POST', body: JSON.stringify({ faction: name }) })
     myFaction.value = name
+    try { window.dispatchEvent(new CustomEvent('achievement-unlocked', { detail: { id: 'faction-join', title: 'Nouveau membre', description: 'Rejoindre une faction' } })) } catch {}
     await load()
   } catch (e:any) {
     alert(e?.message || 'Erreur')

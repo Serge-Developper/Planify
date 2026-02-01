@@ -259,7 +259,7 @@
                   <span v-if="p.type === 'exam'">📝 Examen</span>
                   <span v-else>📚 Devoir</span>
                 </div>
-                <small v-if="p.proposedByName" class="proposer-name">Proposé par {{ p.proposedByName }}</small>
+                <small v-if="p.proposedByName" class="proposer-name">Par {{ p.proposedByName }}</small>
               </div>
               <div class="devoir-actions" style="display:flex; gap:8px; flex-wrap:wrap;">
                 <button class="btn-vider-archive btn-pill-common orange" @click="blockProposer(p)">{{ p.proposedByBlocked ? 'Débloquer' : 'Bloquer' }}</button>
@@ -347,8 +347,8 @@
         </div>
       </div>
     <div class="liste-content" :class="{ 'archives-mode': sortBy === 'passe' }">
-      <div v-if="props.events.length === 0 && sortBy !== 'passe'" class="aucune-matiere">Aucune matière trouvée</div>
-      <template v-else-if="sortBy !== 'passe' && sortBy !== 'enretard'">
+        <div v-if="(toDoEvents.length + doneEvents.length) === 0 && sortBy !== 'passe'" class="aucune-matiere">Aucune matière trouvée</div>
+        <template v-else-if="sortBy !== 'passe' && sortBy !== 'enretard'">
         <div class="liste-deux-colonnes">
           <div class="liste-col-gauche">
             <div class="col-gauche-title">Tâches complétées</div>
@@ -395,6 +395,7 @@
                   <span v-if="event.type === 'exam'">📝 Examen</span>
                   <span v-else>📚 Devoir</span>
                 </div>
+                <small v-if="event.isProposal && displayProposerName(event)" class="proposer-name">Proposé par {{ displayProposerName(event) }}</small>
                 <small style="color:#6366f1;">
                   ⏰ {{ timeLeft(event.date, event.heure) }}
                 </small>
@@ -451,6 +452,7 @@
                   <span v-if="event.type === 'exam'">📝 Examen</span>
                   <span v-else>📚 Devoir</span>
                 </div>
+                <small v-if="event.isProposal && displayProposerName(event)" class="proposer-name">Proposé par {{ displayProposerName(event) }}</small>
                 <small v-if="isLate(event)" style="color:#ef4444;">⚠️ En retard</small>
                 <small v-else style="color:#6366f1;">⏰ {{ timeLeft(event.date, event.heure) }}</small>
                 <button class="btn-plus-infos" @click="openPopup(event)">Plus d'infos</button>
@@ -510,6 +512,7 @@
                   <span v-if="event.type === 'exam'">📝 Examen</span>
                   <span v-else>📚 Devoir</span>
                 </div>
+                <small v-if="event.isProposal && displayProposerName(event)" class="proposer-name">Proposé par {{ displayProposerName(event) }}</small>
                 <small style="color:#6366f1;">Archivé</small>
                 <button class="btn-plus-infos" @click="openPopup(event)">Plus d'infos</button>
                 <div class="group-row">
@@ -626,6 +629,7 @@
         <h2>{{ popupEvent.titre }}</h2>
         <p><b>Matière :</b> {{ popupEvent.matiere }}</p>
         <p><b>Date :</b> {{ formatDate(popupEvent.date) }} {{ popupEvent.heure }}</p>
+        <p v-if="popupEvent.isProposal && displayProposerName(popupEvent)"><b>Proposé par :</b> {{ displayProposerName(popupEvent) }}</p>
         <p><b>Description :</b>
           <span class="multiline-html" v-html="popupDescriptionHtml" @click="onDisplayHtmlClick"></span>
         </p>
@@ -2287,6 +2291,15 @@ function stringToColor(str, type) {
   }
   const h = Math.abs(hash) % 360;
   return `hsl(${h}, 80%, 75%)`;
+}
+
+function displayProposerName(ev) {
+  try {
+    const myId = String(user.value?._id || user.value?.id || '')
+    const createdBy = String(ev?.createdBy || '')
+    if (createdBy && myId && createdBy === myId) return (user.value?.username || user.value?.name || 'Vous')
+    return ev?.createdByName || ev?.proposedByName || ''
+  } catch { return '' }
 }
 function formatDate(dateStr) {
   if (!dateStr) return '';
@@ -4538,6 +4551,8 @@ async function submitAddTask() {
 
     successMessage.value = isPrivileged ? 'Tâche ajoutée avec succès !' : 'Proposition envoyée !';
 
+    try { if (!isPrivileged) window.dispatchEvent(new CustomEvent('homework-proposed')) } catch {}
+
     showAddTaskPopup.value = false;
     showSuccessPopup.value = true;
     if (isPrivileged) {
@@ -4567,7 +4582,29 @@ async function fetchMyProposals() {
     if (!tok) { myProposals.value = []; return; }
     const res = await axios.get(`${API_URL}/events/proposals/mine`, { headers: { Authorization: `Bearer ${tok}` } });
     const arr = Array.isArray(res.data?.proposals) ? res.data.proposals : (Array.isArray(res.data) ? res.data : []);
-    myProposals.value = arr;
+    const uid = String(user.value?._id || user.value?.id || '');
+    myProposals.value = arr.map(p => ({
+      _id: p._id,
+      titre: p.titre || '',
+      matiere: p.matiere || '',
+      date: p.date || '',
+      heure: typeof p.heure === 'string' ? p.heure.replace('h', ':') : (p.heure || ''),
+      type: ((p.type || '').toLowerCase() === 'examen' ? 'exam' : (((p.type || '').toLowerCase() === 'devoir') ? 'devoir' : ((p.type || '').toLowerCase() || 'devoir'))),
+      groupe: p.groupe || 'Promo',
+      groupes: Array.isArray(p.groupes) ? p.groupes : (p.groupe ? [p.groupe] : []),
+      year: p.year || '',
+      specialite: p.specialite || '',
+      description: p.description || '',
+      submissionEnabled: !!p.submissionEnabled,
+      attachments: Array.isArray(p.attachments) ? p.attachments : [],
+      isProposal: true,
+      createdByName: p.proposedBy?.username || (user.value?.username || user.value?.name || ''),
+      checkedBy: Array.isArray(p.checkedBy) ? p.checkedBy : [],
+      archivedBy: Array.isArray(p.archivedBy) ? p.archivedBy : [],
+      checked: Array.isArray(p.checkedBy) ? p.checkedBy.map(String).includes(uid) : false,
+      archived: Array.isArray(p.archivedBy) ? p.archivedBy.map(String).includes(uid) : false,
+      createdBy: p.proposedBy?._id || p.proposedBy || null
+    }));
   } catch { myProposals.value = []; }
 }
 async function fetchMyAcceptedProposals() {
@@ -4576,7 +4613,29 @@ async function fetchMyAcceptedProposals() {
     if (!tok) { myAcceptedProposals.value = []; return; }
     const res = await axios.get(`${API_URL}/events/proposals/accepted`, { headers: { Authorization: `Bearer ${tok}` } });
     const arr = Array.isArray(res.data?.proposals) ? res.data.proposals : (Array.isArray(res.data) ? res.data : []);
-    myAcceptedProposals.value = arr;
+    const uid = String(user.value?._id || user.value?.id || '');
+    myAcceptedProposals.value = arr.map(p => ({
+      _id: p._id,
+      titre: p.titre || '',
+      matiere: p.matiere || '',
+      date: p.date || '',
+      heure: typeof p.heure === 'string' ? p.heure.replace('h', ':') : (p.heure || ''),
+      type: ((p.type || '').toLowerCase() === 'examen' ? 'exam' : (((p.type || '').toLowerCase() === 'devoir') ? 'devoir' : ((p.type || '').toLowerCase() || 'devoir'))),
+      groupe: p.groupe || 'Promo',
+      groupes: Array.isArray(p.groupes) ? p.groupes : (p.groupe ? [p.groupe] : []),
+      year: p.year || '',
+      specialite: p.specialite || '',
+      description: p.description || '',
+      submissionEnabled: !!p.submissionEnabled,
+      attachments: Array.isArray(p.attachments) ? p.attachments : [],
+      isProposal: true,
+      createdByName: p.proposedBy?.username || (user.value?.username || user.value?.name || ''),
+      checkedBy: Array.isArray(p.checkedBy) ? p.checkedBy : [],
+      archivedBy: Array.isArray(p.archivedBy) ? p.archivedBy : [],
+      checked: Array.isArray(p.checkedBy) ? p.checkedBy.map(String).includes(uid) : false,
+      archived: Array.isArray(p.archivedBy) ? p.archivedBy.map(String).includes(uid) : false,
+      createdBy: p.proposedBy?._id || p.proposedBy || null
+    }));
   } catch { myAcceptedProposals.value = []; }
 }
 onMounted(async () => {
@@ -4858,6 +4917,8 @@ async function openProposalInfo(id) {
         description: p.description || '',
         submissionEnabled: !!p.submissionEnabled,
         attachments: Array.isArray(p.attachments) ? p.attachments : [],
+        createdBy: p.proposedBy?._id || p.proposedBy,
+        createdByName: p.proposedBy?.username || '',
         isProposal: true
       };
       openPopup(evLike);
@@ -4878,6 +4939,8 @@ async function openProposalInfo(id) {
         description: p.description || '',
         submissionEnabled: !!p.submissionEnabled,
         attachments: Array.isArray(p.attachments) ? p.attachments : [],
+        createdBy: p.proposedById,
+        createdByName: p.proposedByName || '',
         isProposal: true
       };
       openPopup(evLike);
@@ -4903,17 +4966,35 @@ async function fetchProposals() {
     const url = (role === 'delegue' || role === 'prof' || role === 'admin') ? `${API_URL}/events/proposals` : `${API_URL}/events/proposals/feed`;
     const res = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
     const list = Array.isArray(res.data?.proposals) ? res.data.proposals : (Array.isArray(res.data) ? res.data : []);
-    proposalsList.value = list.map(p => ({
+    const myId = String(user.value?._id || user.value?.id || '');
+    let base = list.map(p => ({
       _id: p._id,
       titre: p.titre,
       matiere: p.matiere,
       type: p.type,
       date: p.date,
-      heure: typeof p.heure === 'string' ? p.heure.replace('h', ':') : p.heure,
+      heure: typeof p.heure === 'string' ? p.heure.replace('h', ':') : (p.heure || ''),
       proposedById: p.proposedBy?._id || p.proposedBy,
       proposedByName: p.proposedBy?.username || '',
       proposedByBlocked: !!(p.proposedBy && p.proposedBy.proposalBlocked === true)
-    }));
+    }))
+    // Élèves/étudiants: exclure mes propres propositions
+    base = (role === 'delegue' || role === 'prof' || role === 'admin') ? base : base.filter(p => String(p.proposedById || '') !== myId)
+    // Enrichir les noms manquants via /events/proposals/:id
+    async function enrichMissing() {
+      const need = base.filter(x => !x.proposedByName && x.proposedById)
+      if (!need.length) return
+      await Promise.all(need.map(async (x) => {
+        try {
+          const d = await axios.get(`${API_URL}/events/proposals/${encodeURIComponent(x._id)}`, { headers: { Authorization: `Bearer ${token}` } })
+          const p2 = d.data?.proposal
+          const name = p2?.proposedBy?.username || ''
+          if (name) x.proposedByName = name
+        } catch {}
+      }))
+    }
+    await enrichMissing()
+    proposalsList.value = base
   } catch (e) { proposalsList.value = []; proposalsError.value = 'Erreur'; } finally { proposalsLoading.value = false; }
 }
 async function validateProposal(p) {

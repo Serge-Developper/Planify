@@ -18,7 +18,7 @@ const showItemReceivedPopup = ref(false);
 const currentItems = ref<any[]>([]);
 const currentAdminMessage = ref('');
 
-const questToasts = ref<{ id: number, title: string, reward: number, type: 'quest'|'task', questId?: string }[]>([])
+const questToasts = ref<{ id: number, title: string, reward: number, type: 'quest'|'task'|'achievement', questId?: string, desc?: string }[]>([])
 const TWO_LINE_IDS = new Set<string>(['leaderboard-profile', 'task-info-3'])
 function normalizeTitle(s: string) { return String(s || '').toLowerCase().replace(/[“”"'’]/g,'"').replace(/\s+/g,' ') }
 function isTwoLine(t: any) { if (!t || t.type !== 'quest') return false; const id = String((t && t.questId) || ''); if (id && TWO_LINE_IDS.has(id)) return true; const n = normalizeTitle(t.title); return (n.includes('plus d"infos') && n.includes('3 tâches')) || (n.includes('leaderboard') && n.includes('profil')) }
@@ -29,9 +29,99 @@ function showGlobalToast(type: 'quest'|'task', title: string, reward = 0, questI
   questToasts.value.push({ id, title, reward, type, questId })
   setTimeout(() => { questToasts.value = questToasts.value.filter(x => x.id !== id) }, 4500)
 }
-function handleQuestCompleted(e: any) { const d = (e && e.detail) || {}; showGlobalToast('quest', d.title || 'Quête', Number(d.reward) || 0, String(d.id || '')); try { localStorage.setItem('questsProgressVersion', String(Date.now())) } catch {} }
-function handleTaskCompleted(e: any) { const d = (e && e.detail) || {}; showGlobalToast('task', d.title || 'Tâche', Number(d.reward) || 0) }
-function handleWheelSpun() { try { localStorage.setItem('questsProgressVersion', String(Date.now())) } catch {} }
+function handleQuestCompleted(e: any) { const d = (e && e.detail) || {}; const r = Number(d.reward) || 0; showGlobalToast('quest', d.title || 'Quête', r, String(d.id || '')); try { coinsStore.addCoins(r, { reason: 'daily-quest' }) } catch {} try { localStorage.setItem('questsProgressVersion', String(Date.now())) } catch {} setTimeout(() => { try { loadAchievementsStatus(false) } catch {} }, 50) }
+function handleTaskCompleted(e: any) { const d = (e && e.detail) || {}; showGlobalToast('task', d.title || 'Tâche', Number(d.reward) || 0); try { loadAchievementsStatus(false) } catch {} }
+function handleWheelSpun() { try { localStorage.setItem('questsProgressVersion', String(Date.now())) } catch {} setTimeout(() => { try { loadAchievementsStatus(false) } catch {} }, 50) }
+
+function showAchToast(title: string, desc: string) {
+  const id = Date.now() + Math.random()
+  questToasts.value.push({ id, title, reward: 0, type: 'achievement', desc })
+  setTimeout(() => { questToasts.value = questToasts.value.filter(x => x.id !== id) }, 4500)
+}
+const achievementsCatalog = [
+  { id: 'ach-first-quest', title: 'Premier pas', description: 'Compléter votre première quête' },
+  { id: 'ach-wheel-once', title: 'Début de la chance', description: 'Tourner la roue une fois' },
+  { id: 'ach-task-streak', title: 'Routine héroïque', description: 'Valider des tâches sur plusieurs jours' },
+  { id: 'wheel-first-loss', title: 'Début de la malchance', description: 'Perdre à la roue de la fortune pour la première fois' },
+  { id: 'wheel-lose-30', title: 'Chanceux d’être malchanceux', description: 'Perdre 30 fois à la roue de la fortune' },
+  { id: 'wheel-weekend-lose-2', title: 'Week-end maudit', description: 'Perdre deux fois à la roue de la fortune le week-end' },
+  { id: 'wheel-spin-10', title: 'Chance montante', description: 'Tourner la roue de la fortune 10 fois' },
+  { id: 'wheel-spin-50', title: 'Accro de la roue', description: 'Tourner la roue de la fortune 50 fois' },
+  { id: 'wheel-spin-100', title: 'Maître de la fortune', description: 'Tourner la roue de la fortune 100 fois' },
+  { id: 'wheel-weekend-spin-2', title: 'Un week-end souriant', description: 'Tourner la roue de la fortune deux fois durant le week-end' },
+  { id: 'tasks-validate-10', title: 'Apprenti organisé', description: 'Valider 10 tâches' },
+  { id: 'tasks-validate-50', title: 'Productivité en marche', description: 'Valider 50 tâches' },
+  { id: 'tasks-validate-100', title: 'Machine à accomplir', description: 'Valider 100 tâches' },
+  { id: 'tasks-validate-250', title: 'Légende de la productivité', description: 'Valider 250 tâches' },
+  { id: 'tasks-info-multi', title: 'Curieux de nature', description: 'Cliquer sur “Plus d’infos” sur plusieurs tâches différentes' },
+  { id: 'tasks-details-10', title: 'Observateur attentif', description: 'Consulter les détails de 10 tâches' },
+  { id: 'tasks-details-25', title: 'Expert en organisation', description: 'Consulter les détails de 25 tâches' },
+  { id: 'daily-complete-5', title: 'Rituel quotidien', description: 'Compléter 5 quêtes journalières' },
+  { id: 'daily-complete-15', title: 'Habitude solide', description: 'Compléter 15 quêtes journalières' },
+  { id: 'daily-complete-30', title: 'Discipline absolue', description: 'Compléter 30 quêtes journalières' },
+  { id: 'daily-complete-50', title: 'Maître des quêtes journalières', description: 'Compléter 50 quêtes journalières' },
+  { id: 'daily-no-reroll', title: 'No re-roll', description: 'Compléter les 3 quêtes journalières sans utiliser de re-roll' },
+  { id: 'repeat-complete-5', title: 'Persévérance', description: 'Compléter 5 quêtes répétables' },
+  { id: 'repeat-complete-20', title: 'Toujours plus loin', description: 'Compléter 20 quêtes répétables' },
+  { id: 'repeat-complete-50', title: 'Infatigable', description: 'Compléter 50 quêtes répétables' },
+  { id: 'repeat-complete-100', title: 'Inarrêtable', description: 'Compléter 100 quêtes répétables' },
+  { id: 'reroll-used', title: 'Deuxième chance', description: 'Utiliser un re-roll' },
+  { id: 'faction-join', title: 'Nouveau membre', description: 'Rejoindre une faction' },
+  { id: 'homework-propose-5', title: 'Petit professeur', description: 'Proposer 5 devoirs' },
+  { id: 'homework-propose-20', title: 'Prof en herbe', description: 'Proposer 20 devoirs' },
+  { id: 'homework-propose-50', title: 'Maître des devoirs', description: 'Proposer 50 devoirs' },
+  { id: 'cosmetics-border-all', title: 'Collectionneur de cadres', description: 'Avoir toutes les couleurs de bordure' },
+  { id: 'cosmetics-item-3styles', title: 'Styliste ultime', description: 'Avoir un item avec 3 styles différents' }
+]
+const ACH_BY_ID = new Map(achievementsCatalog.map(x => [x.id, x]))
+const seenAch = ref(new Set<string>())
+function getAchSeenKey() {
+  try {
+    const uid = String(authStore?.user?._id || authStore?.user?.id || authStore?.user?.username || '').trim()
+    return uid ? 'achSeen:' + uid : 'achSeen'
+  } catch {
+    return 'achSeen'
+  }
+}
+function loadSeenFromStorage() {
+  try {
+    const raw = localStorage.getItem(getAchSeenKey()) || '[]'
+    const arr = JSON.parse(raw)
+    seenAch.value = new Set(Array.isArray(arr) ? arr.map(String) : [])
+  } catch {
+    seenAch.value = new Set<string>()
+  }
+}
+function persistSeen() { try { localStorage.setItem(getAchSeenKey(), JSON.stringify(Array.from(seenAch.value))) } catch {} }
+function handleAchievementUnlocked(e: any) {
+  const d = (e && e.detail) || {}
+  const id = String(d.id || '')
+  if (!id) return
+  // Afficher immédiatement le succès signalé par l'événement (déblocage en direct),
+  // puis marquer comme "vu" pour éviter toute duplication ultérieure.
+  const ref = ACH_BY_ID.get(id)
+  const title = d.title || (ref ? ref.title : 'Succès')
+  const desc = d.description || (ref ? ref.description : '')
+  showAchToast(title, desc)
+  seenAch.value.add(id)
+  persistSeen()
+}
+async function loadAchievementsStatus(initial = false) {
+  try {
+    const r: any = await secureApiCall('/quests/achievements')
+    const list: string[] = Array.isArray(r?.achievements) ? r.achievements.map(String) : []
+    const prev = new Set(Array.from(seenAch.value))
+    if (initial) { seenAch.value = new Set(list); persistSeen(); return }
+    for (const id of list) {
+      if (!prev.has(id)) {
+        seenAch.value.add(id)
+        const ref = ACH_BY_ID.get(id)
+        showAchToast(ref ? ref.title : 'Succès', ref ? ref.description : '')
+      }
+    }
+    persistSeen()
+  } catch {}
+}
 
 // Ouvre la popup cadeau à la demande (sans message)
 function handleOpenItemReceived(e: any) {
@@ -128,10 +218,15 @@ onMounted(() => {
   window.addEventListener('quest-completed', handleQuestCompleted);
   window.addEventListener('task-completed', handleTaskCompleted);
   window.addEventListener('wheel-spun', handleWheelSpun);
+  window.addEventListener('achievement-unlocked', handleAchievementUnlocked);
   // Vérifier les nouveaux items après le chargement initial
   setTimeout(async () => {
     await checkForNewItemsWithMessages();
   }, 1000);
+  setTimeout(async () => {
+    try { loadSeenFromStorage() } catch {}
+    try { await loadAchievementsStatus(true) } catch {}
+  }, 200);
 });
 
 onUnmounted(() => {
@@ -139,6 +234,7 @@ onUnmounted(() => {
   try { window.removeEventListener('quest-completed', handleQuestCompleted) } catch {}
   try { window.removeEventListener('task-completed', handleTaskCompleted) } catch {}
   try { window.removeEventListener('wheel-spun', handleWheelSpun) } catch {}
+  try { window.removeEventListener('achievement-unlocked', handleAchievementUnlocked) } catch {}
 });
 </script>
 
@@ -162,16 +258,21 @@ onUnmounted(() => {
           <img :src="questsLogo" alt="Quêtes" class="toast-quests-logo" />
         </div>
         <div class="toast-content">
-          <div class="toast-title">{{ t.type === 'task' ? 'Tâche terminée' : 'Quête terminée' }}</div>
+          <div class="toast-title">{{ t.type === 'task' ? 'Tâche terminée' : (t.type === 'achievement' ? 'Succès débloqué' : 'Quête terminée') }}</div>
           <div class="toast-sub" :class="{ 'two-lines': isTwoLine(t) }">{{ t.title }}</div>
-          <div v-if="t.reward" class="toast-reward">
+          <div v-if="t.type === 'achievement'" class="toast-reward">
+            <span>{{ t.desc }}</span>
+          </div>
+          <div v-else-if="t.reward" class="toast-reward">
             <img src="@/assets/img/planicoins.webp" alt="Coins" class="coin-icon" />
             <span>+{{ t.reward }} Planify Coins</span>
           </div>
         </div>
-        <div class="toast-check">✓</div>
+        <div class="toast-check">{{ t.type === 'achievement' ? '★' : '✓' }}</div>
       </div>
     </transition-group>
+
+
   </div>
 </template>
 

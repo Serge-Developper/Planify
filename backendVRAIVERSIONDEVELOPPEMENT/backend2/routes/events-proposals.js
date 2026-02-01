@@ -122,6 +122,20 @@ router.post('/proposals', verifyToken, async (req, res) => {
       workGroupsDraft: Array.isArray(b.workGroupsDraft) ? b.workGroupsDraft : [],
       attachments: [], proposedBy: req.user.id, status: 'pending'
     });
+    try {
+      const u = await User.findById(req.user.id)
+      if (u) {
+        u.achievements = u.achievements || {}
+        u.achievements.proposalsCount = Math.max(0, Number(u.achievements.proposalsCount||0)) + 1
+        u.achievementsCompleted = Array.isArray(u.achievementsCompleted) ? u.achievementsCompleted : []
+        function award(id) { if (!u.achievementsCompleted.includes(id)) u.achievementsCompleted.push(id) }
+        const c = u.achievements.proposalsCount
+        if (c === 5) award('homework-propose-5')
+        if (c === 20) award('homework-propose-20')
+        if (c === 50) award('homework-propose-50')
+        await u.save()
+      }
+    } catch {}
     res.json({ success: true, proposal: doc });
   } catch (e) {
     res.status(500).json({ success: false, message: 'Erreur création proposition', error: String(e) });

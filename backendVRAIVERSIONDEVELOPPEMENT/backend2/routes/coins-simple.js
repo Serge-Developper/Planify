@@ -396,6 +396,36 @@ router.get('/spin-status', verifyToken, async (req, res) => {
 });
 
 // Route: /test-force-loss
+router.post('/quest-reward', verifyToken, async (req, res) => {
+  try {
+    const userId = safeUserId(req);
+    const body = req.body || {};
+    const add = Number(body.amount);
+    if (!Number.isFinite(add) || add <= 0) {
+      return res.status(400).json({ success: false, message: 'Montant invalide' });
+    }
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Utilisateur non trouvé' });
+    }
+    user.coins = (user.coins || 0) + add;
+    user.leaderboardCoins = (user.leaderboardCoins || 0) + add;
+    if (user.faction) {
+      user.factionCoins = (user.factionCoins || 0) + add;
+      await Faction.updateOne({ name: user.faction }, { $inc: { totalCoins: add } }, { upsert: true });
+    }
+    await user.save();
+    return res.json({
+      success: true,
+      newCoins: user.coins,
+      leaderboardCoins: user.leaderboardCoins,
+      factionCoins: user.factionCoins || 0
+    });
+  } catch (error) {
+    console.error('Erreur quest-reward:', error);
+    return res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+});
 router.post('/test-force-loss', verifyToken, async (req, res) => {
   try {
     // @ts-ignore
@@ -554,6 +584,53 @@ router.post('/spin-wheel', verifyToken, async (req, res) => {
     }
 
     user.lastSpinDate = now;
+    user.repeatable = user.repeatable || {};
+    function incAndAward(key, threshold, amount) {
+      user.repeatable[key] = Math.max(0, Number(user.repeatable[key] || 0)) + 1;
+      if (user.repeatable[key] >= threshold) {
+        user.repeatable[key] -= threshold;
+        user.coins = (user.coins || 0) + amount; // wallet only
+        user.achievements = user.achievements || {}; user.achievements.repeatCompleted = Math.max(0, Number(user.achievements.repeatCompleted||0)) + 1;
+      }
+    }
+    incAndAward('wheel10', 10, 100);
+    incAndAward('wheel25', 25, 250);
+    incAndAward('wheel50', 50, 500);
+
+    // Succès (roue)
+    function award(id) {
+      user.achievementsCompleted = Array.isArray(user.achievementsCompleted) ? user.achievementsCompleted : [];
+      if (!user.achievementsCompleted.includes(id)) user.achievementsCompleted.push(id);
+    }
+    user.achievements = user.achievements || {};
+    user.achievements.wheelSpinTotal = Math.max(0, Number(user.achievements.wheelSpinTotal||0)) + 1;
+    if (user.achievements.wheelSpinTotal === 1) award('ach-wheel-once');
+    if (user.achievements.wheelSpinTotal === 10) award('wheel-spin-10');
+    if (user.achievements.wheelSpinTotal === 50) award('wheel-spin-50');
+    if (user.achievements.wheelSpinTotal === 100) award('wheel-spin-100');
+
+    const lost = !(reward.itemId) && !(typeof reward.coins === 'number' && reward.coins > 0);
+    if (lost) {
+      user.achievements.wheelLossTotal = Math.max(0, Number(user.achievements.wheelLossTotal||0)) + 1;
+      if (user.achievements.wheelLossTotal === 1) award('wheel-first-loss');
+      if (user.achievements.wheelLossTotal === 30) award('wheel-lose-30');
+    }
+
+    // Weekend counters (Europe/Paris)
+    const parisYmd = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Paris' }));
+    const y = parisYmd.getFullYear(), m = String(parisYmd.getMonth()+1).padStart(2,'0'), d = String(parisYmd.getDate()).padStart(2,'0');
+    const todayYmd = `${y}-${m}-${d}`;
+    if (isWeekend) {
+      if (user.achievements.wheelWeekendSpinsYmd !== todayYmd) { user.achievements.wheelWeekendSpinsYmd = todayYmd; user.achievements.wheelWeekendSpinsCount = 0; }
+      user.achievements.wheelWeekendSpinsCount = Math.max(0, Number(user.achievements.wheelWeekendSpinsCount||0)) + 1;
+      if (user.achievements.wheelWeekendSpinsCount === 2) award('wheel-weekend-spin-2');
+      if (lost) {
+        if (user.achievements.wheelWeekendLossYmd !== todayYmd) { user.achievements.wheelWeekendLossYmd = todayYmd; user.achievements.wheelWeekendLossCount = 0; }
+        user.achievements.wheelWeekendLossCount = Math.max(0, Number(user.achievements.wheelWeekendLossCount||0)) + 1;
+        if (user.achievements.wheelWeekendLossCount === 2) award('wheel-weekend-lose-2');
+      }
+    }
+
     await user.save();
 
     // Incrément du total de la faction

@@ -227,6 +227,26 @@ export const useCoinsStore = defineStore('coins', {
         this.loading = false;
       }
     },
+    // Ajouter des coins (récompenses de quêtes)
+    async addCoins(amount: number, opts?: { reason?: string; skipBackend?: boolean }) {
+      try {
+        const add = Math.max(0, Number(amount || 0));
+        if (!add) return;
+        // Optimistic update
+        this.balance = Math.max(0, Number(this.balance || 0)) + add;
+        this.leaderboardNeedsRefresh = true;
+        if (opts && opts.skipBackend) return;
+        try {
+          const res = await secureApiCall('/coins/quest-reward', {
+            method: 'POST',
+            body: JSON.stringify({ amount: add, reason: (opts && opts.reason) || 'daily-quest' })
+          });
+          if (res && typeof res.newCoins === 'number') this.balance = res.newCoins;
+        } catch {}
+      } catch (error) {
+        console.error('Erreur ajout de coins:', error);
+      }
+    },
 
     // Charger l'état du spin depuis la base de données
     async loadSpinStatus() {

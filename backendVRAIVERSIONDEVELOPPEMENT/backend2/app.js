@@ -22,6 +22,7 @@ const factionsRoutes = require('./routes/factions');
 const borderColorsRoutes = require('./routes/border-colors');
 const ephemeralPopupsRoutes = require('./routes/ephemeral-popups');
 const redeemCodesRouter = require('./routes/redeem-codes');
+const questsRoutes = require('./routes/quests');
 
 // AJOUT: Patch Notes (persistés)
 const patchNotesRoutes = require('./routes/patch-notes');
@@ -215,6 +216,7 @@ app.use('/api/users-admin', requireDb, usersAdminRoutes);
 app.use('/api/border-colors', requireDb, borderColorsRoutes);
 app.use('/api/popups', ephemeralPopupsRoutes);
 app.use('/api/redeem-codes', redeemCodesRouter);
+app.use('/api/quests', requireDb, questsRoutes);
 
 app.use('/api/events', requireDb, eventProposalsRoutes);
 

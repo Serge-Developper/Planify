@@ -44,6 +44,8 @@ router.post('/join', verifyToken, async (req, res) => {
     if (!prev) {
       user.faction = desired;
       user.factionCoins = 0;
+      user.achievementsCompleted = Array.isArray(user.achievementsCompleted) ? user.achievementsCompleted : [];
+      if (!user.achievementsCompleted.includes('faction-join')) user.achievementsCompleted.push('faction-join');
       await user.save();
       await Faction.updateOne({ name: desired }, { $inc: { membersCount: 1 } }, { upsert: true });
       res.json({ success: true, faction: user.faction, coins: Number(user.coins || 0) });

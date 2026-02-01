@@ -72,6 +72,53 @@ const userSchema = new mongoose.Schema({
 
   suggestEditorState: { type: Object, default: {} },
 
+  dailyQuests: {
+    type: [
+      {
+        id: { type: String, required: true },
+        title: { type: String, required: true },
+        reward: { type: Number, default: 0 },
+        actions: { type: Number, default: 1 },
+        done: { type: Boolean, default: false },
+        createdYmd: { type: String, default: null },
+        durationDays: { type: Number, default: 1 },
+        expiresYmd: { type: String, default: null }
+      }
+    ],
+    default: []
+  },
+  dailyQuestsMeta: {
+    lastResetYmd: { type: String, default: null },
+    bonusAwardedYmd: { type: String, default: null },
+    rerollUsed: { type: Boolean, default: false },
+    targetLeaderboardName: { type: String, default: '' }
+  },
+
+  repeatable: {
+    tasks10: { type: Number, default: 0 },
+    tasks25: { type: Number, default: 0 },
+    tasks50: { type: Number, default: 0 },
+    wheel10: { type: Number, default: 0 },
+    wheel25: { type: Number, default: 0 },
+    wheel50: { type: Number, default: 0 },
+    daily10: { type: Number, default: 0 },
+    daily25: { type: Number, default: 0 },
+    daily50: { type: Number, default: 0 }
+  },
+
+  achievementsCompleted: { type: [String], default: [] },
+  achievements: {
+    dailyCompleted: { type: Number, default: 0 },
+    wheelSpinTotal: { type: Number, default: 0 },
+    wheelLossTotal: { type: Number, default: 0 },
+    wheelWeekendSpinsYmd: { type: String, default: null },
+    wheelWeekendSpinsCount: { type: Number, default: 0 },
+    wheelWeekendLossYmd: { type: String, default: null },
+    wheelWeekendLossCount: { type: Number, default: 0 },
+    proposalsCount: { type: Number, default: 0 },
+    repeatCompleted: { type: Number, default: 0 }
+  },
+
   secretQuestions: [{
     question: { type: String, required: true },
     answer: { type: String, required: true }
