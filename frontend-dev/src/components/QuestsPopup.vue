@@ -39,7 +39,7 @@
           </div>
 
           <div class="daily-list">
-            <div v-for="(q, i) in dailyQuests" :key="q.id" class="quest-card" :class="{ completed: q.done, rerolled: rerollUsed && rerollTargetIdx === i }">
+            <div v-for="(q, i) in dailyQuests" :key="q.id" class="quest-card" :class="{ completed: q.done, rerolled: rerollUsed && rerollTargetIdx === i, leaderboard: q.id === 'leaderboard-profile' }">
               <div class="quest-top">
                 <div class="quest-name">{{ q.title }}</div>
                 <div v-if="q.done" class="checkmark-icon" aria-label="Quête complétée">✓</div>
@@ -803,7 +803,7 @@ onUnmounted(() => {
 .quest-card.small { padding: 12px; grid-template-rows: 44px 24px 12px auto; }
 .quest-card.completed { border-color: #5bc682; background: #effaf3; }
 .quest-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 48px; }
-.quest-name { font-weight: 700; color: #fff; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; flex: 1 1 auto; }
+.quest-name { color: #fff; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; flex: 1 1 auto; }
 .quest-badge { font-size: 12px; padding: 6px 10px; border-radius: 999px; background: #e5e7eb; color: #333; font-weight: 700; }
 .quest-badge.done { background: #5bc682; color: #fff; }
 
@@ -929,13 +929,18 @@ onUnmounted(() => {
   .daily-list, .repeat-list { grid-template-columns: 1fr; width: 100%; justify-items: stretch; }
   .daily-list { justify-content: center; }
   .achievements-grid { grid-template-columns: repeat(1, 1fr); }
+  .duration { font-size: 10px; }
+  .bonus-inline { flex-wrap: wrap; }
+  .bonus-inline .next-reset { flex: 1 0 100%; margin-top: 6px; }
+  .daily-section .quest-card.leaderboard .quest-name { font-size: 12px; }
+  .duration { font-size: 10px; }
   .admin-daily-editor { grid-template-columns: 1fr; }
   .quest-card, .quest-card.small { width: 100%; box-sizing: border-box; }
   .inline-reroll { display: none; }
   .quest-card.rerolled .inline-reroll { display: flex; opacity: 1; transform: translateY(0); }
-  .daily-section .quest-name { white-space: normal; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; }
+  .daily-section .quest-name { display: flex; align-items: center;  white-space: normal; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; }
   .daily-section .quest-card { grid-template-rows: 56px 24px 12px auto; }
-  .daily-section .quest-top { min-height: 56px; align-items: flex-start; }
+  .daily-section .quest-top { min-height: 56px; }
   .quest-toast { max-width: 95vw; min-width: 0; }
   .toast-sub { white-space: normal; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; }
   .progress-label { font-size: 17px; }
