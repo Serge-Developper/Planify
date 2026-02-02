@@ -5,6 +5,7 @@ const staticSubjectRuleSchema = new mongoose.Schema({
   yearsAllowed: [{ type: String }],
   groupsAllowed: [{ type: String }],
   specialitesAllowed: [{ type: String }],
+  departmentAllowed: [{ type: String }],
 }, { timestamps: true });
 
 module.exports = mongoose.model('StaticSubjectRule', staticSubjectRuleSchema);

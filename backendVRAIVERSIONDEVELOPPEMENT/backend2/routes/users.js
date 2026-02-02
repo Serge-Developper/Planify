@@ -634,7 +634,8 @@ router.post('/login', loginLimiter, async (req, res) => {
         role: user.role,
         year: user.year,
         groupe: user.groupe,
-        specialite: user.specialite || ''
+        specialite: user.specialite || '',
+        department: user.department || ''
       },
       process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production',
       {
@@ -653,6 +654,7 @@ router.post('/login', loginLimiter, async (req, res) => {
       role: user.role,
       groupe: user.groupe,
       specialite: user.specialite || '',
+      department: user.department || '',
       year: user.year,
       avatar: user.avatar || null, // Ajouter l'avatar dans la réponse
       avatarVersion: typeof user.avatarVersion === 'number' ? user.avatarVersion : 0,
@@ -962,6 +964,7 @@ router.get('/', verifyToken, async (req, res) => {
       username: user.username,
       role: user.role,
       groupe: user.groupe,
+      department: user.department || '',
       year: user.year,
       // Utiliser le porte-monnaie actuel (coins) pour synchroniser avec la navbar
       coins: (Number.isFinite(Number(user.coins)) ? Number(user.coins) : 0),
@@ -1060,6 +1063,7 @@ router.get('/leaderboard', verifyToken, async (req, res) => {
         username: user.username,
         role: user.role,
         groupe: user.groupe,
+        department: user.department || '',
         year: user.year,
         // Toujours utiliser le score historique (ne baisse jamais)
         coins: (Number.isFinite(Number(user.leaderboardCoins)) ? Number(user.leaderboardCoins) : 0),
@@ -1199,10 +1203,10 @@ router.put('/me/theme', verifyToken, async (req, res) => {
 // Création d'utilisateurs (désormais réservé aux admins)
 router.post('/register', verifyToken, requireRole(['admin']), async (req, res) => {
   try {
-    const { password, role, groupe, year, specialite } = req.body;
+    const { password, role, groupe, year, specialite, department } = req.body;
     let { username } = req.body;
     username = normalizeUsernameForStore(username);
-    const user = new User({ username, password, role, groupe, year, specialite: String(specialite || '') });
+    const user = new User({ username, password, role, groupe, year, specialite: String(specialite || ''), department: String(department || 'MMI') });
     
     // Ajouter automatiquement l'item "Bordure Classique" aux nouveaux utilisateurs
     user.purchasedItems.push({
@@ -1253,7 +1257,7 @@ router.post('/secret-questions', async (req, res) => {
 router.put('/:id', verifyToken, requireRole(['admin']), async (req, res) => {
   try {
     const { id } = req.params;
-    const { username, password, role, groupe, year, specialite } = req.body;
+    const { username, password, role, groupe, year, specialite, department } = req.body;
     
     const user = await User.findById(id);
     if (!user) {
@@ -1271,6 +1275,7 @@ router.put('/:id', verifyToken, requireRole(['admin']), async (req, res) => {
     if (groupe !== undefined) user.groupe = groupe;
     if (year !== undefined) user.year = year;
     if (specialite !== undefined) user.specialite = String(specialite || '');
+    if (department !== undefined) user.department = String(department || '');
     // plus de mises à jour de variantes ici (on évite d'ajouter ces champs en DB)
     
     await user.save();

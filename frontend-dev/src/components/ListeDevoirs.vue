@@ -1975,6 +1975,7 @@ const mmiMatieres = computed(() => {
   const userYear = user.value?.year || '';
   const userGroup = user.value?.groupe || '';
   const userSpec = user.value?.specialite || '';
+  const userDept = user.value?.department || '';
 
   const dynamicSubjects = (subjectsStore.getSubjects || [])
     .filter((s) => {
@@ -1986,6 +1987,9 @@ const mmiMatieres = computed(() => {
 
       const specs = Array.isArray(s?.specialitesAllowed) ? s.specialitesAllowed : [];
       if (specs.length > 0 && userSpec && !specs.includes(userSpec)) return false;
+
+      const deps = Array.isArray(s?.departmentAllowed) ? s.departmentAllowed : [];
+      if (deps.length > 0 && userDept && !deps.includes(userDept)) return false;
 
       return true;
     })
@@ -2005,6 +2009,9 @@ const mmiMatieres = computed(() => {
 
     const specs = Array.isArray(rule.specialitesAllowed) ? rule.specialitesAllowed : [];
     if (specs.length > 0 && userSpec && !specs.includes(userSpec)) return false;
+
+    const deps = Array.isArray(rule?.departmentAllowed) ? rule.departmentAllowed : [];
+    if (deps.length > 0 && userDept && !deps.includes(userDept)) return false;
 
     return true;
   });

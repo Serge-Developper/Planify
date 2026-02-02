@@ -13,6 +13,7 @@ export interface Subject {
   yearsAllowed?: string[];
   groupsAllowed?: string[];
   specialitesAllowed?: string[];
+  departmentAllowed?: string[];
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -22,7 +23,7 @@ export const useSubjectsStore = defineStore('subjects', () => {
   const loading = ref(false);
   const error = ref<string | null>(null);
   const initialized = ref(false);
-  const staticRules = ref<Array<{ subjectName: string; yearsAllowed: string[]; groupsAllowed?: string[]; specialitesAllowed: string[] }>>([]);
+  const staticRules = ref<Array<{ subjectName: string; yearsAllowed: string[]; groupsAllowed?: string[]; specialitesAllowed: string[]; departmentAllowed?: string[] }>>([]);
 
   // --- Fallback local si l'API n'est pas disponible (404) ---
   const STATIC_KEY = 'planify_static_rules';
@@ -83,6 +84,7 @@ export const useSubjectsStore = defineStore('subjects', () => {
         yearsAllowed: Array.isArray(s.yearsAllowed) ? s.yearsAllowed : [],
         groupsAllowed: Array.isArray(s.groupsAllowed) ? s.groupsAllowed : [],
         specialitesAllowed: Array.isArray(s.specialitesAllowed) ? s.specialitesAllowed : [],
+        departmentAllowed: Array.isArray(s.departmentAllowed) ? s.departmentAllowed : [],
         createdAt: s.createdAt ? new Date(s.createdAt) : undefined,
         updatedAt: s.updatedAt ? new Date(s.updatedAt) : undefined,
       }));
@@ -137,9 +139,10 @@ export const useSubjectsStore = defineStore('subjects', () => {
     subjectName: string,
     yearsAllowed: string[] = [],
     specialitesAllowed: string[] = [],
-    groupsAllowed?: string[]
+    groupsAllowed?: string[],
+    departmentAllowed?: string[]
   ) => {
-    const payload = { subjectName, yearsAllowed, specialitesAllowed, groupsAllowed: groupsAllowed || [] } as any;
+    const payload = { subjectName, yearsAllowed, specialitesAllowed, groupsAllowed: groupsAllowed || [], departmentAllowed: departmentAllowed || [] } as any;
     try {
       let res = await fetch(`${API_URL}/subjects/rules`, { method: 'POST', headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       if (res.status === 404) {

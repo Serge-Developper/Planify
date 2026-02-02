@@ -16,6 +16,7 @@ const userSchema = new mongoose.Schema({
   year: { type: String, default: null },
   // Spécialité MMI de l'utilisateur (devweb, creation, gestion)
   specialite: { type: String, default: '' },
+  department: { type: String, enum: ['MMI','TC','INFO','INFOCOM','GEA'], default: 'MMI' },
   avatar: { type: String, default: null }, // Chemin vers l'image de profil
 
   // Ajout: versionnage de l'avatar pour bust de cache

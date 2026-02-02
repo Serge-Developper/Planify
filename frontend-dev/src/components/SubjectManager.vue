@@ -41,14 +41,24 @@
           </div>
         </div>
         <div class="form-group">
-          <label>Spécialités visibles</label>
-          <div style="display:flex;gap:10px;flex-wrap:wrap">
-            <label><input type="checkbox" value="gestion" v-model="staticRulesForm.specialitesAllowed" /> Gestion</label>
-            <label><input type="checkbox" value="devweb" v-model="staticRulesForm.specialitesAllowed" /> Dev Web</label>
-            <label><input type="checkbox" value="creation" v-model="staticRulesForm.specialitesAllowed" /> Création</label>
+            <label>Spécialités visibles</label>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <label><input type="checkbox" value="gestion" v-model="staticRulesForm.specialitesAllowed" /> Gestion</label>
+              <label><input type="checkbox" value="devweb" v-model="staticRulesForm.specialitesAllowed" /> Dev Web</label>
+              <label><input type="checkbox" value="creation" v-model="staticRulesForm.specialitesAllowed" /> Création</label>
+            </div>
           </div>
-        </div>
-        <div class="form-actions">
+          <div class="form-group">
+            <label>Études visibles</label>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <label><input type="checkbox" value="MMI" v-model="staticRulesForm.departmentAllowed" /> MMI</label>
+              <label><input type="checkbox" value="TC" v-model="staticRulesForm.departmentAllowed" /> TC</label>
+              <label><input type="checkbox" value="INFO" v-model="staticRulesForm.departmentAllowed" /> INFO</label>
+              <label><input type="checkbox" value="INFOCOM" v-model="staticRulesForm.departmentAllowed" /> INFOCOM</label>
+              <label><input type="checkbox" value="GEA" v-model="staticRulesForm.departmentAllowed" /> GEA</label>
+            </div>
+          </div>
+          <div class="form-actions">
           <button class="submit-btn" :disabled="savingStatic" @click="() => saveStatic(staticEditName)">{{ savingStatic ? 'Sauvegarde...' : 'Sauvegarder règle' }}</button>
           <button class="cancel-btn" @click="() => { staticEditName = ''; clearStaticForm(); }">Fermer</button>
         </div>
@@ -154,6 +164,16 @@
             </div>
           </div>
           <div class="form-group">
+            <label>Études autorisées</label>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <label><input type="checkbox" value="MMI" v-model="formData.departmentAllowed" /> MMI</label>
+              <label><input type="checkbox" value="TC" v-model="formData.departmentAllowed" /> TC</label>
+              <label><input type="checkbox" value="INFO" v-model="formData.departmentAllowed" /> INFO</label>
+              <label><input type="checkbox" value="INFOCOM" v-model="formData.departmentAllowed" /> INFOCOM</label>
+              <label><input type="checkbox" value="GEA" v-model="formData.departmentAllowed" /> GEA</label>
+            </div>
+          </div>
+          <div class="form-group">
             <label for="subjectName">Nom de la matière *</label>
             <input
               id="subjectName"
@@ -217,7 +237,7 @@ import { ref, onMounted, reactive, watch, computed } from 'vue';
 import { useSubjectsStore, type Subject } from '@/stores/subjects';
 
 const subjectsStore = useSubjectsStore();
-const staticRulesForm = reactive<{ subjectName: string; yearsAllowed: string[]; groupsAllowed: string[]; specialitesAllowed: string[] }>({ subjectName: '', yearsAllowed: [], groupsAllowed: [], specialitesAllowed: [] })
+const staticRulesForm = reactive<{ subjectName: string; yearsAllowed: string[]; groupsAllowed: string[]; specialitesAllowed: string[]; departmentAllowed: string[] }>({ subjectName: '', yearsAllowed: [], groupsAllowed: [], specialitesAllowed: [], departmentAllowed: [] })
 const savingStatic = ref(false)
 const staticEditName = ref('')
 // Liste des matières statiques (base du site)
@@ -256,6 +276,7 @@ const formData = reactive({
   yearsAllowed: [] as string[],
   groupsAllowed: [] as string[],
   specialitesAllowed: [] as string[],
+  departmentAllowed: [] as string[],
 });
 
 // Computed
@@ -272,6 +293,7 @@ function clearStaticForm() {
   staticRulesForm.yearsAllowed = []
   staticRulesForm.groupsAllowed = []
   staticRulesForm.specialitesAllowed = []
+  staticRulesForm.departmentAllowed = []
 }
 
 function openStaticRule(name: string) {
@@ -282,11 +304,13 @@ function openStaticRule(name: string) {
     staticRulesForm.yearsAllowed = Array.isArray(existing.yearsAllowed) ? [...existing.yearsAllowed] : []
     staticRulesForm.groupsAllowed = Array.isArray(existing.groupsAllowed) ? [...existing.groupsAllowed] : []
     staticRulesForm.specialitesAllowed = Array.isArray(existing.specialitesAllowed) ? [...existing.specialitesAllowed] : []
+    staticRulesForm.departmentAllowed = Array.isArray((existing as any).departmentAllowed) ? [...(existing as any).departmentAllowed] : []
   } else {
     staticRulesForm.subjectName = name
     staticRulesForm.yearsAllowed = []
     staticRulesForm.groupsAllowed = []
     staticRulesForm.specialitesAllowed = []
+    staticRulesForm.departmentAllowed = []
   }
 }
 
@@ -295,7 +319,7 @@ async function saveStatic(name?: string) {
   if (!subjectName) return;
   try {
     savingStatic.value = true
-    await subjectsStore.saveStaticRule(subjectName, [...staticRulesForm.yearsAllowed], [...staticRulesForm.specialitesAllowed], [...staticRulesForm.groupsAllowed])
+    await subjectsStore.saveStaticRule(subjectName, [...staticRulesForm.yearsAllowed], [...staticRulesForm.specialitesAllowed], [...staticRulesForm.groupsAllowed], [...staticRulesForm.departmentAllowed])
   } finally {
     savingStatic.value = false
   }
@@ -324,6 +348,7 @@ const resetForm = () => {
   formData.yearsAllowed = [];
   formData.groupsAllowed = [];
   formData.specialitesAllowed = [];
+  formData.departmentAllowed = [];
 };
 
 const editSubject = (subject: Subject) => {
@@ -338,6 +363,7 @@ const editSubject = (subject: Subject) => {
   formData.yearsAllowed = Array.isArray((subject as any).yearsAllowed) ? [...(subject as any).yearsAllowed] : [];
   formData.groupsAllowed = Array.isArray((subject as any).groupsAllowed) ? [...(subject as any).groupsAllowed] : [];
   formData.specialitesAllowed = Array.isArray((subject as any).specialitesAllowed) ? [...(subject as any).specialitesAllowed] : [];
+  formData.departmentAllowed = Array.isArray((subject as any).departmentAllowed) ? [...(subject as any).departmentAllowed] : [];
 };
 
 const handleSubmit = async () => {
@@ -350,6 +376,7 @@ const handleSubmit = async () => {
       yearsAllowed: formData.yearsAllowed,
       groupsAllowed: formData.groupsAllowed,
       specialitesAllowed: formData.specialitesAllowed,
+      departmentAllowed: formData.departmentAllowed,
     };
     if (formData.useGradient) {
       payload.color2 = formData.color2;

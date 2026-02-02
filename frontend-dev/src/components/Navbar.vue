@@ -1055,6 +1055,10 @@
               <div class="profile-left-row">
                 <div class="profile-role-with-group">
                   <div class="profile-pill profile-role">{{ user?.role ? afficherRole(user.role) : 'Non défini' }}</div>
+                  <div class="profile-dept-outlet">
+                    <img v-if="departmentLogoSrc" :src="departmentLogoSrc" alt="Études" class="dept-logo" />
+                    <span v-else class="dept-text">{{ user?.department || '—' }}</span>
+                  </div>
                   <div class="profile-group-outlet">
                     <img v-if="groupLogoSrc" :src="groupLogoSrc" alt="Groupe" class="group-logo" />
                     <span v-else class="group-text">{{ user?.groupe || '—' }}</span>
@@ -1331,6 +1335,11 @@ import groupeB from '@/assets/img/groupe_B.webp'
 import groupePromo from '@/assets/img/groupe_Promo.webp'
 import groupeAprime from '@/assets/img/groupe_Aprime.webp'
 import groupeBprime from '@/assets/img/groupe_Bprime.webp'
+import mmiPill from '@/assets/MMI_pill.webp'
+import tcPill from '@/assets/TC_pill.webp'
+import infoPill from '@/assets/INFO_pill.webp'
+import infocomPill from '@/assets/INFOCOM_pill.webp'
+import geaPill from '@/assets/GEA_pill.webp'
 import notificationIcon from '@/assets/logo_notifications.webp'
 import { useTheme } from '@/composables/useTheme'
 import { useAutoDark } from '@/composables/useAutoDark'
@@ -1510,6 +1519,20 @@ const groupLogoSrc = computed(() => {
       case "B'": return groupeBprime
       case 'B"': return groupeBprime
       case 'Promo': return groupePromo
+      default: return null
+    }
+  } catch { return null }
+})
+
+const departmentLogoSrc = computed(() => {
+  try {
+    const d = String((user.value && (user.value.department || user.value['etude'])) || '').trim().toUpperCase()
+    switch (d) {
+      case 'MMI': return mmiPill
+      case 'TC': return tcPill
+      case 'INFO': return infoPill
+      case 'INFOCOM': return infocomPill
+      case 'GEA': return geaPill
       default: return null
     }
   } catch { return null }
@@ -5054,11 +5077,14 @@ body, html {
   justify-content: center;
 }
 .profile-left-row { display:flex; gap:40px; justify-content: center;}
-.profile-role-with-group { position: relative; display: inline-flex; align-items: center; }
+.profile-role-with-group { position: relative; display: inline-flex; align-items: center; gap: 15px; }
 .profile-role-with-group .profile-role { position: relative; z-index: 2; }
-.profile-group-outlet { position: absolute; right: -56px; top: 50%; transform: translateY(-50%); background-color: #104118; border: 4px solid #1a633b; border-radius: 12px; width: 60px; height: 45px; display:flex; align-items:center; justify-content:center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 1; overflow:hidden; }
-.profile-group-outlet .group-logo { width: 28px; height: 28px; object-fit: contain; display:block; }
+.profile-group-outlet { position: relative; margin-left: 0; border: 4px solid #3ddc84; border-radius: 18px; width: 81px; height: 68px; display:flex; align-items:center; justify-content:center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow:hidden; }
+.profile-group-outlet .group-logo { width: 39px; height: 30px; object-fit: contain; display:block; }
 .profile-group-outlet .group-text { font-size: 18px; font-weight: 700; color: #000; }
+.profile-dept-outlet { position: relative; margin-left: 0; border: 4px solid #3ddc84; border-radius: 18px; width: 81px; height: 68px; display:flex; align-items:center; justify-content:center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow:hidden; }
+.profile-dept-outlet .dept-logo { width: 51px; height: 26px; object-fit: contain; display:block; }
+.profile-dept-outlet .dept-text { font-size: 18px; font-weight: 700; color: #000; }
 .profile-badge { min-width: 48px; }
 .profile-coins .coin-icon { width: 30px; height: 30px; margin-left: 8px; display: block; align-self: center; transform: translateY(2px); }
 .profile-upload-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; }

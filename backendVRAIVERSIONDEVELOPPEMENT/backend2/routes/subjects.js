@@ -43,11 +43,11 @@ router.get('/rules', async (req, res) => {
 // Upsert règle (admin)
 router.post('/rules', verifyToken, requireRole(['admin']), async (req, res) => {
   try {
-    const { subjectName, yearsAllowed = [], specialitesAllowed = [], groupsAllowed = [] } = req.body || {};
+    const { subjectName, yearsAllowed = [], specialitesAllowed = [], groupsAllowed = [], departmentAllowed = [] } = req.body || {};
     if (!subjectName) return res.status(400).json({ success: false, message: 'subjectName requis' });
     const rule = await StaticSubjectRule.findOneAndUpdate(
       { subjectName },
-      { subjectName, yearsAllowed, specialitesAllowed, groupsAllowed },
+      { subjectName, yearsAllowed, specialitesAllowed, groupsAllowed, departmentAllowed },
       { new: true, upsert: true }
     );
     res.json({ success: true, rule });

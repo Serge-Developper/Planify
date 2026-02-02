@@ -692,6 +692,13 @@
               <option value="creation">Création numérique</option>
               <option value="strategie">Stratégie de communication</option>
             </select>
+            <select v-model="userForm.department" required>
+              <option value="MMI">MMI</option>
+              <option value="TC">TC</option>
+              <option value="INFO">INFO</option>
+              <option value="INFOCOM">INFOCOM</option>
+              <option value="GEA">GEA</option>
+            </select>
             <div v-if="userForm.role === 'prof'" style="font-size: 0.9em; color: #6b7280; font-style: italic;">
               ⓘ Les professeurs travaillent avec toute la promo (toutes les années)
             </div>
@@ -829,6 +836,16 @@
                 <option value="devweb">Développement web</option>
                 <option value="creation">Création numérique</option>
                 <option value="strategie">Stratégie de communication</option>
+              </select>
+
+              <label class="field-label" for="edit-department">Études</label>
+              <select id="edit-department" v-model="editForm.department" required>
+                <option value="">Aucune</option>
+                <option value="MMI">MMI</option>
+                <option value="TC">TC</option>
+                <option value="INFO">INFO</option>
+                <option value="INFOCOM">INFOCOM</option>
+                <option value="GEA">GEA</option>
               </select>
               
               <div v-if="editForm.role === 'prof'" style="font-size: 0.9em; color: #6b7280; font-style: italic;">
@@ -1913,7 +1930,8 @@ const userForm = ref({
   role: 'eleve',
   groupe: 'A',
   year: 'BUT1',
-  specialite: ''
+  specialite: '',
+  department: 'MMI'
 });
 const userFormMessage = ref('');
 const userFormLoading = ref(false);
@@ -2360,6 +2378,7 @@ const editForm = ref({
   groupe: '',
   year: '',
   specialite: '',
+  department: '',
   coins: 0,
   leaderboardCoins: 0,
   factionCoins: 0
@@ -3458,7 +3477,7 @@ async function addUser() {
     }
     
     userFormMessage.value = 'Utilisateur ajouté avec succès !';
-    userForm.value = { username: '', password: '', role: 'eleve', groupe: 'A', year: 'BUT1' };
+    userForm.value = { username: '', password: '', role: 'eleve', groupe: 'A', year: 'BUT1', specialite: '', department: 'MMI' };
     showUserForm.value = false;
     await fetchUsers(); // Rafraîchir la liste
   } catch (error) {
@@ -3481,6 +3500,7 @@ function editUser(user) {
     groupe: user.groupe || '',
     year: user.year || '',
     specialite: user.specialite || '',
+    department: user.department || '',
     coins: user.coins || 0,
     leaderboardCoins: user.leaderboardCoins || 0,
     factionCoins: user.factionCoins || 0
@@ -3499,6 +3519,7 @@ function editUser(user) {
     groupe: userData.groupe,
     year: userData.year,
     specialite: userData.specialite || '',
+    department: userData.department || '',
     coins: userData.coins || 0,
     leaderboardCoins: userData.leaderboardCoins || 0,
     factionCoins: userData.factionCoins || 0
@@ -3533,6 +3554,7 @@ function cancelEdit() {
     groupe: '',
     year: '',
     specialite: '',
+    department: '',
     coins: 0,
     leaderboardCoins: 0,
     factionCoins: 0
