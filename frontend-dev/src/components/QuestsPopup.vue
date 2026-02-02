@@ -922,6 +922,7 @@ onUnmounted(() => {
   .quests-modal { width: 95vw; }
   .section-title { font-size: 25px; }
   .bonus-title { font-size: 22px; display: flex; align-items: center; }
+  .bonus-block.active .bonus-title { font-size: 21px; }
   .bonus-state { font-size: 14px; }
   .confirm-msg { font-size: 14px; }
   .quests-title { font-size: 28px; }
@@ -944,5 +945,8 @@ onUnmounted(() => {
   .quest-toast { max-width: 95vw; min-width: 0; }
   .toast-sub { white-space: normal; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; }
   .progress-label { font-size: 17px; }
+}
+@media (min-width: 768px) and (max-width: 1024px) {
+  .duration { font-size: 10px; }
 }
 </style>
