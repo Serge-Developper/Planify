@@ -1270,7 +1270,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useCoinsStore } from '@/stores/coins'
 import LoginPopup from './LoginPopup.vue'
 import EphemeralPopup from './EphemeralPopup.vue'
-import accountIcon from '@/assets/accounttt.svg'
+import { FALLBACK_AVATAR_DATA_URL } from '@/constants/fallbackAvatar.js'
 import eyeOpen from '@/assets/eyeopen.svg'
 import eyeClosed from '@/assets/eyeclosed.svg'
 import axios from 'axios'
@@ -1556,7 +1556,7 @@ watch(user, (u) => {
   } catch { musicTitle.value = '' }
 }, { immediate: true })
 const showPassword = ref(false)
-const userAvatar = ref(accountIcon)
+const userAvatar = ref(FALLBACK_AVATAR_DATA_URL)
 // Ajout: URL avatar avec paramètre de version pour bust cache
 function addVersionParam(url, v) {
   try {
@@ -1570,6 +1570,7 @@ function addVersionParam(url, v) {
 const userAvatarWithVersion = computed(() => {
   try {
     const base = typeof userAvatar.value === 'string' ? userAvatar.value : ''
+    if (base.startsWith('data:')) return base
     const ver = (user.value && typeof user.value.avatarVersion === 'number') ? user.value.avatarVersion : null
     return addVersionParam(base, ver)
   } catch { return userAvatar.value }
@@ -1700,17 +1701,10 @@ function toAbsoluteUrl(pathOrUrl) {
 // NOUVEAU: toujours préférer l’endpoint API public par userId
 function getAvatarUrlForUser(u) {
   try {
-    // Si l'utilisateur est admin, forcer l'avatar par défaut (icône de compte)
-    if (u && u.role === 'admin') {
-      return accountIcon
-    }
-    if (u && (u._id || u.id)) {
-      const id = u._id || u.id
-      return `${API_URL}/users/avatar/${encodeURIComponent(id)}`
-    }
-    // fallback: si pas d'id dispo, on tente de normaliser la valeur brute
-    return toAbsoluteUrl(u && u.avatar)
-  } catch { return null }
+    const hasAvatar = !!(u && u.avatar && String(u.avatar).trim() !== '')
+    if (hasAvatar) return toAbsoluteUrl(u.avatar)
+    return FALLBACK_AVATAR_DATA_URL
+  } catch { return FALLBACK_AVATAR_DATA_URL }
 }
 
 function getAvatarUrlById(id) {
@@ -1725,7 +1719,7 @@ function getAvatarUrlById(id) {
 }
 
 function onNavbarAvatarError(e) {
-  try { e.target.src = accountIcon } catch {}
+  try { e.target.src = FALLBACK_AVATAR_DATA_URL } catch {}
 }
 
 // Variables pour le système de coins
@@ -2373,12 +2367,12 @@ const passwordValue = ref('');
 // Fonction pour charger l'avatar de l'utilisateur
 async function loadUserAvatar() {
   try {
-    userAvatar.value = accountIcon;
+    userAvatar.value = FALLBACK_AVATAR_DATA_URL;
     const src = getAvatarUrlForUser(user.value)
     if (src) userAvatar.value = src;
   } catch (error) {
     console.error('Erreur lors du chargement de l\'avatar:', error);
-    userAvatar.value = accountIcon;
+    userAvatar.value = FALLBACK_AVATAR_DATA_URL;
   }
 }
 

@@ -242,6 +242,29 @@
               </div>
             </div>
 
+            <div class="preview-card preview-navbar" :key="'slide-navbar'">
+              <div class="preview-title">Aperçu Navbar</div>
+              <div class="item-img-wrapper large">
+                <div class="navbar-stage" style="position:relative;width:51px;height:51px;display:flex;align-items:center;justify-content:center;">
+                  <div class="item-img-container account-btn" style="position:relative;width:51px;height:51px;margin-left:0;border:3px #000 solid !important;border-radius:12px !important;box-shadow:0 4px 16px #0002, 0 1.5px 6px #0001 !important;overflow:hidden;">
+                    <img v-if="suggestAssetSrc && suggestPlacement.navbar === 'inside'" :src="suggestAssetSrc" :class="['item-img','draggable', draggingKey==='navbar' ? 'drag-active' : '']" :style="getSuggestStyle('navbar')" @click="startDrag('navbar', $event)" @touchstart.prevent.stop="startDragTouch('navbar', $event)" />
+                  </div>
+                  <img v-if="suggestAssetSrc && suggestPlacement.navbar === 'above'" :src="suggestAssetSrc" :class="['item-img','draggable', draggingKey==='navbar' ? 'drag-active' : '']" :style="getSuggestStyle('navbar')" @click="startDrag('navbar', $event)" @touchstart.prevent.stop="startDragTouch('navbar', $event)" />
+                </div>
+              </div>
+              <div class="item-actions" style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
+                <label>Taille: <input type="range" min="10" max="120" v-model.number="suggestStyles.navbar.width" /></label>
+                <label>Top: <input type="number" v-model.number="suggestStyles.navbar.top" /></label>
+                <label>Left: <input type="number" v-model.number="suggestStyles.navbar.left" /></label>
+                <div class="actions-row">
+                  <button class="close-btn-small placement-btn" :class="{ active: suggestPlacement.navbar === 'above' }" @click="togglePlacement('navbar')" @mouseover="hoverPlacementNavbar = true" @mouseleave="hoverPlacementNavbar = false" :aria-label="suggestPlacement.navbar === 'inside' ? 'À l’intérieur' : 'Par-dessus'" :title="suggestPlacement.navbar === 'inside' ? 'À l’intérieur' : 'Par-dessus'">
+                    <img :src="getPlacementImg('navbar', hoverPlacementNavbar)" alt="Placement" class="close-img" />
+                  </button>
+                  <button class="close-btn-small center-btn" @click="centerSuggest('navbar')" @mouseover="hoverCenterNavbar = true" @mouseleave="hoverCenterNavbar = false"><img :src="hoverCenterNavbar ? centerHoverImg : centerImg" alt="Centrer" class="close-img" /></button>
+                </div>
+              </div>
+            </div>
+
             <div v-if="suggestPreviewSlides.includes('popup-style')" class="preview-card preview-popup-style" :key="'slide-popup-style'">
               <div class="preview-title">Aperçu Pop-up Style</div>
 
@@ -661,7 +684,7 @@
               <div class="preview-title">Aperçu (Leaderboard)</div>
               <div class="preview-list">
                 <div class="leaderboard-item" v-for="n in [1,2]" :key="'pp-p-'+n">
-                  <div class="user-info"><div class="user-avatar-container"><div class="user-avatar"><img class="avatar-img" :src="accountIcon" alt="Avatar par défaut" /></div></div><div class="user-details"><div class="username">Personne #{{ n }}</div></div></div>
+                  <div class="user-info"><div class="user-avatar-container"><div class="user-avatar"><img class="avatar-img" :src="FALLBACK_AVATAR_DATA_URL" alt="Avatar par défaut" /></div></div><div class="user-details"><div class="username">Personne #{{ n }}</div></div></div>
                 </div>
                 <div class="leaderboard-item">
                   <div class="user-info">
@@ -744,7 +767,7 @@
                   </div>
                 </div>
                 <div class="leaderboard-item" v-for="n in [3]" :key="'pp-p-'+n">
-                  <div class="user-info"><div class="user-avatar-container"><div class="user-avatar"><img class="avatar-img" :src="accountIcon" alt="Avatar par défaut" /></div></div><div class="user-details"><div class="username">Personne #{{ n }}</div></div></div>
+                  <div class="user-info"><div class="user-avatar-container"><div class="user-avatar"><img class="avatar-img" :src="FALLBACK_AVATAR_DATA_URL" alt="Avatar par défaut" /></div></div><div class="user-details"><div class="username">Personne #{{ n }}</div></div></div>
                 </div>
               </div>
             </div>
@@ -3173,7 +3196,7 @@ import { useAuthStore } from '@/stores/auth'
 import { secureApiCall, API_URL } from '@/api'
 // Icône remplacée par planicoins.png
 import catEars from '@/assets/accounttt.svg' // Utilisé comme placeholder
-import accountIcon from '@/assets/accounttt.svg' // Icône par défaut pour les avatars
+import { FALLBACK_AVATAR_DATA_URL } from '@/constants/fallbackAvatar.js' // Data URL par défaut pour les avatars
 import oreilleschat from '@/assets/img/oreilleschat.gif'
 import blushuwu from '@/assets/img/blushuwu.gif'
 import matrix from '@/assets/img/matrix.gif'
@@ -3771,7 +3794,7 @@ const sliderTrackStyle = computed(() => (
     : { transform: `translateX(-${previewWindowIndex.value * (previewCardWidth.value + previewCardGap.value)}px)`, transition: 'transform 0.45s ease-in-out' }
 ))
 const suggestPreviewSlides = computed(() => {
-  const base = ['dailyShop', 'collection', 'cosmetic', 'leaderboard', 'avatar']
+  const base = ['dailyShop', 'collection', 'cosmetic', 'leaderboard', 'avatar', 'navbar']
   const hasVariants = Array.isArray(suggestVariants.value) && suggestVariants.value.length > 1
   return hasVariants ? [...base, 'popup-style'] : base
 })
@@ -3796,15 +3819,16 @@ const suggestStyles = ref({
   collection: { top: 0, left: 0, width: 50, height: 50, rotate: 0, objectFit: 'contain', zIndex: 1, margin: 0, padding: 0, background: '', boxShadow: '', borderWidth: 0, borderStyle: 'none', borderColor: '', borderRadius: 0 },
   leaderboard: { top: 0, left: 0, width: 50, height: 50, rotate: 0, objectFit: 'contain', zIndex: 1, margin: 0, padding: 0, background: '', boxShadow: '', borderWidth: 0, borderStyle: 'none', borderColor: '', borderRadius: 0 },
   avatar: { top: 0, left: 0, width: 50, height: 50, rotate: 0, objectFit: 'contain', zIndex: 1, margin: 0, padding: 0, background: '', boxShadow: '', borderWidth: 0, borderStyle: 'none', borderColor: '', borderRadius: 0 },
+  navbar: { top: 0, left: 0, width: 50, height: 50, rotate: 0, objectFit: 'contain', zIndex: 1, margin: 0, padding: 0, background: '', boxShadow: '', borderWidth: 0, borderStyle: 'none', borderColor: '', borderRadius: 0 },
   popupStyle: { top: 0, left: 0, width: 50, height: 50, rotate: 0, objectFit: 'contain', zIndex: 1, margin: 0, padding: 0, background: '', boxShadow: '', borderWidth: 0, borderStyle: 'none', borderColor: '', borderRadius: 0 }
 })
 const suggestAvatarStageHeight = ref(250)
 const DEFAULT_SUGGEST_STYLE = { top: 0, left: 0, width: 50, height: 50, rotate: 0, objectFit: 'contain', zIndex: 1, margin: 0, padding: 0, background: '', boxShadow: '', borderWidth: 0, borderStyle: 'none', borderColor: '', borderRadius: 0 }
-const makeVariant = (name) => ({ name, assetSrc: '', styles: { dailyShop: { ...DEFAULT_SUGGEST_STYLE }, collectionPreviewDesktop: { ...DEFAULT_SUGGEST_STYLE }, collectionPreviewMobile: { ...DEFAULT_SUGGEST_STYLE }, collectionPreview: { ...DEFAULT_SUGGEST_STYLE }, collection: { ...DEFAULT_SUGGEST_STYLE }, leaderboard: { ...DEFAULT_SUGGEST_STYLE }, avatar: { ...DEFAULT_SUGGEST_STYLE }, popupStyle: { ...DEFAULT_SUGGEST_STYLE } }, flags: { removeLeaderboardBorder: false, removeProfilePopupBorder: false, leaderboardPlacement: 'inside', profilePopupPlacement: 'inside', largeAvatarHeight: 250 } })
+const makeVariant = (name) => ({ name, assetSrc: '', styles: { dailyShop: { ...DEFAULT_SUGGEST_STYLE }, collectionPreviewDesktop: { ...DEFAULT_SUGGEST_STYLE }, collectionPreviewMobile: { ...DEFAULT_SUGGEST_STYLE }, collectionPreview: { ...DEFAULT_SUGGEST_STYLE }, collection: { ...DEFAULT_SUGGEST_STYLE }, leaderboard: { ...DEFAULT_SUGGEST_STYLE }, avatar: { ...DEFAULT_SUGGEST_STYLE }, navbar: { ...DEFAULT_SUGGEST_STYLE }, popupStyle: { ...DEFAULT_SUGGEST_STYLE } }, flags: { removeLeaderboardBorder: false, removeProfilePopupBorder: false, leaderboardPlacement: 'inside', profilePopupPlacement: 'inside', navbarPlacement: 'inside', largeAvatarHeight: 250 } })
 const suggestVariants = ref([ makeVariant('Style 1') ])
 const activeVariantIndex = ref(0)
-function loadActiveVariantIntoBuffer() { try { const v = suggestVariants.value[activeVariantIndex.value]; if (!v) return; suggestStyles.value.dailyShop = { ...(v.styles.dailyShop || v.styles.dailyStyle || DEFAULT_SUGGEST_STYLE) }; suggestStyles.value.collectionPreviewDesktop = { ...(v.styles.collectionPreviewDesktop || v.styles.collectionPreview || v.styles.collection || DEFAULT_SUGGEST_STYLE) }; suggestStyles.value.collectionPreviewMobile = { ...(v.styles.collectionPreviewMobile || v.styles.collectionPreview || v.styles.collection || DEFAULT_SUGGEST_STYLE) }; suggestStyles.value.collectionPreview = (suggestDevice.value === 'mobile') ? suggestStyles.value.collectionPreviewMobile : suggestStyles.value.collectionPreviewDesktop; suggestStyles.value.collection = { ...v.styles.collection }; suggestStyles.value.leaderboard = { ...v.styles.leaderboard }; suggestStyles.value.avatar = { ...v.styles.avatar }; suggestStyles.value.popupStyle = { ...(v.styles.popupStyle || DEFAULT_SUGGEST_STYLE) }; removeLeaderboardBorder.value = !!v.flags.removeLeaderboardBorder; removeAvatarBorder.value = !!v.flags.removeProfilePopupBorder; suggestPlacement.value = { leaderboard: String(v.flags.leaderboardPlacement || 'inside'), avatar: String(v.flags.profilePopupPlacement || 'inside') }; suggestAvatarStageHeight.value = Number(v.flags.largeAvatarHeight || 250); suggestAssetSrc.value = v.assetSrc || '' } catch {} }
-function persistBufferIntoActiveVariant() { try { const v = suggestVariants.value[activeVariantIndex.value]; if (!v) return; v.styles.dailyShop = { ...suggestStyles.value.dailyShop }; v.styles.collectionPreviewDesktop = { ...suggestStyles.value.collectionPreviewDesktop }; v.styles.collectionPreviewMobile = { ...suggestStyles.value.collectionPreviewMobile }; v.styles.collectionPreview = { ...suggestStyles.value.collectionPreview }; v.styles.collection = { ...suggestStyles.value.collection }; v.styles.leaderboard = { ...suggestStyles.value.leaderboard }; v.styles.avatar = { ...suggestStyles.value.avatar }; v.styles.popupStyle = { ...suggestStyles.value.popupStyle }; v.flags.removeLeaderboardBorder = !!removeLeaderboardBorder.value; v.flags.removeProfilePopupBorder = !!removeAvatarBorder.value; v.flags.leaderboardPlacement = String(suggestPlacement.value.leaderboard || 'inside'); v.flags.profilePopupPlacement = String(suggestPlacement.value.avatar || 'inside'); v.flags.largeAvatarHeight = Number(suggestAvatarStageHeight.value || 250); v.assetSrc = suggestAssetSrc.value || '' } catch {} }
+function loadActiveVariantIntoBuffer() { try { const v = suggestVariants.value[activeVariantIndex.value]; if (!v) return; suggestStyles.value.dailyShop = { ...(v.styles.dailyShop || v.styles.dailyStyle || DEFAULT_SUGGEST_STYLE) }; suggestStyles.value.collectionPreviewDesktop = { ...(v.styles.collectionPreviewDesktop || v.styles.collectionPreview || v.styles.collection || DEFAULT_SUGGEST_STYLE) }; suggestStyles.value.collectionPreviewMobile = { ...(v.styles.collectionPreviewMobile || v.styles.collectionPreview || v.styles.collection || DEFAULT_SUGGEST_STYLE) }; suggestStyles.value.collectionPreview = (suggestDevice.value === 'mobile') ? suggestStyles.value.collectionPreviewMobile : suggestStyles.value.collectionPreviewDesktop; suggestStyles.value.collection = { ...v.styles.collection }; suggestStyles.value.leaderboard = { ...v.styles.leaderboard }; suggestStyles.value.avatar = { ...v.styles.avatar }; suggestStyles.value.navbar = { ...(v.styles.navbar || DEFAULT_SUGGEST_STYLE) }; suggestStyles.value.popupStyle = { ...(v.styles.popupStyle || DEFAULT_SUGGEST_STYLE) }; removeLeaderboardBorder.value = !!v.flags.removeLeaderboardBorder; removeAvatarBorder.value = !!v.flags.removeProfilePopupBorder; suggestPlacement.value = { leaderboard: String(v.flags.leaderboardPlacement || 'inside'), avatar: String(v.flags.profilePopupPlacement || 'inside'), navbar: String(v.flags.navbarPlacement || 'inside') }; suggestAvatarStageHeight.value = Number(v.flags.largeAvatarHeight || 250); suggestAssetSrc.value = v.assetSrc || '' } catch {} }
+function persistBufferIntoActiveVariant() { try { const v = suggestVariants.value[activeVariantIndex.value]; if (!v) return; v.styles.dailyShop = { ...suggestStyles.value.dailyShop }; v.styles.collectionPreviewDesktop = { ...suggestStyles.value.collectionPreviewDesktop }; v.styles.collectionPreviewMobile = { ...suggestStyles.value.collectionPreviewMobile }; v.styles.collectionPreview = { ...suggestStyles.value.collectionPreview }; v.styles.collection = { ...suggestStyles.value.collection }; v.styles.leaderboard = { ...suggestStyles.value.leaderboard }; v.styles.avatar = { ...suggestStyles.value.avatar }; v.styles.navbar = { ...suggestStyles.value.navbar }; v.styles.popupStyle = { ...suggestStyles.value.popupStyle }; v.flags.removeLeaderboardBorder = !!removeLeaderboardBorder.value; v.flags.removeProfilePopupBorder = !!removeAvatarBorder.value; v.flags.leaderboardPlacement = String(suggestPlacement.value.leaderboard || 'inside'); v.flags.profilePopupPlacement = String(suggestPlacement.value.avatar || 'inside'); v.flags.navbarPlacement = String(suggestPlacement.value.navbar || 'inside'); v.flags.largeAvatarHeight = Number(suggestAvatarStageHeight.value || 250); v.assetSrc = suggestAssetSrc.value || '' } catch {} }
 function selectVariant(i) { persistBufferIntoActiveVariant(); activeVariantIndex.value = i; loadActiveVariantIntoBuffer() }
 function addVariant() { persistBufferIntoActiveVariant(); suggestVariants.value.push(makeVariant('Style ' + (suggestVariants.value.length + 1))); activeVariantIndex.value = suggestVariants.value.length - 1; loadActiveVariantIntoBuffer() }
 function duplicateVariant() { persistBufferIntoActiveVariant(); const v = suggestVariants.value[activeVariantIndex.value]; const copy = JSON.parse(JSON.stringify(v)); copy.name = 'Style ' + (suggestVariants.value.length + 1); suggestVariants.value.push(copy); activeVariantIndex.value = suggestVariants.value.length - 1; loadActiveVariantIntoBuffer() }
@@ -3819,11 +3843,13 @@ watch(() => suggestStyles.value.leaderboard.width, (w) => { try { const s = sugg
 watch(() => suggestStyles.value.popupStyle.width, (w) => { try { const s = suggestStyles.value.popupStyle; s.height = Number(w) } catch {} })
 watch(() => suggestStyles.value.dailyShop.width, (w) => { try { const s = suggestStyles.value.dailyShop; s.height = Number(w) } catch {} })
 watch(() => suggestStyles.value.avatar.width, (w) => { try { const s = suggestStyles.value.avatar; s.height = Number(w) } catch {} })
-const suggestPlacement = ref({ leaderboard: 'inside', avatar: 'inside' })
+watch(() => suggestStyles.value.navbar.width, (w) => { try { const s = suggestStyles.value.navbar; s.height = Number(w) } catch {} })
+const suggestPlacement = ref({ leaderboard: 'inside', avatar: 'inside', navbar: 'inside' })
 loadActiveVariantIntoBuffer()
 watch(suggestDevice, (dev, prev) => { try { const s = suggestStyles.value; if (dev === 'mobile') { if (!s.collectionPreviewMobile || ((Number(s.collectionPreviewMobile.top||0)===0) && (Number(s.collectionPreviewMobile.left||0)===0) && (Number(s.collectionPreviewMobile.width||50)===50) && (Number(s.collectionPreviewMobile.height||50)===50))) { s.collectionPreviewMobile = { ...s.collectionPreviewDesktop } } s.collectionPreview = s.collectionPreviewMobile } else { if (!s.collectionPreviewDesktop || ((Number(s.collectionPreviewDesktop.top||0)===0) && (Number(s.collectionPreviewDesktop.left||0)===0) && (Number(s.collectionPreviewDesktop.width||50)===50) && (Number(s.collectionPreviewDesktop.height||50)===50))) { s.collectionPreviewDesktop = { ...s.collectionPreviewMobile } } s.collectionPreview = s.collectionPreviewDesktop } } catch {} })
 const hoverPlacementLeaderboard = ref(false)
 const hoverPlacementAvatar = ref(false)
+const hoverPlacementNavbar = ref(false)
 const hoverToggleLeaderboard = ref(false)
 const hoverToggleAvatar = ref(false)
 function toggleBorder(target) {
@@ -3845,6 +3871,7 @@ const hoverCenterCollection = ref(false)
 const hoverCenterLeaderboard = ref(false)
 const hoverCenterAvatar = ref(false)
 const hoverCenterPopup = ref(false)
+const hoverCenterNavbar = ref(false)
 function togglePlacement(target){ try { const p = suggestPlacement.value; p[target] = (p[target] === 'above') ? 'inside' : 'above'; const v = suggestVariants.value[activeVariantIndex.value]; if (v && v.flags) { if (target === 'leaderboard') v.flags.leaderboardPlacement = String(p[target]); else v.flags.profilePopupPlacement = String(p[target]); } } catch {} }
 function getPlacementImg(target, hover){ try { const isAbove = (suggestPlacement.value && suggestPlacement.value[target] === 'above'); if (isAbove) return aboveIcon; return hover ? aboveIcon : insideIcon } catch { return insideIcon } }
 function openSuggestEditor() { currentEditingLocalId.value = null; showSuggestionEditor.value = true; try { syncWeeklyHeight() } catch {} ; try { showPurchasePreview.value = true } catch { showPurchasePreview = true } ; try { suggestAssetSrc.value = ''; suggestUrl.value = ''; previewWindowIndex.value = 0; suggestDevice.value = 'desktop'; if (Array.isArray(suggestVariants.value)) { suggestVariants.value.forEach(v => { if (v) v.assetSrc = '' }) } resetSuggestUsers() } catch {} }
@@ -3904,6 +3931,7 @@ function editUserItem(item) {
         const col = (a && a.collectionStyle) || (a && a.style) || {}
         const colMobile = (a && a.collectionStyleMobile) || (a && a.collectionStyle) || (a && a.style) || {}
         const lead = (a && a.leaderboardStyle) || (a && a.style) || {}
+        const nav = (a && a.navbarStyle) || (a && a.style) || {}
         const large = (a && a.largeAvatarStyle) || (a && a.profilePopupStyle) || (a && a.style) || {}
         const cosmetic = (a && a.cosmeticPreviewStyle) || (a && a.style) || {}
         const daily = (a && a.dailyStyle) || (a && a.style) || {}
@@ -3912,15 +3940,17 @@ function editUserItem(item) {
           removeProfilePopupBorder: !!(v && (v.removeProfilePopupBorder || v.removeNavbarBorder) || (item.meta && (item.meta.removeProfilePopupBorder || item.meta.removeNavbarBorder))),
           leaderboardPlacement: String(((a && a.meta && a.meta.leaderboardPlacement) || (item.meta && item.meta.leaderboardPlacement) || 'inside')),
           profilePopupPlacement: String(((a && a.meta && (a.meta.profilePopupPlacement ?? a.meta.navbarPlacement)) || (item.meta && (item.meta.profilePopupPlacement ?? item.meta.navbarPlacement)) || 'inside')),
+          navbarPlacement: String(((a && a.meta && a.meta.navbarPlacement) || (item.meta && item.meta.navbarPlacement) || 'inside')),
           largeAvatarHeight: Number(((a && a.meta && a.meta.largeAvatarHeight) || (item.meta && item.meta.largeAvatarHeight) || 250))
         }
-        variants.push({ name: (v && v.name) || 'Style', assetSrc: (a && a.src) || '', styles: { dailyShop: { ...daily }, collectionPreviewDesktop: { ...col }, collectionPreviewMobile: { ...colMobile }, collection: { ...cosmetic }, leaderboard: { ...lead }, avatar: { ...large } }, flags })
+        variants.push({ name: (v && v.name) || 'Style', assetSrc: (a && a.src) || '', styles: { dailyShop: { ...daily }, collectionPreviewDesktop: { ...col }, collectionPreviewMobile: { ...colMobile }, collection: { ...cosmetic }, leaderboard: { ...lead }, navbar: { ...nav }, avatar: { ...large } }, flags })
       }
     } else {
       const a = Array.isArray(item.assets) ? item.assets[0] : null
       const col = (a && a.collectionStyle) || (a && a.style) || {}
       const colMobile = (a && a.collectionStyleMobile) || (a && a.collectionStyle) || (a && a.style) || {}
       const lead = (a && a.leaderboardStyle) || (a && a.style) || {}
+      const nav = (a && a.navbarStyle) || (a && a.style) || {}
       const large = (a && a.largeAvatarStyle) || (a && a.profilePopupStyle) || (a && a.style) || {}
       const cosmetic = (a && a.cosmeticPreviewStyle) || (a && a.style) || {}
       const pop = (a && a.popupStyleStyle) || (a && a.style) || {}
@@ -3930,9 +3960,10 @@ function editUserItem(item) {
         removeProfilePopupBorder: !!(item.meta && (item.meta.removeProfilePopupBorder || item.meta.removeNavbarBorder)),
         leaderboardPlacement: String(((a && a.meta && a.meta.leaderboardPlacement) || (item.meta && item.meta.leaderboardPlacement) || 'inside')),
         profilePopupPlacement: String(((a && a.meta && (a.meta.profilePopupPlacement ?? a.meta.navbarPlacement)) || (item.meta && (item.meta.profilePopupPlacement ?? item.meta.navbarPlacement)) || 'inside')),
+        navbarPlacement: String(((a && a.meta && a.meta.navbarPlacement) || (item.meta && item.meta.navbarPlacement) || 'inside')),
         largeAvatarHeight: Number(((a && a.meta && a.meta.largeAvatarHeight) || (item.meta && item.meta.largeAvatarHeight) || 250))
       }
-      variants.push({ name: 'Style 1', assetSrc: (a && a.src) || '', styles: { dailyShop: { ...daily }, collectionPreviewDesktop: { ...col }, collectionPreviewMobile: { ...colMobile }, collection: { ...cosmetic }, leaderboard: { ...lead }, avatar: { ...large }, popupStyle: { ...pop } }, flags })
+      variants.push({ name: 'Style 1', assetSrc: (a && a.src) || '', styles: { dailyShop: { ...daily }, collectionPreviewDesktop: { ...col }, collectionPreviewMobile: { ...colMobile }, collection: { ...cosmetic }, leaderboard: { ...lead }, navbar: { ...nav }, avatar: { ...large }, popupStyle: { ...pop } }, flags })
     }
     suggestVariants.value = variants.length ? variants : [ makeVariant('Style 1') ]
     activeVariantIndex.value = 0
@@ -3958,8 +3989,8 @@ async function deleteUserItem(item) { try { const legacyId = Number((typeof item
   const normId = Number((typeof item.legacyId !== 'undefined') ? item.legacyId : item.id); dynamicItems.value = (Array.isArray(dynamicItems.value) ? dynamicItems.value.filter(n => { const nid = Number((typeof n.legacyId !== 'undefined') ? n.legacyId : n.id); const nname = String(n.name || '').trim(); return (Number.isFinite(normId) ? nid !== normId : nname !== name) }) : []); try { if (Number.isFinite(normId)) dynamicInfoById.value.delete(Number(normId)) } catch {} try { if (name) dynamicInfoByName.value.delete(String(name)) } catch {} try { loadWeeklyItems() } catch {} localItemsUpdateKey.value++; try { await secureApiCall('/users/my-items', { method: 'DELETE', body: JSON.stringify({ legacyId: Number.isFinite(legacyId) ? legacyId : undefined, localItemId: localId || undefined, id: (typeof item.id === 'number' ? item.id : undefined), name }) }) } catch {} try { userServerLocalItems.value = (Array.isArray(userServerLocalItems.value) ? userServerLocalItems.value.filter(u => { const uid = (typeof u.legacyId !== 'undefined') ? u.legacyId : u.id; const ulocalId = u && u.meta && u.meta.localItemId; const uname = String(u.name || '').trim(); if (localId && ulocalId) return String(ulocalId) !== String(localId); if (Number.isFinite(legacyId)) return Number(uid) !== legacyId; return uname !== name; }) : []) } catch {} try { await loadUserServerLocalItems() } catch {} try { window.dispatchEvent(new CustomEvent('my-items-changed')) } catch {} alert('Item supprimé de vos items.') } catch {} }
 function onSuggestFile(e) { try { const f = e.target.files && e.target.files[0]; if (!f) return; const reader = new FileReader(); reader.onload = () => { const data = reader.result; suggestAssetSrc.value = data; const v = suggestVariants.value[activeVariantIndex.value]; if (v) v.assetSrc = data }; reader.readAsDataURL(f) } catch {} }
 function onSuggestUrl() { try { const u = String(suggestUrl.value || '').trim(); if (!u) return; const raw = u.split('?')[0]; const url = raw + (raw.startsWith('/uploads/') ? `?v=${Date.now()}` : ''); suggestAssetSrc.value = url; const v = suggestVariants.value[activeVariantIndex.value]; if (v) v.assetSrc = url } catch {} }
-function centerSuggest(key) { try { const s = suggestStyles.value[key]; if (!s) return; const root = weeklyContainerRef.value; let el = null; if (key === 'leaderboard') { const sel = (suggestPlacement.value.leaderboard === 'above') ? '.preview-card.preview-leaderboard .leaderboard-item .user-avatar-container' : '.preview-card.preview-leaderboard .avatar-img'; el = root && root.querySelector(sel) } else if (key === 'avatar') { const sel = (suggestPlacement.value.avatar === 'above') ? '.preview-card.preview-avatar .profile-avatar-scaler' : '.preview-card.preview-avatar .avatar-img'; el = root && root.querySelector(sel) } else if (key === 'dailyShop') { el = root && root.querySelector('.preview-card.preview-daily-shop .item-img-container') } else if (key === 'collectionPreview') { el = root && root.querySelector('.preview-card.preview-collection .item-img-container') } else if (key === 'popupStyle') { el = root && root.querySelector('.preview-card.preview-popup-style .item-img-container') } else { el = root && root.querySelector('.preview-card.preview-item .item-img-container') } const rect = el ? el.getBoundingClientRect() : null; const boxW = rect ? rect.width : (key === 'leaderboard' ? 57 : key === 'avatar' ? 150 : key === 'collectionPreview' ? (suggestDevice.value === 'mobile' ? 80 : 90) : key === 'popupStyle' ? 120.5 : key === 'dailyShop' ? 90 : 100); const boxH = rect ? rect.height : (key === 'leaderboard' ? 57 : key === 'avatar' ? 150 : key === 'collectionPreview' ? (suggestDevice.value === 'mobile' ? 80 : 90) : key === 'popupStyle' ? 64 : key === 'dailyShop' ? 90 : 100); const w = Number(s.width) || 50; const h = Number(s.height || s.width) || 50; s.left = Math.round((boxW - w) / 2); s.top = Math.round((boxH - h) / 2) } catch {} }
-function getSuggestStyle(key) { try { const s = suggestStyles.value[key] || {}; const style = { position: 'absolute' }; if (typeof s.top === 'number') style.top = s.top + 'px'; if (typeof s.left === 'number') style.left = s.left + 'px'; if (typeof s.width === 'number') style.width = s.width + 'px'; if (typeof s.height === 'number') style.height = s.height + 'px'; if (typeof s.rotate === 'number') style.transform = `rotate(${s.rotate}deg)`; if (typeof s.zIndex === 'number') style.zIndex = s.zIndex; try { const p = suggestPlacement.value || {}; if (key === 'avatar' && p.avatar === 'above') { style.zIndex = Math.max(Number(style.zIndex || 0), 100) } if (key === 'leaderboard' && p.leaderboard === 'above') { style.zIndex = Math.max(Number(style.zIndex || 0), 100) } } catch {} if (typeof s.objectFit === 'string') style.objectFit = s.objectFit; if (typeof s.margin === 'number') style.margin = s.margin + 'px'; if (typeof s.padding === 'number') style.padding = s.padding + 'px'; if (s.background) style.background = s.background; if (s.boxShadow) style.boxShadow = s.boxShadow; if (typeof s.borderWidth === 'number') style.borderWidth = s.borderWidth + 'px'; if (typeof s.borderStyle === 'string') style.borderStyle = s.borderStyle; if (s.borderColor) style.borderColor = s.borderColor; if (typeof s.borderRadius === 'number') style.borderRadius = s.borderRadius + 'px'; return style } catch { return { position: 'absolute' } } }
+function centerSuggest(key) { try { const s = suggestStyles.value[key]; if (!s) return; const root = weeklyContainerRef.value; let el = null; if (key === 'leaderboard') { const sel = (suggestPlacement.value.leaderboard === 'above') ? '.preview-card.preview-leaderboard .leaderboard-item .user-avatar-container' : '.preview-card.preview-leaderboard .avatar-img'; el = root && root.querySelector(sel) } else if (key === 'avatar') { const sel = (suggestPlacement.value.avatar === 'above') ? '.preview-card.preview-avatar .profile-avatar-scaler' : '.preview-card.preview-avatar .avatar-img'; el = root && root.querySelector(sel) } else if (key === 'navbar') { const sel = (suggestPlacement.value.navbar === 'above') ? '.preview-card.preview-navbar .navbar-stage' : '.preview-card.preview-navbar .item-img-container'; el = root && root.querySelector(sel) } else if (key === 'dailyShop') { el = root && root.querySelector('.preview-card.preview-daily-shop .item-img-container') } else if (key === 'collectionPreview') { el = root && root.querySelector('.preview-card.preview-collection .item-img-container') } else if (key === 'popupStyle') { el = root && root.querySelector('.preview-card.preview-popup-style .item-img-container') } else { el = root && root.querySelector('.preview-card.preview-item .item-img-container') } const rect = el ? el.getBoundingClientRect() : null; const boxW = rect ? rect.width : (key === 'leaderboard' ? 57 : key === 'avatar' ? 150 : key === 'navbar' ? 51 : key === 'collectionPreview' ? (suggestDevice.value === 'mobile' ? 80 : 90) : key === 'popupStyle' ? 120.5 : key === 'dailyShop' ? 90 : 100); const boxH = rect ? rect.height : (key === 'leaderboard' ? 57 : key === 'avatar' ? 150 : key === 'navbar' ? 51 : key === 'collectionPreview' ? (suggestDevice.value === 'mobile' ? 80 : 90) : key === 'popupStyle' ? 64 : key === 'dailyShop' ? 90 : 100); const w = Number(s.width) || 50; const h = Number(s.height || s.width) || 50; s.left = Math.round((boxW - w) / 2); s.top = Math.round((boxH - h) / 2) } catch {} }
+function getSuggestStyle(key) { try { const s = suggestStyles.value[key] || {}; const style = { position: 'absolute' }; if (typeof s.top === 'number') style.top = s.top + 'px'; if (typeof s.left === 'number') style.left = s.left + 'px'; if (typeof s.width === 'number') style.width = s.width + 'px'; if (typeof s.height === 'number') style.height = s.height + 'px'; if (typeof s.rotate === 'number') style.transform = `rotate(${s.rotate}deg)`; if (typeof s.zIndex === 'number') style.zIndex = s.zIndex; try { const p = suggestPlacement.value || {}; if (key === 'avatar' && p.avatar === 'above') { style.zIndex = Math.max(Number(style.zIndex || 0), 100) } if (key === 'leaderboard' && p.leaderboard === 'above') { style.zIndex = Math.max(Number(style.zIndex || 0), 100) } if (key === 'navbar' && p.navbar === 'above') { style.zIndex = Math.max(Number(style.zIndex || 0), 100) } } catch {} if (typeof s.objectFit === 'string') style.objectFit = s.objectFit; if (typeof s.margin === 'number') style.margin = s.margin + 'px'; if (typeof s.padding === 'number') style.padding = s.padding + 'px'; if (s.background) style.background = s.background; if (s.boxShadow) style.boxShadow = s.boxShadow; if (typeof s.borderWidth === 'number') style.borderWidth = s.borderWidth + 'px'; if (typeof s.borderStyle === 'string') style.borderStyle = s.borderStyle; if (s.borderColor) style.borderColor = s.borderColor; if (typeof s.borderRadius === 'number') style.borderRadius = s.borderRadius + 'px'; return style } catch { return { position: 'absolute' } } }
 const suggestPreviewBorderColor = ref(null)
 function refreshSuggestPreviewBorderColor() { try { const root = weeklyContainerRef.value; const sels = ['.preview-card.preview-collection .item-img-wrapper.large', '.preview-card.preview-daily-shop .item-img-wrapper.large', '.preview-card.preview-avatar .profile-avatar-stage']; let color = ''; for (const s of sels) { const el = root && root.querySelector(s); if (!el) continue; const cs = window.getComputedStyle(el); const c = cs.getPropertyValue('border-color') || cs.borderColor || ''; if (c && c !== 'transparent') { color = c; break } } suggestPreviewBorderColor.value = color || '#00FF80' } catch { suggestPreviewBorderColor.value = '#00FF80' } }
 function getPopupWrapperStyle() { try { const c = suggestPreviewBorderColor.value || '#00FF80'; return { borderColor: c } } catch { return {} } }
@@ -3985,6 +4016,8 @@ function saveSuggestion() {
       leaderboardTarget: leaderboardPlacement === 'inside' ? 'user-avatar' : 'user-avatar-container',
       profilePopupPlacement: avatarPlacement,
       profilePopupTarget: avatarPlacement === 'inside' ? 'profile-avatar' : 'profile-avatar-scaler',
+      navbarPlacement: String(suggestPlacement.value.navbar || 'inside'),
+      navbarTarget: 'avatar-image-container',
       largeAvatarHeight: Number(suggestAvatarStageHeight.value || 250)
     }
     const baseAsset = {
@@ -3993,6 +4026,8 @@ function saveSuggestion() {
       collectionStyle: { ...(suggestStyles.value.collectionPreviewDesktop || suggestStyles.value.collectionPreview || suggestStyles.value.collection) },
       collectionStyleMobile: { ...(suggestStyles.value.collectionPreviewMobile || suggestStyles.value.collectionPreview || suggestStyles.value.collection) },
       leaderboardStyle: { ...suggestStyles.value.leaderboard },
+      navbarStyle: { ...suggestStyles.value.navbar },
+      navbarStyleMobile: { ...suggestStyles.value.navbar },
       largeAvatarStyle: { ...suggestStyles.value.avatar },
       largeAvatarStyleMobile: { ...suggestStyles.value.avatar },
       profilePopupStyle: { ...suggestStyles.value.avatar },
@@ -4008,7 +4043,7 @@ function saveSuggestion() {
       price: Math.min(500, Math.max(150, Number(suggestPrice.value) || 0)),
       type: 'generic',
       assets: [baseAsset],
-      backgrounds: { collection: null, leaderboard: null, avatar: null, 'popup-style': null, 'profile-popup': null },
+      backgrounds: { collection: null, leaderboard: null, avatar: null, navbar: null, 'popup-style': null, 'profile-popup': null },
       meta: { largeAvatarHeight: Number(suggestAvatarStageHeight.value || 250) },
       variants: suggestVariants.value.map(v => ({
         name: v.name || 'Style',
@@ -4018,6 +4053,8 @@ function saveSuggestion() {
           collectionStyle: { ...(v.styles.collectionPreviewDesktop || v.styles.collectionPreview || v.styles.collection) },
           collectionStyleMobile: { ...(v.styles.collectionPreviewMobile || v.styles.collectionPreview || v.styles.collection) },
           leaderboardStyle: { ...v.styles.leaderboard },
+          navbarStyle: { ...v.styles.navbar },
+          navbarStyleMobile: { ...v.styles.navbar },
           largeAvatarStyle: { ...v.styles.avatar },
           largeAvatarStyleMobile: { ...v.styles.avatar },
           profilePopupStyle: { ...v.styles.avatar },
@@ -4030,6 +4067,8 @@ function saveSuggestion() {
             leaderboardTarget: (String(v.flags.leaderboardPlacement || 'inside') === 'inside') ? 'user-avatar' : 'user-avatar-container',
             profilePopupPlacement: String(v.flags.profilePopupPlacement || 'inside'),
             profilePopupTarget: (String(v.flags.profilePopupPlacement || 'inside') === 'inside') ? 'profile-avatar' : 'profile-avatar-scaler',
+            navbarPlacement: String(v.flags.navbarPlacement || 'inside'),
+            navbarTarget: 'avatar-image-container',
             largeAvatarHeight: Number(v.flags.largeAvatarHeight || suggestAvatarStageHeight.value || 250)
           }
         }],
@@ -6341,38 +6380,27 @@ function getAvatarImageStyle(user) {
 
 const getUserAvatar = (user) => {
   try {
-    const id = (user && (user.id || user._id)) || ''
-    if (!id) return accountIcon
-
-    // version de cache-busting: avatarVersion prioritaire, sinon fallback sur avatarUpdatedAt (timestamp)
-    const v = (typeof user.avatarVersion === 'number' && user.avatarVersion >= 0)
-      ? user.avatarVersion
-      : (user && user.avatarUpdatedAt ? (Date.parse(user.avatarUpdatedAt) || 0) : 0)
-    const qs = (v !== null && v !== undefined) ? `?v=${encodeURIComponent(v)}` : ''
-
-    // Route API standard (préférée, répond avec image/gif et no-store)
-    const url = `${API_URL}/users/avatar/${encodeURIComponent(id)}${qs}`
-
-    // Fallback: si l’avatar est un chemin statique déjà connu
-    if (user && typeof user.avatar === 'string' && user.avatar.startsWith('/uploads/')) {
-      const baseUrl = API_URL.replace(/\/api$/, '')
-      const altV = (typeof user.avatarVersion === 'number' && user.avatarVersion >= 0)
-        ? user.avatarVersion
-        : (user && user.avatarUpdatedAt ? (Date.parse(user.avatarUpdatedAt) || 0) : 0)
-      const altQs = (altV !== null && altV !== undefined) ? `?v=${encodeURIComponent(altV)}` : ''
-      return `${baseUrl}${user.avatar}${altQs}`
+    const avatar = (user && typeof user.avatar === 'string') ? user.avatar.trim() : ''
+    if (avatar) {
+      if (avatar.startsWith('/uploads/')) {
+        const baseUrl = API_URL.replace(/\/api$/, '')
+        const v = (typeof user.avatarVersion === 'number' && user.avatarVersion >= 0)
+          ? user.avatarVersion
+          : (user && user.avatarUpdatedAt ? (Date.parse(user.avatarUpdatedAt) || 0) : 0)
+        const qs = (v !== null && v !== undefined) ? `?v=${encodeURIComponent(v)}` : ''
+        return `${baseUrl}${avatar}${qs}`
+      }
+      return avatar
     }
-
-    // Dernier recours: URL API
-    return url
+    return FALLBACK_AVATAR_DATA_URL
   } catch (e) {
     console.error('getUserAvatar error:', e)
-    return accountIcon
+    return FALLBACK_AVATAR_DATA_URL
   }
 }
 
  const handleAvatarError = (event) => {
-   event.target.src = accountIcon
+   event.target.src = FALLBACK_AVATAR_DATA_URL
  }
 
  const handleAvatarLoad = () => {

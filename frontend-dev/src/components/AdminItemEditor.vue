@@ -118,7 +118,7 @@
       <div class="canvas-tabs">
         <button :class="{active: activeCanvas==='collection'}" @click="activeCanvas='collection'">Collection</button>
         <button :class="{active: activeCanvas==='leaderboard'}" @click="activeCanvas='leaderboard'">Leaderboard</button>
-        <button :class="{active: activeCanvas==='navbar'}" @click="activeCanvas='navbar'">Navbar</button>
+        <button :class="{active: activeCanvas==='navbar'}" @click="activeCanvas='navbar'">Aperçu Navbar</button>
         <button :class="{active: activeCanvas==='popup-style'}" @click="activeCanvas='popup-style'">Popup Style</button>
         <button :class="{active: activeCanvas==='profile-popup'}" @click="activeCanvas='profile-popup'">Profil Pop-up (Legacy)</button>
         <button :class="{active: activeCanvas==='apercu-profil'}" @click="activeCanvas='apercu-profil'">Aperçu Profil</button>
@@ -132,6 +132,11 @@
       </div>
       <div class="canvas" :class="{ round: activeCanvas==='collection' }" :style="canvasStyle">
         <div class="bg-fill" :style="bgStyle"></div>
+        <div v-if="activeCanvas==='navbar'" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:0;">
+          <div style="position:relative;width:51px;height:51px;border-radius:12px;overflow:hidden;border:3px solid #000;background:#fff;box-shadow:0 4px 16px #0002, 0 1.5px 6px #0001;">
+            <img :src="getUserAvatar(auth.user)" alt="Avatar" style="width:100%;height:100%;object-fit:cover;" />
+          </div>
+        </div>
         <div v-if="activeCanvas==='apercu-large-avatar'" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:0;">
           <div style="position:relative;width:150px;height:150px;border-radius:24px;overflow:hidden;border:3px solid #000;background:#fff;">
             <img :src="getUserAvatar(auth.user)" alt="Avatar" style="width:100%;height:100%;object-fit:cover;" />
@@ -330,6 +335,12 @@
           <span>Cible :</span>
           <button class="btn tiny" :class="{ active: getActiveAssetNavbarTarget() === 'user-account-wrapper' }" @click="setNavbarTarget('user-account-wrapper')">Dans le conteneur</button>
           <button class="btn tiny" :class="{ active: getActiveAssetNavbarTarget() === 'avatar-image-container' }" @click="setNavbarTarget('avatar-image-container')">(Ancien) Dans l'avatar</button>
+        </div>
+        <div v-if="activeCanvas==='navbar' && selectedIndex !== null" class="layer-controls">
+          <span>Placement :</span>
+          <button class="btn tiny" :class="{ active: getActiveAssetNavbarPlacement() === 'below' }" @click="setNavbarPlacement('below')">Below</button>
+          <button class="btn tiny" :class="{ active: getActiveAssetNavbarPlacement() === 'inside' }" @click="setNavbarPlacement('inside')">Inside</button>
+          <button class="btn tiny" :class="{ active: getActiveAssetNavbarPlacement() === 'above' }" @click="setNavbarPlacement('above')">Above</button>
         </div>
         
         <!-- Cible pour Profil Pop-up (Legacy) uniquement -->
@@ -1248,6 +1259,17 @@ function setNavbarPlacement(placement) {
   if (!asset.meta) asset.meta = {}
   if (placement !== 'above' && placement !== 'inside') placement = 'below'
   asset.meta.navbarPlacement = placement
+}
+
+function getActiveAssetNavbarPlacement() {
+  try {
+    if (selectedIndex.value === null) return 'below'
+    const assets = activeAssets()
+    const asset = Array.isArray(assets) ? assets[selectedIndex.value] : null
+    if (!asset) return 'below'
+    const p = asset.meta && asset.meta.navbarPlacement
+    return (p === 'above' || p === 'inside' || p === 'below') ? p : 'below'
+  } catch { return 'below' }
 }
 
 function getActiveAssetNavbarTarget() {
