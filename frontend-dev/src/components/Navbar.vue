@@ -4137,6 +4137,11 @@ onMounted(async () => {
   if (user.value) {
     await coinsStore.initialize();
     checkSpinAvailability();
+    try {
+      const r = await secureApiCall('/users/leaderboard')
+      const arr = Array.isArray(r?.users) ? r.users : (Array.isArray(r) ? r : [])
+      if (arr.length) { try { localStorage.setItem('planify_leaderboard_cache_v1', JSON.stringify({ ts: Date.now(), users: arr })) } catch {} }
+    } catch {}
   }
   
   setInterval(updateSpinTimer, 60000);

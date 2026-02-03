@@ -41,6 +41,7 @@ export const getAuthHeaders = () => {
 };
 
 let hasRedirectedFor401 = false;
+const inflight = new Map<string, Promise<any>>();
 
 // Helpers JWT/token
 function decodeJwtPayload(token?: string): any | null {
@@ -79,14 +80,16 @@ export function getValidAuthToken(): string | null {
 }
 
 export const secureApiCall = async (url: string, options: RequestInit = {}) => {
-  // Construire les headers dynamiquement pour éviter preflight sur GET sans body
   const headers = { ...getAuthHeaders(), ...(options.headers || {}) } as Record<string, string>;
   const hasBody = typeof options.body !== 'undefined' && options.body !== null;
   const method = (options.method || (hasBody ? 'POST' : 'GET')).toString().toUpperCase();
   if (hasBody && !('Content-Type' in headers)) headers['Content-Type'] = 'application/json';
-
   const config: RequestInit = { ...options, method, headers };
-  try {
+
+  const key = (method === 'GET' && !hasBody) ? `${headers['Authorization'] || ''}:${url}` : '';
+  if (key && inflight.has(key)) return await inflight.get(key)!;
+
+  const run = (async () => {
     const response = await fetch(`${API_URL}${url}`, config);
     if (!response.ok) {
       let serverMessage = '';
@@ -107,7 +110,12 @@ export const secureApiCall = async (url: string, options: RequestInit = {}) => {
       throw new Error(`Erreur ${response.status}: ${response.statusText}${serverMessage ? ` - ${serverMessage}` : ''}`);
     }
     return await response.json().catch(() => ({ success: true }));
-  } catch (e: any) {
-    throw new Error(e?.message || 'Erreur réseau');
+  })();
+
+  if (key) {
+    inflight.set(key, run);
+    try { const r = await run; inflight.delete(key); return r; } catch (e) { inflight.delete(key); throw e; }
+  } else {
+    return await run;
   }
 };

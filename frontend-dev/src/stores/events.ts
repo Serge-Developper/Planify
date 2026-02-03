@@ -9,6 +9,23 @@ export const useEventsStore = defineStore('events', () => {
   const loading = ref(false);
   const error = ref<string | null>(null);
   const initialized = ref(false);
+  const CACHE_KEY = 'planify_events_cache_v1';
+  function readCache(userId?: string) {
+    try {
+      const raw = localStorage.getItem(CACHE_KEY);
+      if (!raw) return null;
+      const obj = JSON.parse(raw);
+      if (!obj || String(obj.userId || '') !== String(userId || '')) return null;
+      const items = Array.isArray(obj.events) ? obj.events : [];
+      return { events: items, ts: Number(obj.ts || 0) || 0 };
+    } catch { return null; }
+  }
+  function writeCache(userId: any, list: any[]) {
+    try {
+      const payload = { userId: String(userId || ''), ts: Date.now(), events: list };
+      localStorage.setItem(CACHE_KEY, JSON.stringify(payload));
+    } catch {}
+  }
 
   function normalize(raw: any[], userId?: string) {
     return raw.map((e: any) => {
@@ -48,7 +65,20 @@ export const useEventsStore = defineStore('events', () => {
 
   async function loadIfNeeded() {
     if (initialized.value) return;
-    await refresh();
+    const auth = useAuthStore();
+    const uid = auth.user?.id || auth.user?._id;
+    const cached = readCache(uid);
+    if (cached && Array.isArray(cached.events) && cached.events.length) {
+      events.value = normalize(cached.events, uid);
+      initialized.value = true;
+      error.value = null;
+    }
+    const hydrated = !!(cached && cached.events && cached.events.length);
+    if (!hydrated) {
+      await refresh();
+    } else {
+      try { refresh(); } catch {}
+    }
   }
 
   async function refresh() {
@@ -66,6 +96,7 @@ export const useEventsStore = defineStore('events', () => {
       const raw = Array.isArray(res) ? res : (Array.isArray(res?.events) ? res.events : []);
       const userId = auth.user?.id || auth.user?._id;
       events.value = normalize(raw, userId);
+      try { writeCache(userId, raw) } catch {}
       initialized.value = true;
       error.value = null;
     } catch (e: any) {

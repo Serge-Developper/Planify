@@ -250,13 +250,25 @@ function updateLeaderboardQuestTitle(name) {
 }
 async function loadLeaderboardTargetName() {
   try {
-    const res = await secureApiCall('/users/leaderboard')
-    const arr = Array.isArray(res?.users) ? res.users : (Array.isArray(res) ? res : [])
+    const raw = localStorage.getItem('planify_leaderboard_cache_v1')
+    const obj = raw ? JSON.parse(raw) : null
+    const arr = Array.isArray(obj?.users) ? obj.users : (Array.isArray(obj) ? obj : [])
     if (arr.length) {
       const pick = arr[Math.floor(Math.random() * arr.length)]
       const name = (pick && (pick.username || pick.name)) || ''
       leaderboardTargetName.value = String(name)
       updateLeaderboardQuestTitle(name)
+    }
+  } catch {}
+  try {
+    const res = await secureApiCall('/users/leaderboard')
+    const arr2 = Array.isArray(res?.users) ? res.users : (Array.isArray(res) ? res : [])
+    if (arr2.length) {
+      try { localStorage.setItem('planify_leaderboard_cache_v1', JSON.stringify({ ts: Date.now(), users: arr2 })) } catch {}
+      const pick2 = arr2[Math.floor(Math.random() * arr2.length)]
+      const name2 = (pick2 && (pick2.username || pick2.name)) || ''
+      leaderboardTargetName.value = String(name2)
+      updateLeaderboardQuestTitle(name2)
     }
   } catch {}
 }

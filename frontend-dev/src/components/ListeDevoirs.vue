@@ -4598,12 +4598,19 @@ const myProposals = ref([]);
 const myAcceptedProposals = ref([]);
 async function fetchMyProposals() {
   try {
+    const uid = String(user.value?._id || user.value?.id || '');
     const tok = user.value?.token;
-    if (!tok) { myProposals.value = []; return; }
+    if (!uid || !tok) { myProposals.value = []; return; }
+    const K = 'planify_my_proposals_v1_' + uid;
+    try {
+      const raw = localStorage.getItem(K);
+      const obj = raw ? JSON.parse(raw) : null;
+      const list = Array.isArray(obj?.list) ? obj.list : [];
+      if (list.length) myProposals.value = list;
+    } catch {}
     const res = await axios.get(`${API_URL}/events/proposals/mine`, { headers: { Authorization: `Bearer ${tok}` } });
     const arr = Array.isArray(res.data?.proposals) ? res.data.proposals : (Array.isArray(res.data) ? res.data : []);
-    const uid = String(user.value?._id || user.value?.id || '');
-    myProposals.value = arr.map(p => ({
+    const mapped = arr.map(p => ({
       _id: p._id,
       titre: p.titre || '',
       matiere: p.matiere || '',
@@ -4625,16 +4632,25 @@ async function fetchMyProposals() {
       archived: Array.isArray(p.archivedBy) ? p.archivedBy.map(String).includes(uid) : false,
       createdBy: p.proposedBy?._id || p.proposedBy || null
     }));
+    myProposals.value = mapped;
+    try { localStorage.setItem(K, JSON.stringify({ ts: Date.now(), list: mapped })) } catch {}
   } catch { myProposals.value = []; }
 }
 async function fetchMyAcceptedProposals() {
   try {
+    const uid = String(user.value?._id || user.value?.id || '');
     const tok = user.value?.token;
-    if (!tok) { myAcceptedProposals.value = []; return; }
+    if (!uid || !tok) { myAcceptedProposals.value = []; return; }
+    const K = 'planify_my_accepted_proposals_v1_' + uid;
+    try {
+      const raw = localStorage.getItem(K);
+      const obj = raw ? JSON.parse(raw) : null;
+      const list = Array.isArray(obj?.list) ? obj.list : [];
+      if (list.length) myAcceptedProposals.value = list;
+    } catch {}
     const res = await axios.get(`${API_URL}/events/proposals/accepted`, { headers: { Authorization: `Bearer ${tok}` } });
     const arr = Array.isArray(res.data?.proposals) ? res.data.proposals : (Array.isArray(res.data) ? res.data : []);
-    const uid = String(user.value?._id || user.value?.id || '');
-    myAcceptedProposals.value = arr.map(p => ({
+    const mapped = arr.map(p => ({
       _id: p._id,
       titre: p.titre || '',
       matiere: p.matiere || '',
@@ -4656,13 +4672,17 @@ async function fetchMyAcceptedProposals() {
       archived: Array.isArray(p.archivedBy) ? p.archivedBy.map(String).includes(uid) : false,
       createdBy: p.proposedBy?._id || p.proposedBy || null
     }));
+    myAcceptedProposals.value = mapped;
+    try { localStorage.setItem(K, JSON.stringify({ ts: Date.now(), list: mapped })) } catch {}
   } catch { myAcceptedProposals.value = []; }
 }
 onMounted(async () => {
   await subjectsStore.initializeStore();
-  await fetchMyProposals();
-  await fetchMyAcceptedProposals();
-  await refreshProposalsCountBadge();
+  await Promise.allSettled([
+    fetchMyProposals(),
+    fetchMyAcceptedProposals(),
+    refreshProposalsCountBadge()
+  ]);
 });
 watch(() => user.value && user.value.token, (tok) => { if (tok) { fetchMyProposals(); fetchMyAcceptedProposals(); refreshProposalsCountBadge(); } });
 
@@ -4916,6 +4936,17 @@ async function refreshProposalsCountBadge() {
   try {
     const role = user.value?.role;
     const token = user.value?.token;
+    const uid = String(user.value?._id || user.value?.id || '');
+    const K = 'planify_proposals_count_v1_' + uid + '_' + role;
+    try {
+      const raw = localStorage.getItem(K);
+      const obj = raw ? JSON.parse(raw) : null;
+      const ts = Number(obj?.ts || 0) || 0;
+      const val = Number(obj?.count || 0);
+      if (val >= 0) proposalsCountBadge.value = val;
+      const stale = Date.now() - ts > 300000;
+      if (!stale) return;
+    } catch {}
     if (role === 'delegue' || role === 'prof' || role === 'admin') {
       const r = await axios.get(`${API_URL}/events/proposals`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
       const arr = Array.isArray(r?.data?.proposals) ? r.data.proposals : (Array.isArray(r?.data) ? r.data : []);
@@ -4924,6 +4955,7 @@ async function refreshProposalsCountBadge() {
       const r = await axios.get(`${API_URL}/events/proposals/feed/count`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
       proposalsCountBadge.value = Math.max(0, Number(r?.data?.count || 0));
     }
+    try { localStorage.setItem(K, JSON.stringify({ ts: Date.now(), count: proposalsCountBadge.value })) } catch {}
   } catch { proposalsCountBadge.value = 0; }
 }
 

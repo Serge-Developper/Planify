@@ -5337,9 +5337,12 @@ const getWeeklyColorChipName = (item) => {
 
 // Variables pour le leaderboard
 const leaderboardFilter = ref('coins')
+const LEADERBOARD_CACHE_KEY = 'planify_leaderboard_cache_v1'
 const leaderboardUsers = ref([])
 const showUserProfile = ref(false)
 const selectedUser = ref(null)
+function readLeaderboardCache() { try { const raw = localStorage.getItem(LEADERBOARD_CACHE_KEY); const obj = raw ? JSON.parse(raw) : null; const arr = Array.isArray(obj?.users) ? obj.users : (Array.isArray(obj) ? obj : []); const ts = Number(obj?.ts || 0) || 0; return { users: arr, ts }; } catch { return { users: [], ts: 0 } } }
+function writeLeaderboardCache(list) { try { localStorage.setItem(LEADERBOARD_CACHE_KEY, JSON.stringify({ ts: Date.now(), users: Array.isArray(list) ? list : [] })) } catch {} }
 const hoverCloseProfile = ref(false)
 // moved: popupMusicVolume is initialized earlier to avoid TDZ
 
@@ -6740,21 +6743,25 @@ const sortedLeaderboardUsers = computed(() => {
 
  const loadLeaderboardUsers = async () => {
   try {
-    console.log('🔄 Chargement du leaderboard...')
+    const cached = readLeaderboardCache()
+    if (Array.isArray(cached.users) && cached.users.length) {
+      leaderboardUsers.value = cached.users
+    }
+    const ttl = 5 * 60 * 1000
+    const need = coinsStore.leaderboardNeedsRefresh || !cached.users.length || ((Date.now() - cached.ts) > ttl)
+    if (!need) return
     const response = await secureApiCall('/users/leaderboard')
-    console.log('📊 Réponse leaderboard:', response)
-    
-    if (response.success && response.users) {
-      leaderboardUsers.value = response.users
-      console.log('✅ Leaderboard chargé:', leaderboardUsers.value.length, 'utilisateurs')
-   } else {
-      console.warn('⚠️ Pas de données leaderboard disponibles')
-     leaderboardUsers.value = []
-   }
- } catch (error) {
-    console.error('Erreur lors du chargement du leaderboard:', error)
-   leaderboardUsers.value = []
- }
+    const arr = Array.isArray(response?.users) ? response.users : (Array.isArray(response) ? response : [])
+    if (arr.length) {
+      leaderboardUsers.value = arr
+      writeLeaderboardCache(arr)
+      coinsStore.leaderboardNeedsRefresh = false
+    } else {
+      leaderboardUsers.value = []
+    }
+  } catch (error) {
+    leaderboardUsers.value = []
+  }
 }
 
 // Fonction pour charger les données des factions
