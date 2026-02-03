@@ -6,7 +6,7 @@ import Footer from './components/Footer.vue'
 import ItemReceivedPopup from './components/ItemReceivedPopup.vue'
 import { useCoinsStore } from './stores/coins'
 import { useAuthStore } from './stores/auth'
-import { secureApiCall } from './api'
+import { secureApiCall, getValidAuthToken } from './api'
 import questsLogo from '@/assets/Quetes.svg'
 
 const route = useRoute();
@@ -225,7 +225,7 @@ onMounted(() => {
   }, 1000);
   setTimeout(async () => {
     try { loadSeenFromStorage() } catch {}
-    try { await loadAchievementsStatus(true) } catch {}
+    try { if (getValidAuthToken()) await loadAchievementsStatus(true) } catch {}
   }, 200);
 });
 

@@ -22,6 +22,7 @@ export function useTheme() {
       if (!saved) {
         isDark.value = false;
         document.documentElement.setAttribute('data-theme', 'light');
+        try { localStorage.setItem('theme', 'light') } catch {}
       } else if (saved === 'dark') {
         isDark.value = true;
         document.documentElement.setAttribute('data-theme', 'dark');

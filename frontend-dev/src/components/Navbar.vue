@@ -1258,7 +1258,7 @@
 
 
     <ShopPopup :show="showShopPopup" @close="showShopPopup = false" @equip-item="handleEquipItem" />
-    <QuestsPopup :show="showQuestsPopup" @close="showQuestsPopup = false" />
+    <QuestsPopup v-if="showQuestsPopup" :show="showQuestsPopup" @close="showQuestsPopup = false" />
 
   </header>
 </template>
@@ -1273,6 +1273,7 @@ import EphemeralPopup from './EphemeralPopup.vue'
 import { FALLBACK_AVATAR_DATA_URL } from '@/constants/fallbackAvatar.js'
 import eyeOpen from '@/assets/eyeopen.svg'
 import eyeClosed from '@/assets/eyeclosed.svg'
+import accountIcon from '@/assets/accounttt.svg'
 import axios from 'axios'
 import { API_URL, secureApiCall } from '@/api'
 import { subscribeToPushNotifications } from '@/utils/push'
@@ -2244,6 +2245,8 @@ function getDynProfilePopupAssetStyle(asset) {
 // Détermine si l'item/variante en cours doit retirer la bordure de l'account-btn
 function shouldRemoveNavbarBorder() {
   try {
+    // Flag de preview transmis depuis ShopPopup
+    if (previewItem.value && previewItem.value?.flags && previewItem.value.flags.removeNavbarBorder === true) return true
     // 1) Prévisualisation d'un item dynamique
     let item = (previewItem.value && previewItem.value.isDynamic)
       ? previewItem.value
@@ -2312,6 +2315,7 @@ onMounted(() => {
   try {
     window.addEventListener('navbar-preview-item', (e) => {
       const it = e && e.detail && e.detail.item
+      const removeFlag = !!(e && e.detail && e.detail.removeNavbarBorder)
       try {
         if (it && (it.type === 'border-color' || it.type === 'border-gradient')) {
           try { previewBorderColorId.value = coinsStore.getBorderColorIdFromItem(it) } catch { previewBorderColorId.value = null }
@@ -2319,6 +2323,12 @@ onMounted(() => {
         } else {
           previewItem.value = normalizePreviewItem(it)
           previewBorderColorId.value = null
+          try {
+            if (previewItem.value) {
+              previewItem.value.flags = previewItem.value.flags || {}
+              previewItem.value.flags.removeNavbarBorder = removeFlag
+            }
+          } catch {}
         }
       } catch { previewItem.value = null; previewBorderColorId.value = null }
       setTimeout(() => { previewItem.value = null; previewBorderColorId.value = null }, 90000)

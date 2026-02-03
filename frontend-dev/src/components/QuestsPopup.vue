@@ -617,6 +617,8 @@ function showQuestToast(title, reward, id) {
 }
 const prevDone = ref([])
 onMounted(async () => {
+  const auth = useAuthStore()
+  if (!auth.isLoggedIn) { hydrating.value = false; return }
   hydrating.value = true
   await loadDailyFromBackend()
   loadWheelSpinCount()
