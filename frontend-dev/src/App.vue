@@ -29,9 +29,9 @@ function showGlobalToast(type: 'quest'|'task', title: string, reward = 0, questI
   questToasts.value.push({ id, title, reward, type, questId })
   setTimeout(() => { questToasts.value = questToasts.value.filter(x => x.id !== id) }, 4500)
 }
-function handleQuestCompleted(e: any) { const d = (e && e.detail) || {}; const r = Number(d.reward) || 0; showGlobalToast('quest', d.title || 'Quête', r, String(d.id || '')); try { coinsStore.addCoins(r, { reason: 'daily-quest' }) } catch {} try { localStorage.setItem('questsProgressVersion', String(Date.now())) } catch {} setTimeout(() => { try { loadAchievementsStatus(false) } catch {} }, 50) }
-function handleTaskCompleted(e: any) { const d = (e && e.detail) || {}; showGlobalToast('task', d.title || 'Tâche', Number(d.reward) || 0); try { loadAchievementsStatus(false) } catch {} }
-function handleWheelSpun() { try { localStorage.setItem('questsProgressVersion', String(Date.now())) } catch {} setTimeout(() => { try { loadAchievementsStatus(false) } catch {} }, 50) }
+function handleQuestCompleted(e: any) { const d = (e && e.detail) || {}; const r = Number(d.reward) || 0; showGlobalToast('quest', d.title || 'Quête', r, String(d.id || '')); try { coinsStore.addCoins(r, { reason: 'daily-quest' }) } catch {} try { localStorage.setItem('questsProgressVersion', String(Date.now())) } catch {} setTimeout(() => { try { if (authStore?.isLoggedIn) { loadAchievementsStatus(false) } } catch {} }, 50) }
+function handleTaskCompleted(e: any) { const d = (e && e.detail) || {}; showGlobalToast('task', d.title || 'Tâche', Number(d.reward) || 0); try { if (authStore?.isLoggedIn) { loadAchievementsStatus(false) } } catch {} }
+function handleWheelSpun() { try { localStorage.setItem('questsProgressVersion', String(Date.now())) } catch {} setTimeout(() => { try { if (authStore?.isLoggedIn) { loadAchievementsStatus(false) } } catch {} }, 50) }
 
 function showAchToast(title: string, desc: string) {
   const id = Date.now() + Math.random()
@@ -108,6 +108,7 @@ function handleAchievementUnlocked(e: any) {
 }
 async function loadAchievementsStatus(initial = false) {
   try {
+    if (!authStore?.isLoggedIn) { return }
     const r: any = await secureApiCall('/quests/achievements')
     const list: string[] = Array.isArray(r?.achievements) ? r.achievements.map(String) : []
     const prev = new Set(Array.from(seenAch.value))

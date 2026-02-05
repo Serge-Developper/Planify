@@ -26,7 +26,6 @@ const POOL = [
   { id: 'wheel-2', title: 'Tourner la roue de la fortune 2 fois', reward: 20, actions: 2, durationDays: 1 },
   { id: 'devoirs', title: 'Consulter les devoirs', reward: 10, actions: 1, durationDays: 1 },
   { id: 'task-info-1', title: 'Cliquer sur “Plus d’infos” sur une tâche', reward: 10, actions: 1, durationDays: 1 },
-  { id: 'task-info-3', title: 'Cliquer sur “Plus d’infos” sur 3 tâches différentes', reward: 20, actions: 3, durationDays: 1 },
   { id: 'tasks-archives', title: 'Consulter les archives des tâches', reward: 10, actions: 1, durationDays: 1 },
   { id: 'tab-exams-open', title: 'Ouvrir l’onglet “Examens”', reward: 10, actions: 1, durationDays: 1 },
   { id: 'tab-retards-open', title: 'Ouvrir l’onglet “Retards”', reward: 10, actions: 1, durationDays: 1 },
@@ -140,7 +139,16 @@ router.get('/daily', verifyToken, async (req, res) => {
     const user = await User.findById(userId)
     if (!user) return res.status(404).json({ success: false, message: 'Utilisateur non trouvé' })
     await ensureDailyQuestsForUser(user)
-    return res.json({ dailyQuests: user.dailyQuests || [], meta: user.dailyQuestsMeta || {} })
+    let list = Array.isArray(user.dailyQuests) ? user.dailyQuests : []
+    const idx = list.findIndex(q => q && q.id === 'task-info-3')
+    if (idx !== -1) {
+      const currentIds = list.map((q,i)=> i===idx ? null : q.id).filter(Boolean)
+      const replacement = pickReplacement(currentIds)
+      user.dailyQuests[idx] = { ...replacement, done: false, createdYmd: getParisYMD(), expiresYmd: addDaysYmd(getParisYMD(), Number(replacement.durationDays||1)) }
+      await user.save()
+      list = user.dailyQuests
+    }
+    return res.json({ dailyQuests: list, meta: user.dailyQuestsMeta || {} })
   } catch (e) {
     return res.status(500).json({ success: false, message: 'Erreur serveur' })
   }

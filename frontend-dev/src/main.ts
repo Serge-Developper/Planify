@@ -37,12 +37,14 @@ app.use(router)
 try {
     const userRaw = localStorage.getItem('user') || sessionStorage.getItem('user');
     const userObj = userRaw ? JSON.parse(userRaw) : null;
+    const token = userObj && userObj.token;
     const saved = (userObj && userObj.theme) || localStorage.getItem('theme');
-    const initial = saved || 'light';
+    const initial = token ? (saved || 'light') : 'light';
     const applied = initial === 'auto'
         ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
         : initial;
     document.documentElement.setAttribute('data-theme', applied);
+    if (!token) { try { localStorage.setItem('theme', 'light') } catch {} }
 } catch {}
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {

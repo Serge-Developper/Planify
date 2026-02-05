@@ -2957,11 +2957,11 @@ async function confirmAvatarCrop() {
         const updatedUser = { ...user.value, avatar: response.data.avatar, avatarVersion: v }
         auth.login(updatedUser)
         const apiSrc = getAvatarUrlForUser(updatedUser)
-        userAvatar.value = apiSrc || accountIcon
+        userAvatar.value = apiSrc || FALLBACK_AVATAR_DATA_URL
       } else {
         const tempUser = { id: null, _id: null, avatar: response.data.avatar, avatarVersion: v }
         const apiSrc = getAvatarUrlForUser(tempUser)
-        userAvatar.value = apiSrc || accountIcon
+        userAvatar.value = apiSrc || FALLBACK_AVATAR_DATA_URL
       }
       alert('Avatar mis à jour avec succès !')
     }
@@ -3001,11 +3001,11 @@ async function handleAvatarUpload(event) {
           const updatedUser = { ...user.value, avatar: response.data.avatar, avatarVersion: v }
           auth.login(updatedUser)
           const apiSrc = getAvatarUrlForUser(updatedUser)
-          userAvatar.value = apiSrc || accountIcon
+          userAvatar.value = apiSrc || FALLBACK_AVATAR_DATA_URL
         } else {
           const tempUser = { id: null, _id: null, avatar: response.data.avatar, avatarVersion: v }
           const apiSrc = getAvatarUrlForUser(tempUser)
-          userAvatar.value = apiSrc || accountIcon
+          userAvatar.value = apiSrc || FALLBACK_AVATAR_DATA_URL
         }
         alert('Avatar GIF mis à jour avec succès !')
       }
@@ -3057,10 +3057,10 @@ function logout() {
   coinsStore.reset();
   showUserDropdown.value = false
   showProfilePopup.value = false
-  userAvatar.value = accountIcon; // Remettre l'icône par défaut
+  userAvatar.value = FALLBACK_AVATAR_DATA_URL; // Remettre l'icône par défaut
   
   // Remettre l'icône par défaut
-  userAvatar.value = accountIcon;
+  userAvatar.value = FALLBACK_AVATAR_DATA_URL;
   
   router.push('/')
 }
@@ -4093,8 +4093,8 @@ async function toggleLeaderboardForMe() {
 // Fonction pour gérer les erreurs de chargement d'image
 function handleImageError(event) {
   console.log('❌ Erreur de chargement de l\'image:', event.target.src);
-  console.log('🔄 Retour à l\'icône par défaut');
-  userAvatar.value = accountIcon;
+  console.log("🔄 Retour à l'icône par défaut");
+  userAvatar.value = FALLBACK_AVATAR_DATA_URL;
 }
 
 // Fonction pour gérer le chargement réussi d'image
@@ -4166,7 +4166,7 @@ watch(user, async (newUser) => {
     } else if (newUser.id || newUser._id) {
       loadUserAvatar();
     } else {
-      userAvatar.value = accountIcon;
+      userAvatar.value = FALLBACK_AVATAR_DATA_URL;
     }
 
     // MODIF: ne pas écraser la saisie locale en cours
@@ -4179,7 +4179,7 @@ watch(user, async (newUser) => {
     await coinsStore.initialize();
     checkSpinAvailability();
   } else {
-    userAvatar.value = accountIcon;
+    userAvatar.value = FALLBACK_AVATAR_DATA_URL;
     coinsStore.reset();
   }
 }, { immediate: true });
@@ -6653,7 +6653,7 @@ body, html {
   line-height: 0;
   box-shadow: none !important; /* évite l’illusion d’un “vide” en bas */
   overflow: hidden !important;
-  border-radius: 12px !important;
+  border-radius: 24px !important;
   position: relative !important;
   z-index: 2 !important;
 }
@@ -6825,7 +6825,7 @@ body, html {
 
 .profile-popup .profile-avatar {
   overflow: hidden !important;
-  border-radius: 18px !important;
+  border-radius: 24px !important;
   box-sizing: border-box !important;
 }
 

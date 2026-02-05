@@ -414,16 +414,23 @@ function closeModal() {
 [data-theme="dark"] .about-team h2 {
   color: #ffffff !important;
 }
+[data-theme="dark"] .about-team-lead,
+[data-theme="dark"] .about-team-member h3,
+[data-theme="dark"] .about-team-member p:not(.about-team-role) {
+  color: #ffffff !important;
+}
+[data-theme="dark"] .about-team-role {
+  color: var(--darkreader-text-00cf0e, #48f953) !important;
+}
 
-  /* Sombre: textes de l'équipe en blanc (hors rôle) */
-  [data-theme="dark"] .about-team-lead,
-  [data-theme="dark"] .about-team-member h3,
-  [data-theme="dark"] .about-team-member p:not(.about-team-role) {
-    color: #ffffff !important;
-  }
-
-  /* Sombre: rôle en vert spécial (CEO & ...) */
-  [data-theme="dark"] .about-team-role {
-    color: var(--darkreader-text-00cf0e, #48f953) !important;
-  }
+[data-theme="light"] .about-main { color: #111; background: #fff; }
+[data-theme="light"] .about-hero-content h1,
+[data-theme="light"] .about-title { color: #111 !important; text-shadow: none !important; }
+[data-theme="light"] .about-intro p,
+[data-theme="light"] .about-intro ul,
+[data-theme="light"] .about-intro li,
+[data-theme="light"] .downloads-title,
+[data-theme="light"] .patch-notes-title,
+[data-theme="light"] .about-team h2,
+[data-theme="light"] .pn-modal-content { color: #111 !important; }
 </style>

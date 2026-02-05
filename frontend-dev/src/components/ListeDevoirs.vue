@@ -4678,11 +4678,14 @@ async function fetchMyAcceptedProposals() {
 }
 onMounted(async () => {
   await subjectsStore.initializeStore();
-  await Promise.allSettled([
-    fetchMyProposals(),
-    fetchMyAcceptedProposals(),
-    refreshProposalsCountBadge()
-  ]);
+  const tok = user.value?.token;
+  if (tok) {
+    await Promise.allSettled([
+      fetchMyProposals(),
+      fetchMyAcceptedProposals(),
+      refreshProposalsCountBadge()
+    ]);
+  }
 });
 watch(() => user.value && user.value.token, (tok) => { if (tok) { fetchMyProposals(); fetchMyAcceptedProposals(); refreshProposalsCountBadge(); } });
 
@@ -4947,12 +4950,17 @@ async function refreshProposalsCountBadge() {
       const stale = Date.now() - ts > 300000;
       if (!stale) return;
     } catch {}
+    if (!token) {
+      proposalsCountBadge.value = Math.max(0, Number(proposalsCountBadge.value || 0));
+      try { localStorage.setItem(K, JSON.stringify({ ts: Date.now(), count: proposalsCountBadge.value })) } catch {}
+      return;
+    }
     if (role === 'delegue' || role === 'prof' || role === 'admin') {
-      const r = await axios.get(`${API_URL}/events/proposals`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      const r = await axios.get(`${API_URL}/events/proposals`, { headers: { Authorization: `Bearer ${token}` } });
       const arr = Array.isArray(r?.data?.proposals) ? r.data.proposals : (Array.isArray(r?.data) ? r.data : []);
       proposalsCountBadge.value = Math.max(0, Number(arr.length || 0));
     } else {
-      const r = await axios.get(`${API_URL}/events/proposals/feed/count`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      const r = await axios.get(`${API_URL}/events/proposals/feed/count`, { headers: { Authorization: `Bearer ${token}` } });
       proposalsCountBadge.value = Math.max(0, Number(r?.data?.count || 0));
     }
     try { localStorage.setItem(K, JSON.stringify({ ts: Date.now(), count: proposalsCountBadge.value })) } catch {}

@@ -72,8 +72,10 @@
             <div class="progress-track large"><div class="progress-fill green" :class="{ zero: displayDailyPerc <= 0 }" :style="{ width: displayDailyPerc + '%' }"></div></div>
           </div>
 
-          <div class="bonus-block" :class="{ active: allDailyDone }">
-            <div class="bonus-title">Bonus journalier
+          <div class="bonus-block" :class="{ active: allDailyDone, reduced: rerollUsed }">
+            <div class="bonus-title">
+              Bonus journalier
+              <span class="bonus-badge" v-if="rerollUsed">Bonus réduit</span>
               <button class="bonus-info-btn" type="button" @click="openBonusInfo">
                 <img :src="infoIcon" alt="Infos" class="bonus-info-img" />
               </button>
@@ -84,7 +86,9 @@
               <img :src="planifyCoin" alt="Planify Coin" class="bonus-inline-coin" />
               <div class="next-reset">Rotation à minuit: {{ nextDailyResetStr }}</div>
             </div>
-            <div class="bonus-state" v-else>Complétez les 3 quêtes pour débloquer le bonus</div>
+            <div class="bonus-state" v-else>
+              <div>Complétez les 3 quêtes pour débloquer le bonus</div>
+            </div>
           </div>
         </section>
 
@@ -248,7 +252,29 @@ function updateLeaderboardQuestTitle(name) {
   const q = dailyQuests.value.find(q => q.id === 'leaderboard-profile')
   if (q) q.title = base
 }
+function tryLoadPersistedLeaderboardTarget() {
+  try {
+    const today = getParisYMD()
+    const dU = localStorage.getItem(getQuestStorageKey('leaderboardTargetNameDate')) || ''
+    const nU = localStorage.getItem(getQuestStorageKey('leaderboardTargetNameName')) || ''
+    if (dU && dU === today && nU) { leaderboardTargetName.value = String(nU); updateLeaderboardQuestTitle(nU); return true }
+    const dG = localStorage.getItem('leaderboardTargetNameDate') || ''
+    const nG = localStorage.getItem('leaderboardTargetNameName') || ''
+    if (dG && dG === today && nG) { leaderboardTargetName.value = String(nG); updateLeaderboardQuestTitle(nG); return true }
+  } catch {}
+  return false
+}
+function saveLeaderboardTargetName(name) {
+  try {
+    const today = getParisYMD()
+    localStorage.setItem(getQuestStorageKey('leaderboardTargetNameDate'), today)
+    localStorage.setItem(getQuestStorageKey('leaderboardTargetNameName'), String(name || ''))
+    localStorage.setItem('leaderboardTargetNameDate', today)
+    localStorage.setItem('leaderboardTargetNameName', String(name || ''))
+  } catch {}
+}
 async function loadLeaderboardTargetName() {
+  try { if (tryLoadPersistedLeaderboardTarget()) return } catch {}
   try {
     const raw = localStorage.getItem('planify_leaderboard_cache_v1')
     const obj = raw ? JSON.parse(raw) : null
@@ -258,9 +284,11 @@ async function loadLeaderboardTargetName() {
       const name = (pick && (pick.username || pick.name)) || ''
       leaderboardTargetName.value = String(name)
       updateLeaderboardQuestTitle(name)
+      saveLeaderboardTargetName(name)
     }
   } catch {}
   try {
+    const a = useAuthStore(); if (!a?.isLoggedIn) return
     const res = await secureApiCall('/users/leaderboard')
     const arr2 = Array.isArray(res?.users) ? res.users : (Array.isArray(res) ? res : [])
     if (arr2.length) {
@@ -269,6 +297,7 @@ async function loadLeaderboardTargetName() {
       const name2 = (pick2 && (pick2.username || pick2.name)) || ''
       leaderboardTargetName.value = String(name2)
       updateLeaderboardQuestTitle(name2)
+      saveLeaderboardTargetName(name2)
     }
   } catch {}
 }
@@ -277,11 +306,12 @@ const hydrating = ref(false)
 const dailyQuests = ref([])
 async function loadDailyFromBackend() {
   try {
+    const a = useAuthStore(); if (!a?.isLoggedIn) { return }
     const res = await secureApiCall('/quests/daily')
     const qs = Array.isArray(res?.dailyQuests) ? res.dailyQuests : (Array.isArray(res) ? res : [])
     const meta = res?.meta || {}
     rerollUsed.value = !!meta.rerollUsed
-    if (meta && meta.targetLeaderboardName) updateLeaderboardQuestTitle(meta.targetLeaderboardName)
+    if (meta && meta.targetLeaderboardName) { updateLeaderboardQuestTitle(meta.targetLeaderboardName); saveLeaderboardTargetName(meta.targetLeaderboardName) }
     dailyQuests.value = qs.map(q => ({ ...q }))
     displayQuestPercs.value = dailyQuests.value.map(questProgress)
     displayDailyPerc.value = dailyProgressPerc.value
@@ -295,7 +325,7 @@ const allDailyOptions = [
   { id: 'wheel-2', title: 'Tourner la roue de la fortune 2 fois', reward: 20, actions: 2, done: false },
   { id: 'devoirs', title: 'Consulter les devoirs', reward: 10, actions: 1, done: false },
   { id: 'task-info-1', title: 'Cliquer sur “Plus d’infos” sur une tâche', reward: 10, actions: 1, done: false },
-  { id: 'task-info-3', title: 'Cliquer sur “Plus d’infos” sur 3 tâches différentes', reward: 20, actions: 3, done: false },
+
   { id: 'tasks-archives', title: 'Consulter les archives des tâches', reward: 10, actions: 1, done: false },
   { id: 'tab-exams-open', title: 'Ouvrir l’onglet “Examens”', reward: 10, actions: 1, done: false },
   { id: 'tab-retards-open', title: 'Ouvrir l’onglet “Retards”', reward: 10, actions: 1, done: false },
@@ -336,6 +366,7 @@ const repeatableQuests = [
 ]
 async function loadRepeatableStatus() {
   try {
+    const a = useAuthStore(); if (!a?.isLoggedIn) { return }
     const r = await secureApiCall('/quests/repeatable')
     const arr = Array.isArray(r?.repeatable) ? r.repeatable : []
     const map = new Map(arr.map(x => [x.id, Number(x.progress||0)]))
@@ -345,6 +376,7 @@ async function loadRepeatableStatus() {
 const seenAch = ref(new Set())
 async function loadAchievementsStatus() {
   try {
+    const a = useAuthStore(); if (!a?.isLoggedIn) { return }
     const r = await secureApiCall('/quests/achievements')
     const list = Array.isArray(r?.achievements) ? r.achievements : []
     seenAch.value = new Set(list)
@@ -359,6 +391,7 @@ const achStats = ref({ completedTasks: 0, wheelSpinTotal: 0, wheelLossTotal: 0, 
 
 async function loadAchievementsCounters() {
   try {
+    const a = useAuthStore(); if (!a?.isLoggedIn) { return }
     const r = await secureApiCall('/quests/stats')
     achStats.value = {
       completedTasks: Math.max(0, Number(r?.completedTasks || 0)),
@@ -512,6 +545,7 @@ const dailyProgressPerc = computed(() => {
 const wheelSpinCount = ref(0)
 function getParisYMD() { try { const parisNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Paris' })); const y = parisNow.getFullYear(); const m = String(parisNow.getMonth()+1).padStart(2,'0'); const d = String(parisNow.getDate()).padStart(2,'0'); return `${y}-${m}-${d}` } catch { return '' } }
 function getWheelStorageKey(base) { try { const a = useAuthStore(); const uid = String(a?.user?._id || a?.user?.id || a?.user?.username || '').trim(); return uid ? `${base}:${uid}` : base } catch { return base } }
+function getQuestStorageKey(base) { try { const a = useAuthStore(); const uid = String(a?.user?._id || a?.user?.id || a?.user?.username || '').trim(); return uid ? `${base}:${uid}` : base } catch { return base } }
 function loadWheelSpinCount() { try { const dateKey = getWheelStorageKey('wheelSpinsDate'); const countKey = getWheelStorageKey('wheelSpinsCount'); const savedDate = localStorage.getItem(dateKey) || ''; const today = getParisYMD(); if (!savedDate || savedDate !== today) { localStorage.setItem(dateKey, today); localStorage.setItem(countKey, '0'); wheelSpinCount.value = 0 } else { wheelSpinCount.value = Math.max(0, Number(localStorage.getItem(countKey) || 0)) } } catch { wheelSpinCount.value = 0 } }
 function saveWheelSpinCount() { try { const dateKey = getWheelStorageKey('wheelSpinsDate'); const countKey = getWheelStorageKey('wheelSpinsCount'); localStorage.setItem(dateKey, getParisYMD()); localStorage.setItem(countKey, String(Math.max(0, Number(wheelSpinCount.value||0)))) } catch {} }
 function parseRequiredSpinsFromId(id) { const m = String(id||'').match(/wheel-(\d+)/); return m ? Number(m[1]) : 0 }
@@ -673,7 +707,7 @@ watch(dailyQuests, async (qs) => {
     const before = !!prevDone.value[i]
     if (now && !before) {
       showQuestToast(q.title, q.reward, q.id)
-      try { await secureApiCall('/quests/complete', { method: 'POST', body: JSON.stringify({ questId: q.id }) }) } catch {}
+      try { const a = useAuthStore(); if (a?.isLoggedIn) { await secureApiCall('/quests/complete', { method: 'POST', body: JSON.stringify({ questId: q.id }) }) } } catch {}
       try { await loadRepeatableStatus(); await loadAchievementsStatus() } catch {}
     }
     prevDone.value[i] = now
@@ -717,6 +751,7 @@ async function awardDailyBonusWithRetry() {
   if (bonusAwarding.value) return
   bonusAwarding.value = true
   try {
+    const a = useAuthStore(); if (!a?.isLoggedIn) { bonusAwarding.value = false; return }
     const maxTries = 10
     for (let i = 0; i < maxTries; i++) {
       const d = await secureApiCall('/quests/daily')
@@ -791,6 +826,14 @@ onUnmounted(() => {
 .title-center { position: absolute; left: 50%; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 5px; }
 .quests-logo { width: 30px; height: 35px; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2)); }
 .dev-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 6px; }
+.bonus-block { margin-top: 12px; background: #0f1620; border: 2px solid #334155; border-radius: 12px; padding: 12px; }
+[data-theme="light"] .bonus-block { background: #ffffff; border-color: #e5e7eb; }
+.bonus-block.reduced { border-color: #f59e0b; }
+.bonus-title { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+.bonus-badge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 999px; font-weight: 700; font-size: 12px; color: #f59e0b; border: 1px solid #f59e0b; background: #1f2937; }
+[data-theme="light"] .bonus-badge { background: #fff7ed; color: #b45309; border-color: #f59e0b; }
+.bonus-inline-coin { width: 20px; height: 20px; margin-left: 6px; }
+
 .close-btn { background: transparent; border: none; border-radius: 10px; width: 40px; height: 40px; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; }
 .close-img { width: 32px; height: 32px; display: block; filter: grayscale(0.5) brightness(0.95); transition: transform 0.25s, filter 0.25s; }
 .close-btn:hover .close-img { transform: scale(1.18); filter: grayscale(0) brightness(1.1); }
@@ -892,7 +935,7 @@ onUnmounted(() => {
 
 /* Pop-up confirmation */
 .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; z-index: 1500; }
-.confirm-modal { background: #0f1620; border: 1px solid #1f2a37; color: #e8f0f7; border-radius: 14px; padding: 18px 20px; width: 520px; max-width: 90vw; box-shadow: 0 20px 40px rgba(0,0,0,0.35); animation: scaleIn 160ms ease-out; }
+.confirm-modal { background: #0f1620; border: 1px solid #1f2a37; color: #e8f0f7; border-radius: 14px; padding: 18px 20px; width: 560px; max-width: 90vw; box-shadow: 0 20px 40px rgba(0,0,0,0.35); animation: scaleIn 160ms ease-out; }
 .confirm-title {  font-size: 26px; margin-bottom: 10px; color: #fff; }
 .confirm-msg { font-size: 16px; color: #9ca3af; margin-bottom: 16px; }
 .confirm-actions { display: flex; gap: 10px; justify-content: flex-end; }

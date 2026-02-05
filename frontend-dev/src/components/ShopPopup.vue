@@ -12044,7 +12044,6 @@ onUnmounted(() => {
   text-align: center;
 }
 .confirm-modal .modal-title {
-  font-weight: 700;
   font-size: 20px;
   margin-bottom: 8px;
 }
