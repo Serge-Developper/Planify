@@ -5050,15 +5050,15 @@ body, html {
   }
   .profile-left-stack { width: 100%; }
   .profile-role-with-group {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
+    position: relative;
+    display: inline-flex;
     align-items: center;
-    gap: 10px;
-    flex-direction: column;
+    gap: 15px;
+    flex-direction: row;
+    justify-content: center;
   }
-  .profile-role-with-group .profile-role { order: 1; flex-basis: 100%; }
-  .profile-role-with-group .profile-outlets-row { order: 2; display: inline-flex; gap: 10px; justify-content: center; }
+  .profile-role-with-group .profile-role { order: 1; }
+  .profile-role-with-group .profile-outlets-row { order: 2; display: inline-flex; gap: 25px; justify-content: center; }
   .profile-popup .profile-avatar-stage { width: 100% !important; max-width: 320px !important; margin-left: auto; margin-right: auto; }
   .profile-divider { display: none; }
   .profile-section-title { font-size: 18px; }
