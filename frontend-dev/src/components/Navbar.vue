@@ -1055,13 +1055,15 @@
               <div class="profile-left-row">
                 <div class="profile-role-with-group">
                   <div class="profile-pill profile-role">{{ user?.role ? afficherRole(user.role) : 'Non défini' }}</div>
-                  <div class="profile-dept-outlet">
-                    <img v-if="departmentLogoSrc" :src="departmentLogoSrc" alt="Études" class="dept-logo" />
-                    <span v-else class="dept-text">{{ user?.department || '—' }}</span>
-                  </div>
-                  <div class="profile-group-outlet">
-                    <img v-if="groupLogoSrc" :src="groupLogoSrc" alt="Groupe" class="group-logo" />
-                    <span v-else class="group-text">{{ user?.groupe || '—' }}</span>
+                  <div class="profile-outlets-row">
+                    <div class="profile-dept-outlet">
+                      <img v-if="departmentLogoSrc" :src="departmentLogoSrc" alt="Études" class="dept-logo" />
+                      <span v-else class="dept-text">{{ user?.department || '—' }}</span>
+                    </div>
+                    <div class="profile-group-outlet">
+                      <img v-if="groupLogoSrc" :src="groupLogoSrc" alt="Groupe" class="group-logo" />
+                      <span v-else class="group-text">{{ user?.groupe || '—' }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -5032,8 +5034,34 @@ body, html {
   align-items: stretch;
 }
 @media (max-width: 768px) {
-  .profile-card-grid { grid-template-columns: 1fr; }
+  .profile-card-grid {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+  .profile-left, .profile-right {
+    width: 100%;
+    max-width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+  .profile-left-stack { width: 100%; }
+  .profile-role-with-group {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    flex-direction: column;
+  }
+  .profile-role-with-group .profile-role { order: 1; flex-basis: 100%; }
+  .profile-role-with-group .profile-outlets-row { order: 2; display: inline-flex; gap: 10px; justify-content: center; }
+  .profile-popup .profile-avatar-stage { width: 100% !important; max-width: 320px !important; margin-left: auto; margin-right: auto; }
   .profile-divider { display: none; }
+  .profile-section-title { font-size: 18px; }
 }
 
 [data-theme="light"] .choice-title {
@@ -5087,6 +5115,7 @@ body, html {
 }
 .profile-left-row { display:flex; gap:40px; justify-content: center;}
 .profile-role-with-group { position: relative; display: inline-flex; align-items: center; gap: 15px; }
+.profile-role-with-group .profile-outlets-row { display: inline-flex; align-items: center; gap: 10px; }
 .profile-role-with-group .profile-role { position: relative; z-index: 2; }
 .profile-group-outlet { position: relative; margin-left: 0; border: 4px solid #3ddc84; border-radius: 18px; width: 81px; height: 68px; display:flex; align-items:center; justify-content:center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow:hidden; }
 .profile-group-outlet .group-logo { width: 39px; height: 30px; object-fit: contain; display:block; }
@@ -6627,7 +6656,7 @@ body, html {
 }
 
 .profile-popup .profile-avatar-stage {
-  width: 340px !important;
+  width: min(100%, 340px) !important;
   height: auto;
   box-sizing: border-box;
   border-radius: 12px;
@@ -6635,6 +6664,8 @@ body, html {
   display: flex !important;
   align-items: center;
   justify-content: center;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .profile-popup .profile-avatar-stage:not(.no-border) {
