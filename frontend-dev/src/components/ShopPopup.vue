@@ -245,12 +245,10 @@
             <div class="preview-card preview-navbar" :key="'slide-navbar'">
               <div class="preview-title">Aperçu Navbar</div>
               <div class="item-img-wrapper large">
-                <div class="navbar-stage" style="position:relative;width:51px;height:51px;display:flex;align-items:center;justify-content:center;">
-                  <div class="item-img-container account-btn" :style="getNavbarAccountBtnStyle()">
-                    <img v-if="suggestAssetSrc && suggestPlacement.navbar === 'inside'" :src="suggestAssetSrc" :class="['item-img','draggable', draggingKey==='navbar' ? 'drag-active' : '']" :style="getSuggestStyle('navbar')" @click="startDrag('navbar', $event)" @touchstart.prevent.stop="startDragTouch('navbar', $event)" />
-                  </div>
-                  <img v-if="suggestAssetSrc && suggestPlacement.navbar === 'above'" :src="suggestAssetSrc" :class="['item-img','draggable', draggingKey==='navbar' ? 'drag-active' : '']" :style="getSuggestStyle('navbar')" @click="startDrag('navbar', $event)" @touchstart.prevent.stop="startDragTouch('navbar', $event)" />
+                <div class="navbar-stage" :style="getNavbarStageStyle()" style="position:relative;width:51px;height:51px;display:flex;align-items:center;justify-content:center;">
+                  <img v-if="suggestAssetSrc && suggestPlacement.navbar === 'inside'" :src="suggestAssetSrc" :class="['item-img','draggable', draggingKey==='navbar' ? 'drag-active' : '']" :style="getSuggestStyle('navbar')" @click="startDrag('navbar', $event)" @touchstart.prevent.stop="startDragTouch('navbar', $event)" />
                 </div>
+                <img v-if="suggestAssetSrc && suggestPlacement.navbar === 'above'" :src="suggestAssetSrc" :class="['item-img','draggable', draggingKey==='navbar' ? 'drag-active' : '']" :style="getSuggestStyle('navbar')" @click="startDrag('navbar', $event)" @touchstart.prevent.stop="startDragTouch('navbar', $event)" />
               </div>
               <div class="item-actions" style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
                 <label>Taille: <input type="range" min="10" max="120" v-model.number="suggestStyles.navbar.width" /></label>
@@ -3574,7 +3572,7 @@ const weeklyContainerRef = ref(null)
 const forceWeeklyHeight = ref(0)
 function syncWeeklyHeight(){ try{ const el = weeklyContainerRef.value; if (!el) return; const rect = el.getBoundingClientRect(); forceWeeklyHeight.value = Math.round(rect.height) }catch{} }
 function openPurchasePreview(item){ try{ syncWeeklyHeight(); purchasePreviewItem.value = item; showPurchasePreview.value = true; hoverBackShop.value = false; hoverCloseShop.value = false }catch{} }
-function closePurchasePreview(){ hoverBackShop.value = false; hoverCloseShop.value = false; try{ showPurchasePreview.value = false }catch{ showPurchasePreview = false }; purchasePreviewItem.value = null; if (showSuggestionEditor && (showSuggestionEditor.value === true)) { showSuggestionEditor.value = false; suggestAssetSrc.value = ''; suggestUrl.value = ''; removeAvatarBorder.value = false; removeLeaderboardBorder.value = false; previewWindowIndex.value = 0; suggestDevice.value = 'desktop'; const DEF = { top:0, left:0, width:50, height:50, rotate:0, objectFit:'contain', zIndex:1, margin:0, padding:0, background:'', boxShadow:'', borderWidth:0, borderStyle:'none', borderColor:'', borderRadius:0 }; suggestStyles.value = { dailyShop: { ...DEF }, collectionPreviewDesktop: { ...DEF }, collectionPreviewMobile: { ...DEF }, collectionPreview: { ...DEF }, collection: { ...DEF }, leaderboard: { ...DEF }, avatar: { ...DEF }, popupStyle: { ...DEF } }; resetSuggestUsers() } }
+function closePurchasePreview(){ hoverBackShop.value = false; hoverCloseShop.value = false; try{ showPurchasePreview.value = false }catch{ showPurchasePreview = false }; purchasePreviewItem.value = null; if (showSuggestionEditor && (showSuggestionEditor.value === true)) { showSuggestionEditor.value = false; suggestAssetSrc.value = ''; suggestUrl.value = ''; removeAvatarBorder.value = false; removeLeaderboardBorder.value = false; previewWindowIndex.value = 0; suggestDevice.value = 'desktop'; const DEF = { top:0, left:0, width:50, height:50, rotate:0, objectFit:'contain', zIndex:1, margin:0, padding:0, background:'', boxShadow:'', borderWidth:0, borderStyle:'none', borderColor:'', borderRadius:0 }; suggestStyles.value = { dailyShop: { ...DEF }, collectionPreviewDesktop: { ...DEF }, collectionPreviewMobile: { ...DEF }, collectionPreview: { ...DEF }, collection: { ...DEF }, leaderboard: { ...DEF }, avatar: { ...DEF }, navbar: { ...DEF }, popupStyle: { ...DEF } }; resetSuggestUsers() } }
 function measurePreviewSlider(){ try{ const root = weeklyContainerRef.value; if (!root) return; const card = root.querySelector('.preview-slider-track .preview-card'); if (card) { const r = card.getBoundingClientRect(); previewCardWidth.value = Math.round(r.width) } const track = root.querySelector('.preview-slider-track'); if (track) { const cs = window.getComputedStyle(track); const gapVal = parseFloat(cs.gap) || 6; previewCardGap.value = Math.round(gapVal) } }catch{} }
 onMounted(() => { try{ syncWeeklyHeight(); measurePreviewSlider(); window.addEventListener('resize', syncWeeklyHeight); window.addEventListener('resize', measurePreviewSlider); refreshSuggestPreviewBorderColor() }catch{} })
 onUnmounted(() => { try{ window.removeEventListener('resize', syncWeeklyHeight); window.removeEventListener('resize', measurePreviewSlider) }catch{} })
@@ -3997,12 +3995,13 @@ async function deleteUserItem(item) { try { const legacyId = Number((typeof item
   const normId = Number((typeof item.legacyId !== 'undefined') ? item.legacyId : item.id); dynamicItems.value = (Array.isArray(dynamicItems.value) ? dynamicItems.value.filter(n => { const nid = Number((typeof n.legacyId !== 'undefined') ? n.legacyId : n.id); const nname = String(n.name || '').trim(); return (Number.isFinite(normId) ? nid !== normId : nname !== name) }) : []); try { if (Number.isFinite(normId)) dynamicInfoById.value.delete(Number(normId)) } catch {} try { if (name) dynamicInfoByName.value.delete(String(name)) } catch {} try { loadWeeklyItems() } catch {} localItemsUpdateKey.value++; try { await secureApiCall('/users/my-items', { method: 'DELETE', body: JSON.stringify({ legacyId: Number.isFinite(legacyId) ? legacyId : undefined, localItemId: localId || undefined, id: (typeof item.id === 'number' ? item.id : undefined), name }) }) } catch {} try { userServerLocalItems.value = (Array.isArray(userServerLocalItems.value) ? userServerLocalItems.value.filter(u => { const uid = (typeof u.legacyId !== 'undefined') ? u.legacyId : u.id; const ulocalId = u && u.meta && u.meta.localItemId; const uname = String(u.name || '').trim(); if (localId && ulocalId) return String(ulocalId) !== String(localId); if (Number.isFinite(legacyId)) return Number(uid) !== legacyId; return uname !== name; }) : []) } catch {} try { await loadUserServerLocalItems() } catch {} try { window.dispatchEvent(new CustomEvent('my-items-changed')) } catch {} alert('Item supprimé de vos items.') } catch {} }
 function onSuggestFile(e) { try { const f = e.target.files && e.target.files[0]; if (!f) return; const reader = new FileReader(); reader.onload = () => { const data = reader.result; suggestAssetSrc.value = data; const v = suggestVariants.value[activeVariantIndex.value]; if (v) v.assetSrc = data }; reader.readAsDataURL(f) } catch {} }
 function onSuggestUrl() { try { const u = String(suggestUrl.value || '').trim(); if (!u) return; const raw = u.split('?')[0]; const url = raw + (raw.startsWith('/uploads/') ? `?v=${Date.now()}` : ''); suggestAssetSrc.value = url; const v = suggestVariants.value[activeVariantIndex.value]; if (v) v.assetSrc = url } catch {} }
-function centerSuggest(key) { try { const s = suggestStyles.value[key]; if (!s) return; const root = weeklyContainerRef.value; let el = null; if (key === 'leaderboard') { const sel = (suggestPlacement.value.leaderboard === 'above') ? '.preview-card.preview-leaderboard .leaderboard-item .user-avatar-container' : '.preview-card.preview-leaderboard .avatar-img'; el = root && root.querySelector(sel) } else if (key === 'avatar') { const sel = (suggestPlacement.value.avatar === 'above') ? '.preview-card.preview-avatar .profile-avatar-scaler' : '.preview-card.preview-avatar .avatar-img'; el = root && root.querySelector(sel) } else if (key === 'navbar') { const sel = (suggestPlacement.value.navbar === 'above') ? '.preview-card.preview-navbar .navbar-stage' : '.preview-card.preview-navbar .item-img-container'; el = root && root.querySelector(sel) } else if (key === 'dailyShop') { el = root && root.querySelector('.preview-card.preview-daily-shop .item-img-container') } else if (key === 'collectionPreview') { el = root && root.querySelector('.preview-card.preview-collection .item-img-container') } else if (key === 'popupStyle') { el = root && root.querySelector('.preview-card.preview-popup-style .item-img-container') } else { el = root && root.querySelector('.preview-card.preview-item .item-img-container') } const rect = el ? el.getBoundingClientRect() : null; const boxW = rect ? rect.width : (key === 'leaderboard' ? 57 : key === 'avatar' ? 150 : key === 'navbar' ? 51 : key === 'collectionPreview' ? (suggestDevice.value === 'mobile' ? 80 : 90) : key === 'popupStyle' ? 120.5 : key === 'dailyShop' ? 90 : 100); const boxH = rect ? rect.height : (key === 'leaderboard' ? 57 : key === 'avatar' ? 150 : key === 'navbar' ? 51 : key === 'collectionPreview' ? (suggestDevice.value === 'mobile' ? 80 : 90) : key === 'popupStyle' ? 64 : key === 'dailyShop' ? 90 : 100); const w = Number(s.width) || 50; const h = Number(s.height || s.width) || 50; s.left = Math.round((boxW - w) / 2); s.top = Math.round((boxH - h) / 2) } catch {} }
+function centerSuggest(key) { try { const s = suggestStyles.value[key]; if (!s) return; const root = weeklyContainerRef.value; let el = null; if (key === 'leaderboard') { const sel = (suggestPlacement.value.leaderboard === 'above') ? '.preview-card.preview-leaderboard .leaderboard-item .user-avatar-container' : '.preview-card.preview-leaderboard .avatar-img'; el = root && root.querySelector(sel) } else if (key === 'avatar') { const sel = (suggestPlacement.value.avatar === 'above') ? '.preview-card.preview-avatar .profile-avatar-scaler' : '.preview-card.preview-avatar .avatar-img'; el = root && root.querySelector(sel) } else if (key === 'navbar') { const sel = '.preview-card.preview-navbar .navbar-stage'; el = root && root.querySelector(sel) } else if (key === 'dailyShop') { el = root && root.querySelector('.preview-card.preview-daily-shop .item-img-container') } else if (key === 'collectionPreview') { el = root && root.querySelector('.preview-card.preview-collection .item-img-container') } else if (key === 'popupStyle') { el = root && root.querySelector('.preview-card.preview-popup-style .item-img-container') } else { el = root && root.querySelector('.preview-card.preview-item .item-img-container') } const rect = el ? el.getBoundingClientRect() : null; const boxW = rect ? rect.width : (key === 'leaderboard' ? 57 : key === 'avatar' ? 150 : key === 'navbar' ? 51 : key === 'collectionPreview' ? (suggestDevice.value === 'mobile' ? 80 : 90) : key === 'popupStyle' ? 120.5 : key === 'dailyShop' ? 90 : 100); const boxH = rect ? rect.height : (key === 'leaderboard' ? 57 : key === 'avatar' ? 150 : key === 'navbar' ? 51 : key === 'collectionPreview' ? (suggestDevice.value === 'mobile' ? 80 : 90) : key === 'popupStyle' ? 64 : key === 'dailyShop' ? 90 : 100); const w = Number(s.width) || 50; const h = Number(s.height || s.width) || 50; s.left = Math.round((boxW - w) / 2); s.top = Math.round((boxH - h) / 2) } catch {} }
 function getSuggestStyle(key) { try { const s = suggestStyles.value[key] || {}; const style = { position: 'absolute' }; if (typeof s.top === 'number') style.top = s.top + 'px'; if (typeof s.left === 'number') style.left = s.left + 'px'; if (typeof s.width === 'number') style.width = s.width + 'px'; if (typeof s.height === 'number') style.height = s.height + 'px'; if (typeof s.rotate === 'number') style.transform = `rotate(${s.rotate}deg)`; if (typeof s.zIndex === 'number') style.zIndex = s.zIndex; try { const p = suggestPlacement.value || {}; if (key === 'avatar' && p.avatar === 'above') { style.zIndex = Math.max(Number(style.zIndex || 0), 100) } if (key === 'leaderboard' && p.leaderboard === 'above') { style.zIndex = Math.max(Number(style.zIndex || 0), 100) } if (key === 'navbar' && p.navbar === 'above') { style.zIndex = Math.max(Number(style.zIndex || 0), 100) } } catch {} if (typeof s.objectFit === 'string') style.objectFit = s.objectFit; if (typeof s.margin === 'number') style.margin = s.margin + 'px'; if (typeof s.padding === 'number') style.padding = s.padding + 'px'; if (s.background) style.background = s.background; if (s.boxShadow) style.boxShadow = s.boxShadow; if (typeof s.borderWidth === 'number') style.borderWidth = s.borderWidth + 'px'; if (typeof s.borderStyle === 'string') style.borderStyle = s.borderStyle; if (s.borderColor) style.borderColor = s.borderColor; if (typeof s.borderRadius === 'number') style.borderRadius = s.borderRadius + 'px'; return style } catch { return { position: 'absolute' } } }
 const suggestPreviewBorderColor = ref(null)
 function refreshSuggestPreviewBorderColor() { try { const root = weeklyContainerRef.value; const sels = ['.preview-card.preview-collection .item-img-wrapper.large', '.preview-card.preview-daily-shop .item-img-wrapper.large', '.preview-card.preview-avatar .profile-avatar-stage']; let color = ''; for (const s of sels) { const el = root && root.querySelector(s); if (!el) continue; const cs = window.getComputedStyle(el); const c = cs.getPropertyValue('border-color') || cs.borderColor || ''; if (c && c !== 'transparent') { color = c; break } } suggestPreviewBorderColor.value = color || '#00FF80' } catch { suggestPreviewBorderColor.value = '#00FF80' } }
 function getPopupWrapperStyle() { try { const c = suggestPreviewBorderColor.value || '#00FF80'; return { borderColor: c } } catch { return {} } }
-function getNavbarAccountBtnStyle() { try { const hasBorder = !removeNavbarBorder.value; return { position: 'relative', width: '51px', height: '51px', marginLeft: '0px', border: hasBorder ? '3px #000 solid' : 'none', borderRadius: '12px', boxShadow: hasBorder ? '0 4px 16px #0002, 0 1.5px 6px #0001' : 'none', overflow: 'hidden' } } catch { return {} } }
+function getNavbarStageStyle() { try { const hasBorder = !removeNavbarBorder.value; const above = (suggestPlacement.value && suggestPlacement.value.navbar === 'above'); return { position: 'relative', width: '51px', height: '51px', border: hasBorder ? '3px #000 solid' : 'none', borderRadius: '12px', boxShadow: hasBorder ? '0 4px 16px #0002, 0 1.5px 6px #0001' : 'none', overflow: above ? 'visible' : 'hidden' } } catch { return {} } }
+function getNavbarAccountBtnStyle() { try { return { position: 'relative', width: '100%', height: '100%' } } catch { return {} } }
 const draggingKey = ref(null)
 const dragStart = ref({ x: 0, y: 0 })
 const initialPos = ref({ top: 0, left: 0 })
@@ -6006,7 +6005,7 @@ function getWeeklyJojoTextStyle() {
   return {
     position: 'absolute',
     top: p.top + 'px',
-    left: '50px',
+    left: '65px',
     width: p.width + '%',
     height: 'auto',
     objectFit: 'contain'
@@ -7736,6 +7735,9 @@ onUnmounted(() => {
 .slide-right .suggest-slider-enter-from { transform: translateX(40px); }
 .slide-right .suggest-slider-leave-to { transform: translateX(-40px); }
   .weekly-section:first-child .shop-grid.small-grid { grid-template-columns: repeat(2, 1fr) !important; height: 100%; align-items: stretch; grid-auto-rows: 1fr; gap: 12px !important; width: 658px !important; margin-left: auto; margin-right: auto; }
+  @media (max-width: 480px) {
+    .weekly-section:first-child .shop-grid.small-grid { gap: 25px !important; }
+  }
   @media (max-width: 768px) {
     .weekly-section:first-child .shop-grid {
       display: flex !important;
@@ -7782,9 +7784,22 @@ onUnmounted(() => {
   .weekly-section:first-child .shop-grid .tall-card { height: 100%; display: flex; flex-direction: column; }
   .weekly-section:first-child .shop-grid .tall-card .item-actions { margin-top: auto; }
   .small-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 12px !important; }
+  @media (max-width: 480px) {
+    .weekly-shop-container .weekly-section:nth-of-type(2) .shop-grid.small-grid::before {
+      content: "";
+      display: block;
+      height: 6px;
+      width: 85%;
+      margin: 5px auto 5px;
+      background: #E9E9EA;
+      border-radius: 999px;
+    }
+  }
   .weekly-preview { margin-top: 8px; grid-column: 1 / -1; width: 1235.45px; margin-left: auto; margin-right: auto; }
   .preview-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; align-items: stretch; justify-items: center; height: 100%; }
   .preview-card { width: 100%; max-width: 390px; }
+  .weekly-shop-container .preview-card.preview-navbar .item-img-container,
+  .weekly-shop-container .preview-card.preview-navbar .classic-border-preview { border-radius: 0 !important; }
   .preview-slider-viewport { overflow: hidden; }
 .preview-slider-track { display: flex; gap: 6px; align-items: stretch; justify-content: flex-start; will-change: transform; }
 .preview-slider-track .preview-card { flex: 0 0 390px; max-width: 390px; }
@@ -8572,7 +8587,7 @@ onUnmounted(() => {
     /* Style spécifique pour l'item Angel Wings dans le leaderboard */
   .leaderboard-container .equipped-angel-wings {
     position: absolute !important;
-    top: -50px !important;
+    top: -45px !important;
     left: -30px !important;
     width: 220% !important;
     height: 148% !important;
@@ -8685,7 +8700,7 @@ onUnmounted(() => {
 
 
   .timer-value { 
-    font-size: 16px !important;
+    font-size: 25px !important;
     display: inline-block;
     min-width: 10ch;
     text-align: center;
@@ -8795,7 +8810,7 @@ onUnmounted(() => {
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
-    gap: 10px !important;
+    gap: 0px !important;
     flex-direction: column !important;
   }
   
@@ -8933,6 +8948,8 @@ onUnmounted(() => {
     height: auto !important;
     object-fit: contain !important;
   }
+  /* Desktop weekly override: Jojo text position */
+  .weekly-section .shop-item.weekly-item.small-card .jojo-text-preview.jojotext-fade { left: 65px !important; }
 
   .jojo-img-shop {
     position: absolute !important;
@@ -9066,6 +9083,9 @@ onUnmounted(() => {
   border-color: #00c97b;
   transform: translateY(-5px);
   box-shadow: 0 10px 25px rgba(0, 201, 123, 0.2);
+}
+@media (hover: none) {
+  .shop-item:hover { border-color: inherit; transform: none; box-shadow: none; }
 }
 
 .shop-item.not-owned {
@@ -9341,6 +9361,9 @@ onUnmounted(() => {
   box-shadow: 0 6px 16px rgba(47,191,113,0.35);
 }
 .weekly-shop-container .item-actions .buy-btn.price-hover .btn-label { opacity: 1; transition: opacity 0.25s ease; }
+@media (max-width: 480px) {
+  .weekly-shop-container .item-actions .buy-btn.price-hover .btn-label { font-size: 13px; }
+}
 .weekly-shop-container .item-actions .buy-btn.price-hover:hover:not(:disabled) .btn-label { opacity: 0; }
 .weekly-shop-container .item-actions .buy-btn.price-hover .btn-price {
   position: absolute;
@@ -10930,7 +10953,9 @@ onUnmounted(() => {
     .preview-card.preview-avatar .profile-avatar-scaler .equipped-tomb-raider { left: 34px !important; }
     .preview-card.preview-item img.item-img[alt="Ange"] { position: absolute !important; top: 15% !important; width: 85% !important; left: 8% }
     .preview-card.preview-item .item-img-wrapper.large { width: 250px !important; height: 250px !important; }
-    .preview-card.preview-item .jojo-text-preview { left: 45px !important; width: 60% !important; }
+    .preview-card.preview-item .jojo-text-preview,
+  .weekly-item .jojo-text-preview,
+  .jojo-text-preview { top: 8px !important; left: 45px !important; width: 47% !important; }
     .weekly-section .shop-item.weekly-item.small-card .discord-item-shop .discord-img-shop { top: 15px !important; left: 30px !important; }
     .preview-card.preview-avatar .profile-avatar-scaler .equipped-angel-wings { top: -66px !important; left: -1px !important; }
     .weekly-section .shop-item.weekly-item.small-card .gentleman-item-shop .gentleman-img-shop { top: 20px !important; left: 42px !important; max-width: 50% !important; }
@@ -12439,8 +12464,8 @@ onUnmounted(() => {
   .faction-leaderboard-list .leaderboard-item {
     width: 270px !important;
     max-width: 270px !important;
-    height: 150px !important;
-    min-height: 150px !important;
+    height: 120px !important;
+    min-height: 120px !important;
     margin: 0 auto 10px auto !important;
     box-sizing: border-box !important;
     overflow: hidden !important;
