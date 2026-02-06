@@ -411,6 +411,166 @@ router.delete('/:id', verifyToken, requireRole(['admin']), async (req, res) => {
   }
 });
 
+router.put('/suggest/:id', verifyToken, async (req, res) => {
+  try {
+    const doc = await Item.findById(req.params.id);
+    if (!doc) return res.status(404).json({ success: false, message: 'Item introuvable' });
+
+    const requesterId = String((req.user && (req.user.id || req.user._id)) || '');
+    const requesterName = String((req.user && (req.user.username || req.user.name)) || '');
+    const meta = (doc && typeof doc.meta === 'object') ? doc.meta : {};
+    const creatorIds = Array.isArray(meta.creatorIds) ? meta.creatorIds.map(v => String(v)) : [];
+    const creatorNames = Array.isArray(meta.creatorUsernames) ? meta.creatorUsernames.map(v => String(v)) : [];
+    const isAdmin = String((req.user && req.user.role) || '') === 'admin';
+    const isOwner = (requesterName && String(doc.createdBy || '') === requesterName)
+      || (requesterId && String(doc.createdBy || '') === requesterId)
+      || (requesterId && creatorIds.includes(requesterId))
+      || (requesterName && creatorNames.includes(requesterName));
+
+    if (!isAdmin && !isOwner) return res.status(403).json({ success: false, message: 'Non autorisé' });
+
+    const update = req.body || {};
+
+    if (Array.isArray(update.assets)) {
+      const normalizedAssets = update.assets.filter(a => a && typeof a.src === 'string' && a.src.trim() !== '');
+      doc.assets = normalizedAssets.map(a => ({
+        src: a.src,
+        style: a.style || {},
+        collectionStyle: a.collectionStyle || null,
+        collectionStyleMobile: a.collectionStyleMobile || null,
+        leaderboardStyle: a.leaderboardStyle || null,
+        leaderboardStyleMobile: a.leaderboardStyleMobile || null,
+        avatarStyle: a.avatarStyle || null,
+        avatarStyleMobile: a.avatarStyleMobile || null,
+        navbarStyle: a.navbarStyle || null,
+        navbarStyleMobile: a.navbarStyleMobile || null,
+        popupStyleStyle: a.popupStyleStyle || null,
+        profilePopupStyle: a.profilePopupStyle || null,
+        meta: a.meta || {}
+      }));
+      doc.markModified('assets');
+    }
+
+    if (Array.isArray(update.variants)) {
+      doc.variants = update.variants.map(v => {
+        const vAssets = Array.isArray(v?.assets)
+          ? v.assets.filter(a => a && typeof a.src === 'string' && a.src.trim() !== '')
+          : [];
+        return {
+          name: (v && typeof v.name === 'string') ? v.name : '',
+          assets: vAssets.map(a => ({
+            src: a && a.src,
+            style: a && a.style || {},
+            collectionStyle: a && a.collectionStyle || null,
+            collectionStyleMobile: a && a.collectionStyleMobile || null,
+            leaderboardStyle: a && a.leaderboardStyle || null,
+            leaderboardStyleMobile: a && a.leaderboardStyleMobile || null,
+            avatarStyle: a && a.avatarStyle || null,
+            avatarStyleMobile: a && a.avatarStyleMobile || null,
+            navbarStyle: a && a.navbarStyle || null,
+            navbarStyleMobile: a && a.navbarStyleMobile || null,
+            popupStyleStyle: a && a.popupStyleStyle || null,
+            profilePopupStyle: a && a.profilePopupStyle || null,
+            meta: a && typeof a.meta === 'object' ? a.meta : {}
+          })),
+          backgrounds: {
+            collection: v?.backgrounds?.collection || null,
+            leaderboard: v?.backgrounds?.leaderboard || null,
+            avatar: v?.backgrounds?.avatar || null,
+            navbar: v?.backgrounds?.navbar || null,
+            'popup-style': v?.backgrounds?.['popup-style'] || null,
+            'profile-popup': v?.backgrounds?.['profile-popup'] || null
+          },
+          showText: !!(v && v.showText),
+          textOnly: !!(v && v.textOnly),
+          textContent: (v && typeof v.textContent === 'string') ? v.textContent.trim() : '',
+          removeNavbarBorder: !!(v && v.removeNavbarBorder),
+          removeLeaderboardBorder: !!(v && v.removeLeaderboardBorder),
+          removeProfilePopupBorder: !!(v && v.removeProfilePopupBorder)
+        };
+      });
+      doc.markModified('variants');
+    }
+
+    if (update.backgrounds && typeof update.backgrounds === 'object') { doc.backgrounds = update.backgrounds; doc.markModified('backgrounds'); }
+    if (typeof update.name === 'string') { const n = update.name.trim(); doc.name = n || 'Suggestion'; }
+    if (typeof update.price === 'number') doc.price = update.price;
+    if (typeof update.type === 'string') doc.type = update.type || 'generic';
+    if (typeof update.infoOnly === 'boolean') doc.infoOnly = update.infoOnly;
+    if (typeof update.infoDescription === 'string' || update.infoDescription === null) doc.infoDescription = update.infoDescription;
+
+    const incomingMeta = (update && typeof update.meta === 'object') ? update.meta : {};
+    doc.meta = { ...(doc.meta || {}), ...(incomingMeta || {}), isSuggested: true };
+    if (!doc.createdBy) doc.createdBy = (req.user && (req.user.username || req.user.name)) || null;
+
+    await doc.save();
+    const freshItem = await Item.findById(doc._id).lean();
+    res.json({ success: true, item: freshItem });
+  } catch (e) {
+    res.status(400).json({ success: false, message: 'Erreur mise à jour suggestion', error: String(e && e.message ? e.message : e) });
+  }
+});
+
+router.get('/suggest/resolve', verifyToken, async (req, res) => {
+  try {
+    const legacyId = (typeof req.query.legacyId !== 'undefined') ? Number(req.query.legacyId) : NaN;
+    const localItemId = String(req.query.localItemId || '').trim();
+
+    if (!Number.isFinite(legacyId) && !localItemId) {
+      return res.status(400).json({ success: false, message: 'Paramètres manquants' });
+    }
+
+    const or = [];
+    if (Number.isFinite(legacyId)) or.push({ legacyId });
+    if (localItemId) or.push({ 'meta.localItemId': localItemId });
+
+    const item = await Item.findOne({ $or: or }).lean();
+    if (!item) return res.status(404).json({ success: false, message: 'Item introuvable' });
+
+    const requesterId = String((req.user && (req.user.id || req.user._id)) || '');
+    const requesterName = String((req.user && (req.user.username || req.user.name)) || '');
+    const meta = (item && typeof item.meta === 'object') ? item.meta : {};
+    const creatorIds = Array.isArray(meta.creatorIds) ? meta.creatorIds.map(v => String(v)) : [];
+    const creatorNames = Array.isArray(meta.creatorUsernames) ? meta.creatorUsernames.map(v => String(v)) : [];
+    const isAdmin = String((req.user && req.user.role) || '') === 'admin';
+    const isOwner = (requesterName && String(item.createdBy || '') === requesterName)
+      || (requesterId && String(item.createdBy || '') === requesterId)
+      || (requesterId && creatorIds.includes(requesterId))
+      || (requesterName && creatorNames.includes(requesterName));
+
+    if (!isAdmin && !isOwner) return res.status(403).json({ success: false, message: 'Non autorisé' });
+
+    res.json({ success: true, item });
+  } catch (e) {
+    res.status(400).json({ success: false, message: 'Erreur résolution suggestion', error: String(e && e.message ? e.message : e) });
+  }
+});
+
+router.delete('/suggest/:id', verifyToken, async (req, res) => {
+  try {
+    const doc = await Item.findById(req.params.id);
+    if (!doc) return res.status(404).json({ success: false, message: 'Item introuvable' });
+
+    const requesterId = String((req.user && (req.user.id || req.user._id)) || '');
+    const requesterName = String((req.user && (req.user.username || req.user.name)) || '');
+    const meta = (doc && typeof doc.meta === 'object') ? doc.meta : {};
+    const creatorIds = Array.isArray(meta.creatorIds) ? meta.creatorIds.map(v => String(v)) : [];
+    const creatorNames = Array.isArray(meta.creatorUsernames) ? meta.creatorUsernames.map(v => String(v)) : [];
+    const isAdmin = String((req.user && req.user.role) || '') === 'admin';
+    const isOwner = (requesterName && String(doc.createdBy || '') === requesterName)
+      || (requesterId && String(doc.createdBy || '') === requesterId)
+      || (requesterId && creatorIds.includes(requesterId))
+      || (requesterName && creatorNames.includes(requesterName));
+
+    if (!isAdmin && !isOwner) return res.status(403).json({ success: false, message: 'Non autorisé' });
+
+    await doc.deleteOne();
+    res.json({ success: true });
+  } catch (e) {
+    res.status(400).json({ success: false, message: 'Erreur suppression suggestion', error: String(e && e.message ? e.message : e) });
+  }
+});
+
 // Suggestion d'un item (utilisateur)
 router.post('/suggest', verifyToken, async (req, res) => {
   try {

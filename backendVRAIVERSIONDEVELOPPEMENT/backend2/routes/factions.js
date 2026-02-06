@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const Faction = require('../models/Faction');
+const popupsRouter = require('./ephemeral-popups');
 const { verifyToken } = require('../middlewares/auth');
 const { verifyToken: _v, requireRole } = require('../middlewares/auth');
 
@@ -10,7 +11,7 @@ async function ensureFactions() {
   for (const name of ['Bagnat','Fermier']) {
     await Faction.updateOne(
       { name },
-      { $setOnInsert: { name, leaderboardCoinPrice: 1 } },
+      { $setOnInsert: { name, leaderboardCoinPrice: 1, winnerMessage: DEFAULT_WINNER_MESSAGE, loserMessage: DEFAULT_LOSER_MESSAGE } },
       { upsert: true }
     );
   }
@@ -286,6 +287,118 @@ router.post('/total-coins', verifyToken, requireRole(['admin']), async (req, res
 });
 
 // Supprime la route dupliquée /leaderboard qui était après l’export
+
+router.get('/messages', verifyToken, requireRole(['admin']), async (req, res) => {
+  try {
+    await ensureFactions();
+    const docs = await Faction.find({ name: { $in: ['Bagnat','Fermier'] } }).lean();
+    const ref = docs.find(d => d.name === 'Bagnat') || docs[0] || {};
+    const winnerMessage = String(ref.winnerMessage || DEFAULT_WINNER_MESSAGE);
+    const loserMessage = String(ref.loserMessage || DEFAULT_LOSER_MESSAGE);
+    res.json({ success: true, winnerMessage, loserMessage });
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Erreur chargement messages factions' });
+  }
+});
+
+router.post('/messages', verifyToken, requireRole(['admin']), async (req, res) => {
+  try {
+    const winnerMessage = String(req.body?.winnerMessage || '').trim() || DEFAULT_WINNER_MESSAGE;
+    const loserMessage = String(req.body?.loserMessage || '').trim() || DEFAULT_LOSER_MESSAGE;
+    await ensureFactions();
+    await Faction.updateMany(
+      { name: { $in: ['Bagnat','Fermier'] } },
+      { $set: { winnerMessage, loserMessage } }
+    );
+    res.json({ success: true, winnerMessage, loserMessage });
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Erreur sauvegarde messages factions' });
+  }
+});
+
+router.post('/monthly-rewards', verifyToken, async (req, res) => {
+  try {
+    await ensureFactions();
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth() + 1;
+    const monthKey = `${y}-${String(m).padStart(2,'0')}`;
+    if (now.getDate() !== 1) {
+      return res.json({ success: false, message: 'Récompenses uniquement le 1er jour du mois' });
+    }
+
+    const factions = await Faction.find({ name: { $in: ['Bagnat','Fermier'] } }).lean();
+    const already = factions.some(f => String(f.lastMonthlyRewardsMonth || '') === monthKey);
+    if (already) {
+      return res.json({ success: true, message: 'Récompenses déjà attribuées', month: monthKey });
+    }
+
+    const fB = factions.find(f => f.name === 'Bagnat') || {};
+    const fF = factions.find(f => f.name === 'Fermier') || {};
+    const totalB = Number(fB.totalCoins || 0);
+    const totalF = Number(fF.totalCoins || 0);
+
+    const baseFilter = {
+      role: { $ne: 'admin' },
+      $or: [
+        { role: { $ne: 'prof' } },
+        { role: 'prof', leaderboardEnabled: true }
+      ]
+    };
+
+    if (totalB === totalF) {
+      const tieHtml = `<div style="font-size:1.1rem;line-height:1.6;">⚖️ Égalité ! Les deux factions sont ex aequo.</div>`;
+      const [bUsers, fUsers] = await Promise.all([
+        User.find({ ...baseFilter, faction: 'Bagnat' }).select('_id').lean(),
+        User.find({ ...baseFilter, faction: 'Fermier' }).select('_id').lean()
+      ]);
+      const bIds = bUsers.map(u => u._id);
+      const fIds = fUsers.map(u => u._id);
+      if (popupsRouter && typeof popupsRouter.sendPopupToUsers === 'function') {
+        popupsRouter.sendPopupToUsers(bIds, tieHtml);
+        popupsRouter.sendPopupToUsers(fIds, tieHtml);
+      }
+      await Faction.updateMany({ name: { $in: ['Bagnat','Fermier'] } }, { $set: { lastMonthlyRewardsMonth: monthKey } });
+      return res.json({ success: true, tie: true, month: monthKey });
+    }
+
+    const winning = totalB > totalF ? 'Bagnat' : 'Fermier';
+    const losing = winning === 'Bagnat' ? 'Fermier' : 'Bagnat';
+    const winnerMessage = String((winning === 'Bagnat' ? fB : fF).winnerMessage || DEFAULT_WINNER_MESSAGE);
+    const loserMessage = String((losing === 'Bagnat' ? fB : fF).loserMessage || DEFAULT_LOSER_MESSAGE);
+    const WINNER_REWARD = 200;
+    const LOSER_REWARD = 80;
+
+    const [winUsers, loseUsers] = await Promise.all([
+      User.find({ ...baseFilter, faction: winning }).select('_id').lean(),
+      User.find({ ...baseFilter, faction: losing }).select('_id').lean()
+    ]);
+    const winIds = winUsers.map(u => u._id);
+    const loseIds = loseUsers.map(u => u._id);
+
+    if (winIds.length) {
+      await User.updateMany(
+        { _id: { $in: winIds } },
+        { $inc: { coins: WINNER_REWARD }, $addToSet: { achievementsCompleted: 'faction-join' } }
+      );
+    }
+    if (loseIds.length) {
+      await User.updateMany({ _id: { $in: loseIds } }, { $inc: { coins: LOSER_REWARD } });
+    }
+
+    const winHtml = `<div style="font-size:1.1rem;line-height:1.6;">${winnerMessage}<br/>Vous recevez +${WINNER_REWARD} Planify Coins dans votre wallet.</div>`;
+    const loseHtml = `<div style="font-size:1.1rem;line-height:1.6;">${loserMessage}<br/>Vous recevez +${LOSER_REWARD} Planify Coins dans votre wallet.</div>`;
+    if (popupsRouter && typeof popupsRouter.sendPopupToUsers === 'function') {
+      popupsRouter.sendPopupToUsers(winIds, winHtml);
+      popupsRouter.sendPopupToUsers(loseIds, loseHtml);
+    }
+
+    await Faction.updateMany({ name: { $in: ['Bagnat','Fermier'] } }, { $set: { lastMonthlyRewardsMonth: monthKey } });
+    return res.json({ success: true, winner: winning, month: monthKey, winners: winIds.length, losers: loseIds.length });
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Erreur récompenses mensuelles' });
+  }
+});
 
 // POST /api/factions/monthly-balance — déclencheur léger côté serveur
 // Idempotent côté client grâce à localStorage; côté serveur on s'assure juste que les factions existent

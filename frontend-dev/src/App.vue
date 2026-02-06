@@ -212,9 +212,22 @@ async function closeItemReceivedPopup() {
   currentAdminMessage.value = '';
 }
 
+async function runMonthlyFactionRewards() {
+  try {
+    if (!getValidAuthToken()) return
+    await secureApiCall('/factions/monthly-rewards', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+      cache: 'no-store'
+    })
+  } catch {}
+}
+
 onMounted(() => {
   // Rehydrate et sync cross-onglets
   try { authStore.rehydrateFromStorage(); authStore.initCrossTabSync(); authStore.ensureValidSession(); } catch {}
+  setTimeout(async () => { try { await runMonthlyFactionRewards() } catch {} }, 800);
   window.addEventListener('open-item-received', handleOpenItemReceived);
   window.addEventListener('quest-completed', handleQuestCompleted);
   window.addEventListener('task-completed', handleTaskCompleted);

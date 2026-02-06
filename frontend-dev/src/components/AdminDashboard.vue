@@ -1675,7 +1675,7 @@ async function saveFactionTotal(name) {
 }
 
 // Charger au montage
-onMounted(() => { try { loadFactionTotals() } catch {} })
+onMounted(() => { try { loadFactionTotals() } catch {} try { loadFactionMessages() } catch {} })
 
 // Rafraîchir au retour de focus/visibilité
 function refreshFactionTotalsOnFocus() {
@@ -1697,6 +1697,40 @@ onUnmounted(() => {
 const winnerMessage = ref('Votre faction a gagné 🎉')
 const loserMessage = ref('Votre faction fera mieux la prochaine fois 💪')
 const notifyFactionLoading = ref(false)
+const saveFactionMessagesLoading = ref(false)
+
+async function loadFactionMessages() {
+  try {
+    const res = await secureApiCall('/factions/messages', { method: 'GET', cache: 'no-store' })
+    if (res && res.success) {
+      if (typeof res.winnerMessage === 'string') winnerMessage.value = res.winnerMessage
+      if (typeof res.loserMessage === 'string') loserMessage.value = res.loserMessage
+    }
+  } catch {}
+}
+
+async function saveFactionMessages() {
+  saveFactionMessagesLoading.value = true
+  try {
+    const res = await secureApiCall('/factions/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ winnerMessage: winnerMessage.value, loserMessage: loserMessage.value }),
+      cache: 'no-store'
+    })
+    if (res && res.success) {
+      if (typeof res.winnerMessage === 'string') winnerMessage.value = res.winnerMessage
+      if (typeof res.loserMessage === 'string') loserMessage.value = res.loserMessage
+      alert('Messages sauvegardés')
+    } else {
+      alert(res?.message || 'Erreur')
+    }
+  } catch (e) {
+    alert(e?.message || 'Erreur')
+  } finally {
+    saveFactionMessagesLoading.value = false
+  }
+}
 
 async function sendFactionPopupToMembers(factionName, html) {
   const members = Array.isArray(users.value)

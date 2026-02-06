@@ -3776,6 +3776,7 @@ const hoverFavIndex = ref(null)
 // Suggestion d'item (collection)
 const showSuggestionEditor = ref(false)
 const currentEditingLocalId = ref(null)
+const currentEditingServerId = ref(null)
 // Slider d’aperçus pour la fenêtre de suggestion
 const previewWindowIndex = ref(0)
 const previewWindowSize = 3
@@ -3880,7 +3881,7 @@ const hoverCenterPopup = ref(false)
 const hoverCenterNavbar = ref(false)
 function togglePlacement(target){ try { const p = suggestPlacement.value; p[target] = (p[target] === 'above') ? 'inside' : 'above'; const v = suggestVariants.value[activeVariantIndex.value]; if (v && v.flags) { if (target === 'leaderboard') v.flags.leaderboardPlacement = String(p[target]); else v.flags.profilePopupPlacement = String(p[target]); } } catch {} }
 function getPlacementImg(target, hover){ try { const isAbove = (suggestPlacement.value && suggestPlacement.value[target] === 'above'); if (isAbove) return aboveIcon; return hover ? aboveIcon : insideIcon } catch { return insideIcon } }
-function openSuggestEditor() { currentEditingLocalId.value = null; showSuggestionEditor.value = true; try { syncWeeklyHeight() } catch {} ; try { showPurchasePreview.value = true } catch { showPurchasePreview = true } ; try { suggestAssetSrc.value = ''; suggestUrl.value = ''; previewWindowIndex.value = 0; suggestDevice.value = 'desktop'; if (Array.isArray(suggestVariants.value)) { suggestVariants.value.forEach(v => { if (v) v.assetSrc = '' }) } resetSuggestUsers() } catch {} }
+function openSuggestEditor() { currentEditingLocalId.value = null; currentEditingServerId.value = null; showSuggestionEditor.value = true; try { syncWeeklyHeight() } catch {} ; try { showPurchasePreview.value = true } catch { showPurchasePreview = true } ; try { suggestAssetSrc.value = ''; suggestUrl.value = ''; previewWindowIndex.value = 0; suggestDevice.value = 'desktop'; if (Array.isArray(suggestVariants.value)) { suggestVariants.value.forEach(v => { if (v) v.assetSrc = '' }) } resetSuggestUsers() } catch {} }
 function closeSuggestEditor() { showSuggestionEditor.value = false }
 function isUserItemCreator(item) {
   try {
@@ -3929,6 +3930,7 @@ function editUserItem(item) {
     if (!isUserItemCreator(item)) return
     openSuggestEditor()
     try { if (item && item.meta && item.meta.localItemId) currentEditingLocalId.value = item.meta.localItemId } catch {}
+    try { if (item && item.meta && item.meta.serverItemId) currentEditingServerId.value = item.meta.serverItemId; else if (item && item._id) currentEditingServerId.value = item._id } catch {}
     try { suggestPrice.value = getItemPrice(item) } catch {}
     const variants = []
     if (Array.isArray(item.variants) && item.variants.length > 0) {
@@ -3980,7 +3982,8 @@ function editUserItem(item) {
       const v = suggestVariants.value[activeVariantIndex.value]
       const lp = String(v && v.flags && v.flags.leaderboardPlacement || 'inside')
       const ap = String(v && v.flags && v.flags.profilePopupPlacement || 'inside')
-      suggestPlacement.value = { leaderboard: lp, avatar: ap }
+      const np = String(v && v.flags && v.flags.navbarPlacement || 'inside')
+      suggestPlacement.value = { leaderboard: lp, avatar: ap, navbar: np }
     } catch {}
     try {
       removeLeaderboardBorder.value = !!((item.meta && item.meta.removeLeaderboardBorder) || (Array.isArray(item.variants) && !!item.variants[activeVariantIndex.value]?.removeLeaderboardBorder))
@@ -4100,24 +4103,29 @@ function saveSuggestion() {
       payload.meta.creatorUsernames = [...new Set([...payload.meta.creatorUsernames, ...creatorNames])]
     } catch {}
     const preLocalId = currentEditingLocalId.value ? String(currentEditingLocalId.value) : ('local-' + Date.now() + '-' + Math.floor(Math.random()*1000))
+    const editingServerId = currentEditingServerId.value ? String(currentEditingServerId.value) : null
     if (!payload.meta || typeof payload.meta !== 'object') payload.meta = {}
     if (!payload.meta.localItemId) payload.meta.localItemId = preLocalId
+    if (editingServerId && !payload.meta.serverItemId) payload.meta.serverItemId = editingServerId
 
     ;(async () => {
       if (isAdminOnly && isAdminOnly.value) {
         try {
-          const res = await secureApiCall('/items', { method: 'POST', body: JSON.stringify(payload) })
+          const endpoint = editingServerId ? (`/items/${editingServerId}`) : '/items'
+          const method = editingServerId ? 'PUT' : 'POST'
+          const res = await secureApiCall(endpoint, { method, body: JSON.stringify(payload) })
           if (res && res.success) {
-            alert('Item créé')
+            alert(editingServerId ? 'Item mis à jour' : 'Item créé')
             try { window.dispatchEvent(new CustomEvent('items-changed')) } catch {}
             try { await loadDynamicItems() } catch {}
             return
           }
         } catch {}
       } else {
-        // Pour les non-admins, envoyer une suggestion au serveur
         try {
-          const res = await secureApiCall('/items/suggest', { method: 'POST', body: JSON.stringify(payload) })
+          const endpoint = editingServerId ? (`/items/suggest/${editingServerId}`) : '/items/suggest'
+          const method = editingServerId ? 'PUT' : 'POST'
+          const res = await secureApiCall(endpoint, { method, body: JSON.stringify(payload) })
           if (res && res.success) {
             try {
               if (res.item) {
@@ -4130,7 +4138,7 @@ function saveSuggestion() {
               }
             } catch {}
             try { await loadDynamicItems() } catch {}
-            alert('Item enregistré et visible dans la Collection')
+            alert(editingServerId ? 'Item mis à jour' : 'Item enregistré et visible dans la Collection')
           } else {
             console.error('Erreur suggestion:', res)
           }
