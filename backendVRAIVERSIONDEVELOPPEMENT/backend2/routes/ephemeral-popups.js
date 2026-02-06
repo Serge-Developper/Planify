@@ -103,6 +103,28 @@ router.post('/ack/:id', verifyToken, (req, res) => {
   }
 });
 
+function sendPopupToUser(userId, html) {
+  const targetId = String(userId || '').trim()
+  const safeHtml = String(html || '').trim()
+  if (!targetId || !safeHtml) return null
+  const popup = { id: String(nextId++), html: safeHtml, createdAt: Date.now() }
+  popupByUserId.set(targetId, popup)
+  return popup
+}
+
+function sendPopupToUsers(userIds, html) {
+  const safeHtml = String(html || '').trim()
+  if (!safeHtml) return 0
+  const ids = Array.isArray(userIds) ? userIds.map(id => String(id || '').trim()).filter(Boolean) : []
+  let count = 0
+  for (const id of ids) {
+    const popup = sendPopupToUser(id, safeHtml)
+    if (popup) count += 1
+  }
+  return count
+}
+
+router.sendPopupToUser = sendPopupToUser
+router.sendPopupToUsers = sendPopupToUsers
+
 module.exports = router;
-
-

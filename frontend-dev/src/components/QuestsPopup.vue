@@ -470,8 +470,6 @@ function updateAchievementsProgress() {
     setProgress('tasks-details-10', pct(infoCnt, 10))
     setProgress('tasks-details-25', pct(infoCnt, 25))
 
-    const fj = achievements.value.find(x => x.id === 'faction-join')
-    if (fj && s.faction && !completed.has('faction-join')) fj.progress = 100
   } catch {}
 }
 function showAchToast(id, title, desc) {
@@ -524,7 +522,7 @@ const achievements = ref([
   { id: 'reroll-used', title: 'Deuxième chance', progress: 0, description: 'Utiliser un re-roll' },
 
   // Faction
-  { id: 'faction-join', title: 'Nouveau membre', progress: 0, description: 'Rejoindre une faction' },
+  { id: 'faction-join', title: 'Guerre gagnée', progress: 0, description: 'Gagner une guerre de faction' },
 
   // Devoirs proposés
   { id: 'homework-propose-5', title: 'Petit professeur', progress: 0, description: 'Proposer 5 devoirs' },

@@ -112,7 +112,6 @@ async function join(name: 'Bagnat'|'Fermier') {
     busy.value = true
     await secureApiCall('/factions/join', { method: 'POST', body: JSON.stringify({ faction: name }) })
     myFaction.value = name
-    try { window.dispatchEvent(new CustomEvent('achievement-unlocked', { detail: { id: 'faction-join', title: 'Nouveau membre', description: 'Rejoindre une faction' } })) } catch {}
     await load()
   } catch (e:any) {
     alert(e?.message || 'Erreur')

@@ -187,6 +187,14 @@ router.post('/', requireAdminOrProf, async (req, res) => {
         await user.save()
         return res.json({ success: true, message: 'Inventaire vidé et bordure réinitialisée' })
       }
+      case 'award-achievement': {
+        const achievementId = String(data.achievementId || data.id || '').trim()
+        if (!achievementId) return res.status(400).json({ success: false, error: 'achievementId requis' })
+        user.achievementsCompleted = Array.isArray(user.achievementsCompleted) ? user.achievementsCompleted : []
+        if (!user.achievementsCompleted.includes(achievementId)) user.achievementsCompleted.push(achievementId)
+        await user.save()
+        return res.json({ success: true, message: 'Succès attribué', achievementsCompleted: user.achievementsCompleted })
+      }
       default:
         return res.status(400).json({ success: false, error: 'Action non supportée' })
     }

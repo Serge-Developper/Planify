@@ -587,6 +587,9 @@
               <button class="btn-mini" @click="notifyFactionResult" :disabled="notifyFactionLoading">
                 {{ notifyFactionLoading ? 'Envoi…' : 'Envoyer les notifications' }}
               </button>
+              <button class="btn-mini" @click="saveFactionMessages" :disabled="saveFactionMessagesLoading">
+                {{ saveFactionMessagesLoading ? 'Sauvegarde…' : 'Sauvegarder les messages' }}
+              </button>
             </div>
             <div class="row" style="display:flex; gap:12px; align-items:flex-start; flex-wrap:wrap;">
               <div style="flex:1; min-width:280px;">
@@ -1714,6 +1717,25 @@ async function sendFactionPopupToMembers(factionName, html) {
   }
 }
 
+async function awardAchievementToFactionMembers(factionName, achievementId) {
+  const members = Array.isArray(users.value)
+    ? users.value.filter(u => String(u.faction || '') === factionName)
+    : []
+  for (const u of members) {
+    const userId = u && u._id
+    if (!userId) continue
+    try {
+      await secureApiCall('/users-admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'award-achievement', userId, achievementId })
+      })
+    } catch (e) {
+      console.warn('Succès faction', factionName, 'utilisateur', userId, 'échouée:', e)
+    }
+  }
+}
+
 async function notifyFactionResult() {
   notifyFactionLoading.value = true
   try {
@@ -1733,6 +1755,7 @@ async function notifyFactionResult() {
       const loseHtml = `<div style="font-size:1.1rem;line-height:1.6;">${loserMessage.value || 'Votre faction fera mieux la prochaine fois 💪'}</div>`
       await sendFactionPopupToMembers(winning, winHtml)
       await sendFactionPopupToMembers(losing, loseHtml)
+      await awardAchievementToFactionMembers(winning, 'faction-join')
       alert('Notifications envoyées: gagnants et perdants')
     }
   } catch (e) {

@@ -66,7 +66,7 @@ const achievementsCatalog = [
   { id: 'repeat-complete-50', title: 'Infatigable', description: 'Compléter 50 quêtes répétables' },
   { id: 'repeat-complete-100', title: 'Inarrêtable', description: 'Compléter 100 quêtes répétables' },
   { id: 'reroll-used', title: 'Deuxième chance', description: 'Utiliser un re-roll' },
-  { id: 'faction-join', title: 'Nouveau membre', description: 'Rejoindre une faction' },
+  { id: 'faction-join', title: 'Guerre gagnée', description: 'Gagner une guerre de faction' },
   { id: 'homework-propose-5', title: 'Petit professeur', description: 'Proposer 5 devoirs' },
   { id: 'homework-propose-20', title: 'Prof en herbe', description: 'Proposer 20 devoirs' },
   { id: 'homework-propose-50', title: 'Maître des devoirs', description: 'Proposer 50 devoirs' },

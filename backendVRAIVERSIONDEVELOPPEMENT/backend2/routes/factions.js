@@ -16,6 +16,9 @@ async function ensureFactions() {
   }
 }
 
+const DEFAULT_WINNER_MESSAGE = 'Votre faction a gagné 🎉'
+const DEFAULT_LOSER_MESSAGE = 'Votre faction fera mieux la prochaine fois 💪'
+
 // POST /api/factions/join { faction: 'Bagnat'|'Fermier' }
 router.post('/join', verifyToken, async (req, res) => {
   try {
@@ -44,8 +47,6 @@ router.post('/join', verifyToken, async (req, res) => {
     if (!prev) {
       user.faction = desired;
       user.factionCoins = 0;
-      user.achievementsCompleted = Array.isArray(user.achievementsCompleted) ? user.achievementsCompleted : [];
-      if (!user.achievementsCompleted.includes('faction-join')) user.achievementsCompleted.push('faction-join');
       await user.save();
       await Faction.updateOne({ name: desired }, { $inc: { membersCount: 1 } }, { upsert: true });
       res.json({ success: true, faction: user.faction, coins: Number(user.coins || 0) });
