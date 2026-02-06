@@ -1260,7 +1260,7 @@
 
 
     <ShopPopup :show="showShopPopup" @close="showShopPopup = false" @equip-item="handleEquipItem" />
-    <QuestsPopup v-if="showQuestsPopup" :show="showQuestsPopup" @close="showQuestsPopup = false" />
+    <QuestsPopup :show="showQuestsPopup" @close="showQuestsPopup = false" />
 
   </header>
 </template>
@@ -5054,14 +5054,14 @@ body, html {
     display: inline-flex;
     align-items: center;
     gap: 15px;
-    flex-direction: row;
     justify-content: center;
+    flex-direction: column;
   }
   .profile-role-with-group .profile-role { order: 1; }
   .profile-role-with-group .profile-outlets-row { order: 2; display: inline-flex; gap: 25px; justify-content: center; }
   .profile-popup .profile-avatar-stage { width: 100% !important; max-width: 320px !important; margin-left: auto; margin-right: auto; }
   .profile-divider { display: none; }
-  .profile-section-title { font-size: 18px; }
+  .profile-section-title { font-size: 18px !important; }
 }
 
 [data-theme="light"] .choice-title {

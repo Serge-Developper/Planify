@@ -94,6 +94,7 @@ const userSchema = new mongoose.Schema({
     lastResetYmd: { type: String, default: null },
     bonusAwardedYmd: { type: String, default: null },
     rerollUsed: { type: Boolean, default: false },
+    rerollIndex: { type: Number, default: -1 },
     targetLeaderboardName: { type: String, default: '' }
   },
 

@@ -20,10 +20,32 @@ function addDaysYmd(ymd, days) {
     return `${yy}-${mm}-${dd}`
   } catch { return ymd }
 }
+function isWeekendParis(date = new Date()) {
+  try {
+    const d = new Date(new Date(date).toLocaleString('en-US', { timeZone: 'Europe/Paris' }))
+    const day = d.getDay()
+    return day === 0 || day === 6
+  } catch { return false }
+}
+function canSpinToday(user) {
+  try {
+    if (!user || !user.lastSpinDate) return true
+    return getParisYMD(user.lastSpinDate) !== getParisYMD()
+  } catch { return true }
+}
+function poolForUser(user) {
+  const weekend = isWeekendParis()
+  const canSpin = canSpinToday(user)
+  return POOL.filter(p => {
+    if (p.id === 'wheel-weekend') return weekend && canSpin
+    if (p.id === 'wheel-1') return canSpin
+    return true
+  })
+}
 
 const POOL = [
   { id: 'wheel-1', title: 'Tourner la roue de la fortune 1 fois', reward: 10, actions: 1, durationDays: 1 },
-  { id: 'wheel-2', title: 'Tourner la roue de la fortune 2 fois', reward: 20, actions: 2, durationDays: 1 },
+  { id: 'wheel-weekend', title: 'Tourner la roue de la fortune durant le week-end', reward: 10, actions: 1, durationDays: 1 },
   { id: 'devoirs', title: 'Consulter les devoirs', reward: 10, actions: 1, durationDays: 1 },
   { id: 'task-info-1', title: 'Cliquer sur “Plus d’infos” sur une tâche', reward: 10, actions: 1, durationDays: 1 },
   { id: 'tasks-archives', title: 'Consulter les archives des tâches', reward: 10, actions: 1, durationDays: 1 },
@@ -34,9 +56,14 @@ const POOL = [
   { id: 'connect', title: 'Se connecter à Planify', reward: 10, actions: 1, durationDays: 1 },
 ]
 
-function pickReplacement(excludeIds = []) {
+function pickReplacement(excludeIds = [], user) {
   const excluded = new Set((excludeIds||[]).map(String))
-  const candidates = POOL.filter(p => !excluded.has(String(p.id)))
+  const pool = poolForUser(user)
+  let candidates = pool.filter(p => !excluded.has(String(p.id)))
+  if (!candidates.length) {
+    candidates = POOL.filter(p => !excluded.has(String(p.id)))
+  }
+  if (!candidates.length) candidates = POOL.slice()
   const idx = Math.floor(Math.random() * candidates.length)
   return { ...candidates[idx] }
 }
@@ -45,14 +72,25 @@ async function ensureDailyQuestsForUser(user) {
   const today = getParisYMD()
   const meta = user.dailyQuestsMeta || {}
   const needsReset = meta.lastResetYmd !== today
-  let invalidCount = !Array.isArray(user.dailyQuests) || user.dailyQuests.length !== 3
+  const invalidCount = !Array.isArray(user.dailyQuests) || user.dailyQuests.length !== 3
   if (needsReset || invalidCount) {
     const ids = []
-    const q1 = pickReplacement(ids); ids.push(q1.id)
-    const q2 = pickReplacement(ids); ids.push(q2.id)
-    const q3 = pickReplacement(ids);
-    user.dailyQuests = [q1,q2,q3].map(q => ({ ...q, done: false, createdYmd: today, expiresYmd: addDaysYmd(today, Number(q.durationDays||1)) }))
-    user.dailyQuestsMeta = { lastResetYmd: today, bonusAwardedYmd: null, rerollUsed: false, targetLeaderboardName: user.username || '' }
+    const q1 = pickReplacement(ids, user); ids.push(q1.id)
+    const q2 = pickReplacement(ids, user); ids.push(q2.id)
+    const q3 = pickReplacement(ids, user)
+    user.dailyQuests = [q1, q2, q3].map(q => ({ ...q, done: false, createdYmd: today, expiresYmd: addDaysYmd(today, Number(q.durationDays||1)) }))
+    user.dailyQuestsMeta = { lastResetYmd: today, bonusAwardedYmd: null, rerollUsed: false, rerollIndex: -1, targetLeaderboardName: '' }
+    const hasLeaderboardQuest = user.dailyQuests.some(q => q && q.id === 'leaderboard-profile')
+    if (hasLeaderboardQuest) {
+      try {
+        const candidates = await User.find({ leaderboardEnabled: true, _id: { $ne: user._id } }).select('username name').limit(500)
+        if (Array.isArray(candidates) && candidates.length > 0) {
+          const pick = candidates[Math.floor(Math.random() * candidates.length)]
+          const name = (pick && (pick.username || pick.name)) || ''
+          user.dailyQuestsMeta.targetLeaderboardName = name
+        }
+      } catch {}
+    }
     await user.save()
   }
 }
@@ -140,13 +178,33 @@ router.get('/daily', verifyToken, async (req, res) => {
     if (!user) return res.status(404).json({ success: false, message: 'Utilisateur non trouvé' })
     await ensureDailyQuestsForUser(user)
     let list = Array.isArray(user.dailyQuests) ? user.dailyQuests : []
+    const wheel2Idx = list.findIndex(q => q && q.id === 'wheel-2')
+    if (wheel2Idx !== -1) {
+      const currentIds = list.map((q,i)=> i===wheel2Idx ? null : q && q.id).filter(Boolean)
+      const replacement = pickReplacement(currentIds)
+      user.dailyQuests[wheel2Idx] = { ...replacement, done: false, createdYmd: getParisYMD(), expiresYmd: addDaysYmd(getParisYMD(), Number(replacement.durationDays||1)) }
+      await user.save()
+      list = user.dailyQuests
+    }
     const idx = list.findIndex(q => q && q.id === 'task-info-3')
     if (idx !== -1) {
       const currentIds = list.map((q,i)=> i===idx ? null : q.id).filter(Boolean)
-      const replacement = pickReplacement(currentIds)
+      const replacement = pickReplacement(currentIds, user)
       user.dailyQuests[idx] = { ...replacement, done: false, createdYmd: getParisYMD(), expiresYmd: addDaysYmd(getParisYMD(), Number(replacement.durationDays||1)) }
       await user.save()
       list = user.dailyQuests
+    }
+    const meta = user.dailyQuestsMeta || {}
+    if (list.some(q => q && q.id === 'leaderboard-profile') && !meta.targetLeaderboardName) {
+      try {
+        const candidates = await User.find({ leaderboardEnabled: true, _id: { $ne: user._id } }).select('username name').limit(500)
+        if (Array.isArray(candidates) && candidates.length > 0) {
+          const pick = candidates[Math.floor(Math.random() * candidates.length)]
+          meta.targetLeaderboardName = (pick && (pick.username || pick.name)) || ''
+          user.dailyQuestsMeta = meta
+          await user.save()
+        }
+      } catch {}
     }
     return res.json({ dailyQuests: list, meta: user.dailyQuestsMeta || {} })
   } catch (e) {
@@ -223,15 +281,27 @@ router.post('/reroll', verifyToken, async (req, res) => {
     if (!user) return res.status(404).json({ success: false, message: 'Utilisateur non trouvé' })
     await ensureDailyQuestsForUser(user)
     const meta = user.dailyQuestsMeta || {}
+    if (meta.rerollUsed) return res.status(429).json({ success: false, message: 'Re-roll déjà utilisé aujourd’hui', used: true })
     const i = Math.max(0, Math.min(2, Number(index)))
     const list = Array.isArray(user.dailyQuests) ? user.dailyQuests : []
     const target = list[i]
     if (target && target.done) return res.status(400).json({ success: false, message: 'Quête complétée — re-roll impossible' })
-    const currentIds = list.map((q, idx) => idx === i ? null : q.id).filter(Boolean)
-    const replacement = pickReplacement(currentIds)
+    const excludeIds = list.map(q => q && q.id).filter(Boolean)
+    const replacement = pickReplacement(excludeIds, user)
     user.dailyQuests[i] = { ...replacement, done: false, createdYmd: getParisYMD(), expiresYmd: addDaysYmd(getParisYMD(), Number(replacement.durationDays||1)) }
     user.dailyQuestsMeta.rerollUsed = true
+    user.dailyQuestsMeta.rerollIndex = i
     awardAchievement(user, 'reroll-used')
+    try {
+      const hasLeaderboardQuest = user.dailyQuests.some(q => q && q.id === 'leaderboard-profile')
+      if (hasLeaderboardQuest && !user.dailyQuestsMeta.targetLeaderboardName) {
+        const candidates = await User.find({ leaderboardEnabled: true, _id: { $ne: user._id } }).select('username name').limit(500)
+        if (Array.isArray(candidates) && candidates.length > 0) {
+          const pick = candidates[Math.floor(Math.random() * candidates.length)]
+          user.dailyQuestsMeta.targetLeaderboardName = (pick && (pick.username || pick.name)) || ''
+        }
+      }
+    } catch {}
     await user.save()
     return res.json({ success: true, dailyQuests: user.dailyQuests, meta: user.dailyQuestsMeta })
   } catch (e) {

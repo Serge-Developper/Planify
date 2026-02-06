@@ -1,5 +1,5 @@
 <template>
-  <div v-if="show" class="quests-overlay" @click.self="handleClose">
+  <div v-show="show" class="quests-overlay" @click.self="handleClose">
     <div class="quests-modal">
       <div class="quests-header">
         <div class="title-center">
@@ -38,7 +38,7 @@
             </div>
           </div>
 
-          <div class="daily-list">
+          <div class="daily-list" :class="{ 'reroll-used': rerollUsed }">
             <div v-for="(q, i) in dailyQuests" :key="q.id" class="quest-card" :class="{ completed: q.done, rerolled: rerollUsed && rerollTargetIdx === i, leaderboard: q.id === 'leaderboard-profile' }">
               <div class="quest-top">
                 <div class="quest-name">{{ q.title }}</div>
@@ -55,7 +55,7 @@
 
               <div class="progress-track"><div class="progress-fill green" :class="{ zero: displayQuestPercs[i] <= 0 }" :style="{ width: displayQuestPercs[i] + '%' }"></div></div>
               <div class="inline-reroll">
-                <button class="secondary-btn reroll-btn" @click.stop="openRerollConfirm(i)" :disabled="q.done" :class="{ used: rerollUsed && rerollTargetIdx === i }">
+                <button class="secondary-btn reroll-btn" @click.stop="openRerollConfirm(i)" :disabled="q.done || (rerollUsed && rerollTargetIdx === i)" :class="{ used: rerollUsed && rerollTargetIdx === i }">
                   <span class="dice-icon" aria-hidden="true">🎲</span>
                   <span v-if="rerollUsed && rerollTargetIdx === i">Re-roll utilisé</span>
                   <span v-else>Re-roll</span>
@@ -213,7 +213,7 @@ const props = defineProps({ show: { type: Boolean, default: false } })
 const emit = defineEmits(['close'])
 const coinsStore = useCoinsStore()
 const hoverCloseQuests = ref(false)
-watch(() => props.show, (val) => { if (val) { hoverCloseQuests.value = false; (async () => { try { await loadAchievementsStatus() } catch {} })() } })
+watch(() => props.show, (val) => { if (val) { hoverCloseQuests.value = false; (async () => { try { await loadDailyFromBackend(); await loadAchievementsStatus(); loadWheelSpinCount(); prevDone.value = dailyQuests.value.map(q => !!q.done) } catch {} })() } })
 function handleClose() { hoverCloseQuests.value = false; emit('close') }
 const rerollUsed = ref(false)
 const showConfirm = ref(false)
@@ -311,8 +311,13 @@ async function loadDailyFromBackend() {
     const qs = Array.isArray(res?.dailyQuests) ? res.dailyQuests : (Array.isArray(res) ? res : [])
     const meta = res?.meta || {}
     rerollUsed.value = !!meta.rerollUsed
-    if (meta && meta.targetLeaderboardName) { updateLeaderboardQuestTitle(meta.targetLeaderboardName); saveLeaderboardTargetName(meta.targetLeaderboardName) }
+    rerollTargetIdx.value = Number.isInteger(meta.rerollIndex) ? meta.rerollIndex : null
     dailyQuests.value = qs.map(q => ({ ...q }))
+    if (meta && meta.targetLeaderboardName) {
+      leaderboardTargetName.value = String(meta.targetLeaderboardName || '')
+      updateLeaderboardQuestTitle(meta.targetLeaderboardName)
+      saveLeaderboardTargetName(meta.targetLeaderboardName)
+    }
     displayQuestPercs.value = dailyQuests.value.map(questProgress)
     displayDailyPerc.value = dailyProgressPerc.value
     ensureWheelQuestsCompletionFromLocalCount()
@@ -322,7 +327,7 @@ const showAdmin = ref(false)
 const adminSelectedIds = ref(dailyQuests.value.map(q => q.id))
 const allDailyOptions = [
   { id: 'wheel-1', title: 'Tourner la roue de la fortune 1 fois', reward: 10, actions: 1, done: false },
-  { id: 'wheel-2', title: 'Tourner la roue de la fortune 2 fois', reward: 20, actions: 2, done: false },
+  { id: 'wheel-weekend', title: 'Tourner la roue de la fortune durant le week-end', reward: 10, actions: 1, done: false },
   { id: 'devoirs', title: 'Consulter les devoirs', reward: 10, actions: 1, done: false },
   { id: 'task-info-1', title: 'Cliquer sur “Plus d’infos” sur une tâche', reward: 10, actions: 1, done: false },
 
@@ -632,12 +637,38 @@ function reroll(idx) {
       const qs = Array.isArray(res?.dailyQuests) ? res.dailyQuests : []
       const meta = res?.meta || {}
       dailyQuests.value = qs.map(q => ({ ...q }))
+      prevDone.value = dailyQuests.value.map(q => !!q.done)
       rerollUsed.value = !!meta.rerollUsed
+      rerollTargetIdx.value = Number.isInteger(meta.rerollIndex) ? meta.rerollIndex : idx
+      try { handleConnect() } catch {}
+      if (meta && meta.targetLeaderboardName) {
+        leaderboardTargetName.value = String(meta.targetLeaderboardName || '')
+        updateLeaderboardQuestTitle(meta.targetLeaderboardName)
+        saveLeaderboardTargetName(meta.targetLeaderboardName)
+      }
       displayQuestPercs.value = dailyQuests.value.map(questProgress)
       displayDailyPerc.value = dailyProgressPerc.value
       ensureWheelQuestsCompletionFromLocalCount()
       try { await loadAchievementsStatus() } catch {}
-    } catch {}
+    } catch {
+      try {
+        const d = await secureApiCall('/quests/daily')
+        const qs2 = Array.isArray(d?.dailyQuests) ? d.dailyQuests : []
+        const m = d?.meta || {}
+        dailyQuests.value = qs2.map(q => ({ ...q }))
+        prevDone.value = dailyQuests.value.map(q => !!q.done)
+        rerollUsed.value = !!m.rerollUsed
+        rerollTargetIdx.value = Number.isInteger(m.rerollIndex) ? m.rerollIndex : null
+        if (m && m.targetLeaderboardName) {
+          leaderboardTargetName.value = String(m.targetLeaderboardName || '')
+          updateLeaderboardQuestTitle(m.targetLeaderboardName)
+          saveLeaderboardTargetName(m.targetLeaderboardName)
+        }
+        displayQuestPercs.value = dailyQuests.value.map(questProgress)
+        displayDailyPerc.value = dailyProgressPerc.value
+        ensureWheelQuestsCompletionFromLocalCount()
+      } catch {}
+    }
   })()
 }
 
@@ -897,7 +928,8 @@ onUnmounted(() => {
 /* Bouton Re-roll inline (apparition au survol) */
 .inline-reroll { display: flex; align-items: center; gap: 10px; margin-top: 8px; opacity: 0; transform: translateY(6px); transition: opacity 200ms ease, transform 200ms ease; pointer-events: none; }
 .quest-card:hover .inline-reroll { opacity: 1; transform: translateY(0); pointer-events: auto; }
-.quest-card.rerolled .inline-reroll { opacity: 1; transform: translateY(0); pointer-events: none; }
+.daily-list.reroll-used .quest-card:not(.rerolled):hover .inline-reroll { opacity: 0; transform: translateY(6px); pointer-events: none; }
+.quest-card.rerolled .inline-reroll { opacity: 1; transform: translateY(0); pointer-events: auto; }
 .reroll-btn.used, .reroll-btn[disabled] { background: #9ca3af; color: #fff; cursor: not-allowed; }
 /* Icône dé sur Re-roll */
 .dice-icon { display: inline-block; margin-right: 8px; transition: transform 300ms ease; }
