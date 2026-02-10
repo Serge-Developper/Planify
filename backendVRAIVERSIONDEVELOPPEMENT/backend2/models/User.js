@@ -35,6 +35,7 @@ const userSchema = new mongoose.Schema({
   validations: { type: Number, default: 0 }, // Nombre de validations
   lastSpinDate: { type: Date, default: null }, // Date du dernier spin
   lossStreak: { type: Number, default: 0 }, // Pertes consécutives (protection roue)
+  wheelNotifyLastYmd: { type: String, default: null },
 
   // Note publique (visible par tous)
   publicNote: { type: String, default: '' },

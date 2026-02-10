@@ -7,6 +7,12 @@ const fs = require('fs');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path'); // Added for serving static files
+const User = require('./models/User');
+
+let webpush; try { webpush = require('web-push'); } catch {}
+const VAPID_PUBLIC_KEY = process.env.PUBLIC_KEY || process.env.VAPID_PUBLIC_KEY || '';
+const VAPID_PRIVATE_KEY = process.env.PRIVATE_KEY || process.env.VAPID_PRIVATE_KEY || '';
+try { if (webpush && VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) { webpush.setVapidDetails('mailto:admin@planifymmi.fr', VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY); } } catch {}
 
 const userRoutes = require('./routes/users');
 const eventRoutes = require('./routes/events');
@@ -264,6 +270,68 @@ app.get('/api/health', async (req, res) => {
   });
 });
 
+function getParisNow() {
+  return new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Paris' }));
+}
+
+function getParisYMD(date = new Date()) {
+  const fmt = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Paris',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  return fmt.format(date);
+}
+
+async function sendWheelDailyPush() {
+  try {
+    if (!webpush || !VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) return;
+    if (mongoose.connection?.readyState !== 1) return;
+    const todayYmd = getParisYMD();
+    const users = await User.find({
+      'pushPreferences.enabled': true,
+      'pushPreferences.wheel': true
+    }).select({ pushSubscriptions: 1, wheelNotifyLastYmd: 1 });
+
+    const payload = JSON.stringify({
+      title: '🎡 Roue de la fortune',
+      body: 'La roue de la fortune est disponible ! Venez la faire tourner.',
+      icon: '/planifyFichier_134x.webp?v=2',
+      badge: '/planifyFichier_134x.webp?v=2',
+      data: { url: '/' }
+    });
+
+    for (const user of users) {
+      if (user.wheelNotifyLastYmd === todayYmd) continue;
+      const subs = Array.isArray(user.pushSubscriptions) ? user.pushSubscriptions : [];
+      if (!subs.length) continue;
+      let sent = 0;
+      for (const sub of subs) {
+        try {
+          await webpush.sendNotification(sub, payload);
+          sent++;
+        } catch {}
+      }
+      if (sent > 0) {
+        user.wheelNotifyLastYmd = todayYmd;
+        await user.save();
+      }
+    }
+  } catch {}
+}
+
+function scheduleWheelPush() {
+  const nowParis = getParisNow();
+  const next = new Date(nowParis);
+  next.setHours(24, 0, 0, 0);
+  const waitMs = Math.max(1000, next.getTime() - nowParis.getTime());
+  setTimeout(async () => {
+    await sendWheelDailyPush();
+    scheduleWheelPush();
+  }, waitMs);
+}
+
 // Middleware de gestion d'erreurs global
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -286,3 +354,5 @@ app.listen(PORT, HOST, () => {
     console.log(`Serveur lancé sur le port ${PORT} (accessible depuis l'émulateur Android)`);
   }
 });
+
+scheduleWheelPush();

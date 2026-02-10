@@ -39,7 +39,7 @@
           </div>
 
           <div class="daily-list" :class="{ 'reroll-used': rerollUsed }">
-            <div v-for="(q, i) in dailyQuests" :key="q.id" class="quest-card" :class="{ completed: q.done, rerolled: rerollUsed && rerollTargetIdx === i, leaderboard: q.id === 'leaderboard-profile' }">
+            <div v-for="(q, i) in dailyQuests" :key="q.id" class="quest-card" :class="{ completed: q.done, rerolled: rerollUsed && rerollTargetIdx === i, leaderboard: q.id === 'leaderboard-profile' }" @click="handleQuestCardClick(i)">
               <div class="quest-top">
                 <div class="quest-name">{{ q.title }}</div>
                 <div v-if="q.done" class="checkmark-icon" aria-label="Quête complétée">✓</div>
@@ -170,9 +170,11 @@
       <div class="confirm-modal">
         <div class="confirm-title">Bonus des quêtes journalières</div>
         <div class="confirm-msg">
-          <div>Complétez les 3 quêtes journalières pour obtenir un bonus de <img src="@/assets/img/planicoins.webp" alt="Coins" class="coin-icon" /> 50</div>
-          <div>Si le bonus est désactivé (re-roll ou expiration), il est réduit à <img src="@/assets/img/planicoins.webp" alt="Coins" class="coin-icon" /> 25</div>
-          <div>Le re-roll est possible uniquement sur une quête active (non complétée).</div>
+          <ul class="bonus-info-list">
+            <li>Complétez les 3 quêtes journalières pour obtenir un bonus de <img src="@/assets/img/planicoins.webp" alt="Coins" class="coin-icon" /> 50</li>
+            <li>Si le bonus est désactivé (re-roll ou expiration), il est réduit à <img src="@/assets/img/planicoins.webp" alt="Coins" class="coin-icon" /> 25</li>
+            <li>Le re-roll est possible uniquement sur une quête active (non complétée).</li>
+          </ul>
         </div>
         <div class="confirm-actions">
           <button class="primary-btn" @click="closeBonusInfo">Fermer</button>
@@ -613,6 +615,15 @@ function durationLabel(actions) {
 }
 
 const rerollTargetIdx = ref(null)
+function isMobileViewport() {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia('(max-width: 768px)').matches
+}
+function handleQuestCardClick(idx) {
+  if (!isMobileViewport()) return
+  if (rerollUsed.value) return
+  openRerollConfirm(idx)
+}
 function openRerollConfirm(idx) {
   const q = dailyQuests.value[idx]
   if (q && q.done) return
@@ -966,9 +977,11 @@ onUnmounted(() => {
 
 /* Pop-up confirmation */
 .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; z-index: 1500; }
-.confirm-modal { background: #0f1620; border: 1px solid #1f2a37; color: #e8f0f7; border-radius: 14px; padding: 18px 20px; width: 560px; max-width: 90vw; box-shadow: 0 20px 40px rgba(0,0,0,0.35); animation: scaleIn 160ms ease-out; }
+.confirm-modal { background: #0f1620; border: 1px solid #1f2a37; color: #e8f0f7; border-radius: 14px; padding: 18px 20px; width: 580px; max-width: 90vw; box-shadow: 0 20px 40px rgba(0,0,0,0.35); animation: scaleIn 160ms ease-out; }
 .confirm-title {  font-size: 26px; margin-bottom: 10px; color: #fff; }
 .confirm-msg { font-size: 16px; color: #9ca3af; margin-bottom: 16px; }
+.confirm-msg .bonus-info-list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 8px; }
+.confirm-msg .bonus-info-list li { line-height: 1.35; }
 .confirm-actions { display: flex; gap: 10px; justify-content: flex-end; }
 @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 
@@ -1009,10 +1022,10 @@ onUnmounted(() => {
 @media (max-width: 768px) {
   .quests-modal { width: 95vw; }
   .section-title { font-size: 25px; }
-  .bonus-title { font-size: 22px; display: flex; align-items: center; }
+  .bonus-title { font-size: 21px; display: flex; align-items: center; }
   .bonus-block.active .bonus-title { font-size: 21px; }
   .bonus-state { font-size: 14px; }
-  .confirm-msg { font-size: 14px; }
+  .confirm-msg { font-size: 13px; }
   .quests-title { font-size: 28px; }
   .quests-logo { width: 25px; height: 32px; }
   .daily-list, .repeat-list { grid-template-columns: 1fr; width: 100%; justify-items: stretch; }
@@ -1021,6 +1034,10 @@ onUnmounted(() => {
   .duration { font-size: 10px; }
   .bonus-inline { flex-wrap: wrap; }
   .bonus-inline .next-reset { flex: 1 0 100%; margin-top: 6px; }
+  .bonus-badge { white-space: nowrap; }
+  .bonus-block.reduced { position: relative; }
+  .bonus-block.reduced .bonus-info-btn { position: absolute; top: 0px; right: 4px; margin-left: 0; }
+  .bonus-info-img { width: 26px; height: 26px; }
   .daily-section .quest-card.leaderboard .quest-name { font-size: 12px; }
   .duration { font-size: 10px; }
   .admin-daily-editor { grid-template-columns: 1fr; }

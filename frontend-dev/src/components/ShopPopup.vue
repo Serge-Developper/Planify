@@ -983,7 +983,7 @@
                 </select>
                 <button type="button" class="admin-reset-btn" @click.stop="onAdminReset(idx)" style="background:#5bc682;color:#fff;border:3px solid #000;border-radius:12px;padding:6px 10px;font-weight:800;">Reset</button>
               </div>
-              <button v-if="!coinsStore.hasItem(item.id)" class="buy-btn price-hover" :disabled="!isAdminOnly && (userCoins < getItemPrice(item))" @click="openPurchasePreview(item)"><span class="btn-label">{{ item.name }}</span><span class="btn-price"><img src="@/assets/img/planicoins.webp" alt="Coin" class="coin-icon coin-small" /> {{ getItemPrice(item) }}</span></button>
+              <button v-if="!coinsStore.hasItem(item.id)" class="buy-btn price-hover" @click="openPurchasePreview(item)"><span class="btn-label">{{ item.name }}</span><span class="btn-price"><img src="@/assets/img/planicoins.webp" alt="Coin" class="coin-icon coin-small" /> {{ getItemPrice(item) }}</span></button>
               <button v-else class="owned-btn" disabled>Possédé</button>
               <button v-if="item.infoOnly || item.infoDescription || hasInfo(item)" class="info-btn" type="button" @click.stop="openInfoItem(item)">Plus d'infos</button>
             </div>
@@ -1008,7 +1008,7 @@
               </div>
 
               <div class="item-actions">
-                <button v-if="!coinsStore.hasItem(item.id)" class="buy-btn price-hover" :disabled="!isAdminOnly && (userCoins < getItemPrice(item))" @click="openPurchasePreview(item)"><span class="btn-label">{{ item.name }}</span><span class="btn-price"><img src="@/assets/img/planicoins.webp" alt="Coin" class="coin-icon coin-small" /> {{ getItemPrice(item) }}</span></button>
+                <button v-if="!coinsStore.hasItem(item.id)" class="buy-btn price-hover" @click="openPurchasePreview(item)"><span class="btn-label">{{ item.name }}</span><span class="btn-price"><img src="@/assets/img/planicoins.webp" alt="Coin" class="coin-icon coin-small" /> {{ getItemPrice(item) }}</span></button>
                 <button v-else class="owned-btn" disabled>Possédé</button>
               </div>
             </div>

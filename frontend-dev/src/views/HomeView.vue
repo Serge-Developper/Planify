@@ -13,7 +13,7 @@
         <p class="odoo-banner-desc">Planify, l'outil d'organisation scolaire pour les étudiants MMI : gérez vos devoirs, projets et planning de promo simplement et efficacement.</p>
         <button class="odoo-banner-btn" @click="goToEmploi">
           Commencer
-          <img src="@/assets/chevron-right-circle-svgrepo-com.svg" alt="chevron" style="height:1.2em;width:1.2em;margin-left:0.5em;vertical-align:middle;" />
+          <img src="@/assets/chevron-right-circle-svgrepo-com.svg" alt="chevron" style="height:1.2em;width:1.2em;margin-left:0.2em;vertical-align:middle;" />
         </button>
       </div>
       <div class="odoo-banner-right" style="position: relative; display: flex; align-items: center; justify-content: center;">
