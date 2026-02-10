@@ -1053,7 +1053,7 @@
           <div class="factions-grid">
             <!-- Colonne Bagnat -->
             <div class="faction-col" :class="{ selected: userFaction === 'Bagnat', unselected: !!userFaction && userFaction !== 'Bagnat' }" ref="bagnatColumnRef">
-              <div class="faction-total-card" :class="{ winner: (factionTotalCoins.bagnat || 0) >= (factionTotalCoins.fermier || 0), selected: userFaction === 'Bagnat', unselected: !!userFaction && userFaction !== 'Bagnat' }">
+              <div class="faction-total-card" :class="{ winner: (factionTotalCoins.bagnat || 0) >= (factionTotalCoins.fermier || 0), selected: userFaction === 'Bagnat', unselected: !!userFaction && userFaction !== 'Bagnat', 'no-faction': !userFaction }">
                 <h3>Team Bagnat</h3>
                 <div class="total-score-display">
                   {{ formatCoins(factionTotalCoins.bagnat) }} <img src="@/assets/logo_bagnat.webp" alt="Bagnat" class="coin-icon" style="width:45px !important; height:32px !important;" />
@@ -1586,7 +1586,7 @@
 
             <!-- Colonne Fermier -->
             <div class="faction-col" :class="{ selected: userFaction === 'Fermier', unselected: !!userFaction && userFaction !== 'Fermier' }" ref="fermierColumnRef">
-              <div class="faction-total-card" :class="{ winner: (factionTotalCoins.fermier || 0) > (factionTotalCoins.bagnat || 0), selected: userFaction === 'Fermier', unselected: !!userFaction && userFaction !== 'Fermier' }">
+              <div class="faction-total-card" :class="{ winner: (factionTotalCoins.fermier || 0) > (factionTotalCoins.bagnat || 0), selected: userFaction === 'Fermier', unselected: !!userFaction && userFaction !== 'Fermier', 'no-faction': !userFaction }">
                 <h3>Team Fermier</h3>
                 <div class="total-score-display">
                   {{ formatCoins(factionTotalCoins.fermier) }} <img src="@/assets/logo_fermier.webp" alt="Fermier" class="coin-icon" style="width:45px !important; height:32px !important;" />
@@ -3174,11 +3174,16 @@
     <!-- Modale de confirmation de changement de faction -->
     <div v-if="factionConfirmVisible" class="popup-overlay" @click="cancelConfirmFaction">
       <div class="popup-content popup-delete-confirm faction-delete-confirm" @click.stop>
-        <h3>Confirmation de changement de faction</h3>
-        <p>
-          Êtes-vous sûr de vouloir rejoindre {{ pendingFaction }} ?
-          Cette action coûte 250 Planify Coins.
-        </p>
+        <button class="close-btn" @click="cancelConfirmFaction" @mouseover="hoverCloseFactionConfirm = true" @mouseleave="hoverCloseFactionConfirm = false">
+          <img :src="hoverCloseFactionConfirm ? closeHoverImg : closeImg" alt="Fermer" class="close-img" />
+        </button>
+        <div class="faction-confirm-text">
+          <h3>Confirmation de changement de faction</h3>
+          <p>
+            Êtes-vous sûr de vouloir rejoindre {{ pendingFaction }} ?
+            Cette action coûte 250 Planify Coins.
+          </p>
+        </div>
         <div class="faction-delete-actions">
           <button @click="cancelConfirmFaction" class="btn-cancel-delete">Non</button>
           <button @click="confirmJoinFaction" :disabled="joiningFaction" class="btn-confirm-delete">Oui</button>
@@ -6992,6 +6997,7 @@ async function triggerMonthlyFactionBalanceIfNeeded() {
 // Fonction pour rejoindre une faction
 const factionConfirmVisible = ref(false)
 const pendingFaction = ref(null)
+const hoverCloseFactionConfirm = ref(false)
 const CHANGE_COST = 250
 
 const cancelConfirmFaction = () => {
@@ -7028,7 +7034,6 @@ const confirmJoinFaction = async () => {
         }
       } catch {}
 
-      try { window.dispatchEvent(new CustomEvent('achievement-unlocked', { detail: { id: 'faction-join' } })) } catch {}
       try { await coinsStore.loadBalance() } catch {}
       await loadFactionUsers()
     } else {
@@ -7074,7 +7079,6 @@ async function doJoinFaction(factionName, viaConfirm = false) {
         }
       } catch {}
 
-      try { window.dispatchEvent(new CustomEvent('achievement-unlocked', { detail: { id: 'faction-join' } })) } catch {}
       // Rafraîchir le solde du wallet après déduction
       try { await coinsStore.loadBalance() } catch {}
 
@@ -7126,7 +7130,6 @@ const joinFaction = async (factionName) => {
         }
       } catch {}
 
-      try { window.dispatchEvent(new CustomEvent('achievement-unlocked', { detail: { id: 'faction-join' } })) } catch {}
       await loadFactionUsers()
     } else {
       console.error('Erreur lors du join:', response?.message)
@@ -7416,6 +7419,13 @@ onUnmounted(() => {
   cursor: pointer;
   z-index: 10;
   transition: transform 0.25s, filter 0.25s;
+  outline: none;
+  box-shadow: none;
+}
+.close-btn:focus,
+.close-btn:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 .close-img {
   width: 32px;
@@ -9632,9 +9642,19 @@ onUnmounted(() => {
   border: none;
 }
 .faction-total-card.unselected {
-  background: #121313 !important;
+  background: #AB0631 !important;
   color: #fff;
   border: none;
+}
+.faction-total-card.no-faction {
+  animation: factionBlink 1.4s ease-in-out infinite;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+@keyframes factionBlink {
+  0%, 100% { background: rgba(255, 255, 255, 0.05); }
+  50% { background: #00d89e; }
 }
 
 .total-score-display {
@@ -11771,7 +11791,8 @@ onUnmounted(() => {
 
 
   .faction-member-badge {
-    width: 95%;
+    width: 85%;
+    font-size: 0.7rem;
   }
 
   .faction-leaderboard-list {
@@ -12167,6 +12188,7 @@ onUnmounted(() => {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: auto;
   animation: popupIn 0.25s cubic-bezier(.25,.8,.25,1);
+  position: relative;
 }
 .popup-delete-confirm h3 {
   margin-top: 0;
@@ -12176,6 +12198,15 @@ onUnmounted(() => {
 .popup-delete-confirm p {
   margin-bottom: 18px;
 }
+.faction-confirm-text {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.faction-confirm-text h3,
+.faction-confirm-text p {
+  margin: 0;
+}
 .popup-delete-confirm button {
   background: linear-gradient(90deg, #39ff7a 0%, #6EFF78 100%);
   color: #fff;
@@ -12184,7 +12215,6 @@ onUnmounted(() => {
   padding: 12px 0;
   font-size: 1.2em;
   font-weight: bold;
-  margin-top: 18px;
   cursor: pointer;
   font-family: 'Cobe Heavy', Inter, sans-serif;
   box-shadow: 0 2px 8px #6eff7833;
@@ -12194,6 +12224,18 @@ onUnmounted(() => {
   background: linear-gradient(90deg, #6EFF78 0%, #39ff7a 100%);
   color: #000;
   box-shadow: 0 4px 16px #39ff7a55;
+}
+.popup-delete-confirm .close-btn {
+  background: transparent;
+  box-shadow: none;
+  border: none;
+}
+.popup-delete-confirm .close-btn:hover,
+.popup-delete-confirm .close-btn:focus,
+.popup-delete-confirm .close-btn:focus-visible {
+  background: transparent;
+  box-shadow: none;
+  border: none;
 }
 
 /* Centrage spécifique à la modale de confirmation de faction */
@@ -12215,17 +12257,22 @@ onUnmounted(() => {
 @media (min-width: 320px) and (max-width: 475px) {
   .popup-delete-confirm h3 {
     margin-top: 0;
-    font-size: 1.4em;
+    font-size: 1.5em;
   }
   .popup-delete-confirm {
     background: #fff;
     border-radius: 18px;
-    padding: 40px 36px;
+    padding: 40px 10px;
     min-width: 300px;
     max-width: 6px;
     min-height: 220px;
     max-height: 80vh;
     box-shadow: 0 2px 24px #0003;
+  }
+  .faction-delete-actions .btn-cancel-delete,
+  .faction-delete-actions .btn-confirm-delete {
+    min-width: 110px;
+    padding: 10px 18px;
   }
 }
   /* Barre de progression des couleurs débloquées dans la popup couleur */
@@ -12432,9 +12479,10 @@ onUnmounted(() => {
   }
 
   .faction-col {
-    padding: 5px !important;
+    padding: 0px 5px 5px 5px !important;
     width: 100% !important;
     max-width: 100% !important;
+    border-radius: 18% 18% 0% 0%;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;

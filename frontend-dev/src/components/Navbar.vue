@@ -1091,16 +1091,16 @@
             <img :src="isProfilePlaying ? pauseBtnImg : playBtnImg" :key="isProfilePlaying ? 'pause' : 'play'" class="play-btn-img" />
           </button>
                   <div class="volume-controls" @mouseenter="isVolumeHovered = true" @mouseleave="isVolumeHovered = false">
-                    <button type="button" class="btn btn-icon volume-btn" @click="toggleProfileMute" :title="isProfileMuted ? 'Son coupé' : 'Son actif'" :class="{ 'pop-anim': volumePopActive }">
+                    <button type="button" class="btn btn-icon volume-btn" @click="handleVolumeButtonClick" :title="isProfileMuted ? 'Son coupé' : 'Son actif'" :class="{ 'pop-anim': volumePopActive }">
                       <transition name="icon-fade" mode="out-in">
                         <img :src="currentVolumeIcon" :key="currentVolumeIcon" :class="['volume-btn-img', { 'is-mute': isProfileMuted || musicVolume === 0 }]" alt="Volume" />
                       </transition>
                     </button>
-                    <div class="volume-slider-container" :class="{ visible: isVolumeHovered }">
-                      <div class="volume-seek-bar-vertical" @mousedown="startVolumeDrag" @touchstart="startVolumeDrag">
+                    <div class="volume-slider-container" :class="{ visible: isVolumeHovered || isVolumeOpen, horizontal: isMobile }">
+                      <div :class="isMobile ? 'volume-seek-bar-horizontal' : 'volume-seek-bar-vertical'" @mousedown="startVolumeDrag" @touchstart="startVolumeDrag">
                         <div class="seek-track-vertical"></div>
-                        <div class="seek-fill-vertical" :style="{ height: musicVolume + '%' }"></div>
-                        <div class="seek-thumb-vertical" :style="{ bottom: musicVolume + '%' }"></div>
+                        <div class="seek-fill-vertical" :style="isMobile ? { width: musicVolume + '%' } : { height: musicVolume + '%' }"></div>
+                        <div class="seek-thumb-vertical" :style="isMobile ? { left: musicVolume + '%' } : { bottom: musicVolume + '%' }"></div>
                       </div>
                     </div>
                   </div>
@@ -1118,7 +1118,7 @@
                   <div class="profile-time">{{ formatTime(profileProgress) }}</div>
                 </div>
                 <iframe v-if="isValidYouTubeUrl(user?.musicSrc || '')" id="profile-youtube-player" ref="youtubeIframeRef" :src="getYouTubeEmbedUrl(user?.musicSrc || '')" allow="autoplay; encrypted-media" allowfullscreen aria-hidden="true" style="position:absolute;width:1px;height:1px;border:0;clip:rect(0,0,0,0);overflow:hidden;pointer-events:none;" @load="subscribeYouTubePlayer"></iframe>
-                <audio v-else ref="profileAudioEl" :src="safeProfileAudioSrc" preload="metadata" playsinline @loadedmetadata="onProfileLoadedMetadata" @timeupdate="onProfileTimeUpdate" @ended="() => { isProfilePlaying = false }" @play="onProfileAudioPlay"></audio>
+                <audio v-else ref="profileAudioEl" :src="safeProfileAudioSrc" preload="metadata" playsinline @loadedmetadata="onProfileLoadedMetadata" @timeupdate="onProfileTimeUpdate" @ended="() => { isProfilePlaying = false }" @play="onProfileAudioPlay" @volumechange="onProfileVolumeChange"></audio>
               </div>
             </div>
             <div class="profile-section-card profile-description-card">
@@ -3548,6 +3548,7 @@ function toggleProfilePlay() {
       setTimeout(() => sendYouTubeCommand(cmd), 250)
       if (playNow) { sendYouTubeCommand('getDuration'); startYouTubeProgressPolling() } else { stopYouTubeProgressPolling() }
       isProfilePlaying.value = playNow
+      if (isMobile.value && playNow) { isVolumeOpen.value = true }
       return
     }
     const el = profileAudioEl.value
@@ -3558,6 +3559,7 @@ function toggleProfilePlay() {
     el._clipStart = start
     el._clipEnd = end
     if (!isProfilePlaying.value) {
+      if (isMobile.value) { isVolumeOpen.value = true }
       try { if (!Number.isFinite(el.currentTime) || el.currentTime <= 0.05) el.currentTime = Math.max(0, start) } catch {}
       try { setElVolume(el, Math.max(0, Math.min(1, (Number(musicVolume.value) || 0) / 100))) } catch {}
       el.play().then(() => { isProfilePlaying.value = true }).catch(() => { isProfilePlaying.value = false })
@@ -3674,9 +3676,30 @@ function startSeekDrag(e) {
 }
 
 const isVolumeHovered = ref(false)
+const isVolumeOpen = ref(false)
+
+function handleVolumeButtonClick() {
+  try {
+    if (isMobile.value) {
+      isVolumeOpen.value = !isVolumeOpen.value
+      return
+    }
+    toggleProfileMute()
+  } catch {
+    toggleProfileMute()
+  }
+}
+
+function onProfileVolumeChange() {
+  try {
+    const el = profileAudioEl?.value
+    if (!el) return
+    const v = Math.round(Math.max(0, Math.min(1, Number(el.volume) || 0)) * 100)
+    if (v !== musicVolume.value) musicVolume.value = v
+  } catch {}
+}
 
 function startVolumeDrag(e) {
-  // Prevent default to stop text selection / native drag
   if (e.cancelable && (e.type === 'mousedown' || e.type === 'touchstart')) {
     e.preventDefault()
   }
@@ -3684,32 +3707,34 @@ function startVolumeDrag(e) {
   const container = e.currentTarget
   if (!container) return
 
-  const updateVolume = (clientY) => {
+  const updateVolume = (clientX, clientY) => {
     const rect = container.getBoundingClientRect()
-    // Vertical : 0% en bas, 100% en haut.
-    // clientY est en haut de l'écran.
-    // bottom du rect = rect.top + rect.height
+    if (isMobile.value) {
+      const width = rect.width
+      if (width <= 0) return
+      const offsetX = clientX - rect.left
+      let pct = Math.max(0, Math.min(1, offsetX / width)) * 100
+      musicVolume.value = Math.round(pct)
+      return
+    }
     const bottomY = rect.top + rect.height
     const offsetY = bottomY - clientY
     const height = rect.height
     if (height <= 0) return
-    
     let pct = Math.max(0, Math.min(1, offsetY / height)) * 100
     musicVolume.value = Math.round(pct)
   }
 
-  // Initial update
-  const clientY = e.touches ? e.touches[0].clientY : e.clientY
-  updateVolume(clientY)
+  const startPoint = e.touches ? e.touches[0] : e
+  updateVolume(startPoint.clientX, startPoint.clientY)
 
   const onMove = (moveEvent) => {
-    // Fix spam-click lock: stop dragging if mouse button is not held
     if (!moveEvent.touches && moveEvent.buttons === 0) {
       onUp()
       return
     }
-    const y = moveEvent.touches ? moveEvent.touches[0].clientY : moveEvent.clientY
-    updateVolume(y)
+    const point = moveEvent.touches ? moveEvent.touches[0] : moveEvent
+    updateVolume(point.clientX, point.clientY)
   }
 
   const onUp = () => {
@@ -4003,6 +4028,7 @@ function handleResize() {
   if (!isMobile.value) {
     showMobileMenu.value = false;
     showNotificationBtn.value = false;
+    isVolumeOpen.value = false;
   } else {
     if ('Notification' in window && Notification.permission === 'default') {
       showNotificationBtn.value = true;
@@ -4570,7 +4596,7 @@ body, html {
 
   .odoo-navbar-actions { right: 30px !important; }
 
-  .coins-counter.with-timer { right: -225px !important; }
+  .coins-counter.with-timer { right: -240px !important; }
 
   .coins-display {
     color: #333;
@@ -4726,7 +4752,7 @@ body, html {
     border-radius: 16px;
     box-shadow: 0 2px 8px #0000001a;
     position: absolute;
-    right: -245px;
+    right: -225px;
     top: 55% !important;
     transform: translateY(-50%) !important;
     flex-direction: row !important;
@@ -4741,7 +4767,13 @@ body, html {
 }
 
 .coins-counter.with-timer {
-    right: -300px;
+    right: -280px;
+}
+
+@media (min-width: 1025px) and (max-width: 1200px) {
+  .coins-counter {
+    right: -180px;
+  }
 }
 
 /* Version mobile avec timer */
@@ -5013,15 +5045,12 @@ body, html {
 .choice-title { font-weight:600; }
 .youtube-form { margin-top:12px; display:flex; flex-direction:column; align-items:center; gap:10px; }
 .youtube-input { width: 92%; max-width: 360px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); }
+[data-theme="dark"] .youtube-input { background: #111; }
+[data-theme="light"] .youtube-input { background: #e5e7eb; }
 .youtube-actions { display:flex; align-items:center; gap:10px; }
 .choice-grid { display:flex; gap:12px; justify-content:center; align-items:stretch; margin-top: 6px; }
 .choice-card { display:flex; flex-direction:column; align-items:center; gap:8px; padding:14px 16px; border:1px solid var(--border); border-radius:12px; background: var(--card-bg); color: var(--text); cursor:pointer; transition: transform .18s ease, filter .2s ease; }
 .choice-card:hover { transform: translateY(-1px); filter: brightness(1.05); }
-.choice-icon-img { width:28px; height:28px; object-fit: contain; }
-.choice-title { font-weight:600; }
-.youtube-form { margin-top:12px; display:flex; flex-direction:column; align-items:center; gap:10px; }
-.youtube-input { width: 92%; max-width: 360px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); }
-.youtube-actions { display:flex; align-items:center; gap:10px; }
 .push-settings .odoo-login-btn { margin-top: 8px; }
 @media (max-width: 900px) {
   .forgot-notification-row { flex-direction: column; }
@@ -5138,7 +5167,7 @@ body, html {
 .volume-controls { position: relative; display: flex; flex-direction: column; align-items: center; }
 .volume-slider-container {
   position: absolute;
-  top: 100%; /* Apparaît sous le bouton */
+  top: 100%;
   left: 50%;
   transform: translateX(-50%);
   width: 32px;
@@ -5157,6 +5186,15 @@ body, html {
   height: 120px;
   padding: 10px 0;
 }
+.volume-slider-container.horizontal {
+  width: 160px;
+  height: 0;
+  padding: 0;
+}
+.volume-slider-container.horizontal.visible {
+  height: 32px;
+  padding: 6px 10px;
+}
 .volume-seek-bar-vertical {
   width: 20px;
   height: 100%;
@@ -5164,6 +5202,15 @@ body, html {
   cursor: pointer;
   display: flex;
   justify-content: center;
+  touch-action: none;
+}
+.volume-seek-bar-horizontal {
+  width: 100%;
+  height: 20px;
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
   touch-action: none;
 }
 .seek-track-vertical {
@@ -5190,13 +5237,31 @@ body, html {
   border-radius: 50%;
   position: absolute;
   left: 50%;
-  transform: translate(-50%, 50%); /* Centré sur le bas du fill */
+  transform: translate(-50%, 50%);
   pointer-events: none;
   box-shadow: 0 1px 3px rgba(0,0,0,0.3);
   transition: transform 0.1s;
 }
 .volume-seek-bar-vertical:hover .seek-thumb-vertical {
   transform: translate(-50%, 50%) scale(1.2);
+}
+.volume-seek-bar-horizontal .seek-track-vertical {
+  width: 100%;
+  height: 4px;
+}
+.volume-seek-bar-horizontal .seek-fill-vertical {
+  height: 4px;
+  width: 0;
+  left: 0;
+  top: 50%;
+  bottom: auto;
+  transform: translateY(-50%);
+}
+.volume-seek-bar-horizontal .seek-thumb-vertical {
+  top: 50%;
+  bottom: auto;
+  left: 0;
+  transform: translate(-50%, -50%);
 }
 .volume-range { display: none; } /* On cache l'ancien input */
 
@@ -5842,10 +5907,10 @@ body, html {
 
 .equipped-roi-overlay-mobile {
   position: absolute;
-  top: -59px;
-  left: -4px;
+  top: -46px;
+  left: -3px;
   width: 130%;
-  height: 130%;
+  height: 100%;
   transform: translate(-10%);
   pointer-events: none;
   z-index: 15;

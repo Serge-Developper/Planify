@@ -213,7 +213,7 @@ const props = defineProps({ show: { type: Boolean, default: false } })
 const emit = defineEmits(['close'])
 const coinsStore = useCoinsStore()
 const hoverCloseQuests = ref(false)
-watch(() => props.show, (val) => { if (val) { hoverCloseQuests.value = false; (async () => { try { await loadDailyFromBackend(); await loadAchievementsStatus(); loadWheelSpinCount(); prevDone.value = dailyQuests.value.map(q => !!q.done) } catch {} })() } })
+watch(() => props.show, (val) => { if (val) { hoverCloseQuests.value = false; (async () => { try { await loadDailyFromBackend(); await loadRepeatableStatus(); await loadAchievementsStatus(); loadWheelSpinCount(); prevDone.value = dailyQuests.value.map(q => !!q.done) } catch {} })() } })
 function handleClose() { hoverCloseQuests.value = false; emit('close') }
 const rerollUsed = ref(false)
 const showConfirm = ref(false)
@@ -684,6 +684,7 @@ onMounted(async () => {
   if (!auth.isLoggedIn) { hydrating.value = false; return }
   hydrating.value = true
   await loadDailyFromBackend()
+  await loadRepeatableStatus()
   loadWheelSpinCount()
   await loadAchievementsStatus()
   await loadAchievementsCounters()
@@ -976,7 +977,7 @@ onUnmounted(() => {
 .bonus-visual { position: relative; width: 160px; height: 140px; display: flex; align-items: center; justify-content: center; }
 .coin-glow { position: absolute; width: 160px; height: 160px; border-radius: 50%; background: radial-gradient(circle, rgba(255,215,0,0.28) 0%, rgba(255,215,0,0.12) 55%, rgba(255,215,0,0) 70%); filter: blur(2px); }
 .bonus-coin-large { width: 120px; height: 120px; object-fit: contain; transform: rotate(-14deg); filter: drop-shadow(0 8px 18px rgba(0,0,0,0.35)); position: relative; z-index: 1; }
-.coin-base { position: absolute; bottom: 4px; width: 120px; height: 18px; border-radius: 999px; background: radial-gradient(ellipse at center, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.2) 60%, rgba(0,0,0,0) 100%); }
+.coin-base { position: absolute; bottom: 4px; width: 120px; height: 18px; border-radius: 999px; }
 .bonus-amount { display: flex; align-items: center; justify-content: center; gap: 6px; }
 .amount-text { font-size: 18px; color: #34d399; }
 .amount-coin { width: 20px; height: 20px; object-fit: contain; }
