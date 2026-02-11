@@ -7457,8 +7457,8 @@ onUnmounted(() => {
 /* Éditeur de suggestion d'item */
 .suggest-editor { background: #f9fafb; border: 2px solid #5bc682; border-radius: 12px; padding: 12px; margin-bottom: 16px; color: #111; }
 [data-theme="dark"] .suggest-editor { background: #111; color: #fff; border-color: #333; }
-.suggest-toolbar { display: flex; flex-direction: column; gap: 16px; margin-bottom: 12px; }
-.suggest-top-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; width: 95%; }
+.suggest-toolbar { display: flex; flex-direction: column; gap: 16px; margin-bottom: 12px; max-width: 1180px; margin-left: auto; margin-right: auto; }
+.suggest-top-row { display: flex; flex-wrap: nowrap; flex-direction: row; gap: 16px; align-items: center; justify-content: center; width: 95%; }
 .suggest-upload-group { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; flex: 1 1 520px; }
 .suggest-file-btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 18px; border-radius: 999px; background: #242424; color: #e6e6e6; border: 2px solid #3a3a3a; cursor: pointer; font-weight: 600; font-size: 14px; gap: 8px; }
 [data-theme="light"] .suggest-file-btn { background: #e9ecef; color: #222; border-color: #cfcfcf; }
