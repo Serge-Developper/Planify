@@ -1147,7 +1147,7 @@
 
     <!-- Popup Entrer un code -->
     <div v-if="showRedeemPopup" class="profile-popup-overlay" @click.self="closeRedeemPopup">
-      <div class="profile-popup">
+      <div class="profile-popup redeem-popup">
         <button class="close-btn" @click="closeRedeemPopup" @mouseover="hoverCloseProfile = true" @mouseleave="hoverCloseProfile = false">
           <img :src="hoverCloseProfile ? closeHoverImg : closeImg" alt="Fermer" class="close-img" />
         </button>
@@ -3087,10 +3087,12 @@ function openForgotFromProfile() {
   nextTick(() => { showForgotPasswordProfile.value = true })
 }
 function openRedeemPopup() {
+  hoverCloseProfile.value = false
   showRedeemPopup.value = true
   redeemMessage.value = ''
 }
 function closeRedeemPopup() {
+  hoverCloseProfile.value = false
   showRedeemPopup.value = false
   redeemCode.value = ''
   redeemMessage.value = ''
@@ -5011,6 +5013,9 @@ body, html {
 }
 .profile-popup.push-popup {
   width: min(520px, calc(100vw - 48px));
+}
+.profile-popup.redeem-popup {
+  width: min(460px, calc(100vw - 48px));
 }
 .profile-popup h2 {
   margin-top: 0;
@@ -7089,7 +7094,7 @@ body, html {
 
 /* Overrides MOBILE UNIQUEMENT (profil) */
 @media (min-width: 320px) and (max-width: 480px) {
-  .profile-popup h2 { margin-top: 14px !important; }
+  .profile-popup h2 { margin-top: 14px !important; font-size: 29px !important; }
   .profile-popup h2.profile-title { margin-top: 14px !important; }
   .push-settings { margin: 0 !important; }
   .profile-popup.push-popup h2 { margin-bottom: 0 !important; }

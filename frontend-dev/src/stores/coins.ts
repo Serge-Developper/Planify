@@ -566,6 +566,7 @@ export const useCoinsStore = defineStore('coins', {
             item.equipped = false;
           });
           this.equippedItemId = null;
+          this.leaderboardNeedsRefresh = true;
           return { success: true, message: response.message };
         } else {
           return { success: false, message: response.message };
