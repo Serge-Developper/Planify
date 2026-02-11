@@ -1139,6 +1139,12 @@
                       class="equipped-admin-planify"
                     />
                     <img 
+                      v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'discord'"
+                      :src="[discordon, discordnepasderange, discordderange][coinsStore.discordVariantIndex || 0]"
+                      alt="Discord"
+                      class="equipped-discord"
+                    />
+                    <img 
                       v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'roi'"
                       :src="roi"
                       :alt="getUserEquippedItemData(currentUserFactionEntry).name"
@@ -1369,6 +1375,12 @@
                       
                       <!-- Overlays principaux comme sur le leaderboard -->
                       <img 
+                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'discord'"
+                        :src="[discordon, discordnepasderange, discordderange][coinsStore.discordVariantIndex || 0]"
+                        alt="Discord"
+                        class="equipped-discord"
+                      />
+                      <img 
                         v-if="getUserEquippedItemData(user) && (getUserEquippedItemData(user).name === 'Planify' || getUserEquippedItemData(user).displayType === 'admin-planify')"
                         :src="adminPlanify"
                         :alt="'Planify'"
@@ -1493,6 +1505,27 @@
                         :src="advisory" 
                         :alt="getUserEquippedItemData(user).name"
                         class="equipped-advisory-inside"
+                      />
+                      <!-- Espace: étoiles à l'intérieur (Factions Bagnat) -->
+                      <img 
+                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'espace'" 
+                        :src="spacestars" 
+                        :alt="getUserEquippedItemData(user).name"
+                        class="equipped-spacestars-inside"
+                      />
+                      <!-- Espace: astéroïde à l'intérieur (Factions Bagnat) -->
+                      <img 
+                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'espace'" 
+                        :src="asteroide" 
+                        :alt="getUserEquippedItemData(user).name"
+                        class="equipped-asteroide-overlay"
+                      />
+                      <!-- Lunettes pixel: à l'intérieur (Factions Bagnat) -->
+                      <img 
+                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'lunettes-pixel'" 
+                        :src="mlglunette" 
+                        :alt="getUserEquippedItemData(user).name"
+                        class="equipped-lunettes-pixel-inside"
                       />
                       <!-- Item 2000 (Nokia): téléphone à l'intérieur (Faction Bagnat) -->
                       <img 
