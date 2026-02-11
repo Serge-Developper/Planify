@@ -511,6 +511,7 @@ export const useCoinsStore = defineStore('coins', {
               item.equipped = false;
             });
             this.equippedItemId = null;
+            this.leaderboardNeedsRefresh = true;
             
             console.log('🔧 État local mis à jour - equippedItemId:', this.equippedItemId);
             
@@ -534,6 +535,7 @@ export const useCoinsStore = defineStore('coins', {
               item.equipped = item.itemId === itemId;
             });
             this.equippedItemId = itemId;
+            this.leaderboardNeedsRefresh = true;
             
             console.log('🔧 État local mis à jour - equippedItemId:', this.equippedItemId);
             

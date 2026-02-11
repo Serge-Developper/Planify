@@ -1551,14 +1551,7 @@
                       :alt="getUserEquippedItemData(user).name"
                       class="equipped-absolute-cinema-overlay"
                     />
-                    <!-- Clown: cheveux overlay (Factions Bagnat) -->
-                    <img 
-                      v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'clown'" 
-                      :src="clowncheveux" 
-                      :alt="getUserEquippedItemData(user).name"
-                      class="equipped-clown-overlay"
-                    />
-                    
+
                     <!-- Item 2000 (Nokia): Daft Punk par-dessus l'avatar (positionné en dehors du conteneur) -->
                     <img 
                       v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'nokia'" 
@@ -8155,9 +8148,9 @@ onUnmounted(() => {
   .leaderboard-container .equipped-royal-frame-overlay {
     pointer-events: none !important;
     position: absolute !important;
-    top: -28%;
-    left: -11%;
-    width: 140% !important;
+    top: -19%;
+    left: -12%;
+    width: 161% !important;
     height: 138% !important;
     object-fit: contain !important;
     pointer-events: none !important;
@@ -8238,9 +8231,9 @@ onUnmounted(() => {
   }
   .leaderboard-container .equipped-jojotext-inside {
     position: absolute !important;
-    top: -9px !important;
+    top: -8px !important;
     right: 4px !important;
-    width: 95% !important;
+    width: 88% !important;
     height: 100% !important;
     object-fit: contain !important;
     pointer-events: none !important;
@@ -8252,10 +8245,10 @@ onUnmounted(() => {
   .leaderboard-container .equipped-rainbow-overlay {
     pointer-events: none !important;
     position: absolute !important;
-    top: -25%;
+    top: -30%;
     left: -3%;
-    width: 120% !important;
-    height: 140% !important;
+    width: 131% !important;
+    height: 155% !important;
     object-fit: contain !important;
     pointer-events: none !important;
     z-index: 15 !important;
@@ -8315,9 +8308,9 @@ onUnmounted(() => {
     pointer-events: none !important;
     position: absolute !important;
     top: 9%;
-    left: 20% !important;
-    width: 64% !important;
-    height: 72% !important;
+    left: 15% !important;
+    width: 90% !important;
+    height: 90% !important;
     object-fit: contain !important;
     pointer-events: none !important;
     z-index: 3 !important;
@@ -8557,9 +8550,9 @@ onUnmounted(() => {
   .leaderboard-container .equipped-camera-overlay {
     pointer-events: none !important;
   position: absolute !important;
-    top: 55%;
-    left: 0%;
-    width: 10% !important;
+    top: 44% !important;
+    left: 0% !important;
+    width: 60% !important;
     height: 70% !important;
     object-fit: contain !important;
     pointer-events: none !important;
@@ -8570,8 +8563,8 @@ onUnmounted(() => {
   .leaderboard-container .equipped-chat-overlay {
     pointer-events: none !important;
     position: absolute !important;
-    top: -34%;
-    left: 22%;
+    top: -34% !important;
+    left: 22% !important;
     width: 119% !important;
     height: 100% !important;
     object-fit: contain !important;
@@ -8847,7 +8840,7 @@ onUnmounted(() => {
     object-fit: contain !important;
     position: absolute !important;
     top: 30px !important;
-    left: 25px !important;
+    left: 24px !important;
   }
   
   .absolute-cinema-img-shop-right {
@@ -9718,7 +9711,7 @@ onUnmounted(() => {
 .preview-card.preview-leaderboard .user-avatar-container .equipped-clippy-inside { position: absolute !important; left: 85% !important; top: 85% !important; width: 60% !important; height: auto !important; object-fit: contain !important; transform: translate(-50%, -62%) !important; pointer-events: none !important; z-index: 3 !important; }
 .preview-card.preview-leaderboard .user-avatar-container .equipped-daftpunk-overlay { position: absolute !important; left: 56% !important; top: -25% !important; width: 100% !important; height: auto !important; object-fit: contain !important; transform: translate(-50%, -50%) !important; pointer-events: none !important; z-index: 4 !important; }
 .preview-card.preview-leaderboard .user-avatar-container .equipped-discord-overlay { position: absolute !important; top: -1px !important; left: -20px !important; width: 26% !important; height: 120% !important; object-fit: contain !important; pointer-events: none !important; z-index: 4 !important; }
-.preview-card.preview-leaderboard .equipped-discord-overlay { position: absolute !important; top: -1px !important; left: -20px !important; width: 26% !important; height: 120% !important; object-fit: contain !important; pointer-events: none !important; z-index: 4 !important; }
+.preview-card.preview-leaderboard .equipped-discord-overlay { position: absolute !important; top: -1px !important; left: -12px !important; width: 24% !important; height: 132% !important; object-fit: contain !important; pointer-events: none !important; z-index: 4 !important; }
 .preview-card.preview-leaderboard .equipped-tomb-raider { position: absolute !important; top: -36px !important; left: -135px !important; width: 116% !important; height: 116% !important; object-fit: contain !important; pointer-events: none !important; z-index: 2 !important; }
 /* Clown (preview leaderboard): hair above avatar, nose centered inside */
 .preview-card.preview-leaderboard .user-avatar-container .equipped-clown-overlay { position: absolute !important; left: 56% !important; top: 44px !important; width: 63% !important; height: 70% !important; object-fit: contain !important; transform: translate(-50%, -60%) scale(2.6) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 3 !important; }
@@ -10663,7 +10656,7 @@ onUnmounted(() => {
 .equipped-gentleman-overlay {
   position: absolute;
   top: -20px;
-  left: 0px;
+  left: 3px;
   width: 20%;
   height: 75%;
     transform: translate(-10%);
@@ -10983,7 +10976,7 @@ onUnmounted(() => {
     .preview-card.preview-item .item-img-wrapper.large { width: 250px !important; height: 250px !important; }
     .preview-card.preview-item .jojo-text-preview,
   .weekly-item .jojo-text-preview,
-  .jojo-text-preview { top: 8px !important; left: 45px !important; width: 47% !important; }
+  .jojo-text-preview { top: 3px !important; left: 15px !important; width: 61% !important; }
     .weekly-section .shop-item.weekly-item.small-card .discord-item-shop .discord-img-shop { top: 15px !important; left: 30px !important; }
     .preview-card.preview-avatar .profile-avatar-scaler .equipped-angel-wings { top: -66px !important; left: -1px !important; }
     .weekly-section .shop-item.weekly-item.small-card .gentleman-item-shop .gentleman-img-shop { top: 20px !important; left: 42px !important; max-width: 50% !important; }
@@ -11933,6 +11926,10 @@ onUnmounted(() => {
     object-fit: contain !important;
     z-index: 15 !important;
 }
+.faction-leaderboard-list .equipped-vinyle,
+.faction-leaderboard-list .equipped-vinyle-overlay {
+  left: -11% !important;
+}
 
 /* Factions: Étoiles */
 .faction-leaderboard-list .equipped-stars,
@@ -12543,6 +12540,136 @@ onUnmounted(() => {
   }
 }
 
+@media (max-width: 480px) {
+  .leaderboard-container .equipped-royal-frame,
+  .leaderboard-container .equipped-royal-frame-overlay {
+    position: absolute !important;
+    top: -22%;
+    left: -16%;
+    width: 162% !important;
+    height: 143% !important;
+    object-fit: contain !important;
+    pointer-events: none !important;
+    z-index: 15 !important;
+  }
+
+  .leaderboard-container .equipped-gentleman,
+  .leaderboard-container .equipped-gentleman-overlay {
+    position: absolute !important;
+    top: -71% !important;
+    left: 0%;
+    width: 118% !important;
+    height: 120% !important;
+    object-fit: contain !important;
+    pointer-events: none !important;
+    z-index: 15 !important;
+  }
+
+  .leaderboard-container .equipped-rainbow,
+  .leaderboard-container .equipped-rainbow-overlay {
+    position: absolute !important;
+    top: -29%;
+    left: -5%;
+    width: 135% !important;
+    height: 151% !important;
+    object-fit: contain !important;
+    pointer-events: none !important;
+    z-index: 15 !important;
+  }
+
+  .leaderboard-container .equipped-vinyle,
+  .leaderboard-container .equipped-vinyle-overlay {
+    position: absolute !important;
+    top: -55%;
+    left: 0%;
+    width: 126% !important;
+    height: 83% !important;
+    object-fit: contain !important;
+    pointer-events: none !important;
+    z-index: 15 !important;
+  }
+
+  .leaderboard-container .equipped-absolute-cinema,
+  .leaderboard-container .equipped-absolute-cinema-overlay {
+    position: absolute !important;
+    top: -10% !important;
+    left: -64% !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    pointer-events: none !important;
+    z-index: 15 !important;
+  }
+
+  .leaderboard-container .equipped-camera-overlay {
+    position: absolute !important;
+    top: 40% !important;
+    left: -3% !important;
+    width: 74% !important;
+    height: 81% !important;
+    object-fit: contain !important;
+    pointer-events: none !important;
+    z-index: 3 !important;
+  }
+
+  .leaderboard-container .equipped-flash,
+  .leaderboard-container .equipped-flash-overlay {
+    position: absolute !important;
+    top: -3%;
+    left: 10% !important;
+    width: 93% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    pointer-events: none !important;
+    z-index: 3 !important;
+  }
+
+  .leaderboard-container .equipped-chat-overlay {
+    position: absolute !important;
+    top: -35% !important;
+    left: 17% !important;
+    width: 115% !important;
+    height: 90% !important;
+    object-fit: contain !important;
+    pointer-events: none !important;
+    z-index: 3 !important;
+  }
+
+  .leaderboard-container .equipped-lunettes-pixel-inside {
+    position: absolute !important;
+    top: 0%;
+    left: -5%;
+    width: 109% !important;
+    height: 110% !important;
+    object-fit: contain !important;
+    pointer-events: none !important;
+    z-index: 3 !important;
+  }
+
+  .leaderboard-container .equipped-clippy-inside {
+    position: absolute !important;
+    top: 35% !important;
+    left: 46% !important;
+    width: 58% !important;
+    height: 78% !important;
+    object-fit: contain !important;
+    pointer-events: none !important;
+    z-index: 2 !important;
+  }
+
+  .leaderboard-container .equipped-daftpunk,
+  .leaderboard-container .equipped-daftpunk-overlay {
+    position: absolute !important;
+    top: -65% !important;
+    left: 9% !important;
+    width: 80% !important;
+    height: 90% !important;
+    object-fit: contain !important;
+    pointer-events: none !important;
+    z-index: 15 !important;
+  }
+}
+
 /* Hide mobile filters on Desktop */
 @media (min-width: 1025px) {
   .mobile-only-filters { display: none !important; }
@@ -12566,17 +12693,17 @@ onUnmounted(() => {
 .profile-popup .equipped-asteroide-overlay { top: 50px !important; left: 100px !important; width: 20% !important; height: 50% !important; }
 .profile-popup .equipped-gentleman-overlay { top: -50px !important; left: 95px !important; width: 55% !important; height: 55% !important; }
 .profile-popup .equipped-asteroide-overlay { top: 100px !important; left: 100px !important; width: 20% !important; height: 50% !important; }
-.leaderboard-container .equipped-absolute-cinema, .leaderboard-container .equipped-absolute-cinema-overlay { position: absolute !important; top: -10% !important; left: -31% !important; width: 100% !important; height: 100% !important; object-fit: contain !important; pointer-events: none !important; z-index: 15 !important; }
+.leaderboard-container .equipped-absolute-cinema, .leaderboard-container .equipped-absolute-cinema-overlay { position: absolute; top: -10%; left: -31%; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 15; }
 .profile-popup .equipped-absolute-cinema-overlay-right { left: 224px !important; top: -10% !important; width: 30% !important; height: 100% !important; }
-.leaderboard-container .equipped-camera-overlay { position: absolute !important; top: 40% !important; left: 30% !important; width: 18% !important; height: 70% !important; object-fit: contain !important; pointer-events: none !important; z-index: 3 !important; }
+.leaderboard-container .equipped-camera-overlay { position: absolute; top: 40%; left: 30%; width: 18%; height: 70%; object-fit: contain; pointer-events: none; z-index: 3; }
 .profile-popup .equipped-pate-overlay { position: absolute !important; top: 60% !important; left: 21% !important; width: 33% !important; height: 25% !important; object-fit: contain !important; pointer-events: none !important; z-index: 15 !important; }
-.leaderboard-container .equipped-chat-overlay { position: absolute !important; top: -13% !important; left: 17% !important; width: 108% !important; height: 70% !important; object-fit: contain !important; pointer-events: none !important; z-index: 3 !important; }
+.leaderboard-container .equipped-chat-overlay { position: absolute; top: -13%; left: 17%; width: 108%; height: 70%; object-fit: contain; pointer-events: none; z-index: 3; }
 .profile-popup .equipped-lunettes-pixel-inside { top: 50% !important; left: 50% !important; height: 75% !important; width: 71% !important; }
-.leaderboard-container .equipped-clippy-inside { position: absolute !important; top: 50px !important; left: 83px !important; width: 43% !important; height: 78% !important; object-fit: contain !important; pointer-events: none !important; z-index: 2 !important; }
-.leaderboard-container .equipped-daftpunk, .leaderboard-container .equipped-daftpunk-overlay { position: absolute !important; top: -51% !important; left: 27% !important; width: 44% !important; height: 90% !important; object-fit: contain !important; pointer-events: none !important; z-index: 15 !important; }
+.leaderboard-container .equipped-clippy-inside { position: absolute; top: 50px; left: 83px; width: 43%; height: 78%; object-fit: contain; pointer-events: none; z-index: 2; }
+.leaderboard-container .equipped-daftpunk, .leaderboard-container .equipped-daftpunk-overlay { position: absolute; top: -65% !important; left: 11% !important; width: 80%; height: 90%; object-fit: contain; pointer-events: none; z-index: 15; }
 .profile-popup .equipped-discord-overlay, .profile-popup .equipped-discord { top: 16px !important; left: 4px !important; width: 92% !important; height: 94% !important; }
-.leaderboard-container .equipped-jojo-inside { position: absolute !important; bottom: -2px !important; left: 145px !important; width: 90% !important; height: 40% !important; object-fit: contain !important; pointer-events: none !important; z-index: 6 !important; }
-.leaderboard-container .equipped-jojotext-inside { position: absolute !important; top: -18px !important; right: 30px !important; width: 65% !important; height: 100% !important; object-fit: contain !important; pointer-events: none !important; z-index: 7 !important; }
+.leaderboard-container .equipped-jojo-inside { position: absolute !important; bottom: -2px !important; left: 45px !important; width: 90% !important; height: 40% !important; object-fit: contain !important; pointer-events: none !important; z-index: 6 !important; }
+.leaderboard-container .equipped-jojotext-inside { position: absolute !important; top: -7px !important; right: 2px !important; width: 95% !important; height: 100% !important; object-fit: contain !important; pointer-events: none !important; z-index: 7 !important; }
 
 /* Fix alignement item-actions boutique quotidienne */
 .weekly-shop-container .item-actions {

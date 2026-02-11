@@ -6055,7 +6055,7 @@ body, html {
 .equipped-camera-overlay-mobile {
   position: absolute;
   top: 25px;
-  left: 1px;
+  left: 5px;
   width: 50%;
   height: 70%;
   transform: translate(-10%);
@@ -6076,9 +6076,9 @@ body, html {
 
 .equipped-flash-overlay-mobile {
   position: absolute;
-  top: -10px;
-  left: 15px;
-  width: 75%;
+  top: 1px;
+  left: 7px;
+  width: 95%;
   height: 100%;
   object-fit: contain;
   pointer-events: none;
@@ -6099,8 +6099,8 @@ body, html {
 .equipped-chat-overlay {
   position: absolute;
   top: -20px;
-  left: 20px;
-  width: 100%;
+  left: 10px;
+  width: 120%;
   height: 100%;
   transform: translate(-10%);
   pointer-events: none;
@@ -6109,8 +6109,8 @@ body, html {
 
 .equipped-pate-inside-mobile {
   position: absolute;
-  top: 33px;
-  left: 3px;
+  top: 32px;
+  left: 4px;
   width: 40%;
   height: 40%;
   object-fit: cover;
@@ -6121,8 +6121,8 @@ body, html {
 .equipped-chat-overlay-mobile {
   position: absolute;
   top: -20px;
-  left: 20px;
-  width: 100%;
+  left: 13px;
+  width: 115%;
   height: 100%;
   transform: translate(-10%);
   pointer-events: none;
@@ -6168,6 +6168,18 @@ body, html {
     top: 30%;
     left: 30%;
   }
+}
+
+.equipped-lunettes-pixel-inside {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 1;
 }
 
 .profile-popup .equipped-lunettes-pixel-inside {
@@ -6254,7 +6266,7 @@ body, html {
 .equipped-daftpunk-overlay-mobile {
   position: absolute;
   top: -40px;
-  left: 3px;
+  left: 5px;
   width: 85%;
   height: 100%;
   object-fit: contain;
@@ -6302,7 +6314,7 @@ body, html {
   position: absolute;
     top: -9px;
     right: 4px;
-    width: 95%;
+    width: 85%;
     height: 100%;
     object-fit: contain;
     pointer-events: none;
@@ -6779,7 +6791,7 @@ body, html {
 }
 
 /* Overrides spécifiques à la pop-up de profil pour les items statiques */
-.profile-popup .equipped-cat-ears { top: -22%; left: -14%; width: 70%; height: 94%; }
+.profile-popup .equipped-cat-ears { top: -22%; left: 14%; width: 70%; height: 94%; }
 .profile-popup .equipped-stars { top: 16% !important; left: 26% !important; width: 49% !important; height: 67% !important; position: absolute !important; z-index: 2 !important; pointer-events: none !important; }
 .profile-popup .equipped-flash-overlay { position: absolute; top: 18%; left: 27%; width: 50%; height: 53%; object-fit: contain; pointer-events: none; z-index: 2; }
 .profile-popup .equipped-clown-overlay { top: -11%; left: 24%; width: 66%; height: 100%; }
@@ -7047,7 +7059,10 @@ body, html {
     max-width: 100%;
     width: min(350px, 100%);
     border-radius: 12px;
-    --profile-avatar-size: 100px; /* réduit légèrement sur petit écran */
+    --profile-avatar-size: 100px;
+  }
+  .profile-popup .profile-avatar-stage {
+    height: 110px !important;
   }
 }
 
@@ -7083,27 +7098,31 @@ body, html {
 
 /* Overrides MOBILE UNIQUEMENT pour la fenêtre de profil */
 @media (min-width: 320px) and (max-width: 480px) {
-  .profile-popup .equipped-cat-ears { top: -66px !important; left: -34px !important; width: 165% !important; height: 155% !important; }
-  .profile-popup .equipped-clown-overlay { top: -11% !important; left: 24% !important; width: 66% !important; height: 100% !important; }
-  .profile-popup .equipped-roi-overlay { top: -26% !important; left: 22% !important; width: 63% !important; height: 56% !important; }
-  .profile-popup .equipped-angel-wings { position: absolute !important; top: -28% !important; left: 2% !important; width: 96% !important; height: 75% !important; z-index: 0 !important; pointer-events: none !important; }
+  .profile-popup .equipped-cat-ears { top: -56% !important; left: 8% !important; width: 82% !important; height: 140% !important; }
+  .profile-popup .equipped-clown-overlay { top: -11% !important; left: 25% !important; width: 62% !important; height: 100% !important; }
+  .profile-popup .equipped-roi-overlay { top: -43% !important; left: 33% !important; width: 38% !important; height: 56% !important; }
+  .profile-popup .equipped-angel-wings { position: absolute !important; top: -54% !important; left: 2% !important; width: 96% !important; height: 96% !important; z-index: 0 !important; pointer-events: none !important; }
   .profile-popup .equipped-tomb-raider { position: absolute !important; top: -48px !important; left: 0 !important; width: 102% !important; height: 71% !important; z-index: 0 !important; pointer-events: none !important; }
-  .profile-popup .equipped-royal-frame { top: 6% !important; left: 14% !important; width: 96% !important; height: 88% !important; }
+  .profile-popup .equipped-royal-frame { top: -13% !important; left: 22% !important; width: 74% !important; height: 126% !important; }
+  .profile-popup .equipped-rainbow { top: 0%; left: 25%; width: 61%; height: 99%; }
   .profile-popup .equipped-gentleman-overlay { top: -13% !important; left: 24% !important; width: 63% !important; height: 45% !important; }
-  .profile-popup .equipped-vinyle-overlay { top: -21% !important; left: 33% !important; width: 46% !important; height: 56% !important; }
+  .profile-popup .equipped-vinyle-overlay { top: -34% !important; left: 34% !important; width: 40% !important; height: 63% !important; }
   .profile-popup .equipped-advisory-inside { top: 63px !important; left: 49px !important; width: 56% !important; height: 37% !important; }
-  .profile-popup .equipped-asteroide-overlay { top: 133px !important; left: 102px !important; width: 23% !important; height: 30% !important; }
-  .profile-popup .equipped-absolute-cinema-overlay { top: 15% !important; left: 15% !important; width: 13% !important; height: 60% !important; }
-  .profile-popup .equipped-absolute-cinema-overlay-right { top: 15% !important; left: 72% !important; width: 13% !important; height: 60% !important; }
-  .profile-popup .equipped-camera-overlay { top: 56% !important; left: 29% !important; width: 24% !important; height: 28% !important; }
-  .profile-popup .equipped-chat-overlay { top: -6% !important; left: 35% !important; width: 57% !important; height: 70% !important; }
+  .profile-popup .equipped-asteroide-overlay { top: 59px !important; left: 72px !important; width: 22% !important; height: 43% !important; }
+  .profile-popup .equipped-absolute-cinema-overlay { top: -5% !important; left: 15% !important; width: 13% !important; height: 90% !important; }
+  .profile-popup .equipped-absolute-cinema-overlay-right { top: -5% !important; left: 72% !important; width: 13% !important; height: 90% !important; }
+  .profile-popup .equipped-camera-overlay { top: 56% !important; left: 29% !important; width: 24% !important; height: 50% !important; }
+  .profile-popup .equipped-flash-overlay { position: absolute; top: 11%; left: 18%; width: 68%; height: 77%; object-fit: contain; pointer-events: none; z-index: 2; }
+  .profile-popup .equipped-pate-overlay { pointer-events: none !important; position: absolute !important; top: 60%; left: 27%; width: 22% !important; height: 28% !important; object-fit: contain !important; z-index: 15 !important; }
+  .profile-popup .equipped-chat-overlay { top: -20% !important; left: 35% !important; width: 53% !important; height: 70% !important; }
   .profile-popup .equipped-lunettes-pixel-inside { position: absolute !important; top: 53% !important; left: 50% !important; width: 109% !important; height: 108% !important; object-fit: contain !important; transform: translate(-50%, -50%) !important; pointer-events: none !important; z-index: 1 !important; }
   .profile-popup .equipped-clippy-inside { top: 29px !important; left: 52px !important; width: 40px !important; }
-  .profile-popup .equipped-daftpunk-overlay { top: -12% !important; left: 29% !important; width: 41% !important; height: 38% !important; }
-  .profile-popup .equipped-discord-overlay { top: 17% !important; left: 19% !important; width: 56% !important; height: 74% !important; }
+  .profile-popup .equipped-daftpunk-overlay { top: -35% !important; left: 29% !important; width: 41% !important; height: 45% !important; }
+  .profile-popup .equipped-discord-overlay { top: 4% !important; left: 19% !important; width: 56% !important; height: 105% !important; }
   .profile-popup .equipped-jojo-inside { bottom: -2px !important; left: 95px !important; width: 95% !important; height: 38% !important; }
-  .profile-popup .equipped-jojotext-inside { top: -12px !important; right: 15px !important; width: 75% !important; height: 85% !important; }
-  .equipped-discord-overlay-mobile { position: absolute !important; top: -4px !important; left: -10px !important; width: 125% !important; height: 124% !important; object-fit: contain !important; pointer-events: none !important; z-index: 15 !important; }
+  .profile-popup .equipped-jojotext-inside { top: -11px !important; right: 6px !important; width: 90% !important; height: 85% !important; }
+  .profile-popup .equipped-stars { top: 0% !important; left: 26% !important; width: 49% !important; height: 98% !important; position: absolute !important; z-index: 2 !important; pointer-events: none !important; }
+  .equipped-discord-overlay-mobile { position: absolute !important; top: -4px !important; left: -10px !important; width: 131% !important; height: 130% !important; object-fit: contain !important; pointer-events: none !important; z-index: 15 !important; }
 }
 
 
