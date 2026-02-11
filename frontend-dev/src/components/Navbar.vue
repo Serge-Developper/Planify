@@ -5015,7 +5015,7 @@ body, html {
   width: min(520px, calc(100vw - 48px));
 }
 .profile-popup.redeem-popup {
-  width: min(460px, calc(100vw - 48px));
+  width: min(345px, calc(100vw - 48px));
 }
 .profile-popup h2 {
   margin-top: 0;
