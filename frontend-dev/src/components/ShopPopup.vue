@@ -105,27 +105,80 @@
       </div>
       <div v-if="showSuggestionEditor" class="weekly-shop-container single-col fenetre-collection" ref="weeklyContainerRef">
         <div class="weekly-preview" :style="{ height: forceWeeklyHeight ? (forceWeeklyHeight + 'px') : undefined, width: '1235.45px' }">
-          <div class="suggest-toolbar" style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px;">
-            <div class="suggest-row" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;">
-              <input type="file" accept="image/*" @change="onSuggestFile" />
-              <input type="text" v-model="suggestUrl" placeholder="Importer via URL" class="url-input" />
-              <button class="tab-btn" @click="onSuggestUrl">Importer</button>
-              <label class="price-label">Prix: <input type="number" v-model.number="suggestPrice" min="150" max="500" step="1" class="price-input" /></label>
-              <button class="tab-btn" @click="saveSuggestion">Sauvegarder</button>
-              <button class="tab-btn" @click="closeSuggestEditor">Fermer</button>
+          <div class="suggest-toolbar">
+            <div class="suggest-top-row">
+              <div class="suggest-upload-group">
+                <label class="suggest-file-btn">
+                  <input type="file" accept="image/webp,image/gif" @change="onSuggestFile" class="suggest-file-input" />
+                  <span class="btn-icon">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 3v6h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </span>
+                  <span>Choisir un fichier</span>
+                </label>
+                <input type="text" v-model="suggestUrl" placeholder="Importer via URL" class="url-input suggest-url-input" />
+                <button class="suggest-import-btn" type="button" @click="onSuggestUrl">
+                  <span class="btn-icon">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 16.5a4.5 4.5 0 0 0-1-8.9A5.5 5.5 0 0 0 5 9.5a4 4 0 0 0 1 7.9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 12v7m0 0l3-3m-3 3l-3-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </span>
+                  Importer
+                </button>
+              </div>
+              <div class="suggest-meta-group">
+                <div class="suggest-style-pill">
+                  <span class="btn-icon">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M2 12h20M12 2a16 16 0 0 1 0 20M12 2a16 16 0 0 0 0 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                  </span>
+                  <span>Style</span>
+                </div>
+                <label class="price-label suggest-price-pill">
+                  <span>Prix:</span>
+                  <input type="number" v-model.number="suggestPrice" min="150" max="500" step="1" class="price-input suggest-price-input" />
+                </label>
+              </div>
+              <div class="suggest-actions">
+                <button class="suggest-save-btn" type="button" @click="saveSuggestion">
+                  <span class="btn-icon">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 21v-8H7v8M7 3v5h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </span>
+                  Sauvegarder
+                </button>
+                <button class="suggest-close-btn" type="button" @click="closeSuggestEditor">
+                  <span class="btn-icon">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6l-12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </span>
+                  Fermer
+                </button>
+              </div>
             </div>
-            <div class="suggest-row" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;">
-
-              <div class="variants-ui" style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;">
-                <span>Styles:</span>
-                <button class="tab-btn" v-for="(v, vi) in suggestVariants" :key="'sv-'+vi" :class="{ active: vi === activeVariantIndex }" @click="selectVariant(vi)">{{ v.name || ('Style ' + (vi + 1)) }}</button>
-                <div class="rename-group" v-if="suggestVariants && suggestVariants.length" style="display:flex;align-items:center;gap:6px;">
+            <div class="suggest-variants-row">
+              <div class="variants-ui">
+                <span class="variants-label">Styles:</span>
+                <div class="variant-chips">
+                  <button class="variant-chip" v-for="(v, vi) in suggestVariants" :key="'sv-'+vi" :class="{ active: vi === activeVariantIndex }" @click="selectVariant(vi)">{{ v.name || ('Style ' + (vi + 1)) }}</button>
+                  <button class="variant-add-chip" type="button" @click="addVariant" aria-label="Ajouter un style">+</button>
+                </div>
+                <div class="rename-group" v-if="suggestVariants && suggestVariants.length">
                   <label>Nom: <input type="text" v-model="suggestVariants[activeVariantIndex].name" placeholder="Nom du style" class="variant-name-input" /></label>
                 </div>
-                <div class="variant-actions" style="display:flex;flex-wrap:wrap;gap:6px;">
-                  <button class="tab-btn" @click="addVariant">+ Ajouter</button>
-                  <button class="tab-btn" @click="duplicateVariant">Dupliquer</button>
-                  <button class="tab-btn" @click="removeVariant" :disabled="suggestVariants.length <= 1">Supprimer</button>
+                <div class="variant-actions">
+                  <button class="suggest-add-btn" type="button" @click="addVariant">
+                    <span class="btn-icon">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                    Ajouter
+                  </button>
+                  <button class="suggest-dup-btn" type="button" @click="duplicateVariant">
+                    <span class="btn-icon">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="2" y="2" width="13" height="13" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                    </span>
+                    Dupliquer
+                  </button>
+                  <button class="suggest-remove-btn" type="button" @click="removeVariant" :disabled="suggestVariants.length <= 1">
+                    <span class="btn-icon">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                    Supprimer
+                  </button>
                 </div>
               </div>
             </div>
@@ -587,7 +640,7 @@
 
       <!-- Boutique quotidienne -->
       <div v-if="activeTab === 'weekly'" class="weekly-shop-container" :class="{ 'single-col': showPurchasePreview }" ref="weeklyContainerRef">
-        <div v-if="showPurchasePreview" class="weekly-preview" :style="{ height: forceWeeklyHeight ? (forceWeeklyHeight + 'px') : undefined, width: '1235.45px' }">
+        <div v-if="showPurchasePreview" class="weekly-preview" :style="{ height: forceWeeklyHeight ? (forceWeeklyHeight + 'px') : undefined, width: '1235.45px', }">
           <div class="preview-grid">
             <div class="preview-card preview-item">
               <div class="preview-title">Aperçu (Cosmétique)</div>
@@ -4020,7 +4073,7 @@ function isLocalUserItem(item) { try { const u = authStore.user; const uid = Str
 async function deleteUserItem(item) { try { const legacyId = Number((typeof item.legacyId !== 'undefined') ? item.legacyId : item.id); let targetId = null; if (isAdminOnly && isAdminOnly.value) { try { const r = await secureApiCall(`/items/legacy/${legacyId}`); if (r && r.success && r.item && r.item._id) targetId = r.item._id } catch {} if (targetId) { const del = await secureApiCall(`/items/${targetId}`, { method: 'DELETE' }); if (del && del.success) { try { window.dispatchEvent(new CustomEvent('items-changed')) } catch {} } } } else if (isUserItemCreator(item)) { const serverItemId = item && item.meta && item.meta.serverItemId; if (serverItemId) targetId = serverItemId; if (!targetId) { try { const params = []; if (Number.isFinite(legacyId)) params.push(`legacyId=${legacyId}`); const locId = item && item.meta && item.meta.localItemId; if (locId) params.push(`localItemId=${encodeURIComponent(locId)}`); const res = await secureApiCall(`/items/suggest/resolve${params.length ? ('?' + params.join('&')) : ''}`); if (res && res.success && res.item && res.item._id) targetId = res.item._id } catch {} } if (!targetId) { try { const list = await secureApiCall(`/items?_=${Date.now()}`); const arr = (list && list.items) ? list.items : (Array.isArray(list) ? list : []); const u = authStore.user; const uid = String((u && (u.id || u._id)) || ''); const locId = item && item.meta && item.meta.localItemId; const name = String(item.name || '').trim(); const cand = Array.isArray(arr) ? arr.find(it => { const createdBy = String(it.createdBy || ''); const lid = Number((typeof it.legacyId === 'number' && !Number.isNaN(it.legacyId)) ? it.legacyId : NaN); const serverName = String(it.name || '').trim(); const plocal = it && it.meta && it.meta.localItemId; if (createdBy !== uid) return false; if (Number.isFinite(legacyId) && Number.isFinite(lid) && lid === legacyId) return true; if (locId && plocal && String(plocal) === String(locId)) return true; return serverName === name && !!name; }) : null; if (cand && cand._id) targetId = cand._id } catch {} } if (targetId) { const del2 = await secureApiCall(`/items/suggest/${targetId}`, { method: 'DELETE' }); if (del2 && del2.success) { try { window.dispatchEvent(new CustomEvent('items-changed')) } catch {} } } }
   const u = authStore.user; const uid = String((u && (u.id || u._id)) || 'anon'); const key = 'my-items-local-' + uid; let local = []; try { local = JSON.parse(localStorage.getItem(key) || '[]') } catch { local = [] } const name = String(item.name || '').trim(); const localId = item && item.meta && item.meta.localItemId; const filtered = (Array.isArray(local) ? local.filter(p => { const pid = (typeof p.legacyId !== 'undefined') ? p.legacyId : p.id; const pname = String(p.name || '').trim(); const plocalId = p && p.meta && p.meta.localItemId; const pserverId = p && p.meta && p.meta.serverItemId; const sameServer = !!(pserverId && ((item && item.meta && item.meta.serverItemId) ? String(pserverId) === String(item.meta.serverItemId) : (targetId ? String(pserverId) === String(targetId) : false))); if (sameServer) return false; if (localId && plocalId) return String(plocalId) !== String(localId); if (Number.isFinite(legacyId)) return Number(pid) !== legacyId; return pname !== name; }) : []); try { localStorage.setItem(key, JSON.stringify(filtered)) } catch {}
   const normId = Number((typeof item.legacyId !== 'undefined') ? item.legacyId : item.id); dynamicItems.value = (Array.isArray(dynamicItems.value) ? dynamicItems.value.filter(n => { const nid = Number((typeof n.legacyId !== 'undefined') ? n.legacyId : n.id); const nname = String(n.name || '').trim(); return (Number.isFinite(normId) ? nid !== normId : nname !== name) }) : []); try { if (Number.isFinite(normId)) dynamicInfoById.value.delete(Number(normId)) } catch {} try { if (name) dynamicInfoByName.value.delete(String(name)) } catch {} try { loadWeeklyItems() } catch {} localItemsUpdateKey.value++; try { await secureApiCall('/users/my-items', { method: 'DELETE', body: JSON.stringify({ legacyId: Number.isFinite(legacyId) ? legacyId : undefined, localItemId: localId || undefined, id: (typeof item.id === 'number' ? item.id : undefined), name }) }) } catch {} try { userServerLocalItems.value = (Array.isArray(userServerLocalItems.value) ? userServerLocalItems.value.filter(u => { const uid = (typeof u.legacyId !== 'undefined') ? u.legacyId : u.id; const ulocalId = u && u.meta && u.meta.localItemId; const uname = String(u.name || '').trim(); if (localId && ulocalId) return String(ulocalId) !== String(localId); if (Number.isFinite(legacyId)) return Number(uid) !== legacyId; return uname !== name; }) : []) } catch {} try { await loadUserServerLocalItems() } catch {} try { window.dispatchEvent(new CustomEvent('my-items-changed')) } catch {} alert('Item supprimé de vos items.') } catch {} }
-function onSuggestFile(e) { try { const f = e.target.files && e.target.files[0]; if (!f) return; const reader = new FileReader(); reader.onload = () => { const data = reader.result; suggestAssetSrc.value = data; const v = suggestVariants.value[activeVariantIndex.value]; if (v) v.assetSrc = data }; reader.readAsDataURL(f) } catch {} }
+function onSuggestFile(e) { try { const f = e.target.files && e.target.files[0]; if (!f) return; const name = String(f.name || '').toLowerCase(); const type = String(f.type || '').toLowerCase(); const isWebp = type === 'image/webp' || name.endsWith('.webp'); const isGif = type === 'image/gif' || name.endsWith('.gif'); if (!isWebp && !isGif) { try { alert('Seuls les fichiers WEBP ou GIF sont acceptés.') } catch {} try { e.target.value = '' } catch {} return } const reader = new FileReader(); reader.onload = () => { const data = reader.result; suggestAssetSrc.value = data; const v = suggestVariants.value[activeVariantIndex.value]; if (v) v.assetSrc = data }; reader.readAsDataURL(f) } catch {} }
 function onSuggestUrl() { try { const u = String(suggestUrl.value || '').trim(); if (!u) return; const raw = u.split('?')[0]; const url = raw + (raw.startsWith('/uploads/') ? `?v=${Date.now()}` : ''); suggestAssetSrc.value = url; const v = suggestVariants.value[activeVariantIndex.value]; if (v) v.assetSrc = url } catch {} }
 function centerSuggest(key) { try { const s = suggestStyles.value[key]; if (!s) return; const root = weeklyContainerRef.value; let el = null; if (key === 'leaderboard') { const sel = (suggestPlacement.value.leaderboard === 'above') ? '.preview-card.preview-leaderboard .leaderboard-item .user-avatar-container' : '.preview-card.preview-leaderboard .avatar-img'; el = root && root.querySelector(sel) } else if (key === 'avatar') { const sel = (suggestPlacement.value.avatar === 'above') ? '.preview-card.preview-avatar .profile-avatar-scaler' : '.preview-card.preview-avatar .avatar-img'; el = root && root.querySelector(sel) } else if (key === 'navbar') { const sel = '.preview-card.preview-navbar .navbar-stage'; el = root && root.querySelector(sel) } else if (key === 'dailyShop') { el = root && root.querySelector('.preview-card.preview-daily-shop .item-img-container') } else if (key === 'collectionPreview') { el = root && root.querySelector('.preview-card.preview-collection .item-img-container') } else if (key === 'popupStyle') { el = root && root.querySelector('.preview-card.preview-popup-style .item-img-container') } else { el = root && root.querySelector('.preview-card.preview-item .item-img-container') } const rect = el ? el.getBoundingClientRect() : null; const boxW = rect ? rect.width : (key === 'leaderboard' ? 57 : key === 'avatar' ? 150 : key === 'navbar' ? 51 : key === 'collectionPreview' ? (suggestDevice.value === 'mobile' ? 80 : 90) : key === 'popupStyle' ? 120.5 : key === 'dailyShop' ? 90 : 100); const boxH = rect ? rect.height : (key === 'leaderboard' ? 57 : key === 'avatar' ? 150 : key === 'navbar' ? 51 : key === 'collectionPreview' ? (suggestDevice.value === 'mobile' ? 80 : 90) : key === 'popupStyle' ? 64 : key === 'dailyShop' ? 90 : 100); const w = Number(s.width) || 50; const h = Number(s.height || s.width) || 50; s.left = Math.round((boxW - w) / 2); s.top = Math.round((boxH - h) / 2) } catch {} }
 function getSuggestStyle(key) { try { const s = suggestStyles.value[key] || {}; const style = { position: 'absolute' }; if (typeof s.top === 'number') style.top = s.top + 'px'; if (typeof s.left === 'number') style.left = s.left + 'px'; if (typeof s.width === 'number') style.width = s.width + 'px'; if (typeof s.height === 'number') style.height = s.height + 'px'; if (typeof s.rotate === 'number') style.transform = `rotate(${s.rotate}deg)`; if (typeof s.zIndex === 'number') style.zIndex = s.zIndex; try { const p = suggestPlacement.value || {}; if (key === 'avatar' && p.avatar === 'above') { style.zIndex = Math.max(Number(style.zIndex || 0), 100) } if (key === 'leaderboard' && p.leaderboard === 'above') { style.zIndex = Math.max(Number(style.zIndex || 0), 100) } if (key === 'navbar' && p.navbar === 'above') { style.zIndex = Math.max(Number(style.zIndex || 0), 100) } } catch {} if (typeof s.objectFit === 'string') style.objectFit = s.objectFit; if (typeof s.margin === 'number') style.margin = s.margin + 'px'; if (typeof s.padding === 'number') style.padding = s.padding + 'px'; if (s.background) style.background = s.background; if (s.boxShadow) style.boxShadow = s.boxShadow; if (typeof s.borderWidth === 'number') style.borderWidth = s.borderWidth + 'px'; if (typeof s.borderStyle === 'string') style.borderStyle = s.borderStyle; if (s.borderColor) style.borderColor = s.borderColor; if (typeof s.borderRadius === 'number') style.borderRadius = s.borderRadius + 'px'; return style } catch { return { position: 'absolute' } } }
@@ -7404,6 +7457,55 @@ onUnmounted(() => {
 /* Éditeur de suggestion d'item */
 .suggest-editor { background: #f9fafb; border: 2px solid #5bc682; border-radius: 12px; padding: 12px; margin-bottom: 16px; color: #111; }
 [data-theme="dark"] .suggest-editor { background: #111; color: #fff; border-color: #333; }
+.suggest-toolbar { display: flex; flex-direction: column; gap: 16px; margin-bottom: 12px; }
+.suggest-top-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; width: 95%; }
+.suggest-upload-group { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; flex: 1 1 520px; }
+.suggest-file-btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 18px; border-radius: 999px; background: #242424; color: #e6e6e6; border: 2px solid #3a3a3a; cursor: pointer; font-weight: 600; font-size: 14px; gap: 8px; }
+[data-theme="light"] .suggest-file-btn { background: #e9ecef; color: #222; border-color: #cfcfcf; }
+.suggest-file-btn:hover { filter: brightness(1.05); }
+.suggest-file-input { display: none; }
+.suggest-url-input { min-width: 240px; max-width: 320px; border-radius: 999px; padding: 10px 14px; border: 2px solid #3a3a3a; background: #1f1f1f; color: #fff; }
+[data-theme="light"] .suggest-url-input { background: #fff; color: #111; border-color: #cfcfcf; }
+.suggest-import-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 999px; background: #2ea85b; color: #fff; border: none; font-weight: 700; cursor: pointer; }
+.suggest-import-btn:hover { filter: brightness(1.05); }
+.suggest-meta-group { display: inline-flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 999px; border: 2px solid #3a3a3a; background: #2a2a2a; color: #e6e6e6; white-space: nowrap; }
+[data-theme="light"] .suggest-meta-group { background: #f1f1f1; border-color: #d6d6d6; color: #222; }
+.suggest-style-pill { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
+.suggest-price-pill { display: inline-flex; align-items: center; gap: 6px; background: #3a3a3a; border-radius: 999px; padding: 6px 10px; }
+[data-theme="light"] .suggest-price-pill { background: #e3e3e3; }
+.suggest-price-input { width: 80px; border: none; background: transparent; color: inherit; }
+.suggest-price-input:focus { outline: none; }
+.price-label { display: inline-flex; align-items: center; gap: 6px; }
+.suggest-actions { display: flex; flex-direction: column; gap: 10px; align-items: stretch; min-width: 150px; }
+.suggest-save-btn { display: inline-flex; align-items: center; gap: 8px; justify-content: center; padding: 10px 18px; border-radius: 999px; background: #2ea85b; color: #fff; border: none; font-weight: 700; cursor: pointer; }
+.suggest-save-btn:hover { filter: brightness(1.05); }
+.suggest-close-btn { display: inline-flex; align-items: center; gap: 8px; justify-content: center; padding: 10px 18px; border-radius: 999px; background: #3a3a3a; color: #eaeaea; border: none; font-weight: 600; cursor: pointer; }
+[data-theme="light"] .suggest-close-btn { background: #e0e0e0; color: #111; }
+.suggest-variants-row { display: flex; justify-content: center; justify-content: flex-start; }
+.variants-ui { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; }
+.variants-label { font-weight: 600; }
+.variant-chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.variant-chip { padding: 8px 14px; border-radius: 12px; background: #2c2c2c; border: 2px solid #3a3a3a; color: #eaeaea; font-weight: 600; cursor: pointer; }
+.variant-chip.active { background: #3bbf6c; border-color: #3bbf6c; color: #fff; }
+.variant-add-chip { width: 32px; height: 32px; border-radius: 8px; background: #2f2f2f; border: 2px solid #3a3a3a; color: #eaeaea; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.rename-group { display: flex; align-items: center; gap: 6px; }
+.variant-name-input { padding: 8px 12px; border-radius: 999px; border: 2px solid #3a3a3a; background: #1f1f1f; color: #fff; width: 160px; }
+[data-theme="light"] .variant-name-input { background: #fff; color: #111; border-color: #cfcfcf; }
+.variant-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.suggest-add-btn,
+.suggest-dup-btn,
+.suggest-remove-btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; }
+.suggest-add-btn { background: #3bbf6c; color: #fff; }
+.suggest-dup-btn { background: #4aa3ff; color: #fff; }
+.suggest-remove-btn { background: #e25454; color: #fff; }
+.btn-icon { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; }
+.btn-icon svg { width: 16px; height: 16px; }
+@media (max-width: 980px) {
+  .suggest-top-row { justify-content: center; }
+  .suggest-actions { flex-direction: row; justify-content: center; width: 100%; }
+  .suggest-meta-group { justify-content: center; width: 100%; }
+  .suggest-upload-group { justify-content: center; width: 100%; }
+}
 .suggest-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
 .suggest-previews { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 .preview-block { background: #fff; border: 1px solid #E9E9EA; border-radius: 10px; padding: 10px; }
@@ -7832,7 +7934,7 @@ onUnmounted(() => {
       border-radius: 999px;
     }
   }
-  .weekly-preview { margin-top: 8px; grid-column: 1 / -1; width: 1235.45px; margin-left: auto; margin-right: auto; }
+  .weekly-preview { margin-top: 8px; grid-column: 1 / -1; width: 1235.45px; margin-left: auto; margin-right: auto; height: 650px !important; }
   .preview-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; align-items: stretch; justify-items: center; height: 100%; }
   .preview-card { width: 100%; max-width: 390px; }
   .weekly-shop-container .preview-card.preview-navbar .item-img-container,
