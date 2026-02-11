@@ -123,39 +123,47 @@
                   Importer
                 </button>
               </div>
-              <div class="suggest-meta-group">
-                <div class="suggest-style-pill">
-                  <span class="btn-icon">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M2 12h20M12 2a16 16 0 0 1 0 20M12 2a16 16 0 0 0 0 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                  </span>
-                  <span>Style</span>
+              <div class="suggest-right-group">
+                <div class="suggest-meta-group">
+                  <div class="suggest-style-pill">
+                    <span class="btn-icon">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M2 12h20M12 2a16 16 0 0 1 0 20M12 2a16 16 0 0 0 0 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    </span>
+                    <span>Style</span>
+                  </div>
+                  <label class="price-label suggest-price-pill">
+                    <span>Prix:</span>
+                    <input type="number" v-model.number="suggestPrice" min="150" max="500" step="1" class="price-input suggest-price-input" />
+                  </label>
                 </div>
-                <label class="price-label suggest-price-pill">
-                  <span>Prix:</span>
-                  <input type="number" v-model.number="suggestPrice" min="150" max="500" step="1" class="price-input suggest-price-input" />
-                </label>
-              </div>
-              <div class="suggest-actions">
-                <button class="suggest-save-btn" type="button" @click="saveSuggestion">
-                  <span class="btn-icon">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 21v-8H7v8M7 3v5h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                  </span>
-                  Sauvegarder
-                </button>
-                <button class="suggest-close-btn" type="button" @click="closeSuggestEditor">
-                  <span class="btn-icon">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6l-12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                  </span>
-                  Fermer
-                </button>
+                <div class="suggest-actions">
+                  <button class="suggest-save-btn" type="button" @click="saveSuggestion">
+                    <span class="btn-icon">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 21v-8H7v8M7 3v5h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                    Sauvegarder
+                  </button>
+                  <button class="suggest-close-btn" type="button" @click="closeSuggestEditor">
+                    <span class="btn-icon">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6l-12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                    Fermer
+                  </button>
+                </div>
               </div>
             </div>
             <div class="suggest-variants-row">
               <div class="variants-ui">
                 <span class="variants-label">Styles:</span>
-                <div class="variant-chips">
-                  <button class="variant-chip" v-for="(v, vi) in suggestVariants" :key="'sv-'+vi" :class="{ active: vi === activeVariantIndex }" @click="selectVariant(vi)">{{ v.name || ('Style ' + (vi + 1)) }}</button>
+                <div class="variant-chips-slider">
+                  <button v-if="showVariantArrows" class="variant-arrow" type="button" @click="prevVariantWindow" :disabled="!canScrollVariantLeft" aria-label="Styles précédents">‹</button>
+                  <div class="variant-slider-viewport" :style="variantViewportStyle">
+                    <div class="variant-slider-track" ref="variantTrackRef" :style="variantTrackStyle">
+                      <button class="variant-chip" v-for="(v, vi) in suggestVariants" :key="'sv-'+vi" :class="{ active: vi === activeVariantIndex }" @click="selectVariant(vi)">{{ v.name || ('Style ' + (vi + 1)) }}</button>
+                    </div>
+                  </div>
                   <button class="variant-add-chip" type="button" @click="addVariant" aria-label="Ajouter un style">+</button>
+                  <button v-if="showVariantArrows" class="variant-arrow" type="button" @click="nextVariantWindow" :disabled="!canScrollVariantRight" aria-label="Styles suivants">›</button>
                 </div>
                 <div class="rename-group" v-if="suggestVariants && suggestVariants.length">
                   <label>Nom: <input type="text" v-model="suggestVariants[activeVariantIndex].name" placeholder="Nom du style" class="variant-name-input" /></label>
@@ -3651,8 +3659,8 @@ function syncWeeklyHeight(){ try{ const el = weeklyContainerRef.value; if (!el) 
 function openPurchasePreview(item){ try{ syncWeeklyHeight(); purchasePreviewItem.value = item; showPurchasePreview.value = true; hoverBackShop.value = false; hoverCloseShop.value = false }catch{} }
 function closePurchasePreview(){ hoverBackShop.value = false; hoverCloseShop.value = false; try{ showPurchasePreview.value = false }catch{ showPurchasePreview = false }; purchasePreviewItem.value = null; if (showSuggestionEditor && (showSuggestionEditor.value === true)) { showSuggestionEditor.value = false; suggestAssetSrc.value = ''; suggestUrl.value = ''; removeAvatarBorder.value = false; removeLeaderboardBorder.value = false; previewWindowIndex.value = 0; suggestDevice.value = 'desktop'; const DEF = { top:0, left:0, width:50, height:50, rotate:0, objectFit:'contain', zIndex:1, margin:0, padding:0, background:'', boxShadow:'', borderWidth:0, borderStyle:'none', borderColor:'', borderRadius:0 }; suggestStyles.value = { dailyShop: { ...DEF }, collectionPreviewDesktop: { ...DEF }, collectionPreviewMobile: { ...DEF }, collectionPreview: { ...DEF }, collection: { ...DEF }, leaderboard: { ...DEF }, avatar: { ...DEF }, navbar: { ...DEF }, popupStyle: { ...DEF } }; resetSuggestUsers() } }
 function measurePreviewSlider(){ try{ const root = weeklyContainerRef.value; if (!root) return; const card = root.querySelector('.preview-slider-track .preview-card'); if (card) { const r = card.getBoundingClientRect(); previewCardWidth.value = Math.round(r.width) } const track = root.querySelector('.preview-slider-track'); if (track) { const cs = window.getComputedStyle(track); const gapVal = parseFloat(cs.gap) || 6; previewCardGap.value = Math.round(gapVal) } }catch{} }
-onMounted(() => { try{ syncWeeklyHeight(); measurePreviewSlider(); window.addEventListener('resize', syncWeeklyHeight); window.addEventListener('resize', measurePreviewSlider); refreshSuggestPreviewBorderColor() }catch{} })
-onUnmounted(() => { try{ window.removeEventListener('resize', syncWeeklyHeight); window.removeEventListener('resize', measurePreviewSlider) }catch{} })
+onMounted(() => { try{ syncWeeklyHeight(); measurePreviewSlider(); measureVariantSlider(); window.addEventListener('resize', syncWeeklyHeight); window.addEventListener('resize', measurePreviewSlider); window.addEventListener('resize', measureVariantSlider); refreshSuggestPreviewBorderColor() }catch{} })
+onUnmounted(() => { try{ window.removeEventListener('resize', syncWeeklyHeight); window.removeEventListener('resize', measurePreviewSlider); window.removeEventListener('resize', measureVariantSlider) }catch{} })
 // Indexs pour retrouver infoOnly/infoDescription même si l'item n'est pas affiché (doublon avec catalogue statique)
 const dynamicInfoById = ref(new Map())
 const dynamicInfoByName = ref(new Map())
@@ -3907,15 +3915,86 @@ const DEFAULT_SUGGEST_STYLE = { top: 0, left: 0, width: 50, height: 50, rotate: 
 const makeVariant = (name) => ({ name, assetSrc: '', styles: { dailyShop: { ...DEFAULT_SUGGEST_STYLE }, collectionPreviewDesktop: { ...DEFAULT_SUGGEST_STYLE }, collectionPreviewMobile: { ...DEFAULT_SUGGEST_STYLE }, collectionPreview: { ...DEFAULT_SUGGEST_STYLE }, collection: { ...DEFAULT_SUGGEST_STYLE }, leaderboard: { ...DEFAULT_SUGGEST_STYLE }, avatar: { ...DEFAULT_SUGGEST_STYLE }, navbar: { ...DEFAULT_SUGGEST_STYLE }, popupStyle: { ...DEFAULT_SUGGEST_STYLE } }, flags: { removeLeaderboardBorder: false, removeProfilePopupBorder: false, removeNavbarBorder: false, leaderboardPlacement: 'inside', profilePopupPlacement: 'inside', navbarPlacement: 'inside', largeAvatarHeight: 250 } })
 const suggestVariants = ref([ makeVariant('Style 1') ])
 const activeVariantIndex = ref(0)
+const variantWindowSize = 5
+const variantWindowIndex = ref(0)
+const showVariantArrows = computed(() => {
+  const total = Array.isArray(suggestVariants.value) ? suggestVariants.value.length : 0
+  return total > variantWindowSize
+})
+const canScrollVariantLeft = computed(() => variantWindowIndex.value > 0)
+const canScrollVariantRight = computed(() => {
+  const total = Array.isArray(suggestVariants.value) ? suggestVariants.value.length : 0
+  return (variantWindowIndex.value + variantWindowSize) < total
+})
+const variantTrackRef = ref(null)
+const variantChipWidth = ref(0)
+const variantChipGap = ref(8)
+const variantViewportStyle = computed(() => {
+  const w = variantChipWidth.value
+  const gap = variantChipGap.value
+  if (!w) return { overflow: 'hidden' }
+  return { width: ((w * variantWindowSize) + (gap * (variantWindowSize - 1))) + 'px', overflow: 'hidden' }
+})
+const variantTrackStyle = computed(() => {
+  const w = variantChipWidth.value
+  const gap = variantChipGap.value
+  const step = w + gap
+  if (!w || !step) return { transform: 'none', transition: 'none' }
+  return { transform: `translateX(-${variantWindowIndex.value * step}px)`, transition: 'transform 0.45s ease-in-out' }
+})
+function measureVariantSlider() {
+  try {
+    const track = variantTrackRef.value
+    if (!track) return
+    const chip = track.querySelector('.variant-chip')
+    if (chip) {
+      const r = chip.getBoundingClientRect()
+      variantChipWidth.value = Math.round(r.width)
+    }
+    const cs = window.getComputedStyle(track)
+    const gapVal = parseFloat(cs.gap) || 8
+    variantChipGap.value = Math.round(gapVal)
+  } catch {}
+}
+function clampVariantWindow() {
+  try {
+    const total = Array.isArray(suggestVariants.value) ? suggestVariants.value.length : 0
+    const maxStart = Math.max(0, total - variantWindowSize)
+    if (variantWindowIndex.value > maxStart) variantWindowIndex.value = maxStart
+    if (variantWindowIndex.value < 0) variantWindowIndex.value = 0
+  } catch {}
+}
+function ensureVariantWindowForIndex(i) {
+  try {
+    if (typeof i !== 'number') return
+    clampVariantWindow()
+    if (i < variantWindowIndex.value) variantWindowIndex.value = i
+    else if (i >= (variantWindowIndex.value + variantWindowSize)) variantWindowIndex.value = i - variantWindowSize + 1
+    clampVariantWindow()
+  } catch {}
+}
+function prevVariantWindow() {
+  if (!canScrollVariantLeft.value) return
+  variantWindowIndex.value = Math.max(0, variantWindowIndex.value - 1)
+}
+function nextVariantWindow() {
+  if (!canScrollVariantRight.value) return
+  const total = Array.isArray(suggestVariants.value) ? suggestVariants.value.length : 0
+  const maxStart = Math.max(0, total - variantWindowSize)
+  variantWindowIndex.value = Math.min(maxStart, variantWindowIndex.value + 1)
+}
 function loadActiveVariantIntoBuffer() { try { const v = suggestVariants.value[activeVariantIndex.value]; if (!v) return; suggestStyles.value.dailyShop = { ...(v.styles.dailyShop || v.styles.dailyStyle || DEFAULT_SUGGEST_STYLE) }; suggestStyles.value.collectionPreviewDesktop = { ...(v.styles.collectionPreviewDesktop || v.styles.collectionPreview || v.styles.collection || DEFAULT_SUGGEST_STYLE) }; suggestStyles.value.collectionPreviewMobile = { ...(v.styles.collectionPreviewMobile || v.styles.collectionPreview || v.styles.collection || DEFAULT_SUGGEST_STYLE) }; suggestStyles.value.collectionPreview = (suggestDevice.value === 'mobile') ? suggestStyles.value.collectionPreviewMobile : suggestStyles.value.collectionPreviewDesktop; suggestStyles.value.collection = { ...v.styles.collection }; suggestStyles.value.leaderboard = { ...v.styles.leaderboard }; suggestStyles.value.avatar = { ...v.styles.avatar }; suggestStyles.value.navbar = { ...(v.styles.navbar || DEFAULT_SUGGEST_STYLE) }; suggestStyles.value.popupStyle = { ...(v.styles.popupStyle || DEFAULT_SUGGEST_STYLE) }; removeLeaderboardBorder.value = !!v.flags.removeLeaderboardBorder; removeAvatarBorder.value = !!v.flags.removeProfilePopupBorder; removeNavbarBorder.value = !!v.flags.removeNavbarBorder; suggestPlacement.value = { leaderboard: String(v.flags.leaderboardPlacement || 'inside'), avatar: String(v.flags.profilePopupPlacement || 'inside'), navbar: String(v.flags.navbarPlacement || 'inside') }; suggestAvatarStageHeight.value = Number(v.flags.largeAvatarHeight || 250); suggestAssetSrc.value = v.assetSrc || '' } catch {} }
 function persistBufferIntoActiveVariant() { try { const v = suggestVariants.value[activeVariantIndex.value]; if (!v) return; v.styles.dailyShop = { ...suggestStyles.value.dailyShop }; v.styles.collectionPreviewDesktop = { ...suggestStyles.value.collectionPreviewDesktop }; v.styles.collectionPreviewMobile = { ...suggestStyles.value.collectionPreviewMobile }; v.styles.collectionPreview = { ...suggestStyles.value.collectionPreview }; v.styles.collection = { ...suggestStyles.value.collection }; v.styles.leaderboard = { ...suggestStyles.value.leaderboard }; v.styles.avatar = { ...suggestStyles.value.avatar }; v.styles.navbar = { ...suggestStyles.value.navbar }; v.styles.popupStyle = { ...suggestStyles.value.popupStyle }; v.flags.removeLeaderboardBorder = !!removeLeaderboardBorder.value; v.flags.removeProfilePopupBorder = !!removeAvatarBorder.value; v.flags.removeNavbarBorder = !!removeNavbarBorder.value; v.flags.leaderboardPlacement = String(suggestPlacement.value.leaderboard || 'inside'); v.flags.profilePopupPlacement = String(suggestPlacement.value.avatar || 'inside'); v.flags.navbarPlacement = String(suggestPlacement.value.navbar || 'inside'); v.flags.largeAvatarHeight = Number(suggestAvatarStageHeight.value || 250); v.assetSrc = suggestAssetSrc.value || '' } catch {} }
-function selectVariant(i) { persistBufferIntoActiveVariant(); activeVariantIndex.value = i; loadActiveVariantIntoBuffer() }
-function addVariant() { persistBufferIntoActiveVariant(); suggestVariants.value.push(makeVariant('Style ' + (suggestVariants.value.length + 1))); activeVariantIndex.value = suggestVariants.value.length - 1; loadActiveVariantIntoBuffer() }
-function duplicateVariant() { persistBufferIntoActiveVariant(); const v = suggestVariants.value[activeVariantIndex.value]; const copy = JSON.parse(JSON.stringify(v)); copy.name = 'Style ' + (suggestVariants.value.length + 1); suggestVariants.value.push(copy); activeVariantIndex.value = suggestVariants.value.length - 1; loadActiveVariantIntoBuffer() }
-function removeVariant() { if (suggestVariants.value.length <= 1) return; persistBufferIntoActiveVariant(); suggestVariants.value.splice(activeVariantIndex.value, 1); activeVariantIndex.value = Math.max(0, activeVariantIndex.value - 1); loadActiveVariantIntoBuffer() }
+function selectVariant(i) { persistBufferIntoActiveVariant(); activeVariantIndex.value = i; loadActiveVariantIntoBuffer(); ensureVariantWindowForIndex(i) }
+function addVariant() { persistBufferIntoActiveVariant(); suggestVariants.value.push(makeVariant('Style ' + (suggestVariants.value.length + 1))); activeVariantIndex.value = suggestVariants.value.length - 1; loadActiveVariantIntoBuffer(); ensureVariantWindowForIndex(activeVariantIndex.value) }
+function duplicateVariant() { persistBufferIntoActiveVariant(); const v = suggestVariants.value[activeVariantIndex.value]; const copy = JSON.parse(JSON.stringify(v)); copy.name = 'Style ' + (suggestVariants.value.length + 1); suggestVariants.value.push(copy); activeVariantIndex.value = suggestVariants.value.length - 1; loadActiveVariantIntoBuffer(); ensureVariantWindowForIndex(activeVariantIndex.value) }
+function removeVariant() { if (suggestVariants.value.length <= 1) return; persistBufferIntoActiveVariant(); suggestVariants.value.splice(activeVariantIndex.value, 1); activeVariantIndex.value = Math.max(0, activeVariantIndex.value - 1); loadActiveVariantIntoBuffer(); ensureVariantWindowForIndex(activeVariantIndex.value) }
 watch(removeAvatarBorder, (val) => { try { const v = suggestVariants.value[activeVariantIndex.value]; if (v && v.flags) v.flags.removeProfilePopupBorder = !!val } catch {} })
 watch(removeLeaderboardBorder, (val) => { try { const v = suggestVariants.value[activeVariantIndex.value]; if (v && v.flags) v.flags.removeLeaderboardBorder = !!val } catch {} })
 watch(removeNavbarBorder, (val) => { try { const v = suggestVariants.value[activeVariantIndex.value]; if (v && v.flags) v.flags.removeNavbarBorder = !!val } catch {} })
+watch(() => suggestVariants.value.length, () => { clampVariantWindow(); ensureVariantWindowForIndex(activeVariantIndex.value); measureVariantSlider() })
+watch(activeVariantIndex, (i) => { ensureVariantWindowForIndex(i) })
+watch(showSuggestionEditor, (val) => { if (val) measureVariantSlider() })
 watch(suggestPrice, (val) => { try { const n = Number(val)||0; if (n < 150) suggestPrice.value = 150; else if (n > 500) suggestPrice.value = 500 } catch {} }, { immediate: true })
 watch(() => suggestStyles.value.dailyShop, (val) => { try { const v = suggestVariants.value[activeVariantIndex.value]; if (v && v.styles) v.styles.dailyShop = { ...val } } catch {} }, { deep: true })
 watch(() => suggestStyles.value.collectionPreview.width, (w) => { try { const s = suggestStyles.value.collectionPreview; s.height = Number(w) } catch {} })
@@ -7458,8 +7537,9 @@ onUnmounted(() => {
 .suggest-editor { background: #f9fafb; border: 2px solid #5bc682; border-radius: 12px; padding: 12px; margin-bottom: 16px; color: #111; }
 [data-theme="dark"] .suggest-editor { background: #111; color: #fff; border-color: #333; }
 .suggest-toolbar { display: flex; flex-direction: column; gap: 16px; margin-bottom: 12px; max-width: 1180px; margin-left: auto; margin-right: auto; }
-.suggest-top-row { display: flex; flex-wrap: nowrap; flex-direction: row; gap: 16px; align-items: center; justify-content: center; width: 95%; }
+.suggest-top-row { display: flex; flex-wrap: nowrap; flex-direction: row; gap: 0px; align-items: center; justify-content: center; width: 100%; }
 .suggest-upload-group { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; flex: 1 1 520px; }
+.suggest-right-group { display: flex; align-items: center; gap: 16px; }
 .suggest-file-btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 18px; border-radius: 999px; background: #242424; color: #e6e6e6; border: 2px solid #3a3a3a; cursor: pointer; font-weight: 600; font-size: 14px; gap: 8px; }
 [data-theme="light"] .suggest-file-btn { background: #e9ecef; color: #222; border-color: #cfcfcf; }
 .suggest-file-btn:hover { filter: brightness(1.05); }
@@ -7484,10 +7564,15 @@ onUnmounted(() => {
 .suggest-variants-row { display: flex; justify-content: center; justify-content: flex-start; }
 .variants-ui { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; }
 .variants-label { font-weight: 600; }
-.variant-chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.variant-chip { padding: 8px 14px; border-radius: 12px; background: #2c2c2c; border: 2px solid #3a3a3a; color: #eaeaea; font-weight: 600; cursor: pointer; }
+.variant-slider-viewport { overflow: hidden; min-width: 0; padding-right: 2px; width: 345px !important; }
+.variant-slider-track { display: flex; flex-wrap: nowrap; gap: 8px; align-items: center; will-change: transform; }
+.variant-chips-slider { display: flex; align-items: center; gap: 8px; }
+.variant-arrow { width: 30px; height: 30px; border-radius: 10px; background: #2f2f2f; border: 2px solid #3a3a3a; color: #eaeaea; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.variant-arrow:disabled { opacity: 0.4; cursor: default; }
+[data-theme="light"] .variant-arrow { background: #e0e0e0; border-color: #cfcfcf; color: #111; }
+.variant-chip { padding: 8px 6px; border-radius: 12px; background: #2c2c2c; border: 2px solid #3a3a3a; color: #eaeaea;  cursor: pointer; white-space: nowrap; }
 .variant-chip.active { background: #3bbf6c; border-color: #3bbf6c; color: #fff; }
-.variant-add-chip { width: 32px; height: 32px; border-radius: 8px; background: #2f2f2f; border: 2px solid #3a3a3a; color: #eaeaea; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.variant-add-chip { width: 32px; height: 32px; font-size: 20px; border-radius: 8px; background: #2f2f2f; border: 2px solid #3a3a3a; color: #eaeaea; display: inline-flex; align-items: flex-end; justify-content: center; cursor: pointer; }
 .rename-group { display: flex; align-items: center; gap: 6px; }
 .variant-name-input { padding: 8px 12px; border-radius: 999px; border: 2px solid #3a3a3a; background: #1f1f1f; color: #fff; width: 160px; }
 [data-theme="light"] .variant-name-input { background: #fff; color: #111; border-color: #cfcfcf; }
@@ -7502,6 +7587,7 @@ onUnmounted(() => {
 .btn-icon svg { width: 16px; height: 16px; }
 @media (max-width: 980px) {
   .suggest-top-row { justify-content: center; }
+  .suggest-right-group { flex-direction: column; align-items: center; width: 100%; gap: 12px; }
   .suggest-actions { flex-direction: row; justify-content: center; width: 100%; }
   .suggest-meta-group { justify-content: center; width: 100%; }
   .suggest-upload-group { justify-content: center; width: 100%; }
@@ -7860,19 +7946,24 @@ onUnmounted(() => {
   .weekly-shop-container .admin-preview-toolbar { display: flex; gap: 8px; justify-content: flex-end; margin: 8px 0; }
   .weekly-shop-container .admin-preview-toolbar button { background: #5bc682; color: #fff; border: 3px solid #000; border-radius: 12px; padding: 6px 10px; font-weight: 800; cursor: pointer; }
   .weekly-shop-container .admin-preview-toolbar button:hover { filter: brightness(0.95); }
-.weekly-shop-container .preview-slider-controls { position: relative; display: flex; gap: 8px; justify-content: center; margin: 8px 0; z-index: 1000; }
-.weekly-shop-container .preview-slider-controls .left-arrow { position: absolute; left: 0; top: -10px; z-index: 1001; }
-.weekly-shop-container .preview-slider-controls .right-arrow { position: absolute; right: 0; top: -10px; z-index: 1001; }
+.weekly-shop-container .preview-slider-controls { position: relative; display: flex; justify-content: center; align-items: center; margin: 0 auto; margin-bottom: 8px; width: 96%; z-index: 1000; }
+.weekly-shop-container .preview-slider-controls .slider-arrow { width: 34px; height: 34px; border-radius: 12px; border: 2px solid #3a3a3a; background: #2a2a2a; color: #eaeaea; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 6px 14px rgba(0,0,0,0.35); transition: transform 0.18s ease, filter 0.18s ease, box-shadow 0.18s ease; }
+.weekly-shop-container .preview-slider-controls .slider-arrow:hover { filter: brightness(1.08); transform: translateY(-1px); box-shadow: 0 8px 18px rgba(0,0,0,0.4); }
+.weekly-shop-container .preview-slider-controls .slider-arrow:disabled { opacity: 0.5; cursor: default; transform: none; box-shadow: none; }
+[data-theme="light"] .weekly-shop-container .preview-slider-controls .slider-arrow { background: #f2f2f2; color: #111; border-color: #cfcfcf; box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
 @media (max-width: 1024px) {
   .weekly-shop-container .preview-slider-controls { display: none !important; }
 }
-.suggest-slider-enter-active, .suggest-slider-leave-active { transition: transform 0.38s ease-in-out, opacity 0.2s ease-out; will-change: transform; }
-.suggest-slider-enter-from, .suggest-slider-leave-to { opacity: 0; }
+.suggest-slider-enter-active, .suggest-slider-leave-active { transition: transform 0.38s ease-in-out; will-change: transform; }
 .suggest-slider-move { transition: none !important; }
-.slide-left .suggest-slider-enter-from { transform: translateX(-40px); }
-.slide-left .suggest-slider-leave-to { transform: translateX(40px); }
-.slide-right .suggest-slider-enter-from { transform: translateX(40px); }
-.slide-right .suggest-slider-leave-to { transform: translateX(-40px); }
+.slide-left .suggest-slider-enter-from,
+.slide-left.suggest-slider-enter-from { transform: translateX(-40px); }
+.slide-left .suggest-slider-leave-to,
+.slide-left.suggest-slider-leave-to { transform: translateX(40px); }
+.slide-right .suggest-slider-enter-from,
+.slide-right.suggest-slider-enter-from { transform: translateX(40px); }
+.slide-right .suggest-slider-leave-to,
+.slide-right.suggest-slider-leave-to { transform: translateX(-40px); }
   .weekly-section:first-child .shop-grid.small-grid { grid-template-columns: repeat(2, 1fr) !important; height: 100%; align-items: stretch; grid-auto-rows: 1fr; gap: 12px !important; width: 658px !important; margin-left: auto; margin-right: auto; }
   @media (max-width: 480px) {
     .weekly-section:first-child .shop-grid.small-grid { gap: 25px !important; }
@@ -7941,7 +8032,7 @@ onUnmounted(() => {
   .weekly-shop-container .preview-card.preview-navbar .classic-border-preview { border-radius: 0 !important; }
   .preview-slider-viewport { overflow: hidden; }
 .preview-slider-track { display: flex; gap: 6px; align-items: stretch; justify-content: flex-start; will-change: transform; }
-.preview-slider-track .preview-card { flex: 0 0 390px; max-width: 390px; }
+.preview-slider-track .preview-card { flex: 0 0 390px; max-width: 390px; height: 410px; }
 @media (max-width: 1024px) {
   .preview-slider-viewport { overflow: visible !important; width: 100% !important; }
   .preview-slider-track { flex-direction: column; align-items: center; justify-content: flex-start; }
