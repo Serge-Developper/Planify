@@ -201,7 +201,7 @@
               <div class="preview-title">Aperçu Boutique Quotidienne</div>
               <div class="item-img-wrapper large" :class="{ 'mobile-mode': suggestDevice === 'mobile' }">
                 <div class="item-img-container">
-                  <img v-if="suggestAssetSrc" :src="suggestAssetSrc" :class="['item-img','draggable', draggingKey==='dailyShop' ? 'drag-active' : '']" :style="getSuggestStyle('dailyShop')" @click="startDrag('dailyShop', $event)" @touchstart.prevent.stop="startDragTouch('dailyShop', $event)" />
+                  <img v-for="(src, si) in suggestAssetSrcs" :key="'dailyShop-'+si" :src="src" :class="['item-img','draggable', draggingKey==='dailyShop' ? 'drag-active' : '']" :style="[getSuggestStyle('dailyShop'), getSuggestStackStyle(si)]" @click="startDrag('dailyShop', $event)" @touchstart.prevent.stop="startDragTouch('dailyShop', $event)" />
                 </div>
               </div>
               <div class="item-actions" style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
@@ -215,7 +215,7 @@
               <div class="preview-title">Aperçu Collection</div>
               <div class="item-img-wrapper large" :class="{ 'mobile-mode': suggestDevice === 'mobile' }">
                 <div class="item-img-container">
-                  <img v-if="suggestAssetSrc" :src="suggestAssetSrc" :class="['item-img','draggable', draggingKey==='collectionPreview' ? 'drag-active' : '']" :style="getSuggestStyle('collectionPreview')" @click="startDrag('collectionPreview', $event)" @touchstart.prevent.stop="startDragTouch('collectionPreview', $event)" />
+                  <img v-for="(src, si) in suggestAssetSrcs" :key="'collectionPreview-'+si" :src="src" :class="['item-img','draggable', draggingKey==='collectionPreview' ? 'drag-active' : '']" :style="[getSuggestStyle('collectionPreview'), getSuggestStackStyle(si)]" @click="startDrag('collectionPreview', $event)" @touchstart.prevent.stop="startDragTouch('collectionPreview', $event)" />
                 </div>
               </div>
               <div class="preview-actions" style="display:flex;gap:8px;justify-content:center;">
@@ -233,7 +233,7 @@
               <div class="preview-title">Aperçu Cosmétique</div>
               <div class="item-img-wrapper large">
                 <div class="item-img-container">
-                  <img v-if="suggestAssetSrc" :src="suggestAssetSrc" :class="['item-img','draggable', draggingKey==='collection' ? 'drag-active' : '']" :style="getSuggestStyle('collection')" @click="startDrag('collection', $event)" @touchstart.prevent.stop="startDragTouch('collection', $event)" />
+                  <img v-for="(src, si) in suggestAssetSrcs" :key="'collection-'+si" :src="src" :class="['item-img','draggable', draggingKey==='collection' ? 'drag-active' : '']" :style="[getSuggestStyle('collection'), getSuggestStackStyle(si)]" @click="startDrag('collection', $event)" @touchstart.prevent.stop="startDragTouch('collection', $event)" />
                 </div>
               </div>
               <div class="item-actions" style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
@@ -251,10 +251,10 @@
                   <div class="user-avatar-container">
                     <div class="user-avatar" :class="{ 'no-border': removeLeaderboardBorder }">
                       <div class="avatar-img" style="position:relative;">
-                        <img v-if="suggestAssetSrc && u.isYou && suggestPlacement.leaderboard === 'inside'" :src="suggestAssetSrc" :class="['draggable', draggingKey==='leaderboard' ? 'drag-active' : '']" :style="getSuggestStyle('leaderboard')" @click="startDrag('leaderboard', $event)" @touchstart.prevent.stop="startDragTouch('leaderboard', $event)" />
+                        <img v-for="(src, si) in (u.isYou && suggestPlacement.leaderboard === 'inside' ? suggestAssetSrcs : [])" :key="'leaderboard-in-'+si" :src="src" :class="['draggable', draggingKey==='leaderboard' ? 'drag-active' : '']" :style="[getSuggestStyle('leaderboard'), getSuggestStackStyle(si)]" @click="startDrag('leaderboard', $event)" @touchstart.prevent.stop="startDragTouch('leaderboard', $event)" />
                       </div>
                     </div>
-                    <img v-if="suggestAssetSrc && u.isYou && suggestPlacement.leaderboard === 'above'" :src="suggestAssetSrc" :class="['draggable','overlay-above-leader', draggingKey==='leaderboard' ? 'drag-active' : '']" :style="getSuggestStyle('leaderboard')" @click="startDrag('leaderboard', $event)" @touchstart.prevent.stop="startDragTouch('leaderboard', $event)" />
+                    <img v-for="(src, si) in (u.isYou && suggestPlacement.leaderboard === 'above' ? suggestAssetSrcs : [])" :key="'leaderboard-above-'+si" :src="src" :class="['draggable','overlay-above-leader', draggingKey==='leaderboard' ? 'drag-active' : '']" :style="[getSuggestStyle('leaderboard'), getSuggestStackStyle(si)]" @click="startDrag('leaderboard', $event)" @touchstart.prevent.stop="startDragTouch('leaderboard', $event)" />
                   </div>
                   <div class="user-details"><div class="username">{{ u.name }}</div></div>
                 </div>
@@ -280,10 +280,10 @@
                 <div class="profile-avatar-scaler" :style="`border:none; height: ${suggestAvatarStageHeight}px !important`">
                   <div class="profile-avatar" :class="{ 'no-border': removeAvatarBorder }" style="position:relative;">
                     <div class="avatar-img" style="position:relative; width:150px; height:150px; border-radius:24px; border:none; overflow:hidden;">
-                      <img v-if="suggestAssetSrc && suggestPlacement.avatar === 'inside'" :src="suggestAssetSrc" :class="['draggable', draggingKey==='avatar' ? 'drag-active' : '']" :style="getSuggestStyle('avatar')" @click="startDrag('avatar', $event)" @touchstart.prevent.stop="startDragTouch('avatar', $event)" />
+                      <img v-for="(src, si) in (suggestPlacement.avatar === 'inside' ? suggestAssetSrcs : [])" :key="'avatar-in-'+si" :src="src" :class="['draggable', draggingKey==='avatar' ? 'drag-active' : '']" :style="[getSuggestStyle('avatar'), getSuggestStackStyle(si)]" @click="startDrag('avatar', $event)" @touchstart.prevent.stop="startDragTouch('avatar', $event)" />
                     </div>
                   </div>
-                  <img v-if="suggestAssetSrc && suggestPlacement.avatar === 'above'" :src="suggestAssetSrc" :class="['draggable','overlay-above', draggingKey==='avatar' ? 'drag-active' : '']" :style="getSuggestStyle('avatar')" @click="startDrag('avatar', $event)" @touchstart.prevent.stop="startDragTouch('avatar', $event)" />
+                  <img v-for="(src, si) in (suggestPlacement.avatar === 'above' ? suggestAssetSrcs : [])" :key="'avatar-above-'+si" :src="src" :class="['draggable','overlay-above', draggingKey==='avatar' ? 'drag-active' : '']" :style="[getSuggestStyle('avatar'), getSuggestStackStyle(si)]" @click="startDrag('avatar', $event)" @touchstart.prevent.stop="startDragTouch('avatar', $event)" />
                 </div>
               </div>
               <div class="item-actions" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px;">
@@ -307,9 +307,9 @@
               <div class="preview-title">Aperçu Navbar</div>
               <div class="item-img-wrapper large">
                 <div class="navbar-stage" :style="getNavbarStageStyle()" style="position:relative;width:51px;height:51px;display:flex;align-items:center;justify-content:center;">
-                  <img v-if="suggestAssetSrc && suggestPlacement.navbar === 'inside'" :src="suggestAssetSrc" :class="['item-img','draggable', draggingKey==='navbar' ? 'drag-active' : '']" :style="getSuggestStyle('navbar')" @click="startDrag('navbar', $event)" @touchstart.prevent.stop="startDragTouch('navbar', $event)" />
+                  <img v-for="(src, si) in (suggestPlacement.navbar === 'inside' ? suggestAssetSrcs : [])" :key="'navbar-in-'+si" :src="src" :class="['item-img','draggable', draggingKey==='navbar' ? 'drag-active' : '']" :style="[getSuggestStyle('navbar'), getSuggestStackStyle(si)]" @click="startDrag('navbar', $event)" @touchstart.prevent.stop="startDragTouch('navbar', $event)" />
                 </div>
-                <img v-if="suggestAssetSrc && suggestPlacement.navbar === 'above'" :src="suggestAssetSrc" :class="['item-img','draggable', draggingKey==='navbar' ? 'drag-active' : '']" :style="getSuggestStyle('navbar')" @click="startDrag('navbar', $event)" @touchstart.prevent.stop="startDragTouch('navbar', $event)" />
+                <img v-for="(src, si) in (suggestPlacement.navbar === 'above' ? suggestAssetSrcs : [])" :key="'navbar-above-'+si" :src="src" :class="['item-img','draggable', draggingKey==='navbar' ? 'drag-active' : '']" :style="[getSuggestStyle('navbar'), getSuggestStackStyle(si)]" @click="startDrag('navbar', $event)" @touchstart.prevent.stop="startDragTouch('navbar', $event)" />
               </div>
               <div class="item-actions" style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
                 <label>Taille: <input type="range" min="10" max="120" v-model.number="suggestStyles.navbar.width" /></label>
@@ -332,7 +332,7 @@
 
               <div class="item-img-wrapper large" :style="getPopupWrapperStyle()">
                 <div class="item-img-container">
-                  <img v-if="suggestVariants && suggestVariants[activeVariantIndex] && suggestVariants[activeVariantIndex].assetSrc" :src="suggestVariants[activeVariantIndex].assetSrc" :class="['item-img','draggable', draggingKey==='popupStyle' ? 'drag-active' : '']" :style="getSuggestStyle('popupStyle')" @click="startDrag('popupStyle', $event)" @touchstart.prevent.stop="startDragTouch('popupStyle', $event)" />
+                  <img v-for="(src, si) in suggestAssetSrcs" :key="'popupStyle-'+si" :src="src" :class="['item-img','draggable', draggingKey==='popupStyle' ? 'drag-active' : '']" :style="[getSuggestStyle('popupStyle'), getSuggestStackStyle(si)]" @click="startDrag('popupStyle', $event)" @touchstart.prevent.stop="startDragTouch('popupStyle', $event)" />
                 </div>
               </div>
               <div class="item-actions" style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
@@ -3116,7 +3116,7 @@
               </div>
               <div class="item-img-wrapper large">
                 <div class="item-img-container">
-                  <img v-if="suggestVariants && suggestVariants[activeVariantIndex] && suggestVariants[activeVariantIndex].assetSrc" :src="suggestVariants[activeVariantIndex].assetSrc" :style="getSuggestStyle('popupStyle')" class="item-img" />
+                  <img v-for="(src, si) in suggestAssetSrcs" :key="'popupStyle-preview-'+si" :src="src" :style="[getSuggestStyle('popupStyle'), getSuggestStackStyle(si)]" class="item-img" />
                 </div>
               </div>
             </div>
@@ -3657,7 +3657,7 @@ const weeklyContainerRef = ref(null)
 const forceWeeklyHeight = ref(0)
 function syncWeeklyHeight(){ try{ const el = weeklyContainerRef.value; if (!el) return; const rect = el.getBoundingClientRect(); forceWeeklyHeight.value = Math.round(rect.height) }catch{} }
 function openPurchasePreview(item){ try{ syncWeeklyHeight(); purchasePreviewItem.value = item; showPurchasePreview.value = true; hoverBackShop.value = false; hoverCloseShop.value = false }catch{} }
-function closePurchasePreview(){ hoverBackShop.value = false; hoverCloseShop.value = false; try{ showPurchasePreview.value = false }catch{ showPurchasePreview = false }; purchasePreviewItem.value = null; if (showSuggestionEditor && (showSuggestionEditor.value === true)) { showSuggestionEditor.value = false; suggestAssetSrc.value = ''; suggestUrl.value = ''; removeAvatarBorder.value = false; removeLeaderboardBorder.value = false; previewWindowIndex.value = 0; suggestDevice.value = 'desktop'; const DEF = { top:0, left:0, width:50, height:50, rotate:0, objectFit:'contain', zIndex:1, margin:0, padding:0, background:'', boxShadow:'', borderWidth:0, borderStyle:'none', borderColor:'', borderRadius:0 }; suggestStyles.value = { dailyShop: { ...DEF }, collectionPreviewDesktop: { ...DEF }, collectionPreviewMobile: { ...DEF }, collectionPreview: { ...DEF }, collection: { ...DEF }, leaderboard: { ...DEF }, avatar: { ...DEF }, navbar: { ...DEF }, popupStyle: { ...DEF } }; resetSuggestUsers() } }
+function closePurchasePreview(){ hoverBackShop.value = false; hoverCloseShop.value = false; try{ showPurchasePreview.value = false }catch{ showPurchasePreview = false }; purchasePreviewItem.value = null; if (showSuggestionEditor && (showSuggestionEditor.value === true)) { showSuggestionEditor.value = false; suggestAssetSrcs.value = []; suggestUrl.value = ''; removeAvatarBorder.value = false; removeLeaderboardBorder.value = false; previewWindowIndex.value = 0; suggestDevice.value = 'desktop'; const DEF = { top:0, left:0, width:50, height:50, rotate:0, objectFit:'contain', zIndex:1, margin:0, padding:0, background:'', boxShadow:'', borderWidth:0, borderStyle:'none', borderColor:'', borderRadius:0 }; suggestStyles.value = { dailyShop: { ...DEF }, collectionPreviewDesktop: { ...DEF }, collectionPreviewMobile: { ...DEF }, collectionPreview: { ...DEF }, collection: { ...DEF }, leaderboard: { ...DEF }, avatar: { ...DEF }, navbar: { ...DEF }, popupStyle: { ...DEF } }; resetSuggestUsers() } }
 function measurePreviewSlider(){ try{ const root = weeklyContainerRef.value; if (!root) return; const card = root.querySelector('.preview-slider-track .preview-card'); if (card) { const r = card.getBoundingClientRect(); previewCardWidth.value = Math.round(r.width) } const track = root.querySelector('.preview-slider-track'); if (track) { const cs = window.getComputedStyle(track); const gapVal = parseFloat(cs.gap) || 6; previewCardGap.value = Math.round(gapVal) } }catch{} }
 onMounted(() => { try{ syncWeeklyHeight(); measurePreviewSlider(); measureVariantSlider(); window.addEventListener('resize', syncWeeklyHeight); window.addEventListener('resize', measurePreviewSlider); window.addEventListener('resize', measureVariantSlider); refreshSuggestPreviewBorderColor() }catch{} })
 onUnmounted(() => { try{ window.removeEventListener('resize', syncWeeklyHeight); window.removeEventListener('resize', measurePreviewSlider); window.removeEventListener('resize', measureVariantSlider) }catch{} })
@@ -3893,7 +3893,7 @@ function isSlideVisible(key) {
   if (idx < 0) return false
   return idx >= previewWindowIndex.value && idx < (previewWindowIndex.value + previewWindowSize)
 }
-const suggestAssetSrc = ref('')
+const suggestAssetSrcs = ref([])
 const suggestUrl = ref('')
 const suggestPrice = ref(150)
 const removeAvatarBorder = ref(false)
@@ -3912,7 +3912,7 @@ const suggestStyles = ref({
 })
 const suggestAvatarStageHeight = ref(250)
 const DEFAULT_SUGGEST_STYLE = { top: 0, left: 0, width: 50, height: 50, rotate: 0, objectFit: 'contain', zIndex: 1, margin: 0, padding: 0, background: '', boxShadow: '', borderWidth: 0, borderStyle: 'none', borderColor: '', borderRadius: 0 }
-const makeVariant = (name) => ({ name, assetSrc: '', styles: { dailyShop: { ...DEFAULT_SUGGEST_STYLE }, collectionPreviewDesktop: { ...DEFAULT_SUGGEST_STYLE }, collectionPreviewMobile: { ...DEFAULT_SUGGEST_STYLE }, collectionPreview: { ...DEFAULT_SUGGEST_STYLE }, collection: { ...DEFAULT_SUGGEST_STYLE }, leaderboard: { ...DEFAULT_SUGGEST_STYLE }, avatar: { ...DEFAULT_SUGGEST_STYLE }, navbar: { ...DEFAULT_SUGGEST_STYLE }, popupStyle: { ...DEFAULT_SUGGEST_STYLE } }, flags: { removeLeaderboardBorder: false, removeProfilePopupBorder: false, removeNavbarBorder: false, leaderboardPlacement: 'inside', profilePopupPlacement: 'inside', navbarPlacement: 'inside', largeAvatarHeight: 250 } })
+const makeVariant = (name) => ({ name, assetSrcs: [], assetSrc: '', styles: { dailyShop: { ...DEFAULT_SUGGEST_STYLE }, collectionPreviewDesktop: { ...DEFAULT_SUGGEST_STYLE }, collectionPreviewMobile: { ...DEFAULT_SUGGEST_STYLE }, collectionPreview: { ...DEFAULT_SUGGEST_STYLE }, collection: { ...DEFAULT_SUGGEST_STYLE }, leaderboard: { ...DEFAULT_SUGGEST_STYLE }, avatar: { ...DEFAULT_SUGGEST_STYLE }, navbar: { ...DEFAULT_SUGGEST_STYLE }, popupStyle: { ...DEFAULT_SUGGEST_STYLE } }, flags: { removeLeaderboardBorder: false, removeProfilePopupBorder: false, removeNavbarBorder: false, leaderboardPlacement: 'inside', profilePopupPlacement: 'inside', navbarPlacement: 'inside', largeAvatarHeight: 250 } })
 const suggestVariants = ref([ makeVariant('Style 1') ])
 const activeVariantIndex = ref(0)
 const variantWindowSize = 5
@@ -3983,8 +3983,8 @@ function nextVariantWindow() {
   const maxStart = Math.max(0, total - variantWindowSize)
   variantWindowIndex.value = Math.min(maxStart, variantWindowIndex.value + 1)
 }
-function loadActiveVariantIntoBuffer() { try { const v = suggestVariants.value[activeVariantIndex.value]; if (!v) return; suggestStyles.value.dailyShop = { ...(v.styles.dailyShop || v.styles.dailyStyle || DEFAULT_SUGGEST_STYLE) }; suggestStyles.value.collectionPreviewDesktop = { ...(v.styles.collectionPreviewDesktop || v.styles.collectionPreview || v.styles.collection || DEFAULT_SUGGEST_STYLE) }; suggestStyles.value.collectionPreviewMobile = { ...(v.styles.collectionPreviewMobile || v.styles.collectionPreview || v.styles.collection || DEFAULT_SUGGEST_STYLE) }; suggestStyles.value.collectionPreview = (suggestDevice.value === 'mobile') ? suggestStyles.value.collectionPreviewMobile : suggestStyles.value.collectionPreviewDesktop; suggestStyles.value.collection = { ...v.styles.collection }; suggestStyles.value.leaderboard = { ...v.styles.leaderboard }; suggestStyles.value.avatar = { ...v.styles.avatar }; suggestStyles.value.navbar = { ...(v.styles.navbar || DEFAULT_SUGGEST_STYLE) }; suggestStyles.value.popupStyle = { ...(v.styles.popupStyle || DEFAULT_SUGGEST_STYLE) }; removeLeaderboardBorder.value = !!v.flags.removeLeaderboardBorder; removeAvatarBorder.value = !!v.flags.removeProfilePopupBorder; removeNavbarBorder.value = !!v.flags.removeNavbarBorder; suggestPlacement.value = { leaderboard: String(v.flags.leaderboardPlacement || 'inside'), avatar: String(v.flags.profilePopupPlacement || 'inside'), navbar: String(v.flags.navbarPlacement || 'inside') }; suggestAvatarStageHeight.value = Number(v.flags.largeAvatarHeight || 250); suggestAssetSrc.value = v.assetSrc || '' } catch {} }
-function persistBufferIntoActiveVariant() { try { const v = suggestVariants.value[activeVariantIndex.value]; if (!v) return; v.styles.dailyShop = { ...suggestStyles.value.dailyShop }; v.styles.collectionPreviewDesktop = { ...suggestStyles.value.collectionPreviewDesktop }; v.styles.collectionPreviewMobile = { ...suggestStyles.value.collectionPreviewMobile }; v.styles.collectionPreview = { ...suggestStyles.value.collectionPreview }; v.styles.collection = { ...suggestStyles.value.collection }; v.styles.leaderboard = { ...suggestStyles.value.leaderboard }; v.styles.avatar = { ...suggestStyles.value.avatar }; v.styles.navbar = { ...suggestStyles.value.navbar }; v.styles.popupStyle = { ...suggestStyles.value.popupStyle }; v.flags.removeLeaderboardBorder = !!removeLeaderboardBorder.value; v.flags.removeProfilePopupBorder = !!removeAvatarBorder.value; v.flags.removeNavbarBorder = !!removeNavbarBorder.value; v.flags.leaderboardPlacement = String(suggestPlacement.value.leaderboard || 'inside'); v.flags.profilePopupPlacement = String(suggestPlacement.value.avatar || 'inside'); v.flags.navbarPlacement = String(suggestPlacement.value.navbar || 'inside'); v.flags.largeAvatarHeight = Number(suggestAvatarStageHeight.value || 250); v.assetSrc = suggestAssetSrc.value || '' } catch {} }
+function loadActiveVariantIntoBuffer() { try { const v = suggestVariants.value[activeVariantIndex.value]; if (!v) return; suggestStyles.value.dailyShop = { ...(v.styles.dailyShop || v.styles.dailyStyle || DEFAULT_SUGGEST_STYLE) }; suggestStyles.value.collectionPreviewDesktop = { ...(v.styles.collectionPreviewDesktop || v.styles.collectionPreview || v.styles.collection || DEFAULT_SUGGEST_STYLE) }; suggestStyles.value.collectionPreviewMobile = { ...(v.styles.collectionPreviewMobile || v.styles.collectionPreview || v.styles.collection || DEFAULT_SUGGEST_STYLE) }; suggestStyles.value.collectionPreview = (suggestDevice.value === 'mobile') ? suggestStyles.value.collectionPreviewMobile : suggestStyles.value.collectionPreviewDesktop; suggestStyles.value.collection = { ...v.styles.collection }; suggestStyles.value.leaderboard = { ...v.styles.leaderboard }; suggestStyles.value.avatar = { ...v.styles.avatar }; suggestStyles.value.navbar = { ...(v.styles.navbar || DEFAULT_SUGGEST_STYLE) }; suggestStyles.value.popupStyle = { ...(v.styles.popupStyle || DEFAULT_SUGGEST_STYLE) }; removeLeaderboardBorder.value = !!v.flags.removeLeaderboardBorder; removeAvatarBorder.value = !!v.flags.removeProfilePopupBorder; removeNavbarBorder.value = !!v.flags.removeNavbarBorder; suggestPlacement.value = { leaderboard: String(v.flags.leaderboardPlacement || 'inside'), avatar: String(v.flags.profilePopupPlacement || 'inside'), navbar: String(v.flags.navbarPlacement || 'inside') }; suggestAvatarStageHeight.value = Number(v.flags.largeAvatarHeight || 250); const rawSrcs = Array.isArray(v.assetSrcs) ? v.assetSrcs : (v.assetSrc ? [v.assetSrc] : []); let resolved = rawSrcs; try { resolved = rawSrcs.map(s => resolveAssetSrc(s)) } catch {} suggestAssetSrcs.value = resolved.filter(s => !!s) } catch {} }
+function persistBufferIntoActiveVariant() { try { const v = suggestVariants.value[activeVariantIndex.value]; if (!v) return; v.styles.dailyShop = { ...suggestStyles.value.dailyShop }; v.styles.collectionPreviewDesktop = { ...suggestStyles.value.collectionPreviewDesktop }; v.styles.collectionPreviewMobile = { ...suggestStyles.value.collectionPreviewMobile }; v.styles.collectionPreview = { ...suggestStyles.value.collectionPreview }; v.styles.collection = { ...suggestStyles.value.collection }; v.styles.leaderboard = { ...suggestStyles.value.leaderboard }; v.styles.avatar = { ...suggestStyles.value.avatar }; v.styles.navbar = { ...suggestStyles.value.navbar }; v.styles.popupStyle = { ...suggestStyles.value.popupStyle }; v.flags.removeLeaderboardBorder = !!removeLeaderboardBorder.value; v.flags.removeProfilePopupBorder = !!removeAvatarBorder.value; v.flags.removeNavbarBorder = !!removeNavbarBorder.value; v.flags.leaderboardPlacement = String(suggestPlacement.value.leaderboard || 'inside'); v.flags.profilePopupPlacement = String(suggestPlacement.value.avatar || 'inside'); v.flags.navbarPlacement = String(suggestPlacement.value.navbar || 'inside'); v.flags.largeAvatarHeight = Number(suggestAvatarStageHeight.value || 250); v.assetSrcs = Array.isArray(suggestAssetSrcs.value) ? [...suggestAssetSrcs.value] : []; v.assetSrc = v.assetSrcs[0] || '' } catch {} }
 function selectVariant(i) { persistBufferIntoActiveVariant(); activeVariantIndex.value = i; loadActiveVariantIntoBuffer(); ensureVariantWindowForIndex(i) }
 function addVariant() { persistBufferIntoActiveVariant(); suggestVariants.value.push(makeVariant('Style ' + (suggestVariants.value.length + 1))); activeVariantIndex.value = suggestVariants.value.length - 1; loadActiveVariantIntoBuffer(); ensureVariantWindowForIndex(activeVariantIndex.value) }
 function duplicateVariant() { persistBufferIntoActiveVariant(); const v = suggestVariants.value[activeVariantIndex.value]; const copy = JSON.parse(JSON.stringify(v)); copy.name = 'Style ' + (suggestVariants.value.length + 1); suggestVariants.value.push(copy); activeVariantIndex.value = suggestVariants.value.length - 1; loadActiveVariantIntoBuffer(); ensureVariantWindowForIndex(activeVariantIndex.value) }
@@ -4037,7 +4037,7 @@ const hoverCenterPopup = ref(false)
 const hoverCenterNavbar = ref(false)
 function togglePlacement(target){ try { const p = suggestPlacement.value; p[target] = (p[target] === 'above') ? 'inside' : 'above'; const v = suggestVariants.value[activeVariantIndex.value]; if (v && v.flags) { if (target === 'leaderboard') v.flags.leaderboardPlacement = String(p[target]); else v.flags.profilePopupPlacement = String(p[target]); } } catch {} }
 function getPlacementImg(target, hover){ try { const isAbove = (suggestPlacement.value && suggestPlacement.value[target] === 'above'); if (isAbove) return aboveIcon; return hover ? aboveIcon : insideIcon } catch { return insideIcon } }
-function openSuggestEditor() { currentEditingLocalId.value = null; currentEditingServerId.value = null; showSuggestionEditor.value = true; try { syncWeeklyHeight() } catch {} ; try { showPurchasePreview.value = true } catch { showPurchasePreview = true } ; try { suggestAssetSrc.value = ''; suggestUrl.value = ''; previewWindowIndex.value = 0; suggestDevice.value = 'desktop'; if (Array.isArray(suggestVariants.value)) { suggestVariants.value.forEach(v => { if (v) v.assetSrc = '' }) } resetSuggestUsers() } catch {} }
+function openSuggestEditor() { currentEditingLocalId.value = null; currentEditingServerId.value = null; showSuggestionEditor.value = true; try { syncWeeklyHeight() } catch {} ; try { showPurchasePreview.value = true } catch { showPurchasePreview = true } ; try { suggestAssetSrcs.value = []; suggestUrl.value = ''; previewWindowIndex.value = 0; suggestDevice.value = 'desktop'; if (Array.isArray(suggestVariants.value)) { suggestVariants.value.forEach(v => { if (v) { v.assetSrcs = []; v.assetSrc = '' } }) } resetSuggestUsers() } catch {} }
 function closeSuggestEditor() { showSuggestionEditor.value = false }
 function isUserItemCreator(item) {
   try {
@@ -4107,10 +4107,13 @@ function editUserItem(item) {
           navbarPlacement: String(((a && a.meta && a.meta.navbarPlacement) || (item.meta && item.meta.navbarPlacement) || 'inside')),
           largeAvatarHeight: Number(((a && a.meta && a.meta.largeAvatarHeight) || (item.meta && item.meta.largeAvatarHeight) || 250))
         }
-        variants.push({ name: (v && v.name) || 'Style', assetSrc: (a && a.src) || '', styles: { dailyShop: { ...daily }, collectionPreviewDesktop: { ...col }, collectionPreviewMobile: { ...colMobile }, collection: { ...cosmetic }, leaderboard: { ...lead }, navbar: { ...nav }, avatar: { ...large } }, flags })
+        const assets = Array.isArray(v && v.assets) ? v.assets : []
+        const assetSrcs = assets.map(a => (a && a.src) || '').filter(s => !!s)
+        variants.push({ name: (v && v.name) || 'Style', assetSrcs, assetSrc: assetSrcs[0] || (a && a.src) || '', styles: { dailyShop: { ...daily }, collectionPreviewDesktop: { ...col }, collectionPreviewMobile: { ...colMobile }, collection: { ...cosmetic }, leaderboard: { ...lead }, navbar: { ...nav }, avatar: { ...large } }, flags })
       }
     } else {
-      const a = Array.isArray(item.assets) ? item.assets[0] : null
+      const assets = Array.isArray(item.assets) ? item.assets : []
+      const a = assets[0] || null
       const col = (a && a.collectionStyle) || (a && a.style) || {}
       const colMobile = (a && a.collectionStyleMobile) || (a && a.collectionStyle) || (a && a.style) || {}
       const lead = (a && a.leaderboardStyle) || (a && a.style) || {}
@@ -4127,13 +4130,15 @@ function editUserItem(item) {
         navbarPlacement: String(((a && a.meta && a.meta.navbarPlacement) || (item.meta && item.meta.navbarPlacement) || 'inside')),
         largeAvatarHeight: Number(((a && a.meta && a.meta.largeAvatarHeight) || (item.meta && item.meta.largeAvatarHeight) || 250))
       }
-      variants.push({ name: 'Style 1', assetSrc: (a && a.src) || '', styles: { dailyShop: { ...daily }, collectionPreviewDesktop: { ...col }, collectionPreviewMobile: { ...colMobile }, collection: { ...cosmetic }, leaderboard: { ...lead }, navbar: { ...nav }, avatar: { ...large }, popupStyle: { ...pop } }, flags })
+      const assetSrcs = assets.map(a => (a && a.src) || '').filter(s => !!s)
+      variants.push({ name: 'Style 1', assetSrcs, assetSrc: assetSrcs[0] || (a && a.src) || '', styles: { dailyShop: { ...daily }, collectionPreviewDesktop: { ...col }, collectionPreviewMobile: { ...colMobile }, collection: { ...cosmetic }, leaderboard: { ...lead }, navbar: { ...nav }, avatar: { ...large }, popupStyle: { ...pop } }, flags })
     }
     suggestVariants.value = variants.length ? variants : [ makeVariant('Style 1') ]
     activeVariantIndex.value = 0
     loadActiveVariantIntoBuffer()
-    const a0 = (Array.isArray(item.variants) && item.variants[0] && Array.isArray(item.variants[0].assets)) ? item.variants[0].assets[0] : (Array.isArray(item.assets) ? item.assets[0] : null)
-    try { suggestAssetSrc.value = resolveAssetSrc((a0 && a0.src) || '') } catch { suggestAssetSrc.value = (a0 && a0.src) || '' }
+    const a0Assets = (Array.isArray(item.variants) && item.variants[0] && Array.isArray(item.variants[0].assets)) ? item.variants[0].assets : (Array.isArray(item.assets) ? item.assets : [])
+    const a0Srcs = a0Assets.map(a => (a && a.src) || '').filter(s => !!s)
+    try { suggestAssetSrcs.value = a0Srcs.map(s => resolveAssetSrc(s)) } catch { suggestAssetSrcs.value = a0Srcs }
     try {
       const v = suggestVariants.value[activeVariantIndex.value]
       const lp = String(v && v.flags && v.flags.leaderboardPlacement || 'inside')
@@ -4152,9 +4157,10 @@ function isLocalUserItem(item) { try { const u = authStore.user; const uid = Str
 async function deleteUserItem(item) { try { const legacyId = Number((typeof item.legacyId !== 'undefined') ? item.legacyId : item.id); let targetId = null; if (isAdminOnly && isAdminOnly.value) { try { const r = await secureApiCall(`/items/legacy/${legacyId}`); if (r && r.success && r.item && r.item._id) targetId = r.item._id } catch {} if (targetId) { const del = await secureApiCall(`/items/${targetId}`, { method: 'DELETE' }); if (del && del.success) { try { window.dispatchEvent(new CustomEvent('items-changed')) } catch {} } } } else if (isUserItemCreator(item)) { const serverItemId = item && item.meta && item.meta.serverItemId; if (serverItemId) targetId = serverItemId; if (!targetId) { try { const params = []; if (Number.isFinite(legacyId)) params.push(`legacyId=${legacyId}`); const locId = item && item.meta && item.meta.localItemId; if (locId) params.push(`localItemId=${encodeURIComponent(locId)}`); const res = await secureApiCall(`/items/suggest/resolve${params.length ? ('?' + params.join('&')) : ''}`); if (res && res.success && res.item && res.item._id) targetId = res.item._id } catch {} } if (!targetId) { try { const list = await secureApiCall(`/items?_=${Date.now()}`); const arr = (list && list.items) ? list.items : (Array.isArray(list) ? list : []); const u = authStore.user; const uid = String((u && (u.id || u._id)) || ''); const locId = item && item.meta && item.meta.localItemId; const name = String(item.name || '').trim(); const cand = Array.isArray(arr) ? arr.find(it => { const createdBy = String(it.createdBy || ''); const lid = Number((typeof it.legacyId === 'number' && !Number.isNaN(it.legacyId)) ? it.legacyId : NaN); const serverName = String(it.name || '').trim(); const plocal = it && it.meta && it.meta.localItemId; if (createdBy !== uid) return false; if (Number.isFinite(legacyId) && Number.isFinite(lid) && lid === legacyId) return true; if (locId && plocal && String(plocal) === String(locId)) return true; return serverName === name && !!name; }) : null; if (cand && cand._id) targetId = cand._id } catch {} } if (targetId) { const del2 = await secureApiCall(`/items/suggest/${targetId}`, { method: 'DELETE' }); if (del2 && del2.success) { try { window.dispatchEvent(new CustomEvent('items-changed')) } catch {} } } }
   const u = authStore.user; const uid = String((u && (u.id || u._id)) || 'anon'); const key = 'my-items-local-' + uid; let local = []; try { local = JSON.parse(localStorage.getItem(key) || '[]') } catch { local = [] } const name = String(item.name || '').trim(); const localId = item && item.meta && item.meta.localItemId; const filtered = (Array.isArray(local) ? local.filter(p => { const pid = (typeof p.legacyId !== 'undefined') ? p.legacyId : p.id; const pname = String(p.name || '').trim(); const plocalId = p && p.meta && p.meta.localItemId; const pserverId = p && p.meta && p.meta.serverItemId; const sameServer = !!(pserverId && ((item && item.meta && item.meta.serverItemId) ? String(pserverId) === String(item.meta.serverItemId) : (targetId ? String(pserverId) === String(targetId) : false))); if (sameServer) return false; if (localId && plocalId) return String(plocalId) !== String(localId); if (Number.isFinite(legacyId)) return Number(pid) !== legacyId; return pname !== name; }) : []); try { localStorage.setItem(key, JSON.stringify(filtered)) } catch {}
   const normId = Number((typeof item.legacyId !== 'undefined') ? item.legacyId : item.id); dynamicItems.value = (Array.isArray(dynamicItems.value) ? dynamicItems.value.filter(n => { const nid = Number((typeof n.legacyId !== 'undefined') ? n.legacyId : n.id); const nname = String(n.name || '').trim(); return (Number.isFinite(normId) ? nid !== normId : nname !== name) }) : []); try { if (Number.isFinite(normId)) dynamicInfoById.value.delete(Number(normId)) } catch {} try { if (name) dynamicInfoByName.value.delete(String(name)) } catch {} try { loadWeeklyItems() } catch {} localItemsUpdateKey.value++; try { await secureApiCall('/users/my-items', { method: 'DELETE', body: JSON.stringify({ legacyId: Number.isFinite(legacyId) ? legacyId : undefined, localItemId: localId || undefined, id: (typeof item.id === 'number' ? item.id : undefined), name }) }) } catch {} try { userServerLocalItems.value = (Array.isArray(userServerLocalItems.value) ? userServerLocalItems.value.filter(u => { const uid = (typeof u.legacyId !== 'undefined') ? u.legacyId : u.id; const ulocalId = u && u.meta && u.meta.localItemId; const uname = String(u.name || '').trim(); if (localId && ulocalId) return String(ulocalId) !== String(localId); if (Number.isFinite(legacyId)) return Number(uid) !== legacyId; return uname !== name; }) : []) } catch {} try { await loadUserServerLocalItems() } catch {} try { window.dispatchEvent(new CustomEvent('my-items-changed')) } catch {} alert('Item supprimé de vos items.') } catch {} }
-function onSuggestFile(e) { try { const f = e.target.files && e.target.files[0]; if (!f) return; const name = String(f.name || '').toLowerCase(); const type = String(f.type || '').toLowerCase(); const isWebp = type === 'image/webp' || name.endsWith('.webp'); const isGif = type === 'image/gif' || name.endsWith('.gif'); if (!isWebp && !isGif) { try { alert('Seuls les fichiers WEBP ou GIF sont acceptés.') } catch {} try { e.target.value = '' } catch {} return } const reader = new FileReader(); reader.onload = () => { const data = reader.result; suggestAssetSrc.value = data; const v = suggestVariants.value[activeVariantIndex.value]; if (v) v.assetSrc = data }; reader.readAsDataURL(f) } catch {} }
-function onSuggestUrl() { try { const u = String(suggestUrl.value || '').trim(); if (!u) return; const raw = u.split('?')[0]; const url = raw + (raw.startsWith('/uploads/') ? `?v=${Date.now()}` : ''); suggestAssetSrc.value = url; const v = suggestVariants.value[activeVariantIndex.value]; if (v) v.assetSrc = url } catch {} }
+function onSuggestFile(e) { try { const f = e.target.files && e.target.files[0]; if (!f) return; const name = String(f.name || '').toLowerCase(); const type = String(f.type || '').toLowerCase(); const isWebp = type === 'image/webp' || name.endsWith('.webp'); const isGif = type === 'image/gif' || name.endsWith('.gif'); if (!isWebp && !isGif) { try { alert('Seuls les fichiers WEBP ou GIF sont acceptés.') } catch {} try { e.target.value = '' } catch {} return } const reader = new FileReader(); reader.onload = () => { const data = reader.result; persistBufferIntoActiveVariant(); const v = suggestVariants.value[activeVariantIndex.value]; const list = (v && Array.isArray(v.assetSrcs)) ? v.assetSrcs : (v && v.assetSrc ? [v.assetSrc] : []); if (v) { v.assetSrcs = [...list, data]; v.assetSrc = v.assetSrcs[0] || '' } suggestAssetSrcs.value = (v && Array.isArray(v.assetSrcs)) ? [...v.assetSrcs] : [data] }; reader.readAsDataURL(f) } catch {} }
+function onSuggestUrl() { try { const u = String(suggestUrl.value || '').trim(); if (!u) return; const raw = u.split('?')[0]; const url = raw + (raw.startsWith('/uploads/') ? `?v=${Date.now()}` : ''); persistBufferIntoActiveVariant(); const v = suggestVariants.value[activeVariantIndex.value]; const list = (v && Array.isArray(v.assetSrcs)) ? v.assetSrcs : (v && v.assetSrc ? [v.assetSrc] : []); if (v) { v.assetSrcs = [...list, url]; v.assetSrc = v.assetSrcs[0] || '' } suggestAssetSrcs.value = (v && Array.isArray(v.assetSrcs)) ? [...v.assetSrcs] : [url] } catch {} }
 function centerSuggest(key) { try { const s = suggestStyles.value[key]; if (!s) return; const root = weeklyContainerRef.value; let el = null; if (key === 'leaderboard') { const sel = (suggestPlacement.value.leaderboard === 'above') ? '.preview-card.preview-leaderboard .leaderboard-item .user-avatar-container' : '.preview-card.preview-leaderboard .avatar-img'; el = root && root.querySelector(sel) } else if (key === 'avatar') { const sel = (suggestPlacement.value.avatar === 'above') ? '.preview-card.preview-avatar .profile-avatar-scaler' : '.preview-card.preview-avatar .avatar-img'; el = root && root.querySelector(sel) } else if (key === 'navbar') { const sel = '.preview-card.preview-navbar .navbar-stage'; el = root && root.querySelector(sel) } else if (key === 'dailyShop') { el = root && root.querySelector('.preview-card.preview-daily-shop .item-img-container') } else if (key === 'collectionPreview') { el = root && root.querySelector('.preview-card.preview-collection .item-img-container') } else if (key === 'popupStyle') { el = root && root.querySelector('.preview-card.preview-popup-style .item-img-container') } else { el = root && root.querySelector('.preview-card.preview-item .item-img-container') } const rect = el ? el.getBoundingClientRect() : null; const boxW = rect ? rect.width : (key === 'leaderboard' ? 57 : key === 'avatar' ? 150 : key === 'navbar' ? 51 : key === 'collectionPreview' ? (suggestDevice.value === 'mobile' ? 80 : 90) : key === 'popupStyle' ? 120.5 : key === 'dailyShop' ? 90 : 100); const boxH = rect ? rect.height : (key === 'leaderboard' ? 57 : key === 'avatar' ? 150 : key === 'navbar' ? 51 : key === 'collectionPreview' ? (suggestDevice.value === 'mobile' ? 80 : 90) : key === 'popupStyle' ? 64 : key === 'dailyShop' ? 90 : 100); const w = Number(s.width) || 50; const h = Number(s.height || s.width) || 50; s.left = Math.round((boxW - w) / 2); s.top = Math.round((boxH - h) / 2) } catch {} }
+function getSuggestStackStyle(i) { try { const idx = Number(i) || 0; if (idx <= 0) return {}; const delta = Math.min(24, idx * 6); return { marginLeft: delta + 'px', marginTop: delta + 'px' } } catch { return {} } }
 function getSuggestStyle(key) { try { const s = suggestStyles.value[key] || {}; const style = { position: 'absolute' }; if (typeof s.top === 'number') style.top = s.top + 'px'; if (typeof s.left === 'number') style.left = s.left + 'px'; if (typeof s.width === 'number') style.width = s.width + 'px'; if (typeof s.height === 'number') style.height = s.height + 'px'; if (typeof s.rotate === 'number') style.transform = `rotate(${s.rotate}deg)`; if (typeof s.zIndex === 'number') style.zIndex = s.zIndex; try { const p = suggestPlacement.value || {}; if (key === 'avatar' && p.avatar === 'above') { style.zIndex = Math.max(Number(style.zIndex || 0), 100) } if (key === 'leaderboard' && p.leaderboard === 'above') { style.zIndex = Math.max(Number(style.zIndex || 0), 100) } if (key === 'navbar' && p.navbar === 'above') { style.zIndex = Math.max(Number(style.zIndex || 0), 100) } } catch {} if (typeof s.objectFit === 'string') style.objectFit = s.objectFit; if (typeof s.margin === 'number') style.margin = s.margin + 'px'; if (typeof s.padding === 'number') style.padding = s.padding + 'px'; if (s.background) style.background = s.background; if (s.boxShadow) style.boxShadow = s.boxShadow; if (typeof s.borderWidth === 'number') style.borderWidth = s.borderWidth + 'px'; if (typeof s.borderStyle === 'string') style.borderStyle = s.borderStyle; if (s.borderColor) style.borderColor = s.borderColor; if (typeof s.borderRadius === 'number') style.borderRadius = s.borderRadius + 'px'; return style } catch { return { position: 'absolute' } } }
 const suggestPreviewBorderColor = ref(null)
 function refreshSuggestPreviewBorderColor() { try { const root = weeklyContainerRef.value; const sels = ['.preview-card.preview-collection .item-img-wrapper.large', '.preview-card.preview-daily-shop .item-img-wrapper.large', '.preview-card.preview-avatar .profile-avatar-stage']; let color = ''; for (const s of sels) { const el = root && root.querySelector(s); if (!el) continue; const cs = window.getComputedStyle(el); const c = cs.getPropertyValue('border-color') || cs.borderColor || ''; if (c && c !== 'transparent') { color = c; break } } suggestPreviewBorderColor.value = color || '#00FF80' } catch { suggestPreviewBorderColor.value = '#00FF80' } }
@@ -4187,8 +4193,9 @@ function saveSuggestion() {
       navbarTarget: 'avatar-image-container',
       largeAvatarHeight: Number(suggestAvatarStageHeight.value || 250)
     }
-    const baseAsset = {
-      src: suggestAssetSrc.value || '',
+    const baseAssetSrcs = (Array.isArray(suggestAssetSrcs.value) && suggestAssetSrcs.value.length) ? suggestAssetSrcs.value : ['']
+    const baseAssets = baseAssetSrcs.map(src => ({
+      src: src || '',
       style: { top: 0, left: 0, width: 100 },
       collectionStyle: { ...(suggestStyles.value.collectionPreviewDesktop || suggestStyles.value.collectionPreview || suggestStyles.value.collection) },
       collectionStyleMobile: { ...(suggestStyles.value.collectionPreviewMobile || suggestStyles.value.collectionPreview || suggestStyles.value.collection) },
@@ -4203,47 +4210,50 @@ function saveSuggestion() {
       cosmeticPreviewStyleMobile: { ...suggestStyles.value.collection },
       dailyStyle: { ...suggestStyles.value.dailyShop },
       meta: { ...baseMeta }
-    }
+    }))
     const payload = {
       legacyId: null,
       name: 'Suggestion',
       price: Math.min(500, Math.max(150, Number(suggestPrice.value) || 0)),
       type: 'generic',
-      assets: [baseAsset],
+      assets: baseAssets,
       backgrounds: { collection: null, leaderboard: null, avatar: null, navbar: null, 'popup-style': null, 'profile-popup': null },
       meta: { largeAvatarHeight: Number(suggestAvatarStageHeight.value || 250) },
-      variants: suggestVariants.value.map(v => ({
-        name: v.name || 'Style',
-        assets: [{
-          src: v.assetSrc || '',
-          style: { top: 0, left: 0, width: 100 },
-          collectionStyle: { ...(v.styles.collectionPreviewDesktop || v.styles.collectionPreview || v.styles.collection) },
-          collectionStyleMobile: { ...(v.styles.collectionPreviewMobile || v.styles.collectionPreview || v.styles.collection) },
-          leaderboardStyle: { ...v.styles.leaderboard },
-          navbarStyle: { ...v.styles.navbar },
-          navbarStyleMobile: { ...v.styles.navbar },
-          largeAvatarStyle: { ...v.styles.avatar },
-          largeAvatarStyleMobile: { ...v.styles.avatar },
-          profilePopupStyle: { ...v.styles.avatar },
-          popupStyleStyle: { ...v.styles.popupStyle },
-          cosmeticPreviewStyle: { ...v.styles.collection },
-          cosmeticPreviewStyleMobile: { ...v.styles.collection },
-          dailyStyle: { ...v.styles.dailyShop },
-          meta: {
-            leaderboardPlacement: String(v.flags.leaderboardPlacement || 'inside'),
-            leaderboardTarget: (String(v.flags.leaderboardPlacement || 'inside') === 'inside') ? 'user-avatar' : 'user-avatar-container',
-            profilePopupPlacement: String(v.flags.profilePopupPlacement || 'inside'),
-            profilePopupTarget: (String(v.flags.profilePopupPlacement || 'inside') === 'inside') ? 'profile-avatar' : 'profile-avatar-scaler',
-            navbarPlacement: String(v.flags.navbarPlacement || 'inside'),
-            navbarTarget: 'avatar-image-container',
-            largeAvatarHeight: Number(v.flags.largeAvatarHeight || suggestAvatarStageHeight.value || 250)
-          }
-        }],
-        backgrounds: { collection: null, leaderboard: null, avatar: null, 'popup-style': null, 'profile-popup': null },
-        removeLeaderboardBorder: !!v.flags.removeLeaderboardBorder,
-        removeProfilePopupBorder: !!v.flags.removeProfilePopupBorder,
-        removeNavbarBorder: !!v.flags.removeNavbarBorder
-      }))
+      variants: suggestVariants.value.map(v => {
+        const vSrcs = (Array.isArray(v.assetSrcs) && v.assetSrcs.length) ? v.assetSrcs : (v.assetSrc ? [v.assetSrc] : [''])
+        return {
+          name: v.name || 'Style',
+          assets: vSrcs.map(src => ({
+            src: src || '',
+            style: { top: 0, left: 0, width: 100 },
+            collectionStyle: { ...(v.styles.collectionPreviewDesktop || v.styles.collectionPreview || v.styles.collection) },
+            collectionStyleMobile: { ...(v.styles.collectionPreviewMobile || v.styles.collectionPreview || v.styles.collection) },
+            leaderboardStyle: { ...v.styles.leaderboard },
+            navbarStyle: { ...v.styles.navbar },
+            navbarStyleMobile: { ...v.styles.navbar },
+            largeAvatarStyle: { ...v.styles.avatar },
+            largeAvatarStyleMobile: { ...v.styles.avatar },
+            profilePopupStyle: { ...v.styles.avatar },
+            popupStyleStyle: { ...v.styles.popupStyle },
+            cosmeticPreviewStyle: { ...v.styles.collection },
+            cosmeticPreviewStyleMobile: { ...v.styles.collection },
+            dailyStyle: { ...v.styles.dailyShop },
+            meta: {
+              leaderboardPlacement: String(v.flags.leaderboardPlacement || 'inside'),
+              leaderboardTarget: (String(v.flags.leaderboardPlacement || 'inside') === 'inside') ? 'user-avatar' : 'user-avatar-container',
+              profilePopupPlacement: String(v.flags.profilePopupPlacement || 'inside'),
+              profilePopupTarget: (String(v.flags.profilePopupPlacement || 'inside') === 'inside') ? 'profile-avatar' : 'profile-avatar-scaler',
+              navbarPlacement: String(v.flags.navbarPlacement || 'inside'),
+              navbarTarget: 'avatar-image-container',
+              largeAvatarHeight: Number(v.flags.largeAvatarHeight || suggestAvatarStageHeight.value || 250)
+            }
+          })),
+          backgrounds: { collection: null, leaderboard: null, avatar: null, 'popup-style': null, 'profile-popup': null },
+          removeLeaderboardBorder: !!v.flags.removeLeaderboardBorder,
+          removeProfilePopupBorder: !!v.flags.removeProfilePopupBorder,
+          removeNavbarBorder: !!v.flags.removeNavbarBorder
+        }
+      })
     }
     try {
       const u = authStore.user
@@ -7946,7 +7956,7 @@ onUnmounted(() => {
   .weekly-shop-container .admin-preview-toolbar { display: flex; gap: 8px; justify-content: flex-end; margin: 8px 0; }
   .weekly-shop-container .admin-preview-toolbar button { background: #5bc682; color: #fff; border: 3px solid #000; border-radius: 12px; padding: 6px 10px; font-weight: 800; cursor: pointer; }
   .weekly-shop-container .admin-preview-toolbar button:hover { filter: brightness(0.95); }
-.weekly-shop-container .preview-slider-controls { position: relative; display: flex; justify-content: center; align-items: center; margin: 0 auto; margin-bottom: 8px; width: 96%; z-index: 1000; }
+.weekly-shop-container .preview-slider-controls { position: relative; display: flex; justify-content: center; align-items: center; margin: 0 auto; margin-bottom: 8px; width: 96%; z-index: 1000; justify-content: space-between; }
 .weekly-shop-container .preview-slider-controls .slider-arrow { width: 34px; height: 34px; border-radius: 12px; border: 2px solid #3a3a3a; background: #2a2a2a; color: #eaeaea; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 6px 14px rgba(0,0,0,0.35); transition: transform 0.18s ease, filter 0.18s ease, box-shadow 0.18s ease; }
 .weekly-shop-container .preview-slider-controls .slider-arrow:hover { filter: brightness(1.08); transform: translateY(-1px); box-shadow: 0 8px 18px rgba(0,0,0,0.4); }
 .weekly-shop-container .preview-slider-controls .slider-arrow:disabled { opacity: 0.5; cursor: default; transform: none; box-shadow: none; }
