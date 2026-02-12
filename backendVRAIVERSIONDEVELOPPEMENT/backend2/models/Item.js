@@ -23,6 +23,11 @@ const assetSchema = new mongoose.Schema({
   navbarStyleMobile: { type: styleSchema, default: null },
   popupStyleStyle: { type: styleSchema, default: null },
   profilePopupStyle: { type: styleSchema, default: null },
+  largeAvatarStyle: { type: styleSchema, default: null },
+  largeAvatarStyleMobile: { type: styleSchema, default: null },
+  cosmeticPreviewStyle: { type: styleSchema, default: null },
+  cosmeticPreviewStyleMobile: { type: styleSchema, default: null },
+  dailyStyle: { type: styleSchema, default: null },
   meta: { type: Object, default: {} }
 }, { _id: false });
 

@@ -173,6 +173,8 @@ router.post('/', verifyToken, requireRole(['admin']), async (req, res) => {
       navbarStyleMobile: a.navbarStyleMobile || null,
       popupStyleStyle: a.popupStyleStyle || null,
       profilePopupStyle: a.profilePopupStyle || null,
+      cosmeticPreviewStyle: a.cosmeticPreviewStyle || null,
+      cosmeticPreviewStyleMobile: a.cosmeticPreviewStyleMobile || null,
       meta: a.meta || {}
     }));
 
@@ -196,6 +198,8 @@ router.post('/', verifyToken, requireRole(['admin']), async (req, res) => {
           navbarStyleMobile: a && a.navbarStyleMobile || null,
           popupStyleStyle: a && a.popupStyleStyle || null,
           profilePopupStyle: a && a.profilePopupStyle || null,
+          cosmeticPreviewStyle: a && a.cosmeticPreviewStyle || null,
+          cosmeticPreviewStyleMobile: a && a.cosmeticPreviewStyleMobile || null,
           meta: a && typeof a.meta === 'object' ? a.meta : {}
         })),
         backgrounds: {
@@ -319,6 +323,8 @@ router.put('/:id', verifyToken, requireRole(['admin']), async (req, res) => {
         navbarStyleMobile: (a && a.navbarStyleMobile) || null,
         popupStyleStyle: (a && a.popupStyleStyle) || null,
         profilePopupStyle: (a && a.profilePopupStyle) || null,
+        cosmeticPreviewStyle: (a && a.cosmeticPreviewStyle) || null,
+        cosmeticPreviewStyleMobile: (a && a.cosmeticPreviewStyleMobile) || null,
         meta: (a && typeof a.meta === 'object') ? a.meta : {}
       }))
       doc.markModified('assets');
@@ -345,6 +351,8 @@ router.put('/:id', verifyToken, requireRole(['admin']), async (req, res) => {
             navbarStyleMobile: (a && a.navbarStyleMobile) || null,
             popupStyleStyle: (a && a.popupStyleStyle) || null,
             profilePopupStyle: (a && a.profilePopupStyle) || null,
+            cosmeticPreviewStyle: (a && a.cosmeticPreviewStyle) || null,
+            cosmeticPreviewStyleMobile: (a && a.cosmeticPreviewStyleMobile) || null,
             meta: (a && typeof a.meta === 'object') ? a.meta : {}
           })),
           backgrounds: (v && v.backgrounds && typeof v.backgrounds === 'object') ? v.backgrounds : {},
@@ -464,6 +472,8 @@ router.put('/suggest/:id', verifyToken, async (req, res) => {
         navbarStyleMobile: a.navbarStyleMobile || null,
         popupStyleStyle: a.popupStyleStyle || null,
         profilePopupStyle: a.profilePopupStyle || null,
+        cosmeticPreviewStyle: a.cosmeticPreviewStyle || null,
+        cosmeticPreviewStyleMobile: a.cosmeticPreviewStyleMobile || null,
         meta: a.meta || {}
       }));
       doc.markModified('assets');
@@ -489,6 +499,8 @@ router.put('/suggest/:id', verifyToken, async (req, res) => {
             navbarStyleMobile: a && a.navbarStyleMobile || null,
             popupStyleStyle: a && a.popupStyleStyle || null,
             profilePopupStyle: a && a.profilePopupStyle || null,
+            cosmeticPreviewStyle: a && a.cosmeticPreviewStyle || null,
+            cosmeticPreviewStyleMobile: a && a.cosmeticPreviewStyleMobile || null,
             meta: a && typeof a.meta === 'object' ? a.meta : {}
           })),
           backgrounds: {
@@ -614,6 +626,8 @@ router.post('/suggest', verifyToken, async (req, res) => {
       navbarStyleMobile: a.navbarStyleMobile || null,
       popupStyleStyle: a.popupStyleStyle || null,
       profilePopupStyle: a.profilePopupStyle || null,
+      cosmeticPreviewStyle: a.cosmeticPreviewStyle || null,
+      cosmeticPreviewStyleMobile: a.cosmeticPreviewStyleMobile || null,
       meta: a.meta || {}
     }));
 
@@ -636,6 +650,8 @@ router.post('/suggest', verifyToken, async (req, res) => {
           navbarStyleMobile: a && a.navbarStyleMobile || null,
           popupStyleStyle: a && a.popupStyleStyle || null,
           profilePopupStyle: a && a.profilePopupStyle || null,
+          cosmeticPreviewStyle: a && a.cosmeticPreviewStyle || null,
+          cosmeticPreviewStyleMobile: a && a.cosmeticPreviewStyleMobile || null,
           meta: a && typeof a.meta === 'object' ? a.meta : {}
         })),
         backgrounds: {
