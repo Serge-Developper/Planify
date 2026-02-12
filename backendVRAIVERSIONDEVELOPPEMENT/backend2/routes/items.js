@@ -88,6 +88,24 @@ router.get('/legacy/:legacyId', async (req, res) => {
   }
 });
 
+router.get('/admin/all', verifyToken, requireRole(['admin']), async (req, res) => {
+  try {
+    const items = await Item.find({}).sort({ createdAt: -1 }).lean();
+    const itemsWithVariants = items.map(item => ({
+      ...item,
+      variants: Array.isArray(item.variants) ? item.variants.map(v => ({
+        ...v,
+        showText: !!v.showText,
+        textOnly: !!v.textOnly,
+        textContent: v.textContent || ''
+      })) : []
+    }));
+    res.json({ success: true, items: itemsWithVariants });
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Erreur chargement tous les items', error: String(e) });
+  }
+});
+
 // Récupération d'un item par ID (admin)
 router.get('/:id([0-9a-fA-F]{24})', async (req, res) => {
   try {
