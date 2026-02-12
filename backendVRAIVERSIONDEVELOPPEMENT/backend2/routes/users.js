@@ -13,6 +13,11 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const mongoose = require('mongoose');
+let webpush;
+try { webpush = require('web-push'); } catch {}
+const VAPID_PUBLIC_KEY = process.env.PUBLIC_KEY || process.env.VAPID_PUBLIC_KEY || '';
+const VAPID_PRIVATE_KEY = process.env.PRIVATE_KEY || process.env.VAPID_PRIVATE_KEY || '';
+try { if (webpush && VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) { webpush.setVapidDetails('mailto:admin@planifymmi.fr', VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY); } } catch {}
 
 // Dossiers d'uploads unifiés
 const UPLOADS_DIR = process.env.UPLOADS_DIR || path.join(__dirname, '../uploads');
@@ -1624,12 +1629,88 @@ router.get('/push/public-key', (req, res) => {
 
 router.post('/push/subscribe', verifyToken, async (req, res) => {
   try {
+    const userId = req.user.id || req.user._id;
     const subscription = req.body && req.body.subscription ? req.body.subscription : null;
-    if (!subscription) return res.status(400).json({ success: false, message: 'Subscription manquante' });
-    // Stockage non implémenté pour l’instant; acquit sans erreur
+    if (!subscription || !subscription.endpoint || !subscription.keys) return res.status(400).json({ success: false, message: 'Subscription manquante' });
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ success: false, message: 'Utilisateur non trouvé' });
+    user.pushSubscriptions = Array.isArray(user.pushSubscriptions) ? user.pushSubscriptions : [];
+    const endpoint = String(subscription.endpoint || '');
+    const p256dh = subscription.keys && subscription.keys.p256dh ? String(subscription.keys.p256dh) : '';
+    const auth = subscription.keys && subscription.keys.auth ? String(subscription.keys.auth) : '';
+    const existing = user.pushSubscriptions.find(s => String(s.endpoint) === endpoint);
+    if (existing) {
+      existing.keys = { p256dh, auth };
+      existing.createdAt = new Date();
+    } else {
+      user.pushSubscriptions.push({ endpoint, keys: { p256dh, auth }, createdAt: new Date() });
+    }
+    await user.save();
     res.json({ success: true });
   } catch (e) {
     res.status(500).json({ success: false, message: 'Erreur abonnement push' });
+  }
+});
+
+router.post('/push/test', verifyToken, async (req, res) => {
+  try {
+    if (!webpush || !VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) return res.status(503).json({ success: false, message: 'Push indisponible' });
+    const userId = req.user.id || req.user._id;
+    const user = await User.findById(userId).select('pushSubscriptions');
+    if (!user) return res.status(404).json({ success: false, message: 'Utilisateur non trouvé' });
+    const subs = Array.isArray(user.pushSubscriptions) ? user.pushSubscriptions : [];
+    if (!subs.length) return res.status(400).json({ success: false, message: 'Aucune subscription push' });
+    const title = String(req.body?.title || 'Test Planify');
+    const body = String(req.body?.body || 'Notification de test');
+    const url = String(req.body?.url || '/');
+    const payload = JSON.stringify({ title, body, icon: '/planifyFichier_134x.webp?v=2', badge: '/planifyFichier_134x.webp?v=2', data: { url } });
+    let sent = 0;
+    const invalid = new Set();
+    for (const sub of subs) {
+      try {
+        await webpush.sendNotification(sub, payload);
+        sent++;
+      } catch (e) {
+        const code = e && e.statusCode;
+        if (code === 404 || code === 410) invalid.add(String(sub.endpoint || ''));
+      }
+    }
+    if (invalid.size) {
+      user.pushSubscriptions = subs.filter(s => !invalid.has(String(s.endpoint || '')));
+      await user.save();
+    }
+    res.json({ success: true, sent });
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Erreur test push' });
+  }
+});
+
+router.get('/me/push-preferences', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.id || req.user._id;
+    const user = await User.findById(userId).select('pushPreferences');
+    if (!user) return res.status(404).json({ success: false, message: 'Utilisateur non trouvé' });
+    res.json({ success: true, pushPreferences: user.pushPreferences || { enabled: false, wheel: false, homework: false, exam: false } });
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+});
+
+router.put('/me/push-preferences', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.id || req.user._id;
+    const raw = req.body || {};
+    const prefs = {
+      enabled: raw.enabled === true || raw.enabled === 'true' || raw.enabled === 1 || raw.enabled === '1',
+      wheel: raw.wheel === true || raw.wheel === 'true' || raw.wheel === 1 || raw.wheel === '1',
+      homework: raw.homework === true || raw.homework === 'true' || raw.homework === 1 || raw.homework === '1',
+      exam: raw.exam === true || raw.exam === 'true' || raw.exam === 1 || raw.exam === '1'
+    };
+    const updated = await User.findByIdAndUpdate(userId, { pushPreferences: prefs }, { new: true }).select('-password');
+    if (!updated) return res.status(404).json({ success: false, message: 'Utilisateur non trouvé' });
+    res.json({ success: true, pushPreferences: updated.pushPreferences });
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 });
 

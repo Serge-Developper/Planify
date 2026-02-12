@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const Event = require('../models/Event');
 const Subject = require('../models/Subject');
+const User = require('../models/User');
 const { verifyToken, requireRole } = require('../middlewares/auth');
 const fs = require('fs');
 const StaticSubjectRule = require('../models/StaticSubjectRule');
@@ -15,6 +16,12 @@ try {
   archiver = null;
   console.warn('Le module "archiver" est absent. Les ZIP de soumissions seront désactivés.');
 }
+
+let webpush;
+try { webpush = require('web-push'); } catch {}
+const VAPID_PUBLIC_KEY = process.env.PUBLIC_KEY || process.env.VAPID_PUBLIC_KEY || '';
+const VAPID_PRIVATE_KEY = process.env.PRIVATE_KEY || process.env.VAPID_PRIVATE_KEY || '';
+try { if (webpush && VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) { webpush.setVapidDetails('mailto:admin@planifymmi.fr', VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY); } } catch {}
 
 function ensureDir(p) {
   try { fs.mkdirSync(p, { recursive: true }); } catch {}
@@ -99,6 +106,75 @@ function normalizeYear(year) {
 function normalizeGroupe(groupe) {
   if (!groupe) return '';
   return groupe.replace(/\s+/g, '').toUpperCase();
+}
+
+function buildPossibleYears(year) {
+  const normalized = normalizeYear(String(year || ''));
+  const list = [];
+  if (normalized) list.push(normalized);
+  if (normalized === '1') list.push('BUT1', 'BUT 1', 1);
+  if (normalized === '2') list.push('BUT2', 'BUT 2', 2);
+  if (normalized === '3') list.push('BUT3', 'BUT 3', 3);
+  return Array.from(new Set(list));
+}
+
+async function sendEventPush(event) {
+  try {
+    if (!webpush || !VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) return;
+    if (!event) return;
+    const prefKey = event.type === 'exam' ? 'exam' : 'homework';
+    const possibleYears = buildPossibleYears(event.year);
+    if (!possibleYears.length) return;
+    const groups = [];
+    if (event.groupe) groups.push(String(event.groupe));
+    if (Array.isArray(event.groupes)) {
+      for (const g of event.groupes) {
+        if (g) groups.push(String(g));
+      }
+    }
+    const normalizedGroups = groups.map(normalizeGroupe).filter(Boolean);
+    const hasPromo = normalizedGroups.includes('PROMO');
+    const groupList = Array.from(new Set(groups.filter(Boolean)));
+    const query = {
+      'pushPreferences.enabled': true,
+      [`pushPreferences.${prefKey}`]: true,
+      year: { $in: possibleYears },
+      pushSubscriptions: { $elemMatch: { endpoint: { $exists: true, $ne: '' } } }
+    };
+    if (!hasPromo && groupList.length) query.groupe = { $in: groupList };
+    if (event.specialite) query.specialite = String(event.specialite);
+    const users = await User.find(query).select({ pushSubscriptions: 1 });
+    if (!users || !users.length) return;
+    const title = event.type === 'exam' ? '📝 Nouvel examen' : '📘 Nouveau devoir';
+    const parts = [];
+    if (event.matiere) parts.push(String(event.matiere));
+    if (event.titre) parts.push(String(event.titre));
+    const body = parts.join(' • ') || 'Nouvel événement';
+    const payload = JSON.stringify({
+      title,
+      body,
+      icon: '/planifyFichier_134x.webp?v=2',
+      badge: '/planifyFichier_134x.webp?v=2',
+      data: { url: '/devoirs' }
+    });
+    for (const user of users) {
+      const subs = Array.isArray(user.pushSubscriptions) ? user.pushSubscriptions : [];
+      if (!subs.length) continue;
+      const invalid = new Set();
+      for (const sub of subs) {
+        try {
+          await webpush.sendNotification(sub, payload);
+        } catch (e) {
+          const code = e && e.statusCode;
+          if (code === 404 || code === 410) invalid.add(String(sub.endpoint || ''));
+        }
+      }
+      if (invalid.size) {
+        user.pushSubscriptions = subs.filter(s => !invalid.has(String(s.endpoint || '')));
+        await user.save();
+      }
+    }
+  } catch {}
 }
 
 // AJOUT: Helpers pour gérer l'expiration des examens
@@ -275,6 +351,7 @@ router.post('/', verifyToken, requireRole(['admin', 'prof', 'delegue']), async (
   const event = new Event({ ...payload, createdBy: req.user.id });
   await event.save();
   res.json(event);
+  try { setImmediate(() => { sendEventPush(event).catch(() => {}); }); } catch {}
 });
 
 // Vider pour SOI (POST): marque l'événement comme supprimé pour l'utilisateur courant
