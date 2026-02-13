@@ -233,17 +233,21 @@
                 <button class="close-btn-small center-btn" @click="centerSuggest('collectionPreview')" @mouseover="hoverCenterCollectionPreview = true" @mouseleave="hoverCenterCollectionPreview = false"><img :src="hoverCenterCollectionPreview ? centerHoverImg : centerImg" alt="Centrer" class="close-img" /></button>
               </div>
             </div>
-            <div class="preview-card preview-item" :key="'slide-cosmetic'">
+            <div class="preview-card preview-item" :class="{ 'cosmetic-mobile-card': suggestCosmeticDevice === 'mobile' }" :key="'slide-cosmetic'">
               <div class="preview-title">Aperçu Cosmétique</div>
-              <div class="item-img-wrapper large">
+              <div class="item-img-wrapper large" :class="{ 'mobile-mode': suggestCosmeticDevice === 'mobile' }">
                 <div class="item-img-container">
                   <img v-for="(src, si) in suggestAssetSrcs" :key="'collection-'+si" :src="src" :class="['item-img','draggable', draggingKey==='collection' ? 'drag-active' : '']" :style="getSuggestStyle('collection', si)" @click="startDrag('collection', si, $event)" @touchstart.prevent.stop="startDragTouch('collection', si, $event)" />
                 </div>
               </div>
+              <div class="preview-actions" style="display:flex;gap:8px;justify-content:center;">
+                <button class="tab-btn" :class="{ active: suggestCosmeticDevice==='desktop' }" @click="suggestCosmeticDevice='desktop'">Desktop</button>
+                <button class="tab-btn" :class="{ active: suggestCosmeticDevice==='mobile' }" @click="suggestCosmeticDevice='mobile'">Mobile</button>
+              </div>
               <div class="item-actions" style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
-                <label>Taille: <input type="range" min="10" max="120" v-model.number="suggestStyles.collection.width" /></label>
-                <label>Top: <input type="number" v-model.number="suggestStyles.collection.top" /></label>
-                <label>Left: <input type="number" v-model.number="suggestStyles.collection.left" /></label>
+                <label>Taille: <input type="range" min="10" max="120" v-model.number="suggestCosmeticStyle.width" /></label>
+                <label>Top: <input type="number" v-model.number="suggestCosmeticStyle.top" /></label>
+                <label>Left: <input type="number" v-model.number="suggestCosmeticStyle.left" /></label>
                 <button class="close-btn-small center-btn" @click="centerSuggest('collection')" @mouseover="hoverCenterCollection = true" @mouseleave="hoverCenterCollection = false"><img :src="hoverCenterCollection ? centerHoverImg : centerImg" alt="Centrer" class="close-img" /></button>
               </div>
             </div>
@@ -280,8 +284,8 @@
             </div>
             <div class="preview-card preview-avatar" :key="'slide-avatar'">
               <div class="preview-title">Aperçu Large/Avatar</div>
-              <div class="profile-avatar-stage" :style="`height: ${suggestAvatarStageHeight}px !important`">
-                <div class="profile-avatar-scaler" :style="`height: ${suggestAvatarStageHeight}px !important`">
+              <div class="profile-avatar-stage" :style="`width: ${suggestAvatarDevice === 'mobile' ? 250 : 351}px !important; height: ${suggestAvatarStageHeight}px !important`">
+                <div class="profile-avatar-scaler" :style="`width: ${suggestAvatarDevice === 'mobile' ? 250 : 351}px !important; height: ${suggestAvatarStageHeight}px !important`">
                   <div class="profile-avatar" :class="{ 'no-border': removeAvatarBorder }" style="position:relative;">
                     <div class="avatar-img" style="position:relative; width:150px; height:150px; border-radius:24px; border:none; overflow:hidden;">
                       <img v-for="asset in getSuggestAssetsForPlacement('avatar','inside', true)" :key="'avatar-in-'+asset.si" :src="asset.src" :class="['draggable', draggingKey==='avatar' ? 'drag-active' : '']" :style="getSuggestStyle('avatar', asset.si)" @click="startDrag('avatar', asset.si, $event)" @touchstart.prevent.stop="startDragTouch('avatar', asset.si, $event)" />
@@ -289,6 +293,10 @@
                   </div>
                   <img v-for="asset in getSuggestAssetsForPlacement('avatar','above', true)" :key="'avatar-above-'+asset.si" :src="asset.src" :class="['draggable','overlay-above', draggingKey==='avatar' ? 'drag-active' : '']" :style="getSuggestStyle('avatar', asset.si)" @click="startDrag('avatar', asset.si, $event)" @touchstart.prevent.stop="startDragTouch('avatar', asset.si, $event)" />
                 </div>
+              </div>
+              <div class="preview-actions" style="display:flex;gap:8px;justify-content:center;margin-top:8px;">
+                <button class="tab-btn" :class="{ active: suggestAvatarDevice==='desktop' }" @click="suggestAvatarDevice='desktop'">Desktop</button>
+                <button class="tab-btn" :class="{ active: suggestAvatarDevice==='mobile' }" @click="suggestAvatarDevice='mobile'">Mobile</button>
               </div>
               <div class="item-actions" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px;">
                 <label>Taille: <input type="range" min="10" max="300" step="1" v-model.number="suggestStyles.avatar.width" /></label>
@@ -3663,7 +3671,7 @@ const weeklyContainerRef = ref(null)
 const forceWeeklyHeight = ref(0)
 function syncWeeklyHeight(){ try{ const el = weeklyContainerRef.value; if (!el) return; const rect = el.getBoundingClientRect(); forceWeeklyHeight.value = Math.round(rect.height) }catch{} }
 function openPurchasePreview(item){ try{ syncWeeklyHeight(); purchasePreviewItem.value = item; showPurchasePreview.value = true; hoverBackShop.value = false; hoverCloseShop.value = false }catch{} }
-function closePurchasePreview(){ hoverBackShop.value = false; hoverCloseShop.value = false; try{ showPurchasePreview.value = false }catch{ showPurchasePreview = false }; purchasePreviewItem.value = null; if (showSuggestionEditor && (showSuggestionEditor.value === true)) { showSuggestionEditor.value = false; suggestAssetSrcs.value = []; suggestAssetStyles.value = []; suggestAssetPlacements.value = { leaderboard: [], avatar: [], navbar: [] }; suggestPlacement.value = { leaderboard: 'inside', avatar: 'inside', navbar: 'inside' }; activeSuggestAssetIndex.value = 0; suggestUrl.value = ''; removeAvatarBorder.value = false; removeLeaderboardBorder.value = false; previewWindowIndex.value = 0; suggestDevice.value = 'desktop'; const DEF = { top:0, left:0, width:50, height:50, rotate:0, objectFit:'contain', zIndex:1, margin:0, padding:0, background:'', boxShadow:'', borderWidth:0, borderStyle:'none', borderColor:'', borderRadius:0 }; suggestStyles.value = { dailyShop: { ...DEF }, collectionPreviewDesktop: { ...DEF }, collectionPreviewMobile: { ...DEF }, collectionPreview: { ...DEF }, collection: { ...DEF }, leaderboard: { ...DEF }, avatar: { ...DEF }, navbar: { ...DEF }, popupStyle: { ...DEF } }; resetSuggestUsers() } }
+function closePurchasePreview(){ hoverBackShop.value = false; hoverCloseShop.value = false; try{ showPurchasePreview.value = false }catch{ showPurchasePreview = false }; purchasePreviewItem.value = null; if (showSuggestionEditor && (showSuggestionEditor.value === true)) { showSuggestionEditor.value = false; suggestAssetSrcs.value = []; suggestAssetStyles.value = []; suggestAssetPlacements.value = { leaderboard: [], avatar: [], navbar: [] }; suggestPlacement.value = { leaderboard: 'inside', avatar: 'inside', navbar: 'inside' }; activeSuggestAssetIndex.value = 0; suggestUrl.value = ''; removeAvatarBorder.value = false; removeLeaderboardBorder.value = false; previewWindowIndex.value = 0; suggestDevice.value = 'desktop'; suggestAvatarDevice.value = 'desktop'; suggestCosmeticDevice.value = 'desktop'; const DEF = { top:0, left:0, width:50, height:50, rotate:0, objectFit:'contain', zIndex:1, margin:0, padding:0, background:'', boxShadow:'', borderWidth:0, borderStyle:'none', borderColor:'', borderRadius:0 }; suggestStyles.value = { dailyShop: { ...DEF }, collectionPreviewDesktop: { ...DEF }, collectionPreviewMobile: { ...DEF }, collectionPreview: { ...DEF }, collection: { ...DEF }, cosmeticDesktop: { ...DEF }, cosmeticMobile: { ...DEF }, leaderboard: { ...DEF }, avatarDesktop: { ...DEF }, avatarMobile: { ...DEF }, avatar: { ...DEF }, navbar: { ...DEF }, popupStyle: { ...DEF } }; resetSuggestUsers() } }
 function measurePreviewSlider(){ try{ const root = weeklyContainerRef.value; if (!root) return; const card = root.querySelector('.preview-slider-track .preview-card'); if (card) { const r = card.getBoundingClientRect(); previewCardWidth.value = Math.round(r.width) } const track = root.querySelector('.preview-slider-track'); if (track) { const cs = window.getComputedStyle(track); const gapVal = parseFloat(cs.gap) || 6; previewCardGap.value = Math.round(gapVal) } }catch{} }
 onMounted(() => { try{ syncWeeklyHeight(); measurePreviewSlider(); measureVariantSlider(); window.addEventListener('resize', syncWeeklyHeight); window.addEventListener('resize', measurePreviewSlider); window.addEventListener('resize', measureVariantSlider); refreshSuggestPreviewBorderColor() }catch{} })
 onUnmounted(() => { try{ window.removeEventListener('resize', syncWeeklyHeight); window.removeEventListener('resize', measurePreviewSlider); window.removeEventListener('resize', measureVariantSlider) }catch{} })
@@ -3872,6 +3880,8 @@ const currentEditingServerId = ref(null)
 const previewWindowIndex = ref(0)
 const previewWindowSize = 3
 const suggestDevice = ref('desktop')
+const suggestAvatarDevice = ref('desktop')
+const suggestCosmeticDevice = ref('desktop')
 const slideDirection = ref(null)
 const slideDirectionClass = computed(() => slideDirection.value === 'left' ? 'slide-left' : slideDirection.value === 'right' ? 'slide-right' : '')
 const previewCardWidth = ref(390)
@@ -3914,11 +3924,16 @@ const suggestStyles = ref({
   collectionPreviewMobile:  { top: 0, left: 0, width: 50, height: 50, rotate: 0, objectFit: 'contain', zIndex: 1, margin: 0, padding: 0, background: '', boxShadow: '', borderWidth: 0, borderStyle: 'none', borderColor: '', borderRadius: 0 },
   collectionPreview:        { top: 0, left: 0, width: 50, height: 50, rotate: 0, objectFit: 'contain', zIndex: 1, margin: 0, padding: 0, background: '', boxShadow: '', borderWidth: 0, borderStyle: 'none', borderColor: '', borderRadius: 0 },
   collection: { top: 0, left: 0, width: 50, height: 50, rotate: 0, objectFit: 'contain', zIndex: 1, margin: 0, padding: 0, background: '', boxShadow: '', borderWidth: 0, borderStyle: 'none', borderColor: '', borderRadius: 0 },
+  cosmeticDesktop: { top: 0, left: 0, width: 50, height: 50, rotate: 0, objectFit: 'contain', zIndex: 1, margin: 0, padding: 0, background: '', boxShadow: '', borderWidth: 0, borderStyle: 'none', borderColor: '', borderRadius: 0 },
+  cosmeticMobile: { top: 0, left: 0, width: 50, height: 50, rotate: 0, objectFit: 'contain', zIndex: 1, margin: 0, padding: 0, background: '', boxShadow: '', borderWidth: 0, borderStyle: 'none', borderColor: '', borderRadius: 0 },
   leaderboard: { top: 0, left: 0, width: 50, height: 50, rotate: 0, objectFit: 'contain', zIndex: 1, margin: 0, padding: 0, background: '', boxShadow: '', borderWidth: 0, borderStyle: 'none', borderColor: '', borderRadius: 0 },
+  avatarDesktop: { top: 0, left: 0, width: 50, height: 50, rotate: 0, objectFit: 'contain', zIndex: 1, margin: 0, padding: 0, background: '', boxShadow: '', borderWidth: 0, borderStyle: 'none', borderColor: '', borderRadius: 0 },
+  avatarMobile: { top: 0, left: 0, width: 50, height: 50, rotate: 0, objectFit: 'contain', zIndex: 1, margin: 0, padding: 0, background: '', boxShadow: '', borderWidth: 0, borderStyle: 'none', borderColor: '', borderRadius: 0 },
   avatar: { top: 0, left: 0, width: 50, height: 50, rotate: 0, objectFit: 'contain', zIndex: 1, margin: 0, padding: 0, background: '', boxShadow: '', borderWidth: 0, borderStyle: 'none', borderColor: '', borderRadius: 0 },
   navbar: { top: 0, left: 0, width: 50, height: 50, rotate: 0, objectFit: 'contain', zIndex: 1, margin: 0, padding: 0, background: '', boxShadow: '', borderWidth: 0, borderStyle: 'none', borderColor: '', borderRadius: 0 },
   popupStyle: { top: 0, left: 0, width: 50, height: 50, rotate: 0, objectFit: 'contain', zIndex: 1, margin: 0, padding: 0, background: '', boxShadow: '', borderWidth: 0, borderStyle: 'none', borderColor: '', borderRadius: 0 }
 })
+const suggestCosmeticStyle = computed(() => (suggestCosmeticDevice.value === 'mobile') ? suggestStyles.value.cosmeticMobile : suggestStyles.value.cosmeticDesktop)
 const suggestAvatarStageHeight = ref(250)
 const DEFAULT_SUGGEST_STYLE = { top: 0, left: 0, width: 50, height: 50, rotate: 0, objectFit: 'contain', zIndex: 1, margin: 0, padding: 0, background: '', boxShadow: '', borderWidth: 0, borderStyle: 'none', borderColor: '', borderRadius: 0 }
 const cloneSuggestStyle = (src) => ({ ...(src || DEFAULT_SUGGEST_STYLE) })
@@ -3930,7 +3945,11 @@ const makeSuggestStyleSet = (src) => {
     collectionPreviewMobile: cloneSuggestStyle(base?.collectionPreviewMobile || base?.collectionPreview || base?.collection || base),
     collectionPreview: cloneSuggestStyle(base?.collectionPreview || base?.collectionPreviewDesktop || base),
     collection: cloneSuggestStyle(base?.collection || base),
+    cosmeticDesktop: cloneSuggestStyle(base?.cosmeticDesktop || base?.collection || base),
+    cosmeticMobile: cloneSuggestStyle(base?.cosmeticMobile || base?.cosmeticDesktop || base?.collection || base),
     leaderboard: cloneSuggestStyle(base?.leaderboard || base),
+    avatarDesktop: cloneSuggestStyle(base?.avatarDesktop || base?.avatar || base),
+    avatarMobile: cloneSuggestStyle(base?.avatarMobile || base?.avatarDesktop || base?.avatar || base),
     avatar: cloneSuggestStyle(base?.avatar || base),
     navbar: cloneSuggestStyle(base?.navbar || base),
     popupStyle: cloneSuggestStyle(base?.popupStyle || base)
@@ -3944,9 +3963,13 @@ const normalizeSuggestStyleSet = (src, fallback) => {
     collectionPreviewDesktop: { ...(s.collectionPreviewDesktop || s.collectionPreview || s.collection || fb.collectionPreviewDesktop) },
     collectionPreviewMobile: { ...(s.collectionPreviewMobile || s.collectionPreview || s.collection || fb.collectionPreviewMobile) },
     collectionPreview: { ...(s.collectionPreview || s.collectionPreviewDesktop || fb.collectionPreview) },
-    collection: { ...(s.collection || fb.collection) },
+    collection: { ...(s.collection || s.cosmeticDesktop || fb.collection) },
+    cosmeticDesktop: { ...(s.cosmeticDesktop || s.collection || fb.cosmeticDesktop || fb.collection) },
+    cosmeticMobile: { ...(s.cosmeticMobile || s.cosmeticDesktop || s.collection || fb.cosmeticMobile || fb.cosmeticDesktop || fb.collection) },
     leaderboard: { ...(s.leaderboard || fb.leaderboard) },
-    avatar: { ...(s.avatar || fb.avatar) },
+    avatarDesktop: { ...(s.avatarDesktop || s.avatar || fb.avatarDesktop || fb.avatar) },
+    avatarMobile: { ...(s.avatarMobile || s.avatarDesktop || s.avatar || fb.avatarMobile || fb.avatarDesktop || fb.avatar) },
+    avatar: { ...(s.avatar || s.avatarDesktop || fb.avatar) },
     navbar: { ...(s.navbar || fb.navbar) },
     popupStyle: { ...(s.popupStyle || fb.popupStyle) }
   }
@@ -3982,9 +4005,14 @@ function setActiveSuggestAsset(i) {
       }
       set.collectionPreview = set.collectionPreviewDesktop
     }
+    if (!set.avatarDesktop) set.avatarDesktop = { ...(set.avatar || DEFAULT_SUGGEST_STYLE) }
+    if (!set.avatarMobile) set.avatarMobile = { ...(set.avatarDesktop || set.avatar || DEFAULT_SUGGEST_STYLE) }
+    set.avatar = (suggestAvatarDevice.value === 'mobile') ? set.avatarMobile : set.avatarDesktop
+    if (!set.cosmeticDesktop) set.cosmeticDesktop = { ...(set.collection || DEFAULT_SUGGEST_STYLE) }
+    if (!set.cosmeticMobile) set.cosmeticMobile = { ...(set.cosmeticDesktop || set.collection || DEFAULT_SUGGEST_STYLE) }
   } catch {}
 }
-const makeVariant = (name) => ({ name, assetSrcs: [], assetSrc: '', assetStyles: [], assetPlacements: { leaderboard: [], avatar: [], navbar: [] }, styles: { dailyShop: { ...DEFAULT_SUGGEST_STYLE }, collectionPreviewDesktop: { ...DEFAULT_SUGGEST_STYLE }, collectionPreviewMobile: { ...DEFAULT_SUGGEST_STYLE }, collectionPreview: { ...DEFAULT_SUGGEST_STYLE }, collection: { ...DEFAULT_SUGGEST_STYLE }, leaderboard: { ...DEFAULT_SUGGEST_STYLE }, avatar: { ...DEFAULT_SUGGEST_STYLE }, navbar: { ...DEFAULT_SUGGEST_STYLE }, popupStyle: { ...DEFAULT_SUGGEST_STYLE } }, flags: { removeLeaderboardBorder: false, removeProfilePopupBorder: false, removeNavbarBorder: false, leaderboardPlacement: 'inside', profilePopupPlacement: 'inside', navbarPlacement: 'inside', largeAvatarHeight: 250 } })
+const makeVariant = (name) => ({ name, assetSrcs: [], assetSrc: '', assetStyles: [], assetPlacements: { leaderboard: [], avatar: [], navbar: [] }, styles: { dailyShop: { ...DEFAULT_SUGGEST_STYLE }, collectionPreviewDesktop: { ...DEFAULT_SUGGEST_STYLE }, collectionPreviewMobile: { ...DEFAULT_SUGGEST_STYLE }, collectionPreview: { ...DEFAULT_SUGGEST_STYLE }, collection: { ...DEFAULT_SUGGEST_STYLE }, cosmeticDesktop: { ...DEFAULT_SUGGEST_STYLE }, cosmeticMobile: { ...DEFAULT_SUGGEST_STYLE }, leaderboard: { ...DEFAULT_SUGGEST_STYLE }, avatarDesktop: { ...DEFAULT_SUGGEST_STYLE }, avatarMobile: { ...DEFAULT_SUGGEST_STYLE }, avatar: { ...DEFAULT_SUGGEST_STYLE }, navbar: { ...DEFAULT_SUGGEST_STYLE }, popupStyle: { ...DEFAULT_SUGGEST_STYLE } }, flags: { removeLeaderboardBorder: false, removeProfilePopupBorder: false, removeNavbarBorder: false, leaderboardPlacement: 'inside', profilePopupPlacement: 'inside', navbarPlacement: 'inside', largeAvatarHeight: 250 } })
 const suggestVariants = ref([ makeVariant('Style 1') ])
 const activeVariantIndex = ref(0)
 const variantWindowSize = 5
@@ -4097,9 +4125,15 @@ function persistBufferIntoActiveVariant() {
     v.styles.collectionPreviewDesktop = { ...suggestStyles.value.collectionPreviewDesktop }
     v.styles.collectionPreviewMobile = { ...suggestStyles.value.collectionPreviewMobile }
     v.styles.collectionPreview = { ...suggestStyles.value.collectionPreview }
-    v.styles.collection = { ...suggestStyles.value.collection }
+    const cosmeticDesktop = { ...(suggestStyles.value.cosmeticDesktop || suggestStyles.value.collection || DEFAULT_SUGGEST_STYLE) }
+    const cosmeticMobile = { ...(suggestStyles.value.cosmeticMobile || suggestStyles.value.cosmeticDesktop || suggestStyles.value.collection || DEFAULT_SUGGEST_STYLE) }
+    v.styles.collection = { ...cosmeticDesktop }
+    v.styles.cosmeticDesktop = { ...cosmeticDesktop }
+    v.styles.cosmeticMobile = { ...cosmeticMobile }
     v.styles.leaderboard = { ...suggestStyles.value.leaderboard }
-    v.styles.avatar = { ...suggestStyles.value.avatar }
+    v.styles.avatarDesktop = { ...(suggestStyles.value.avatarDesktop || suggestStyles.value.avatar) }
+    v.styles.avatarMobile = { ...(suggestStyles.value.avatarMobile || suggestStyles.value.avatarDesktop || suggestStyles.value.avatar) }
+    v.styles.avatar = { ...(suggestStyles.value.avatarDesktop || suggestStyles.value.avatar) }
     v.styles.navbar = { ...suggestStyles.value.navbar }
     v.styles.popupStyle = { ...suggestStyles.value.popupStyle }
     v.flags.removeLeaderboardBorder = !!removeLeaderboardBorder.value
@@ -4132,7 +4166,8 @@ watch(showSuggestionEditor, (val) => { if (val) measureVariantSlider() })
 watch(suggestPrice, (val) => { try { const n = Number(val)||0; if (n < 150) suggestPrice.value = 150; else if (n > 500) suggestPrice.value = 500 } catch {} }, { immediate: true })
 watch(() => suggestStyles.value.dailyShop, (val) => { try { const v = suggestVariants.value[activeVariantIndex.value]; if (v && v.styles) v.styles.dailyShop = { ...val } } catch {} }, { deep: true })
 watch(() => suggestStyles.value.collectionPreview.width, (w) => { try { const s = suggestStyles.value.collectionPreview; s.height = Number(w) } catch {} })
-watch(() => suggestStyles.value.collection.width, (w) => { try { const s = suggestStyles.value.collection; s.height = Number(w) } catch {} })
+watch(() => suggestStyles.value.cosmeticDesktop.width, (w) => { try { const s = suggestStyles.value.cosmeticDesktop; s.height = Number(w) } catch {} })
+watch(() => suggestStyles.value.cosmeticMobile.width, (w) => { try { const s = suggestStyles.value.cosmeticMobile; s.height = Number(w) } catch {} })
 watch(() => suggestStyles.value.leaderboard.width, (w) => { try { const s = suggestStyles.value.leaderboard; s.height = Number(w) } catch {} })
 watch(() => suggestStyles.value.popupStyle.width, (w) => { try { const s = suggestStyles.value.popupStyle; s.height = Number(w) } catch {} })
 watch(() => suggestStyles.value.dailyShop.width, (w) => { try { const s = suggestStyles.value.dailyShop; s.height = Number(w) } catch {} })
@@ -4202,6 +4237,8 @@ function hasAnyPlacementAbove(target) {
 }
 loadActiveVariantIntoBuffer()
 watch(suggestDevice, (dev, prev) => { try { setActiveSuggestAsset(activeSuggestAssetIndex.value) } catch {} })
+watch(suggestAvatarDevice, (dev, prev) => { try { setActiveSuggestAsset(activeSuggestAssetIndex.value) } catch {} })
+watch(suggestCosmeticDevice, (dev, prev) => { try { setActiveSuggestAsset(activeSuggestAssetIndex.value) } catch {} })
 const hoverPlacementLeaderboard = ref(false)
 const hoverPlacementAvatar = ref(false)
 const hoverPlacementNavbar = ref(false)
@@ -4232,7 +4269,7 @@ const hoverCenterPopup = ref(false)
 const hoverCenterNavbar = ref(false)
 function togglePlacement(target){ try { const idx = activeSuggestAssetIndex.value; const current = getPlacementForIndex(target, idx); const next = (current === 'above') ? 'inside' : 'above'; setPlacementForIndex(target, idx, next); const v = suggestVariants.value[activeVariantIndex.value]; if (v && v.flags) { if (target === 'leaderboard') v.flags.leaderboardPlacement = String(next); else if (target === 'avatar') v.flags.profilePopupPlacement = String(next); else if (target === 'navbar') v.flags.navbarPlacement = String(next); } } catch {} }
 function getPlacementImg(target, hover){ try { const idx = activeSuggestAssetIndex.value; const isAbove = (getPlacementForIndex(target, idx) === 'above'); if (isAbove) return aboveIcon; return hover ? aboveIcon : insideIcon } catch { return insideIcon } }
-function openSuggestEditor() { currentEditingLocalId.value = null; currentEditingServerId.value = null; showSuggestionEditor.value = true; try { syncWeeklyHeight() } catch {} ; try { showPurchasePreview.value = true } catch { showPurchasePreview = true } ; try { suggestAssetSrcs.value = []; suggestAssetStyles.value = []; suggestAssetPlacements.value = { leaderboard: [], avatar: [], navbar: [] }; suggestPlacement.value = { leaderboard: 'inside', avatar: 'inside', navbar: 'inside' }; activeSuggestAssetIndex.value = 0; suggestUrl.value = ''; suggestName.value = ''; previewWindowIndex.value = 0; suggestDevice.value = 'desktop'; if (Array.isArray(suggestVariants.value)) { suggestVariants.value.forEach(v => { if (v) { v.assetSrcs = []; v.assetSrc = ''; v.assetStyles = []; v.assetPlacements = { leaderboard: [], avatar: [], navbar: [] } } }) } resetSuggestUsers() } catch {} }
+function openSuggestEditor() { currentEditingLocalId.value = null; currentEditingServerId.value = null; showSuggestionEditor.value = true; try { syncWeeklyHeight() } catch {} ; try { showPurchasePreview.value = true } catch { showPurchasePreview = true } ; try { suggestAssetSrcs.value = []; suggestAssetStyles.value = []; suggestAssetPlacements.value = { leaderboard: [], avatar: [], navbar: [] }; suggestPlacement.value = { leaderboard: 'inside', avatar: 'inside', navbar: 'inside' }; activeSuggestAssetIndex.value = 0; suggestUrl.value = ''; suggestName.value = ''; previewWindowIndex.value = 0; suggestDevice.value = 'desktop'; suggestAvatarDevice.value = 'desktop'; suggestCosmeticDevice.value = 'desktop'; if (Array.isArray(suggestVariants.value)) { suggestVariants.value.forEach(v => { if (v) { v.assetSrcs = []; v.assetSrc = ''; v.assetStyles = []; v.assetPlacements = { leaderboard: [], avatar: [], navbar: [] } } }) } resetSuggestUsers() } catch {} }
 function closeSuggestEditor() { showSuggestionEditor.value = false }
 function isUserItemCreator(item) {
   try {
@@ -4293,7 +4330,9 @@ function editUserItem(item) {
         const lead = (a && a.leaderboardStyle) || (a && a.style) || {}
         const nav = (a && a.navbarStyle) || (a && a.style) || {}
         const large = (a && a.largeAvatarStyle) || (a && a.profilePopupStyle) || (a && a.style) || {}
+        const largeMobile = (a && (a.largeAvatarStyleMobile || a.largeAvatarStyle || a.profilePopupStyle || a.style)) || {}
         const cosmetic = (a && a.cosmeticPreviewStyle) || (a && a.style) || {}
+        const cosmeticMobile = (a && (a.cosmeticPreviewStyleMobile || a.cosmeticPreviewStyle || a.style)) || {}
         const daily = (a && a.dailyStyle) || (a && a.style) || {}
         const flags = {
           removeLeaderboardBorder: !!(v && (v.removeLeaderboardBorder || v.removeNavbarBorder) || (item.meta && item.meta.removeLeaderboardBorder)),
@@ -4305,14 +4344,14 @@ function editUserItem(item) {
         }
         const assets = Array.isArray(v && v.assets) ? v.assets : []
         const assetSrcs = assets.map(a => (a && a.src) || '').filter(s => !!s)
-        const baseSet = normalizeSuggestStyleSet({ dailyShop: { ...daily }, collectionPreviewDesktop: { ...col }, collectionPreviewMobile: { ...colMobile }, collection: { ...cosmetic }, leaderboard: { ...lead }, navbar: { ...nav }, avatar: { ...large }, popupStyle: { ...(a && (a.popupStyleStyle || a.style) || {}) } }, makeSuggestStyleSet(DEFAULT_SUGGEST_STYLE))
-        const assetStyles = assets.map(x => normalizeSuggestStyleSet({ dailyShop: (x && (x.dailyStyle || x.style)) || {}, collectionPreviewDesktop: (x && (x.collectionStyle || x.style)) || {}, collectionPreviewMobile: (x && (x.collectionStyleMobile || x.collectionStyle || x.style)) || {}, collection: (x && (x.cosmeticPreviewStyle || x.style)) || {}, leaderboard: (x && (x.leaderboardStyle || x.style)) || {}, navbar: (x && (x.navbarStyle || x.style)) || {}, avatar: (x && (x.largeAvatarStyle || x.profilePopupStyle || x.style)) || {}, popupStyle: (x && (x.popupStyleStyle || x.style)) || {} }, baseSet))
+        const baseSet = normalizeSuggestStyleSet({ dailyShop: { ...daily }, collectionPreviewDesktop: { ...col }, collectionPreviewMobile: { ...colMobile }, collection: { ...cosmetic }, cosmeticDesktop: { ...cosmetic }, cosmeticMobile: { ...cosmeticMobile }, leaderboard: { ...lead }, navbar: { ...nav }, avatarDesktop: { ...large }, avatarMobile: { ...largeMobile }, avatar: { ...large }, popupStyle: { ...(a && (a.popupStyleStyle || a.style) || {}) } }, makeSuggestStyleSet(DEFAULT_SUGGEST_STYLE))
+        const assetStyles = assets.map(x => normalizeSuggestStyleSet({ dailyShop: (x && (x.dailyStyle || x.style)) || {}, collectionPreviewDesktop: (x && (x.collectionStyle || x.style)) || {}, collectionPreviewMobile: (x && (x.collectionStyleMobile || x.collectionStyle || x.style)) || {}, collection: (x && (x.cosmeticPreviewStyle || x.style)) || {}, cosmeticDesktop: (x && (x.cosmeticPreviewStyle || x.style)) || {}, cosmeticMobile: (x && (x.cosmeticPreviewStyleMobile || x.cosmeticPreviewStyle || x.style)) || {}, leaderboard: (x && (x.leaderboardStyle || x.style)) || {}, navbar: (x && (x.navbarStyle || x.style)) || {}, avatarDesktop: (x && (x.largeAvatarStyle || x.profilePopupStyle || x.style)) || {}, avatarMobile: (x && (x.largeAvatarStyleMobile || x.largeAvatarStyle || x.profilePopupStyle || x.style)) || {}, avatar: (x && (x.largeAvatarStyle || x.profilePopupStyle || x.style)) || {}, popupStyle: (x && (x.popupStyleStyle || x.style)) || {} }, baseSet))
         const assetPlacements = {
           leaderboard: assets.map(x => normalizeSuggestPlacementValue((x && x.meta && x.meta.leaderboardPlacement) || flags.leaderboardPlacement || 'inside')),
           avatar: assets.map(x => normalizeSuggestPlacementValue(((x && x.meta && (x.meta.profilePopupPlacement ?? x.meta.navbarPlacement)) || flags.profilePopupPlacement || 'inside'))),
           navbar: assets.map(x => normalizeSuggestPlacementValue((x && x.meta && x.meta.navbarPlacement) || flags.navbarPlacement || 'inside'))
         }
-        variants.push({ name: (v && v.name) || 'Style', assetSrcs, assetSrc: assetSrcs[0] || (a && a.src) || '', assetStyles, assetPlacements, styles: { dailyShop: { ...daily }, collectionPreviewDesktop: { ...col }, collectionPreviewMobile: { ...colMobile }, collection: { ...cosmetic }, leaderboard: { ...lead }, navbar: { ...nav }, avatar: { ...large }, popupStyle: { ...(a && (a.popupStyleStyle || a.style) || {}) } }, flags })
+        variants.push({ name: (v && v.name) || 'Style', assetSrcs, assetSrc: assetSrcs[0] || (a && a.src) || '', assetStyles, assetPlacements, styles: { dailyShop: { ...daily }, collectionPreviewDesktop: { ...col }, collectionPreviewMobile: { ...colMobile }, collection: { ...cosmetic }, cosmeticDesktop: { ...cosmetic }, cosmeticMobile: { ...cosmeticMobile }, leaderboard: { ...lead }, navbar: { ...nav }, avatarDesktop: { ...large }, avatarMobile: { ...largeMobile }, avatar: { ...large }, popupStyle: { ...(a && (a.popupStyleStyle || a.style) || {}) } }, flags })
       }
     } else {
       const assets = Array.isArray(item.assets) ? item.assets : []
@@ -4322,7 +4361,9 @@ function editUserItem(item) {
       const lead = (a && a.leaderboardStyle) || (a && a.style) || {}
       const nav = (a && a.navbarStyle) || (a && a.style) || {}
       const large = (a && a.largeAvatarStyle) || (a && a.profilePopupStyle) || (a && a.style) || {}
+      const largeMobile = (a && (a.largeAvatarStyleMobile || a.largeAvatarStyle || a.profilePopupStyle || a.style)) || {}
       const cosmetic = (a && a.cosmeticPreviewStyle) || (a && a.style) || {}
+      const cosmeticMobile = (a && (a.cosmeticPreviewStyleMobile || a.cosmeticPreviewStyle || a.style)) || {}
       const pop = (a && a.popupStyleStyle) || (a && a.style) || {}
       const daily = (a && a.dailyStyle) || (a && a.style) || {}
       const flags = {
@@ -4334,14 +4375,14 @@ function editUserItem(item) {
         largeAvatarHeight: Number(((a && a.meta && a.meta.largeAvatarHeight) || (item.meta && item.meta.largeAvatarHeight) || 250))
       }
       const assetSrcs = assets.map(a => (a && a.src) || '').filter(s => !!s)
-      const baseSet = normalizeSuggestStyleSet({ dailyShop: { ...daily }, collectionPreviewDesktop: { ...col }, collectionPreviewMobile: { ...colMobile }, collection: { ...cosmetic }, leaderboard: { ...lead }, navbar: { ...nav }, avatar: { ...large }, popupStyle: { ...pop } }, makeSuggestStyleSet(DEFAULT_SUGGEST_STYLE))
-      const assetStyles = assets.map(x => normalizeSuggestStyleSet({ dailyShop: (x && (x.dailyStyle || x.style)) || {}, collectionPreviewDesktop: (x && (x.collectionStyle || x.style)) || {}, collectionPreviewMobile: (x && (x.collectionStyleMobile || x.collectionStyle || x.style)) || {}, collection: (x && (x.cosmeticPreviewStyle || x.style)) || {}, leaderboard: (x && (x.leaderboardStyle || x.style)) || {}, navbar: (x && (x.navbarStyle || x.style)) || {}, avatar: (x && (x.largeAvatarStyle || x.profilePopupStyle || x.style)) || {}, popupStyle: (x && (x.popupStyleStyle || x.style)) || {} }, baseSet))
+      const baseSet = normalizeSuggestStyleSet({ dailyShop: { ...daily }, collectionPreviewDesktop: { ...col }, collectionPreviewMobile: { ...colMobile }, collection: { ...cosmetic }, cosmeticDesktop: { ...cosmetic }, cosmeticMobile: { ...cosmeticMobile }, leaderboard: { ...lead }, navbar: { ...nav }, avatarDesktop: { ...large }, avatarMobile: { ...largeMobile }, avatar: { ...large }, popupStyle: { ...pop } }, makeSuggestStyleSet(DEFAULT_SUGGEST_STYLE))
+      const assetStyles = assets.map(x => normalizeSuggestStyleSet({ dailyShop: (x && (x.dailyStyle || x.style)) || {}, collectionPreviewDesktop: (x && (x.collectionStyle || x.style)) || {}, collectionPreviewMobile: (x && (x.collectionStyleMobile || x.collectionStyle || x.style)) || {}, collection: (x && (x.cosmeticPreviewStyle || x.style)) || {}, cosmeticDesktop: (x && (x.cosmeticPreviewStyle || x.style)) || {}, cosmeticMobile: (x && (x.cosmeticPreviewStyleMobile || x.cosmeticPreviewStyle || x.style)) || {}, leaderboard: (x && (x.leaderboardStyle || x.style)) || {}, navbar: (x && (x.navbarStyle || x.style)) || {}, avatarDesktop: (x && (x.largeAvatarStyle || x.profilePopupStyle || x.style)) || {}, avatarMobile: (x && (x.largeAvatarStyleMobile || x.largeAvatarStyle || x.profilePopupStyle || x.style)) || {}, avatar: (x && (x.largeAvatarStyle || x.profilePopupStyle || x.style)) || {}, popupStyle: (x && (x.popupStyleStyle || x.style)) || {} }, baseSet))
       const assetPlacements = {
         leaderboard: assets.map(x => normalizeSuggestPlacementValue((x && x.meta && x.meta.leaderboardPlacement) || flags.leaderboardPlacement || 'inside')),
         avatar: assets.map(x => normalizeSuggestPlacementValue(((x && x.meta && (x.meta.profilePopupPlacement ?? x.meta.navbarPlacement)) || flags.profilePopupPlacement || 'inside'))),
         navbar: assets.map(x => normalizeSuggestPlacementValue((x && x.meta && x.meta.navbarPlacement) || flags.navbarPlacement || 'inside'))
       }
-      variants.push({ name: 'Style 1', assetSrcs, assetSrc: assetSrcs[0] || (a && a.src) || '', assetStyles, assetPlacements, styles: { dailyShop: { ...daily }, collectionPreviewDesktop: { ...col }, collectionPreviewMobile: { ...colMobile }, collection: { ...cosmetic }, leaderboard: { ...lead }, navbar: { ...nav }, avatar: { ...large }, popupStyle: { ...pop } }, flags })
+      variants.push({ name: 'Style 1', assetSrcs, assetSrc: assetSrcs[0] || (a && a.src) || '', assetStyles, assetPlacements, styles: { dailyShop: { ...daily }, collectionPreviewDesktop: { ...col }, collectionPreviewMobile: { ...colMobile }, collection: { ...cosmetic }, cosmeticDesktop: { ...cosmetic }, cosmeticMobile: { ...cosmeticMobile }, leaderboard: { ...lead }, navbar: { ...nav }, avatarDesktop: { ...large }, avatarMobile: { ...largeMobile }, avatar: { ...large }, popupStyle: { ...pop } }, flags })
     }
     suggestVariants.value = variants.length ? variants : [ makeVariant('Style 1') ]
     activeVariantIndex.value = 0
@@ -4352,7 +4393,7 @@ function editUserItem(item) {
     try {
       const v0 = suggestVariants.value[activeVariantIndex.value]
       const baseSet = normalizeSuggestStyleSet((v0 && v0.styles) || makeSuggestStyleSet(DEFAULT_SUGGEST_STYLE))
-      const a0Styles = Array.isArray(v0 && v0.assetStyles) ? v0.assetStyles : a0Assets.map(x => normalizeSuggestStyleSet({ dailyShop: (x && (x.dailyStyle || x.style)) || {}, collectionPreviewDesktop: (x && (x.collectionStyle || x.style)) || {}, collectionPreviewMobile: (x && (x.collectionStyleMobile || x.collectionStyle || x.style)) || {}, collection: (x && (x.cosmeticPreviewStyle || x.style)) || {}, leaderboard: (x && (x.leaderboardStyle || x.style)) || {}, navbar: (x && (x.navbarStyle || x.style)) || {}, avatar: (x && (x.largeAvatarStyle || x.profilePopupStyle || x.style)) || {}, popupStyle: (x && (x.popupStyleStyle || x.style)) || {} }, baseSet))
+      const a0Styles = Array.isArray(v0 && v0.assetStyles) ? v0.assetStyles : a0Assets.map(x => normalizeSuggestStyleSet({ dailyShop: (x && (x.dailyStyle || x.style)) || {}, collectionPreviewDesktop: (x && (x.collectionStyle || x.style)) || {}, collectionPreviewMobile: (x && (x.collectionStyleMobile || x.collectionStyle || x.style)) || {}, collection: (x && (x.cosmeticPreviewStyle || x.style)) || {}, cosmeticDesktop: (x && (x.cosmeticPreviewStyle || x.style)) || {}, cosmeticMobile: (x && (x.cosmeticPreviewStyleMobile || x.cosmeticPreviewStyle || x.style)) || {}, leaderboard: (x && (x.leaderboardStyle || x.style)) || {}, navbar: (x && (x.navbarStyle || x.style)) || {}, avatarDesktop: (x && (x.largeAvatarStyle || x.profilePopupStyle || x.style)) || {}, avatarMobile: (x && (x.largeAvatarStyleMobile || x.largeAvatarStyle || x.profilePopupStyle || x.style)) || {}, avatar: (x && (x.largeAvatarStyle || x.profilePopupStyle || x.style)) || {}, popupStyle: (x && (x.popupStyleStyle || x.style)) || {} }, baseSet))
       suggestAssetStyles.value = a0Styles
       activeSuggestAssetIndex.value = 0
       setActiveSuggestAsset(0)
@@ -4377,7 +4418,14 @@ async function deleteUserItem(item) { try { const legacyId = Number((typeof item
   const normId = Number((typeof item.legacyId !== 'undefined') ? item.legacyId : item.id); dynamicItems.value = (Array.isArray(dynamicItems.value) ? dynamicItems.value.filter(n => { const nid = Number((typeof n.legacyId !== 'undefined') ? n.legacyId : n.id); const nname = String(n.name || '').trim(); return (Number.isFinite(normId) ? nid !== normId : nname !== name) }) : []); try { if (Number.isFinite(normId)) dynamicInfoById.value.delete(Number(normId)) } catch {} try { if (name) dynamicInfoByName.value.delete(String(name)) } catch {} try { loadWeeklyItems() } catch {} localItemsUpdateKey.value++; try { await secureApiCall('/users/my-items', { method: 'DELETE', body: JSON.stringify({ legacyId: Number.isFinite(legacyId) ? legacyId : undefined, localItemId: localId || undefined, id: (typeof item.id === 'number' ? item.id : undefined), name }) }) } catch {} try { userServerLocalItems.value = (Array.isArray(userServerLocalItems.value) ? userServerLocalItems.value.filter(u => { const uid = (typeof u.legacyId !== 'undefined') ? u.legacyId : u.id; const ulocalId = u && u.meta && u.meta.localItemId; const uname = String(u.name || '').trim(); if (localId && ulocalId) return String(ulocalId) !== String(localId); if (Number.isFinite(legacyId)) return Number(uid) !== legacyId; return uname !== name; }) : []) } catch {} try { await loadUserServerLocalItems() } catch {} try { window.dispatchEvent(new CustomEvent('my-items-changed')) } catch {} alert('Item supprimé de vos items.') } catch {} }
 function onSuggestFile(e) { try { const f = e.target.files && e.target.files[0]; if (!f) return; const name = String(f.name || '').toLowerCase(); const type = String(f.type || '').toLowerCase(); const isWebp = type === 'image/webp' || name.endsWith('.webp'); const isGif = type === 'image/gif' || name.endsWith('.gif'); if (!isWebp && !isGif) { try { alert('Seuls les fichiers WEBP ou GIF sont acceptés.') } catch {} try { e.target.value = '' } catch {} return } const reader = new FileReader(); reader.onload = () => { const data = reader.result; persistBufferIntoActiveVariant(); const v = suggestVariants.value[activeVariantIndex.value]; const list = (v && Array.isArray(v.assetSrcs)) ? v.assetSrcs : (v && v.assetSrc ? [v.assetSrc] : []); const styleList = (v && Array.isArray(v.assetStyles)) ? v.assetStyles : (Array.isArray(suggestAssetStyles.value) ? suggestAssetStyles.value : []); const nextStyle = normalizeSuggestStyleSet(suggestStyles.value); if (v) { v.assetSrcs = [...list, data]; v.assetSrc = v.assetSrcs[0] || ''; v.assetStyles = [...styleList, nextStyle] } suggestAssetSrcs.value = (v && Array.isArray(v.assetSrcs)) ? [...v.assetSrcs] : [data]; suggestAssetStyles.value = (v && Array.isArray(v.assetStyles)) ? [...v.assetStyles] : [...styleList, nextStyle]; activeSuggestAssetIndex.value = suggestAssetStyles.value.length ? (suggestAssetStyles.value.length - 1) : 0; setPlacementForIndex('leaderboard', activeSuggestAssetIndex.value, suggestPlacement.value.leaderboard); setPlacementForIndex('avatar', activeSuggestAssetIndex.value, suggestPlacement.value.avatar); setPlacementForIndex('navbar', activeSuggestAssetIndex.value, suggestPlacement.value.navbar); setActiveSuggestAsset(activeSuggestAssetIndex.value) }; reader.readAsDataURL(f) } catch {} }
 function onSuggestUrl() { try { const u = String(suggestUrl.value || '').trim(); if (!u) return; const raw = u.split('?')[0]; const url = raw + (raw.startsWith('/uploads/') ? `?v=${Date.now()}` : ''); persistBufferIntoActiveVariant(); const v = suggestVariants.value[activeVariantIndex.value]; const list = (v && Array.isArray(v.assetSrcs)) ? v.assetSrcs : (v && v.assetSrc ? [v.assetSrc] : []); const styleList = (v && Array.isArray(v.assetStyles)) ? v.assetStyles : (Array.isArray(suggestAssetStyles.value) ? suggestAssetStyles.value : []); const nextStyle = normalizeSuggestStyleSet(suggestStyles.value); if (v) { v.assetSrcs = [...list, url]; v.assetSrc = v.assetSrcs[0] || ''; v.assetStyles = [...styleList, nextStyle] } suggestAssetSrcs.value = (v && Array.isArray(v.assetSrcs)) ? [...v.assetSrcs] : [url]; suggestAssetStyles.value = (v && Array.isArray(v.assetStyles)) ? [...v.assetStyles] : [...styleList, nextStyle]; activeSuggestAssetIndex.value = suggestAssetStyles.value.length ? (suggestAssetStyles.value.length - 1) : 0; setPlacementForIndex('leaderboard', activeSuggestAssetIndex.value, suggestPlacement.value.leaderboard); setPlacementForIndex('avatar', activeSuggestAssetIndex.value, suggestPlacement.value.avatar); setPlacementForIndex('navbar', activeSuggestAssetIndex.value, suggestPlacement.value.navbar); setActiveSuggestAsset(activeSuggestAssetIndex.value) } catch {} }
-function centerSuggest(key) { try { const s = suggestStyles.value[key]; if (!s) return; const root = weeklyContainerRef.value; let el = null; if (key === 'leaderboard') { const sel = (suggestPlacement.value.leaderboard === 'above') ? '.preview-card.preview-leaderboard .leaderboard-item .user-avatar-container' : '.preview-card.preview-leaderboard .avatar-img'; el = root && root.querySelector(sel) } else if (key === 'avatar') { const sel = (suggestPlacement.value.avatar === 'above') ? '.preview-card.preview-avatar .profile-avatar-scaler' : '.preview-card.preview-avatar .avatar-img'; el = root && root.querySelector(sel) } else if (key === 'navbar') { const sel = '.preview-card.preview-navbar .navbar-stage'; el = root && root.querySelector(sel) } else if (key === 'dailyShop') { el = root && root.querySelector('.preview-card.preview-daily-shop .item-img-container') } else if (key === 'collectionPreview') { el = root && root.querySelector('.preview-card.preview-collection .item-img-container') } else if (key === 'popupStyle') { el = root && root.querySelector('.preview-card.preview-popup-style .item-img-container') } else { el = root && root.querySelector('.preview-card.preview-item .item-img-container') } const rect = el ? el.getBoundingClientRect() : null; const boxW = rect ? rect.width : (key === 'leaderboard' ? 57 : key === 'avatar' ? 150 : key === 'navbar' ? 57 : key === 'collectionPreview' ? (suggestDevice.value === 'mobile' ? 80 : 90) : key === 'popupStyle' ? 120.5 : key === 'dailyShop' ? 90 : 100); const boxH = rect ? rect.height : (key === 'leaderboard' ? 57 : key === 'avatar' ? 150 : key === 'navbar' ? 57 : key === 'collectionPreview' ? (suggestDevice.value === 'mobile' ? 80 : 90) : key === 'popupStyle' ? 64 : key === 'dailyShop' ? 90 : 100); const w = Number(s.width) || 50; const h = Number(s.height || s.width) || 50; s.left = Math.round((boxW - w) / 2); s.top = Math.round((boxH - h) / 2) } catch {} }
+function centerSuggest(key) { try { const s = (key === 'collection') ? ((suggestCosmeticDevice.value === 'mobile') ? (suggestStyles.value.cosmeticMobile || suggestStyles.value.collection || {}) : (suggestStyles.value.cosmeticDesktop || suggestStyles.value.collection || {})) : (suggestStyles.value[key] || {}); if (!s) return; const root = weeklyContainerRef.value; let el = null; if (key === 'leaderboard') { const sel = (suggestPlacement.value.leaderboard === 'above') ? '.preview-card.preview-leaderboard .leaderboard-item .user-avatar-container' : '.preview-card.preview-leaderboard .avatar-img'; el = root && root.querySelector(sel) } else if (key === 'avatar') { const sel = (suggestPlacement.value.avatar === 'above') ? '.preview-card.preview-avatar .profile-avatar-scaler' : '.preview-card.preview-avatar .avatar-img'; el = root && root.querySelector(sel) } else if (key === 'navbar') { const sel = '.preview-card.preview-navbar .navbar-stage'; el = root && root.querySelector(sel) } else if (key === 'dailyShop') { el = root && root.querySelector('.preview-card.preview-daily-shop .item-img-container') } else if (key === 'collectionPreview') { el = root && root.querySelector('.preview-card.preview-collection .item-img-container') } else if (key === 'popupStyle') { el = root && root.querySelector('.preview-card.preview-popup-style .item-img-container') } else { el = root && root.querySelector('.preview-card.preview-item .item-img-container') }
+    const rect = el ? el.getBoundingClientRect() : null
+    const avatarBoxW = (suggestPlacement.value.avatar === 'above') ? (suggestAvatarDevice.value === 'mobile' ? 250 : 351) : 150
+    const avatarBoxH = (suggestPlacement.value.avatar === 'above') ? Number(suggestAvatarStageHeight.value || 250) : 150
+    const cosmeticBoxW = (suggestCosmeticDevice.value === 'mobile') ? 250 : 350
+    const cosmeticBoxH = (suggestCosmeticDevice.value === 'mobile') ? 180 : 145
+    const boxW = rect ? rect.width : (key === 'leaderboard' ? 57 : key === 'avatar' ? avatarBoxW : key === 'navbar' ? 57 : key === 'collectionPreview' ? (suggestDevice.value === 'mobile' ? 80 : 90) : key === 'collection' ? cosmeticBoxW : key === 'popupStyle' ? 120.5 : key === 'dailyShop' ? 90 : 100)
+    const boxH = rect ? rect.height : (key === 'leaderboard' ? 57 : key === 'avatar' ? avatarBoxH : key === 'navbar' ? 57 : key === 'collectionPreview' ? (suggestDevice.value === 'mobile' ? 80 : 90) : key === 'collection' ? cosmeticBoxH : key === 'popupStyle' ? 64 : key === 'dailyShop' ? 90 : 100); const w = Number(s.width) || 50; const h = Number(s.height || s.width) || 50; s.left = Math.round((boxW - w) / 2); s.top = Math.round((boxH - h) / 2) } catch {} }
 function getSuggestAssetsForPlacement(target, placement, isYou) {
   try {
     if (isYou === false) return []
@@ -4388,7 +4436,7 @@ function getSuggestAssetsForPlacement(target, placement, isYou) {
   } catch { return [] }
 }
 function getSuggestStackStyle(i) { try { const idx = Number(i) || 0; if (idx <= 0) return {}; const delta = Math.min(24, idx * 6); return { marginLeft: delta + 'px', marginTop: delta + 'px' } } catch { return {} } }
-function getSuggestStyle(key, assetIndex) { try { const set = getSuggestStyleSetForIndex(assetIndex); const s = (key === 'collectionPreview') ? ((suggestDevice.value === 'mobile') ? (set.collectionPreviewMobile || set.collectionPreview || set.collection || {}) : (set.collectionPreviewDesktop || set.collectionPreview || set.collection || {})) : (set[key] || {}); const style = { position: 'absolute' }; if (typeof s.top === 'number') style.top = s.top + 'px'; if (typeof s.left === 'number') style.left = s.left + 'px'; if (typeof s.width === 'number') style.width = s.width + 'px'; if (typeof s.height === 'number') style.height = s.height + 'px'; if (typeof s.rotate === 'number') style.transform = `rotate(${s.rotate}deg)`; if (typeof s.zIndex === 'number') style.zIndex = s.zIndex; try { const isAvatarAbove = (key === 'avatar' && getPlacementForIndex('avatar', assetIndex) === 'above'); const isLeaderboardAbove = (key === 'leaderboard' && getPlacementForIndex('leaderboard', assetIndex) === 'above'); const isNavbarAbove = (key === 'navbar' && getPlacementForIndex('navbar', assetIndex) === 'above'); if (isAvatarAbove || isLeaderboardAbove || isNavbarAbove) { style.zIndex = Math.max(Number(style.zIndex || 0), 100) } } catch {} if (typeof s.objectFit === 'string') style.objectFit = s.objectFit; if (typeof s.margin === 'number') style.margin = s.margin + 'px'; if (typeof s.padding === 'number') style.padding = s.padding + 'px'; if (s.background) style.background = s.background; if (s.boxShadow) style.boxShadow = s.boxShadow; if (typeof s.borderWidth === 'number') style.borderWidth = s.borderWidth + 'px'; if (typeof s.borderStyle === 'string') style.borderStyle = s.borderStyle; if (s.borderColor) style.borderColor = s.borderColor; if (typeof s.borderRadius === 'number') style.borderRadius = s.borderRadius + 'px'; return style } catch { return { position: 'absolute' } } }
+function getSuggestStyle(key, assetIndex) { try { const set = getSuggestStyleSetForIndex(assetIndex); const s = (key === 'collectionPreview') ? ((suggestDevice.value === 'mobile') ? (set.collectionPreviewMobile || set.collectionPreview || set.collection || {}) : (set.collectionPreviewDesktop || set.collectionPreview || set.collection || {})) : (key === 'avatar') ? ((suggestAvatarDevice.value === 'mobile') ? (set.avatarMobile || set.avatar || {}) : (set.avatarDesktop || set.avatar || {})) : (key === 'collection') ? ((suggestCosmeticDevice.value === 'mobile') ? (set.cosmeticMobile || set.collection || {}) : (set.cosmeticDesktop || set.collection || {})) : (set[key] || {}); const style = { position: 'absolute' }; if (typeof s.top === 'number') style.top = s.top + 'px'; if (typeof s.left === 'number') style.left = s.left + 'px'; if (typeof s.width === 'number') style.width = s.width + 'px'; if (typeof s.height === 'number') style.height = s.height + 'px'; if (typeof s.rotate === 'number') style.transform = `rotate(${s.rotate}deg)`; if (typeof s.zIndex === 'number') style.zIndex = s.zIndex; try { const isAvatarAbove = (key === 'avatar' && getPlacementForIndex('avatar', assetIndex) === 'above'); const isLeaderboardAbove = (key === 'leaderboard' && getPlacementForIndex('leaderboard', assetIndex) === 'above'); const isNavbarAbove = (key === 'navbar' && getPlacementForIndex('navbar', assetIndex) === 'above'); if (isAvatarAbove || isLeaderboardAbove || isNavbarAbove) { style.zIndex = Math.max(Number(style.zIndex || 0), 100) } } catch {} if (typeof s.objectFit === 'string') style.objectFit = s.objectFit; if (typeof s.margin === 'number') style.margin = s.margin + 'px'; if (typeof s.padding === 'number') style.padding = s.padding + 'px'; if (s.background) style.background = s.background; if (s.boxShadow) style.boxShadow = s.boxShadow; if (typeof s.borderWidth === 'number') style.borderWidth = s.borderWidth + 'px'; if (typeof s.borderStyle === 'string') style.borderStyle = s.borderStyle; if (s.borderColor) style.borderColor = s.borderColor; if (typeof s.borderRadius === 'number') style.borderRadius = s.borderRadius + 'px'; return style } catch { return { position: 'absolute' } } }
 const suggestPreviewBorderColor = ref(null)
 function refreshSuggestPreviewBorderColor() { try { const root = weeklyContainerRef.value; const sels = ['.preview-card.preview-collection .item-img-wrapper.large', '.preview-card.preview-daily-shop .item-img-wrapper.large', '.preview-card.preview-avatar .profile-avatar-stage']; let color = ''; for (const s of sels) { const el = root && root.querySelector(s); if (!el) continue; const cs = window.getComputedStyle(el); const c = cs.getPropertyValue('border-color') || cs.borderColor || ''; if (c && c !== 'transparent') { color = c; break } } suggestPreviewBorderColor.value = color || '#00FF80' } catch { suggestPreviewBorderColor.value = '#00FF80' } }
 function getPopupWrapperStyle() { try { const c = suggestPreviewBorderColor.value || '#00FF80'; return { borderColor: c } } catch { return {} } }
@@ -4398,12 +4446,13 @@ const draggingKey = ref(null)
 const dragStart = ref({ x: 0, y: 0 })
 const initialPos = ref({ top: 0, left: 0 })
 let rafId = null
-function startDrag(key, assetIndex, e) { try { setActiveSuggestAsset(assetIndex); if (draggingKey.value === key) { endDrag(); return } draggingKey.value = key; dragStart.value = { x: e.clientX, y: e.clientY }; const s = suggestStyles.value[key] || {}; initialPos.value = { top: Number(s.top)||0, left: Number(s.left)||0 }; window.addEventListener('mousemove', onDrag, { passive: true }); setTimeout(() => { window.addEventListener('click', handleDropClick, { once: true }) }, 0) } catch {} }
+function getDragStyleForKey(key) { try { if (key === 'collection') { return (suggestCosmeticDevice.value === 'mobile') ? (suggestStyles.value.cosmeticMobile || suggestStyles.value.collection || {}) : (suggestStyles.value.cosmeticDesktop || suggestStyles.value.collection || {}) } return suggestStyles.value[key] || {} } catch { return {} } }
+function startDrag(key, assetIndex, e) { try { setActiveSuggestAsset(assetIndex); if (draggingKey.value === key) { endDrag(); return } draggingKey.value = key; dragStart.value = { x: e.clientX, y: e.clientY }; const s = getDragStyleForKey(key); initialPos.value = { top: Number(s.top)||0, left: Number(s.left)||0 }; window.addEventListener('mousemove', onDrag, { passive: true }); setTimeout(() => { window.addEventListener('click', handleDropClick, { once: true }) }, 0) } catch {} }
 function handleDropClick() { try { endDrag() } catch {} }
-function onDrag(e) { try { if (!draggingKey.value) return; const key = draggingKey.value; const s = suggestStyles.value[key] || {}; const dx = e.clientX - dragStart.value.x; const dy = e.clientY - dragStart.value.y; if (rafId) cancelAnimationFrame(rafId); rafId = requestAnimationFrame(() => { s.left = initialPos.value.left + dx; s.top = initialPos.value.top + dy }) } catch {} }
+function onDrag(e) { try { if (!draggingKey.value) return; const key = draggingKey.value; const s = getDragStyleForKey(key); const dx = e.clientX - dragStart.value.x; const dy = e.clientY - dragStart.value.y; if (rafId) cancelAnimationFrame(rafId); rafId = requestAnimationFrame(() => { s.left = initialPos.value.left + dx; s.top = initialPos.value.top + dy }) } catch {} }
 function endDrag() { try { draggingKey.value = null; window.removeEventListener('mousemove', onDrag) } catch {} }
-function startDragTouch(key, assetIndex, e) { try { const t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]); if (!t) return; e.preventDefault(); setActiveSuggestAsset(assetIndex); if (draggingKey.value === key) { endDragTouch(); return } draggingKey.value = key; dragStart.value = { x: t.clientX, y: t.clientY }; const s = suggestStyles.value[key] || {}; initialPos.value = { top: Number(s.top)||0, left: Number(s.left)||0 }; window.addEventListener('touchmove', onDragTouch, { passive: false }); window.addEventListener('touchend', endDragTouch, { once: true }) } catch {} }
-function onDragTouch(e) { try { if (!draggingKey.value) return; const t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]); if (!t) return; e.preventDefault(); const key = draggingKey.value; const s = suggestStyles.value[key] || {}; const dx = t.clientX - dragStart.value.x; const dy = t.clientY - dragStart.value.y; if (rafId) cancelAnimationFrame(rafId); rafId = requestAnimationFrame(() => { s.left = initialPos.value.left + dx; s.top = initialPos.value.top + dy }) } catch {} }
+function startDragTouch(key, assetIndex, e) { try { const t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]); if (!t) return; e.preventDefault(); setActiveSuggestAsset(assetIndex); if (draggingKey.value === key) { endDragTouch(); return } draggingKey.value = key; dragStart.value = { x: t.clientX, y: t.clientY }; const s = getDragStyleForKey(key); initialPos.value = { top: Number(s.top)||0, left: Number(s.left)||0 }; window.addEventListener('touchmove', onDragTouch, { passive: false }); window.addEventListener('touchend', endDragTouch, { once: true }) } catch {} }
+function onDragTouch(e) { try { if (!draggingKey.value) return; const t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]); if (!t) return; e.preventDefault(); const key = draggingKey.value; const s = getDragStyleForKey(key); const dx = t.clientX - dragStart.value.x; const dy = t.clientY - dragStart.value.y; if (rafId) cancelAnimationFrame(rafId); rafId = requestAnimationFrame(() => { s.left = initialPos.value.left + dx; s.top = initialPos.value.top + dy }) } catch {} }
 function endDragTouch() { try { draggingKey.value = null; window.removeEventListener('touchmove', onDragTouch) } catch {} }
 function saveSuggestion() {
   try {
@@ -4438,12 +4487,12 @@ function saveSuggestion() {
         leaderboardStyle: { ...set.leaderboard },
         navbarStyle: { ...set.navbar },
         navbarStyleMobile: { ...set.navbar },
-        largeAvatarStyle: { ...set.avatar },
-        largeAvatarStyleMobile: { ...set.avatar },
-        profilePopupStyle: { ...set.avatar },
+        largeAvatarStyle: { ...(set.avatarDesktop || set.avatar) },
+        largeAvatarStyleMobile: { ...(set.avatarMobile || set.avatarDesktop || set.avatar) },
+        profilePopupStyle: { ...(set.avatarDesktop || set.avatar) },
         popupStyleStyle: { ...set.popupStyle },
-        cosmeticPreviewStyle: { ...set.collection },
-        cosmeticPreviewStyleMobile: { ...set.collection },
+        cosmeticPreviewStyle: { ...(set.cosmeticDesktop || set.collection) },
+        cosmeticPreviewStyleMobile: { ...(set.cosmeticMobile || set.cosmeticDesktop || set.collection) },
         dailyStyle: { ...set.dailyShop },
         meta: { 
           ...baseMeta,
@@ -4487,12 +4536,12 @@ function saveSuggestion() {
               leaderboardStyle: { ...set.leaderboard },
               navbarStyle: { ...set.navbar },
               navbarStyleMobile: { ...set.navbar },
-              largeAvatarStyle: { ...set.avatar },
-              largeAvatarStyleMobile: { ...set.avatar },
-              profilePopupStyle: { ...set.avatar },
+              largeAvatarStyle: { ...(set.avatarDesktop || set.avatar) },
+              largeAvatarStyleMobile: { ...(set.avatarMobile || set.avatarDesktop || set.avatar) },
+              profilePopupStyle: { ...(set.avatarDesktop || set.avatar) },
               popupStyleStyle: { ...set.popupStyle },
-              cosmeticPreviewStyle: { ...set.collection },
-              cosmeticPreviewStyleMobile: { ...set.collection },
+              cosmeticPreviewStyle: { ...(set.cosmeticDesktop || set.collection) },
+              cosmeticPreviewStyleMobile: { ...(set.cosmeticMobile || set.cosmeticDesktop || set.collection) },
               dailyStyle: { ...set.dailyShop },
               meta: {
                 leaderboardPlacement: String(lbPlacement || 'inside'),
@@ -8337,6 +8386,8 @@ onUnmounted(() => {
   .preview-slider-viewport { overflow: hidden; }
 .preview-slider-track { display: flex; gap: 6px; align-items: stretch; justify-content: flex-start; will-change: transform; }
 .preview-slider-track .preview-card { flex: 0 0 390px; max-width: 390px; height: 410px; }
+.preview-slider-track .preview-card.preview-item { height: 470px; }
+.preview-slider-track .preview-card.preview-item.cosmetic-mobile-card { height: 575px; }
 @media (max-width: 1024px) {
   .preview-slider-viewport { overflow: visible !important; width: 100% !important; }
   .preview-slider-track { flex-direction: column; align-items: center; justify-content: flex-start; }
@@ -8347,6 +8398,7 @@ onUnmounted(() => {
   .preview-card.preview-collection .item-img-container { position: relative; width: 100%; height: 100%; background: transparent; overflow: visible; border: none; }
   .preview-card.preview-leaderboard { max-width: 390px; }
   .preview-card.preview-avatar { max-width: 390px; }
+  .preview-card.preview-avatar.avatar-mobile-card { align-items: center; }
   .preview-card.preview-popup-style .item-img-wrapper.large { position: relative; width: 120.5px; height: 64px; margin: 0 auto; border-radius: 12px; }
   .preview-card.preview-avatar:not(.roi-preview) .profile-avatar-stage { border: none; border-radius: 30px; width: 351px !important; height: 250px !important; box-sizing: border-box; }
   .preview-card.preview-avatar:not(.roi-preview) .profile-avatar-scaler { width: 351px !important; height: 250px !important; display:flex; align-items:center; justify-content:center; border: 5px solid #5bc682; border-radius: 30px; box-sizing: border-box; margin: 0 auto; position: relative; }
@@ -8404,6 +8456,17 @@ onUnmounted(() => {
     height: 145px;
     margin: 0 auto 12px;
     position: relative;
+  }
+  .fenetre-collection .preview-card.preview-item .item-img-wrapper.large.mobile-mode {
+    width: 250px !important;
+    height: 250px !important;
+  }
+  .fenetre-collection .preview-card.preview-item .item-img-wrapper.large.mobile-mode .item-img-container {
+    width: 240px;
+    height: 240px;
+  }
+  .fenetre-collection .preview-card.preview-item .item-img-wrapper.large:not(.mobile-mode) .item-img-container {
+    height: 135px;
   }
   .preview-card.preview-daily-shop .item-img-wrapper {
     background: #fff;
