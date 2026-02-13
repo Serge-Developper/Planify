@@ -1690,7 +1690,7 @@ router.get('/me/push-preferences', verifyToken, async (req, res) => {
     const userId = req.user.id || req.user._id;
     const user = await User.findById(userId).select('pushPreferences');
     if (!user) return res.status(404).json({ success: false, message: 'Utilisateur non trouvé' });
-    res.json({ success: true, pushPreferences: user.pushPreferences || { enabled: false, wheel: false, homework: false, exam: false } });
+    res.json({ success: true, pushPreferences: user.pushPreferences || { enabled: false, wheel: false, homework: false, exam: false, shop: false } });
   } catch (e) {
     res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
@@ -1704,7 +1704,8 @@ router.put('/me/push-preferences', verifyToken, async (req, res) => {
       enabled: raw.enabled === true || raw.enabled === 'true' || raw.enabled === 1 || raw.enabled === '1',
       wheel: raw.wheel === true || raw.wheel === 'true' || raw.wheel === 1 || raw.wheel === '1',
       homework: raw.homework === true || raw.homework === 'true' || raw.homework === 1 || raw.homework === '1',
-      exam: raw.exam === true || raw.exam === 'true' || raw.exam === 1 || raw.exam === '1'
+      exam: raw.exam === true || raw.exam === 'true' || raw.exam === 1 || raw.exam === '1',
+      shop: raw.shop === true || raw.shop === 'true' || raw.shop === 1 || raw.shop === '1'
     };
     const updated = await User.findByIdAndUpdate(userId, { pushPreferences: prefs }, { new: true }).select('-password');
     if (!updated) return res.status(404).json({ success: false, message: 'Utilisateur non trouvé' });

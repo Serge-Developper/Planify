@@ -43,6 +43,7 @@ const variantSchema = new mongoose.Schema({
     'popup-style': { type: String, default: null },
     'profile-popup': { type: String, default: null }
   },
+  navbarPlacements: { type: [String], default: [] },
   showText: { type: Boolean, default: false }, // Afficher le texte "Par défaut" au lieu de l'image
   textOnly: { type: Boolean, default: false }, // Style avec texte uniquement (pas d'images)
   textContent: { type: String, default: '' }, // Texte à afficher pour ce style

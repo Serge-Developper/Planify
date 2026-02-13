@@ -182,21 +182,10 @@
                 :style="getDynNavbarAssetStyle(a)"
               />
             </template>
-            <!-- Items dynamiques: "above" au-dessus du bouton account -->
-            <template v-if="equippedDynItem && Array.isArray(equippedDynItem.variants) && equippedDynItem.variants.length > 0">
+            <template v-if="equippedDynItem">
               <img
-                v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
-                v-if="a && a.meta && a.meta.navbarPlacement === 'above' && isNavbarAssetTargetingAccountBtn(equippedDynItem, a)"
-                :key="'dyn-nb-above-'+ai+'-'+dynamicVariantsState"
-                :src="resolveDynSrc(a.src)"
-                :style="getDynNavbarOverlayStyle(a)"
-              />
-            </template>
-            <template v-else-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
-              <img
-                v-for="(a, ai) in equippedDynItem.assets"
-                v-if="a && a.meta && a.meta.navbarPlacement === 'above' && isNavbarAssetTargetingAccountBtn(equippedDynItem, a)"
-                :key="'dyn-nb-above-'+ai"
+                v-for="(a, ai) in getNavbarAssetsForTargetPlacement(equippedDynItem, 'user-account-wrapper', 'above')"
+                :key="'dyn-nb-above-'+ai+'-'+navbarVariantUpdateKey"
                 :src="resolveDynSrc(a.src)"
                 :style="getDynNavbarOverlayStyle(a)"
               />
@@ -589,7 +578,7 @@
             <template v-if="equippedDynItem && Array.isArray(equippedDynItem.variants) && equippedDynItem.variants.length > 0">
               <img
                 v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
-                v-if="!a || !a.meta || a.meta.navbarPlacement === 'above'"
+                v-if="getNavbarPlacementForAsset(equippedDynItem, a, ai) === 'above' && isNavbarAssetTargetingAccountBtn(equippedDynItem, a, ai)"
                 :key="'dyn-m-above-'+ai+'-'+dynamicVariantsState"
                 :src="resolveDynSrc(a.src)"
                 :style="getDynNavbarOverlayStyle(a)"
@@ -598,7 +587,7 @@
             <template v-else-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
               <img
                 v-for="(a, ai) in equippedDynItem.assets"
-                v-if="!a || !a.meta || a.meta.navbarPlacement === 'above'"
+                v-if="getNavbarPlacementForAsset(equippedDynItem, a, ai) === 'above' && isNavbarAssetTargetingAccountBtn(equippedDynItem, a, ai)"
                 :key="'dyn-m-above-'+ai"
                 :src="resolveDynSrc(a.src)"
                 :style="getDynNavbarOverlayStyle(a)"
@@ -1216,6 +1205,7 @@
           <label style="display:block;margin:4px 0;"><input type="checkbox" v-model="pushPrefs.homework" /> Devoirs</label>
           <label style="display:block;margin:4px 0;"><input type="checkbox" v-model="pushPrefs.exam" /> Examens</label>
           <label style="display:block;margin:4px 0;"><input type="checkbox" v-model="pushPrefs.wheel" /> Roue de la fortune</label>
+          <label style="display:block;margin:4px 0;"><input type="checkbox" v-model="pushPrefs.shop" /> Boutique (nouveaux items)</label>
           <button class="odoo-login-btn push-update-btn" @click="applyPushSettings" :disabled="pushUpdateState==='working'" :class="pushUpdateState">
             <span v-if="pushUpdateState==='working'" class="btn-spinner" aria-hidden="true"></span>
             <span v-if="pushUpdateState==='working'">Mise à jour…</span>
@@ -1423,12 +1413,12 @@ const showRedeemPopup = ref(false)
 const showForgotPasswordProfile = ref(false)
 const showPushSettings = ref(false)
 const pushEnabled = ref(false)
-const pushPrefs = ref({ wheel: false, homework: false, exam: false })
+const pushPrefs = ref({ wheel: false, homework: false, exam: false, shop: false })
 const pushUpdateState = ref('idle')
 function togglePushSettings(){ showPushSettings.value=!showPushSettings.value; if(showPushSettings.value){ loadPushSettings() } else { pushUpdateState.value='idle' } }
 watch(pushPrefs,()=>{ if(pushUpdateState.value==='ok') pushUpdateState.value='idle' },{deep:true})
-async function loadPushSettings(){ try{ const res=await secureApiCall('/users/me/push-preferences',{method:'GET'}); const p=res && res.pushPreferences ? res.pushPreferences : {}; pushEnabled.value=!!p.enabled; pushPrefs.value={ wheel: !!p.wheel, homework: !!p.homework, exam: !!p.exam }; }catch{ try{ const p=(user.value && user.value.pushPreferences) || {}; pushEnabled.value=!!p.enabled; pushPrefs.value={ wheel: !!p.wheel, homework: !!p.homework, exam: !!p.exam }; }catch{} } }
-async function applyPushSettings(){ try{ pushUpdateState.value='working'; let canEnable=true; if(typeof Notification!=='undefined'){ if(Notification.permission!=='granted'){ const perm=await Notification.requestPermission(); if(perm!=='granted') canEnable=false } } else { canEnable=false } if(canEnable && !pushEnabled.value){ const subOk=await subscribeToPushNotifications(); if(!subOk) canEnable=false } const enabled=!!canEnable; pushEnabled.value=enabled; await secureApiCall('/users/me/push-preferences',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled:enabled,wheel:!!pushPrefs.value.wheel,homework:!!pushPrefs.value.homework,exam:!!pushPrefs.value.exam})}); pushUpdateState.value='ok'; }catch{ pushUpdateState.value='idle' } }
+async function loadPushSettings(){ try{ const res=await secureApiCall('/users/me/push-preferences',{method:'GET'}); const p=res && res.pushPreferences ? res.pushPreferences : {}; pushEnabled.value=!!p.enabled; pushPrefs.value={ wheel: !!p.wheel, homework: !!p.homework, exam: !!p.exam, shop: !!p.shop }; }catch{ try{ const p=(user.value && user.value.pushPreferences) || {}; pushEnabled.value=!!p.enabled; pushPrefs.value={ wheel: !!p.wheel, homework: !!p.homework, exam: !!p.exam, shop: !!p.shop }; }catch{} } }
+async function applyPushSettings(){ try{ pushUpdateState.value='working'; let canEnable=true; if(typeof Notification!=='undefined'){ if(Notification.permission!=='granted'){ const perm=await Notification.requestPermission(); if(perm!=='granted') canEnable=false } } else { canEnable=false } if(canEnable && !pushEnabled.value){ const subOk=await subscribeToPushNotifications(); if(!subOk) canEnable=false } const enabled=!!canEnable; pushEnabled.value=enabled; await secureApiCall('/users/me/push-preferences',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled:enabled,wheel:!!pushPrefs.value.wheel,homework:!!pushPrefs.value.homework,exam:!!pushPrefs.value.exam,shop:!!pushPrefs.value.shop})}); pushUpdateState.value='ok'; }catch{ pushUpdateState.value='idle' } }
 
 const showNotificationBtn = ref(false)
 
@@ -1867,32 +1857,60 @@ const getDynVariantAssetsForNavbar = (item) => {
     if (!variant) {
       return []
     }
+
+    const variantPlacements = Array.isArray(variant.navbarPlacements) ? variant.navbarPlacements : null
+    const basePlacements = item && item.meta && Array.isArray(item.meta.navbarPlacements) ? item.meta.navbarPlacements : null
     
     // Si c'est un style texte uniquement, retourner les assets de la base avec les styles de la variante
     if (variant.textOnly) {
       const baseAssets = Array.isArray(item.assets) ? item.assets : []
       // Appliquer les styles de la variante aux assets de la base
-      return baseAssets.map(asset => ({
-        ...asset,
-        // Utiliser les styles de la variante s'ils existent, sinon garder les styles de l'asset
-        style: variant.assets && variant.assets[0] && variant.assets[0].style ? variant.assets[0].style : asset.style,
-        collectionStyle: variant.assets && variant.assets[0] && variant.assets[0].collectionStyle ? variant.assets[0].collectionStyle : asset.collectionStyle,
-        collectionStyleMobile: variant.assets && variant.assets[0] && variant.assets[0].collectionStyleMobile ? variant.assets[0].collectionStyleMobile : asset.collectionStyleMobile,
-        leaderboardStyle: variant.assets && variant.assets[0] && variant.assets[0].leaderboardStyle ? variant.assets[0].leaderboardStyle : asset.leaderboardStyle,
-        leaderboardStyleMobile: variant.assets && variant.assets[0] && variant.assets[0].leaderboardStyleMobile ? variant.assets[0].leaderboardStyleMobile : asset.leaderboardStyleMobile,
-        avatarStyle: variant.assets && variant.assets[0] && variant.assets[0].avatarStyle ? variant.assets[0].avatarStyle : asset.avatarStyle,
-        avatarStyleMobile: variant.assets && variant.assets[0] && variant.assets[0].avatarStyleMobile ? variant.assets[0].avatarStyleMobile : asset.avatarStyleMobile,
-        navbarStyle: variant.assets && variant.assets[0] && variant.assets[0].navbarStyle ? variant.assets[0].navbarStyle : asset.navbarStyle,
-        navbarStyleMobile: variant.assets && variant.assets[0] && variant.assets[0].navbarStyleMobile ? variant.assets[0].navbarStyleMobile : asset.navbarStyleMobile,
-        popupStyleStyle: variant.assets && variant.assets[0] && variant.assets[0].popupStyleStyle ? variant.assets[0].popupStyleStyle : asset.popupStyleStyle,
-        profilePopupStyle: variant.assets && variant.assets[0] && variant.assets[0].profilePopupStyle ? variant.assets[0].profilePopupStyle : asset.profilePopupStyle,
-        // Propager la taille/position de l'aperçu Large Avatar
-        largeAvatarStyle: variant.assets && variant.assets[0] && variant.assets[0].largeAvatarStyle ? variant.assets[0].largeAvatarStyle : asset.largeAvatarStyle,
-        // Fallback meta: si la variante n'a pas de meta, prendre celle de la base
-        meta: (variant.assets && variant.assets[0] && variant.assets[0].meta)
-          ? { ...(asset.meta || {}), ...(variant.assets[0].meta || {}) }
-          : (asset.meta || {})
-      }))
+      return baseAssets.map((asset, ai) => {
+        const mergedMeta = {
+          ...(asset && asset.meta ? asset.meta : {}),
+          ...((variant.assets && variant.assets[0] && variant.assets[0].meta) ? variant.assets[0].meta : {})
+        }
+        const placementFallback = normalizeNavbarPlacement(variantPlacements && variantPlacements[ai])
+          || normalizeNavbarPlacement(basePlacements && basePlacements[ai])
+          || normalizeNavbarPlacement(item && item.meta && item.meta.navbarPlacement)
+        const existingPlacement = normalizeNavbarPlacement(mergedMeta.navbarPlacement)
+        if (!existingPlacement && placementFallback) {
+          mergedMeta.navbarPlacement = placementFallback
+        }
+        const placementFromTarget = (mergedMeta.navbarTarget === 'user-account-wrapper')
+          ? 'above'
+          : ((mergedMeta.navbarTarget === 'avatar-image-container' || mergedMeta.navbarTarget === 'account-btn') ? 'inside' : null)
+        if (!normalizeNavbarPlacement(mergedMeta.navbarPlacement) && placementFromTarget) {
+          mergedMeta.navbarPlacement = placementFromTarget
+        }
+        const effectivePlacement = normalizeNavbarPlacement(mergedMeta.navbarPlacement) || placementFallback
+        if (effectivePlacement && !mergedMeta.navbarTarget) {
+          if (effectivePlacement === 'above') {
+            mergedMeta.navbarTarget = 'user-account-wrapper'
+          } else if (effectivePlacement === 'inside' || effectivePlacement === 'below') {
+            mergedMeta.navbarTarget = 'avatar-image-container'
+          }
+        }
+        return {
+          ...asset,
+          // Utiliser les styles de la variante s'ils existent, sinon garder les styles de l'asset
+          style: variant.assets && variant.assets[0] && variant.assets[0].style ? variant.assets[0].style : asset.style,
+          collectionStyle: variant.assets && variant.assets[0] && variant.assets[0].collectionStyle ? variant.assets[0].collectionStyle : asset.collectionStyle,
+          collectionStyleMobile: variant.assets && variant.assets[0] && variant.assets[0].collectionStyleMobile ? variant.assets[0].collectionStyleMobile : asset.collectionStyleMobile,
+          leaderboardStyle: variant.assets && variant.assets[0] && variant.assets[0].leaderboardStyle ? variant.assets[0].leaderboardStyle : asset.leaderboardStyle,
+          leaderboardStyleMobile: variant.assets && variant.assets[0] && variant.assets[0].leaderboardStyleMobile ? variant.assets[0].leaderboardStyleMobile : asset.leaderboardStyleMobile,
+          avatarStyle: variant.assets && variant.assets[0] && variant.assets[0].avatarStyle ? variant.assets[0].avatarStyle : asset.avatarStyle,
+          avatarStyleMobile: variant.assets && variant.assets[0] && variant.assets[0].avatarStyleMobile ? variant.assets[0].avatarStyleMobile : asset.avatarStyleMobile,
+          navbarStyle: variant.assets && variant.assets[0] && variant.assets[0].navbarStyle ? variant.assets[0].navbarStyle : asset.navbarStyle,
+          navbarStyleMobile: variant.assets && variant.assets[0] && variant.assets[0].navbarStyleMobile ? variant.assets[0].navbarStyleMobile : asset.navbarStyleMobile,
+          popupStyleStyle: variant.assets && variant.assets[0] && variant.assets[0].popupStyleStyle ? variant.assets[0].popupStyleStyle : asset.popupStyleStyle,
+          profilePopupStyle: variant.assets && variant.assets[0] && variant.assets[0].profilePopupStyle ? variant.assets[0].profilePopupStyle : asset.profilePopupStyle,
+          // Propager la taille/position de l'aperçu Large Avatar
+          largeAvatarStyle: variant.assets && variant.assets[0] && variant.assets[0].largeAvatarStyle ? variant.assets[0].largeAvatarStyle : asset.largeAvatarStyle,
+          // Fallback meta: si la variante n'a pas de meta, prendre celle de la base
+          meta: mergedMeta
+        }
+      })
     }
     
     if (!Array.isArray(variant.assets)) {
@@ -1901,9 +1919,33 @@ const getDynVariantAssetsForNavbar = (item) => {
     // Fusionner meta depuis la base si manquante
     const baseAssets = Array.isArray(item.assets) ? item.assets : []
     const bySrc = new Map(baseAssets.map(b => [String(b.src || ''), b]))
-    return variant.assets.map(a => {
+    return variant.assets.map((a, ai) => {
       const base = bySrc.get(String(a && a.src || ''))
-      const mergedMeta = (a && a.meta) ? a.meta : (base && base.meta ? base.meta : {})
+      const mergedMeta = {
+        ...(base && base.meta ? base.meta : {}),
+        ...(a && a.meta ? a.meta : {})
+      }
+      const placementFallback = normalizeNavbarPlacement(variantPlacements && variantPlacements[ai])
+        || normalizeNavbarPlacement(basePlacements && basePlacements[ai])
+        || normalizeNavbarPlacement(item && item.meta && item.meta.navbarPlacement)
+      const existingPlacement = normalizeNavbarPlacement(mergedMeta.navbarPlacement)
+      if (!existingPlacement && placementFallback) {
+        mergedMeta.navbarPlacement = placementFallback
+      }
+      const placementFromTarget = (mergedMeta.navbarTarget === 'user-account-wrapper')
+        ? 'above'
+        : ((mergedMeta.navbarTarget === 'avatar-image-container' || mergedMeta.navbarTarget === 'account-btn') ? 'inside' : null)
+      if (!normalizeNavbarPlacement(mergedMeta.navbarPlacement) && placementFromTarget) {
+        mergedMeta.navbarPlacement = placementFromTarget
+      }
+      const effectivePlacement = normalizeNavbarPlacement(mergedMeta.navbarPlacement) || placementFallback
+      if (effectivePlacement && !mergedMeta.navbarTarget) {
+        if (effectivePlacement === 'above') {
+          mergedMeta.navbarTarget = 'user-account-wrapper'
+        } else if (effectivePlacement === 'inside' || effectivePlacement === 'below') {
+          mergedMeta.navbarTarget = 'avatar-image-container'
+        }
+      }
       return { ...a, meta: mergedMeta, largeAvatarStyle: a.largeAvatarStyle ?? (base && base.largeAvatarStyle) }
     })
   } catch (e) {
@@ -1918,7 +1960,18 @@ function uniqueNavbarAssetsBySrc(assets) {
     const seen = new Set()
     const out = []
     for (const a of Array.isArray(assets) ? assets : []) {
-      const key = String(a && a.src ? a.src : '')
+      const s = (a && (a.navbarStyle || a.style)) || {}
+      const meta = a && a.meta ? a.meta : {}
+      const key = [
+        String(a && a.src ? a.src : ''),
+        String(meta.navbarPlacement || ''),
+        String(meta.navbarTarget || ''),
+        String(s.top ?? ''),
+        String(s.left ?? ''),
+        String(s.width ?? ''),
+        String(s.height ?? ''),
+        String(s.rotate ?? '')
+      ].join('|')
       if (seen.has(key)) continue
       seen.add(key)
       out.push(a)
@@ -1935,17 +1988,97 @@ function getUniqueBaseAssetsForNavbar(item) {
   return uniqueNavbarAssetsBySrc(item && Array.isArray(item.assets) ? item.assets : [])
 }
 
+function normalizeNavbarPlacement(p) {
+  return (p === 'above' || p === 'inside' || p === 'below') ? p : null
+}
+
+function getNavbarPlacementForAsset(item, asset, index) {
+  try {
+    const direct = normalizeNavbarPlacement(asset && asset.meta && asset.meta.navbarPlacement)
+    if (direct) return direct
+    const explicitTarget = asset && asset.meta && asset.meta.navbarTarget
+    if (explicitTarget === 'user-account-wrapper') return 'above'
+    if (explicitTarget === 'avatar-image-container' || explicitTarget === 'account-btn') return 'inside'
+    const itemId = item && (item.legacyId !== undefined ? item.legacyId : item.id)
+    const vi = (item && Array.isArray(item.variants) && itemId !== undefined && itemId !== null)
+      ? coinsStore.getDynamicItemVariant(itemId)
+      : -1
+    const v = (item && Array.isArray(item.variants) && vi >= 0) ? item.variants[vi] : null
+    const arr = (v && Array.isArray(v.navbarPlacements)) ? v.navbarPlacements : null
+    const idx = Number.isFinite(Number(index)) ? Number(index) : -1
+    if (arr && idx >= 0 && idx < arr.length) {
+      const pv = normalizeNavbarPlacement(arr[idx])
+      if (pv) return pv
+    }
+    const baseArr = item && item.meta && Array.isArray(item.meta.navbarPlacements) ? item.meta.navbarPlacements : null
+    if (baseArr && idx >= 0 && idx < baseArr.length) {
+      const pb = normalizeNavbarPlacement(baseArr[idx])
+      if (pb) return pb
+    }
+    const itemLevel = normalizeNavbarPlacement(item && item.meta && item.meta.navbarPlacement)
+    if (itemLevel) return itemLevel
+    const itemTarget = item && item.meta && item.meta.navbarTarget
+    if (itemTarget === 'user-account-wrapper') return 'above'
+    if (itemTarget === 'avatar-image-container' || itemTarget === 'account-btn') return 'inside'
+  } catch {}
+  return 'below'
+}
+
+function getNavbarTargetForAsset(item, asset, index) {
+  try {
+    const explicit = asset && asset.meta && asset.meta.navbarTarget
+    const directPlacement = normalizeNavbarPlacement(asset && asset.meta && asset.meta.navbarPlacement)
+    const itemId = item && (item.legacyId !== undefined ? item.legacyId : item.id)
+    const vi = (item && Array.isArray(item.variants) && itemId !== undefined && itemId !== null)
+      ? coinsStore.getDynamicItemVariant(itemId)
+      : -1
+    const v = (item && Array.isArray(item.variants) && vi >= 0) ? item.variants[vi] : null
+    const idx = Number.isFinite(Number(index)) ? Number(index) : -1
+    const hasVariantPlacement = !!(v && Array.isArray(v.navbarPlacements) && idx >= 0 && idx < v.navbarPlacements.length)
+    const hasBasePlacement = !!(item && item.meta && Array.isArray(item.meta.navbarPlacements) && idx >= 0 && idx < item.meta.navbarPlacements.length)
+    const itemPlacement = normalizeNavbarPlacement(item && item.meta && item.meta.navbarPlacement)
+    const hasPlacement = !!(directPlacement || hasVariantPlacement || hasBasePlacement || itemPlacement)
+    if (hasPlacement) {
+      const placement = getNavbarPlacementForAsset(item, asset, index)
+      if (placement === 'above') return 'user-account-wrapper'
+      if (placement === 'inside' || placement === 'below') return 'avatar-image-container'
+    }
+    if (explicit) return String(explicit === 'account-btn' ? 'avatar-image-container' : explicit)
+    const itemLevel = item && item.meta && item.meta.navbarTarget
+    if (itemLevel) return String(itemLevel === 'account-btn' ? 'avatar-image-container' : itemLevel)
+  } catch {}
+  return 'avatar-image-container'
+}
+
 function filterNavbarAssets(item, assets, target, placement) {
-  const list = uniqueNavbarAssetsBySrc(assets)
-  return list.filter((a) => {
-    try {
-      const t = getEffectiveNavbarTarget(item, a)
-      if (t !== target) return false
-      const p = a && a.meta && a.meta.navbarPlacement
-      if (!p) return placement === 'below'
-      return p === placement
-    } catch { return false }
-  })
+  try {
+    const list = Array.isArray(assets) ? assets : []
+    const seen = new Set()
+    const out = []
+    for (let i = 0; i < list.length; i++) {
+      const a = list[i]
+      const t = getNavbarTargetForAsset(item, a, i)
+      if (t !== target) continue
+      const p = getNavbarPlacementForAsset(item, a, i)
+      if (p !== placement) continue
+      const s = (a && (a.navbarStyle || a.style)) || {}
+      const meta = a && a.meta ? a.meta : {}
+      const key = [
+        String(a && a.src ? a.src : ''),
+        String(meta.navbarPlacement || ''),
+        String(meta.navbarTarget || ''),
+        String(s.top ?? ''),
+        String(s.left ?? ''),
+        String(s.width ?? ''),
+        String(s.height ?? ''),
+        String(s.rotate ?? '')
+      ].join('|')
+      if (seen.has(key)) continue
+      seen.add(key)
+      out.push(a)
+    }
+    return out
+  } catch { return [] }
 }
 
 function getVariantAssetsForTargetPlacement(item, target, placement) {
@@ -1970,11 +2103,13 @@ function getNavbarAssetsForTargetPlacement(item, target, placement) {
 
 function getEffectiveNavbarTarget(item, asset) {
   try {
-    // 1) Priorité: valeur définie au niveau ITEM
+    const explicit = asset && asset.meta && asset.meta.navbarTarget
+    if (explicit) return String(explicit === 'account-btn' ? 'avatar-image-container' : explicit)
+    const placement = asset && asset.meta && asset.meta.navbarPlacement
+    if (placement === 'above') return 'user-account-wrapper'
+    if (placement === 'inside' || placement === 'below') return 'avatar-image-container'
     const itemLevel = item && item.meta && item.meta.navbarTarget
     if (itemLevel) return String(itemLevel === 'account-btn' ? 'avatar-image-container' : itemLevel)
-    // 1bis) Détection globale comme dans le leaderboard: si l'un des assets (variante courante ou base)
-    // cible explicitement l'extérieur, basculer tout l'item sur 'user-account-wrapper'
     try {
       const assetsList = (Array.isArray(item?.variants) && item.variants.length > 0)
         ? getDynVariantAssetsForNavbar(item)
@@ -1986,10 +2121,7 @@ function getEffectiveNavbarTarget(item, asset) {
         }
       }
     } catch {}
-    const explicit = asset && asset.meta && asset.meta.navbarTarget
-    if (explicit) return String(explicit === 'account-btn' ? 'avatar-image-container' : explicit)
   } catch {}
-  // Défaut: intérieur = avatar-image-container
   return 'avatar-image-container'
 }
 
@@ -2032,14 +2164,14 @@ function getProfilePopupAssetsForTargetPlacement(item, target, placement) {
   } catch { return [] }
 }
 
-function isNavbarAssetTargetingAvatar(item, asset) {
+function isNavbarAssetTargetingAvatar(item, asset, index) {
   // intérieur = avatar-image-container
-  return getEffectiveNavbarTarget(item, asset) === 'avatar-image-container'
+  return getNavbarTargetForAsset(item, asset, index) === 'avatar-image-container'
 }
 
-function isNavbarAssetTargetingAccountBtn(item, asset) {
+function isNavbarAssetTargetingAccountBtn(item, asset, index) {
   // extérieur = user-account-wrapper
-  return getEffectiveNavbarTarget(item, asset) === 'user-account-wrapper'
+  return getNavbarTargetForAsset(item, asset, index) === 'user-account-wrapper'
 }
 
 function resolveDynSrc(src) {

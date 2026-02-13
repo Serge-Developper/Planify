@@ -9,6 +9,12 @@ const User = require('../models/User');
 
 const router = express.Router();
 
+let webpush;
+try { webpush = require('web-push'); } catch {}
+const VAPID_PUBLIC_KEY = process.env.PUBLIC_KEY || process.env.VAPID_PUBLIC_KEY || '';
+const VAPID_PRIVATE_KEY = process.env.PRIVATE_KEY || process.env.VAPID_PRIVATE_KEY || '';
+try { if (webpush && VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) { webpush.setVapidDetails('mailto:admin@planifymmi.fr', VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY); } } catch {}
+
 // Configuration upload pour assets d'items
 const uploadDir = path.join(__dirname, '..', 'uploads', 'items');
 fs.mkdirSync(uploadDir, { recursive: true });
@@ -39,6 +45,136 @@ function isReservedLegacyId(id) {
   // Bordures couleur 100..143 (dont variantes), puis 200..231 (dégradés)
   if ((id >= 100 && id <= 143) || (id >= 200 && id <= 231)) return true
   return false
+}
+
+function collectItemAssetSrcs(item) {
+  const out = [];
+  const assets = Array.isArray(item?.assets) ? item.assets : [];
+  for (const a of assets) {
+    const src = a && typeof a.src === 'string' ? a.src.trim() : '';
+    if (src) out.push(src);
+  }
+  const variants = Array.isArray(item?.variants) ? item.variants : [];
+  for (const v of variants) {
+    const vAssets = Array.isArray(v?.assets) ? v.assets : [];
+    for (const a of vAssets) {
+      const src = a && typeof a.src === 'string' ? a.src.trim() : '';
+      if (src) out.push(src);
+    }
+  }
+  return out;
+}
+
+function isWebpGifSrc(src) {
+  return /\.(webp|gif)(\?|#|$)/i.test(String(src || ''));
+}
+
+function buildNotifySources(item) {
+  const all = collectItemAssetSrcs(item);
+  const preferred = all.filter(isWebpGifSrc);
+  const used = preferred.length ? preferred : all;
+  const uniq = Array.from(new Set(used.map(s => String(s || '').trim()).filter(Boolean)));
+  uniq.sort();
+  return uniq;
+}
+
+function normalizeNavbarPlacements(arr) {
+  if (!Array.isArray(arr)) return [];
+  return arr.map(v => (v === 'above' || v === 'inside' || v === 'below') ? v : 'below');
+}
+
+function buildNotifySig(sources) {
+  if (!Array.isArray(sources) || !sources.length) return '';
+  return sources.join('|');
+}
+
+async function markPoolNotifyState(item, sig, sent) {
+  if (!item) return;
+  const meta = (item.meta && typeof item.meta === 'object') ? item.meta : {};
+  item.meta = { ...meta, poolNotifySig: sig || null, poolNotifiedAt: new Date(), poolNotifySent: !!sent };
+  item.markModified('meta');
+  try { await item.save(); } catch {}
+}
+
+async function hasDuplicateAssetSources(sources, itemId) {
+  if (!Array.isArray(sources) || !sources.length) return false;
+  const query = {
+    _id: { $ne: itemId },
+    active: true,
+    availableInDailyShop: true,
+    $or: [
+      { 'assets.src': { $in: sources } },
+      { 'variants.assets.src': { $in: sources } }
+    ]
+  };
+  const other = await Item.findOne(query).select('_id').lean();
+  return !!other;
+}
+
+async function sendNewItemPush(item) {
+  try {
+    if (!webpush || !VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) return 0;
+    if (!item) return 0;
+    const users = await User.find({
+      'pushPreferences.enabled': true,
+      'pushPreferences.shop': true,
+      pushSubscriptions: { $elemMatch: { endpoint: { $exists: true, $ne: '' } } }
+    }).select({ pushSubscriptions: 1 });
+    if (!users || !users.length) return 0;
+    const title = '🆕 Nouvel item en boutique';
+    const name = String(item.name || '').trim();
+    const body = 'Un nouvel item est arrivé !';
+    const payload = JSON.stringify({
+      title,
+      body,
+      icon: '/planifyFichier_134x.webp?v=2',
+      badge: '/planifyFichier_134x.webp?v=2',
+      data: { url: '/boutique' }
+    });
+    let sent = 0;
+    for (const user of users) {
+      const subs = Array.isArray(user.pushSubscriptions) ? user.pushSubscriptions : [];
+      if (!subs.length) continue;
+      const invalid = new Set();
+      for (const sub of subs) {
+        try {
+          await webpush.sendNotification(sub, payload);
+          sent++;
+        } catch (e) {
+          const code = e && e.statusCode;
+          if (code === 404 || code === 410) invalid.add(String(sub.endpoint || ''));
+        }
+      }
+      if (invalid.size) {
+        user.pushSubscriptions = subs.filter(s => !invalid.has(String(s.endpoint || '')));
+        await user.save();
+      }
+    }
+    return sent;
+  } catch {
+    return 0;
+  }
+}
+
+async function maybeNotifyNewPoolItem(item, prevAvailableInDailyShop, prevActive) {
+  try {
+    if (!item) return;
+    const nowInPool = !!item.availableInDailyShop && item.active !== false;
+    const prevInPool = !!prevAvailableInDailyShop && prevActive !== false;
+    if (!nowInPool || prevInPool) return;
+    const meta = (item.meta && typeof item.meta === 'object') ? item.meta : {};
+    if (meta.poolNotifiedAt) return;
+    const sources = buildNotifySources(item);
+    const sig = buildNotifySig(sources);
+    if (!sig) return;
+    const dup = await hasDuplicateAssetSources(sources, item._id);
+    if (dup) {
+      await markPoolNotifyState(item, sig, false);
+      return;
+    }
+    const sent = await sendNewItemPush(item);
+    await markPoolNotifyState(item, sig, sent > 0);
+  } catch {}
 }
 
 // Liste des items (public)
@@ -210,6 +346,7 @@ router.post('/', verifyToken, requireRole(['admin']), async (req, res) => {
           'popup-style': (v && v.backgrounds && typeof v.backgrounds['popup-style'] === 'string') ? v.backgrounds['popup-style'] : null,
           'profile-popup': (v && v.backgrounds && typeof v.backgrounds['profile-popup'] === 'string') ? v.backgrounds['profile-popup'] : null
         },
+        navbarPlacements: normalizeNavbarPlacements(v && v.navbarPlacements),
         showText: !!(v && v.showText),
         textOnly: !!(v && v.textOnly),
         textContent: (v && typeof v.textContent === 'string') ? v.textContent.trim() : '',
@@ -265,6 +402,7 @@ router.post('/', verifyToken, requireRole(['admin']), async (req, res) => {
       }
     } catch {}
     res.json({ success: true, item });
+    try { setImmediate(() => { maybeNotifyNewPoolItem(item, false, false).catch(() => {}); }); } catch {}
   } catch (e) {
     let msg = 'Erreur création item';
     if (e && e.code === 11000) { // duplicate key (legacyId unique)
@@ -304,6 +442,8 @@ router.put('/:id', verifyToken, requireRole(['admin']), async (req, res) => {
     const doc = await Item.findById(req.params.id);
     if (!doc) return res.status(404).json({ success: false, message: 'Item introuvable' });
 
+    const prevAvailableInDailyShop = !!doc.availableInDailyShop;
+    const prevActive = doc.active !== false;
     const oldLegacyId = Number(doc.legacyId);
     const oldName = doc.name;
 
@@ -356,6 +496,7 @@ router.put('/:id', verifyToken, requireRole(['admin']), async (req, res) => {
             meta: (a && typeof a.meta === 'object') ? a.meta : {}
           })),
           backgrounds: (v && v.backgrounds && typeof v.backgrounds === 'object') ? v.backgrounds : {},
+          navbarPlacements: normalizeNavbarPlacements(v && v.navbarPlacements),
           showText: !!(v && v.showText),
           textOnly: !!(v && v.textOnly),
           textContent: (v && typeof v.textContent === 'string') ? v.textContent.trim() : '',
@@ -421,6 +562,7 @@ router.put('/:id', verifyToken, requireRole(['admin']), async (req, res) => {
     // Récupérer l'item fraîchement depuis la base de données pour s'assurer de la cohérence
     const freshItem = await Item.findById(item._id).lean();
     res.json({ success: true, item: freshItem });
+    try { setImmediate(() => { maybeNotifyNewPoolItem(item, prevAvailableInDailyShop, prevActive).catch(() => {}); }); } catch {}
   } catch (e) {
     res.status(400).json({ success: false, message: 'Erreur mise à jour', error: String(e) });
   }
@@ -456,6 +598,8 @@ router.put('/suggest/:id', verifyToken, async (req, res) => {
     if (!isAdmin && !isOwner) return res.status(403).json({ success: false, message: 'Non autorisé' });
 
     const update = req.body || {};
+    const prevAvailableInDailyShop = !!doc.availableInDailyShop;
+    const prevActive = doc.active !== false;
 
     if (Array.isArray(update.assets)) {
       const normalizedAssets = update.assets.filter(a => a && typeof a.src === 'string' && a.src.trim() !== '');
@@ -511,6 +655,7 @@ router.put('/suggest/:id', verifyToken, async (req, res) => {
             'popup-style': v?.backgrounds?.['popup-style'] || null,
             'profile-popup': v?.backgrounds?.['profile-popup'] || null
           },
+          navbarPlacements: normalizeNavbarPlacements(v && v.navbarPlacements),
           showText: !!(v && v.showText),
           textOnly: !!(v && v.textOnly),
           textContent: (v && typeof v.textContent === 'string') ? v.textContent.trim() : '',
@@ -529,6 +674,9 @@ router.put('/suggest/:id', verifyToken, async (req, res) => {
     if (typeof update.infoOnly === 'boolean') doc.infoOnly = update.infoOnly;
     if (typeof update.infoDescription === 'string' || update.infoDescription === null) doc.infoDescription = update.infoDescription;
 
+    if (isAdmin && typeof update.availableInDailyShop === 'boolean') doc.availableInDailyShop = update.availableInDailyShop;
+    if (isAdmin && typeof update.active === 'boolean') doc.active = update.active;
+
     const incomingMeta = (update && typeof update.meta === 'object') ? update.meta : {};
     doc.meta = { ...(doc.meta || {}), ...(incomingMeta || {}), isSuggested: true };
     if (!doc.createdBy) doc.createdBy = (req.user && (req.user.username || req.user.name)) || null;
@@ -536,6 +684,7 @@ router.put('/suggest/:id', verifyToken, async (req, res) => {
     await doc.save();
     const freshItem = await Item.findById(doc._id).lean();
     res.json({ success: true, item: freshItem });
+    try { setImmediate(() => { maybeNotifyNewPoolItem(doc, prevAvailableInDailyShop, prevActive).catch(() => {}); }); } catch {}
   } catch (e) {
     res.status(400).json({ success: false, message: 'Erreur mise à jour suggestion', error: String(e && e.message ? e.message : e) });
   }
@@ -662,6 +811,7 @@ router.post('/suggest', verifyToken, async (req, res) => {
           'popup-style': v?.backgrounds?.['popup-style'] || null,
           'profile-popup': v?.backgrounds?.['profile-popup'] || null
         },
+        navbarPlacements: normalizeNavbarPlacements(v && v.navbarPlacements),
         showText: !!(v && v.showText),
         textOnly: !!(v && v.textOnly),
         textContent: (v && typeof v.textContent === 'string') ? v.textContent.trim() : '',
@@ -701,13 +851,14 @@ router.post('/suggest', verifyToken, async (req, res) => {
       assets: sanitizedAssets,
       backgrounds: (backgrounds && typeof backgrounds === 'object') ? backgrounds : {},
       variants: sanitizedVariants,
-      availableInDailyShop: false,
+      availableInDailyShop: true,
       active: true,
       createdBy: req.user?.username || null,
       meta: baseMeta
     });
 
     res.json({ success: true, item: doc });
+    try { setImmediate(() => { maybeNotifyNewPoolItem(doc, false, false).catch(() => {}); }); } catch {}
   } catch (e) {
     res.status(400).json({ success: false, message: 'Erreur enregistrement suggestion', error: String(e && e.message ? e.message : e) });
   }
