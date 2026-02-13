@@ -452,8 +452,7 @@
                   <!-- Dyn (mobile): below -->
                   <template v-if="equippedDynItem && Array.isArray(equippedDynItem.variants) && equippedDynItem.variants.length > 0">
                     <img
-                      v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
-                      v-if="a && a.meta && a.meta.navbarPlacement === 'below'"
+                      v-for="(a, ai) in getVariantAssetsForTargetPlacement(equippedDynItem, 'avatar-image-container', 'below')"
                       :key="'dyn-m-below-'+ai+'-'+dynamicVariantsState"
                       :src="resolveDynSrc(a.src)"
                       :style="getDynNavbarAssetStyle(a)"
@@ -461,8 +460,7 @@
                   </template>
                   <template v-else-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
                     <img
-                      v-for="(a, ai) in equippedDynItem.assets"
-                      v-if="a && a.meta && a.meta.navbarPlacement === 'below'"
+                      v-for="(a, ai) in getBaseAssetsForTargetPlacement(equippedDynItem, 'avatar-image-container', 'below')"
                       :key="'dyn-m-below-'+ai"
                       :src="resolveDynSrc(a.src)"
                       :style="getDynNavbarAssetStyle(a)"
@@ -484,8 +482,7 @@
                   <!-- Dyn (mobile): inside -->
                   <template v-if="equippedDynItem && Array.isArray(equippedDynItem.variants) && equippedDynItem.variants.length > 0">
                     <img
-                      v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
-                      v-if="a && a.meta && a.meta.navbarPlacement === 'inside'"
+                      v-for="(a, ai) in getVariantAssetsForTargetPlacement(equippedDynItem, 'avatar-image-container', 'inside')"
                       :key="'dyn-m-inside-'+ai+'-'+dynamicVariantsState"
                       :src="resolveDynSrc(a.src)"
                       :style="getDynNavbarAssetStyle(a)"
@@ -493,8 +490,7 @@
                   </template>
                   <template v-else-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
                     <img
-                      v-for="(a, ai) in equippedDynItem.assets"
-                      v-if="a && a.meta && a.meta.navbarPlacement === 'inside'"
+                      v-for="(a, ai) in getBaseAssetsForTargetPlacement(equippedDynItem, 'avatar-image-container', 'inside')"
                       :key="'dyn-m-inside-'+ai"
                       :src="resolveDynSrc(a.src)"
                       :style="getDynNavbarAssetStyle(a)"
@@ -574,21 +570,23 @@
 
               </div>
             </button>
-            <!-- Dyn (mobile): above -->
-            <template v-if="equippedDynItem && Array.isArray(equippedDynItem.variants) && equippedDynItem.variants.length > 0">
+            <!-- Dyn (mobile): account-btn (en-dehors de avatar-image-container) -->
+            <template v-if="equippedDynItem">
               <img
-                v-for="(a, ai) in getDynVariantAssetsForNavbar(equippedDynItem)"
-                v-if="getNavbarPlacementForAsset(equippedDynItem, a, ai) === 'above' && isNavbarAssetTargetingAccountBtn(equippedDynItem, a, ai)"
-                :key="'dyn-m-above-'+ai+'-'+dynamicVariantsState"
+                v-for="(a, ai) in getNavbarAssetsForTargetPlacement(equippedDynItem, 'user-account-wrapper', 'below')"
+                :key="'dyn-m-acc-below-'+ai+'-'+navbarVariantUpdateKey"
                 :src="resolveDynSrc(a.src)"
-                :style="getDynNavbarOverlayStyle(a)"
+                :style="getDynNavbarAssetStyle(a)"
               />
-            </template>
-            <template v-else-if="equippedDynItem && Array.isArray(equippedDynItem.assets)">
               <img
-                v-for="(a, ai) in equippedDynItem.assets"
-                v-if="getNavbarPlacementForAsset(equippedDynItem, a, ai) === 'above' && isNavbarAssetTargetingAccountBtn(equippedDynItem, a, ai)"
-                :key="'dyn-m-above-'+ai"
+                v-for="(a, ai) in getNavbarAssetsForTargetPlacement(equippedDynItem, 'user-account-wrapper', 'inside')"
+                :key="'dyn-m-acc-inside-'+ai+'-'+navbarVariantUpdateKey"
+                :src="resolveDynSrc(a.src)"
+                :style="getDynNavbarAssetStyle(a)"
+              />
+              <img
+                v-for="(a, ai) in getNavbarAssetsForTargetPlacement(equippedDynItem, 'user-account-wrapper', 'above')"
+                :key="'dyn-m-acc-above-'+ai+'-'+navbarVariantUpdateKey"
                 :src="resolveDynSrc(a.src)"
                 :style="getDynNavbarOverlayStyle(a)"
               />
@@ -5048,7 +5046,7 @@ body, html {
   border: 3px #000000 solid;
   cursor: pointer;
   padding: 0;
-  margin-left: 2px;
+  margin-left: 0;
   border-radius: 12px;
   transition: background 0.18s, border-color 0.18s, box-shadow 0.18s;
   width: 57px;
