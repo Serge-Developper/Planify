@@ -309,6 +309,8 @@ router.post('/', verifyToken, requireRole(['admin']), async (req, res) => {
       navbarStyleMobile: a.navbarStyleMobile || null,
       popupStyleStyle: a.popupStyleStyle || null,
       profilePopupStyle: a.profilePopupStyle || null,
+      largeAvatarStyle: a.largeAvatarStyle || null,
+      largeAvatarStyleMobile: a.largeAvatarStyleMobile || null,
       cosmeticPreviewStyle: a.cosmeticPreviewStyle || null,
       cosmeticPreviewStyleMobile: a.cosmeticPreviewStyleMobile || null,
       meta: a.meta || {}
@@ -334,6 +336,8 @@ router.post('/', verifyToken, requireRole(['admin']), async (req, res) => {
           navbarStyleMobile: a && a.navbarStyleMobile || null,
           popupStyleStyle: a && a.popupStyleStyle || null,
           profilePopupStyle: a && a.profilePopupStyle || null,
+          largeAvatarStyle: a && a.largeAvatarStyle || null,
+          largeAvatarStyleMobile: a && a.largeAvatarStyleMobile || null,
           cosmeticPreviewStyle: a && a.cosmeticPreviewStyle || null,
           cosmeticPreviewStyleMobile: a && a.cosmeticPreviewStyleMobile || null,
           meta: a && typeof a.meta === 'object' ? a.meta : {}
@@ -463,6 +467,8 @@ router.put('/:id', verifyToken, requireRole(['admin']), async (req, res) => {
         navbarStyleMobile: (a && a.navbarStyleMobile) || null,
         popupStyleStyle: (a && a.popupStyleStyle) || null,
         profilePopupStyle: (a && a.profilePopupStyle) || null,
+        largeAvatarStyle: (a && a.largeAvatarStyle) || null,
+        largeAvatarStyleMobile: (a && a.largeAvatarStyleMobile) || null,
         cosmeticPreviewStyle: (a && a.cosmeticPreviewStyle) || null,
         cosmeticPreviewStyleMobile: (a && a.cosmeticPreviewStyleMobile) || null,
         meta: (a && typeof a.meta === 'object') ? a.meta : {}
@@ -491,6 +497,8 @@ router.put('/:id', verifyToken, requireRole(['admin']), async (req, res) => {
             navbarStyleMobile: (a && a.navbarStyleMobile) || null,
             popupStyleStyle: (a && a.popupStyleStyle) || null,
             profilePopupStyle: (a && a.profilePopupStyle) || null,
+            largeAvatarStyle: (a && a.largeAvatarStyle) || null,
+            largeAvatarStyleMobile: (a && a.largeAvatarStyleMobile) || null,
             cosmeticPreviewStyle: (a && a.cosmeticPreviewStyle) || null,
             cosmeticPreviewStyleMobile: (a && a.cosmeticPreviewStyleMobile) || null,
             meta: (a && typeof a.meta === 'object') ? a.meta : {}
@@ -616,6 +624,8 @@ router.put('/suggest/:id', verifyToken, async (req, res) => {
         navbarStyleMobile: a.navbarStyleMobile || null,
         popupStyleStyle: a.popupStyleStyle || null,
         profilePopupStyle: a.profilePopupStyle || null,
+        largeAvatarStyle: a.largeAvatarStyle || null,
+        largeAvatarStyleMobile: a.largeAvatarStyleMobile || null,
         cosmeticPreviewStyle: a.cosmeticPreviewStyle || null,
         cosmeticPreviewStyleMobile: a.cosmeticPreviewStyleMobile || null,
         meta: a.meta || {}
@@ -643,6 +653,8 @@ router.put('/suggest/:id', verifyToken, async (req, res) => {
             navbarStyleMobile: a && a.navbarStyleMobile || null,
             popupStyleStyle: a && a.popupStyleStyle || null,
             profilePopupStyle: a && a.profilePopupStyle || null,
+            largeAvatarStyle: a && a.largeAvatarStyle || null,
+            largeAvatarStyleMobile: a && a.largeAvatarStyleMobile || null,
             cosmeticPreviewStyle: a && a.cosmeticPreviewStyle || null,
             cosmeticPreviewStyleMobile: a && a.cosmeticPreviewStyleMobile || null,
             meta: a && typeof a.meta === 'object' ? a.meta : {}
@@ -775,6 +787,8 @@ router.post('/suggest', verifyToken, async (req, res) => {
       navbarStyleMobile: a.navbarStyleMobile || null,
       popupStyleStyle: a.popupStyleStyle || null,
       profilePopupStyle: a.profilePopupStyle || null,
+      largeAvatarStyle: a.largeAvatarStyle || null,
+      largeAvatarStyleMobile: a.largeAvatarStyleMobile || null,
       cosmeticPreviewStyle: a.cosmeticPreviewStyle || null,
       cosmeticPreviewStyleMobile: a.cosmeticPreviewStyleMobile || null,
       meta: a.meta || {}
@@ -799,6 +813,8 @@ router.post('/suggest', verifyToken, async (req, res) => {
           navbarStyleMobile: a && a.navbarStyleMobile || null,
           popupStyleStyle: a && a.popupStyleStyle || null,
           profilePopupStyle: a && a.profilePopupStyle || null,
+          largeAvatarStyle: a && a.largeAvatarStyle || null,
+          largeAvatarStyleMobile: a && a.largeAvatarStyleMobile || null,
           cosmeticPreviewStyle: a && a.cosmeticPreviewStyle || null,
           cosmeticPreviewStyleMobile: a && a.cosmeticPreviewStyleMobile || null,
           meta: a && typeof a.meta === 'object' ? a.meta : {}

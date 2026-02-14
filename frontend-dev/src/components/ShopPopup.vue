@@ -282,27 +282,29 @@
                 </div>
               </div>
             </div>
-            <div class="preview-card preview-avatar" :key="'slide-avatar'">
+            <div class="preview-card preview-avatar" :class="{ 'avatar-mobile-card': suggestAvatarDevice === 'mobile' }" :key="'slide-avatar'">
               <div class="preview-title">Aperçu Large/Avatar</div>
-              <div class="profile-avatar-stage" :style="`width: ${suggestAvatarDevice === 'mobile' ? 250 : 351}px !important; height: ${suggestAvatarStageHeight}px !important`">
-                <div class="profile-avatar-scaler" :style="`width: ${suggestAvatarDevice === 'mobile' ? 250 : 351}px !important; height: ${suggestAvatarStageHeight}px !important`">
-                  <div class="profile-avatar" :class="{ 'no-border': removeAvatarBorder }" style="position:relative;">
-                    <div class="avatar-img" style="position:relative; width:150px; height:150px; border-radius:24px; border:none; overflow:hidden;">
-                      <img v-for="asset in getSuggestAssetsForPlacement('avatar','inside', true)" :key="'avatar-in-'+asset.si" :src="asset.src" :class="['draggable', draggingKey==='avatar' ? 'drag-active' : '']" :style="getSuggestStyle('avatar', asset.si)" @click="startDrag('avatar', asset.si, $event)" @touchstart.prevent.stop="startDragTouch('avatar', asset.si, $event)" />
+              <div class="profile-avatar-wrap" :class="{ 'profile-popup': suggestAvatarDevice === 'mobile' }">
+                <div class="profile-avatar-stage" :style="suggestAvatarStageInlineStyle">
+                  <div class="profile-avatar-scaler" :style="suggestAvatarScalerInlineStyle">
+                    <div class="profile-avatar" :class="{ 'no-border': removeAvatarBorder }" style="position:relative;">
+                      <div class="avatar-img" :style="suggestAvatarImgInlineStyle">
+                        <img v-for="asset in getSuggestAssetsForPlacement('avatar','inside', true)" :key="'avatar-in-'+asset.si" :src="asset.src" :class="['draggable', draggingKey==='avatar' ? 'drag-active' : '']" :style="getSuggestStyle('avatar', asset.si)" @click="startDrag('avatar', asset.si, $event)" @touchstart.prevent.stop="startDragTouch('avatar', asset.si, $event)" />
+                      </div>
                     </div>
+                    <img v-for="asset in getSuggestAssetsForPlacement('avatar','above', true)" :key="'avatar-above-'+asset.si" :src="asset.src" :class="['draggable','overlay-above', draggingKey==='avatar' ? 'drag-active' : '']" :style="getSuggestStyle('avatar', asset.si)" @click="startDrag('avatar', asset.si, $event)" @touchstart.prevent.stop="startDragTouch('avatar', asset.si, $event)" />
                   </div>
-                  <img v-for="asset in getSuggestAssetsForPlacement('avatar','above', true)" :key="'avatar-above-'+asset.si" :src="asset.src" :class="['draggable','overlay-above', draggingKey==='avatar' ? 'drag-active' : '']" :style="getSuggestStyle('avatar', asset.si)" @click="startDrag('avatar', asset.si, $event)" @touchstart.prevent.stop="startDragTouch('avatar', asset.si, $event)" />
                 </div>
               </div>
               <div class="preview-actions" style="display:flex;gap:8px;justify-content:center;margin-top:8px;">
-                <button class="tab-btn" :class="{ active: suggestAvatarDevice==='desktop' }" @click="suggestAvatarDevice='desktop'">Desktop</button>
-                <button class="tab-btn" :class="{ active: suggestAvatarDevice==='mobile' }" @click="suggestAvatarDevice='mobile'">Mobile</button>
+                <button class="tab-btn" :class="{ active: suggestAvatarDevice === 'desktop' }" @click="suggestAvatarDevice='desktop'">Desktop</button>
+                <button class="tab-btn" :class="{ active: suggestAvatarDevice === 'mobile' }" @click="suggestAvatarDevice='mobile'">Mobile</button>
               </div>
               <div class="item-actions" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px;">
-                <label>Taille: <input type="range" min="10" max="300" step="1" v-model.number="suggestStyles.avatar.width" /></label>
+                <label>Taille: <input type="range" min="10" max="300" step="1" v-model.number="suggestAvatarStyle.width" /></label>
                 <label>Hauteur: <input type="range" min="250" max="400" step="1" v-model.number="suggestAvatarStageHeight" /></label>
-                <label>Top: <input type="number" v-model.number="suggestStyles.avatar.top" /></label>
-                <label>Left: <input type="number" v-model.number="suggestStyles.avatar.left" /></label>
+                <label>Top: <input type="number" v-model.number="suggestAvatarStyle.top" /></label>
+                <label>Left: <input type="number" v-model.number="suggestAvatarStyle.left" /></label>
                 <div class="actions-row">
                   <button class="close-btn-small placement-btn" :class="{ active: suggestPlacement.avatar === 'above' }" @click="togglePlacement('avatar')" @mouseover="hoverPlacementAvatar = true" @mouseleave="hoverPlacementAvatar = false" :aria-label="suggestPlacement.avatar === 'inside' ? 'À l’intérieur' : 'Par-dessus'" :title="suggestPlacement.avatar === 'inside' ? 'À l’intérieur' : 'Par-dessus'">
                     <img :src="getPlacementImg('avatar', hoverPlacementAvatar)" alt="Placement" class="close-img" />
@@ -3934,7 +3936,36 @@ const suggestStyles = ref({
   popupStyle: { top: 0, left: 0, width: 50, height: 50, rotate: 0, objectFit: 'contain', zIndex: 1, margin: 0, padding: 0, background: '', boxShadow: '', borderWidth: 0, borderStyle: 'none', borderColor: '', borderRadius: 0 }
 })
 const suggestCosmeticStyle = computed(() => (suggestCosmeticDevice.value === 'mobile') ? suggestStyles.value.cosmeticMobile : suggestStyles.value.cosmeticDesktop)
+const ensureAvatarStyle = () => {
+  try {
+    const set = suggestStyles.value || {}
+    const fallback = { top: 0, left: 0, width: 50, height: 50, rotate: 0, objectFit: 'contain', zIndex: 1, margin: 0, padding: 0, background: '', boxShadow: '', borderWidth: 0, borderStyle: 'none', borderColor: '', borderRadius: 0 }
+    if (suggestAvatarDevice.value === 'mobile') {
+      if (!set.avatarMobile) set.avatarMobile = { ...(set.avatarDesktop || set.avatar || fallback) }
+      return set.avatarMobile
+    }
+    if (!set.avatarDesktop) set.avatarDesktop = { ...(set.avatar || set.avatarMobile || fallback) }
+    return set.avatarDesktop
+  } catch {
+    return { top: 0, left: 0, width: 50, height: 50, rotate: 0, objectFit: 'contain', zIndex: 1, margin: 0, padding: 0, background: '', boxShadow: '', borderWidth: 0, borderStyle: 'none', borderColor: '', borderRadius: 0 }
+  }
+}
+const suggestAvatarStyle = computed(() => ensureAvatarStyle())
 const suggestAvatarStageHeight = ref(250)
+const suggestAvatarStageInlineStyle = computed(() => {
+  const w = (suggestAvatarDevice.value === 'mobile') ? 100 : 351
+  const h = (suggestAvatarDevice.value === 'mobile') ? 100 : suggestAvatarStageHeight.value
+  return `width: ${w}px !important; height: ${h}px !important`
+})
+const suggestAvatarScalerInlineStyle = computed(() => {
+  const w = (suggestAvatarDevice.value === 'mobile') ? 100 : 351
+  const h = (suggestAvatarDevice.value === 'mobile') ? 100 : suggestAvatarStageHeight.value
+  return `width: ${w}px !important; height: ${h}px !important`
+})
+const suggestAvatarImgInlineStyle = computed(() => {
+  const size = (suggestAvatarDevice.value === 'mobile') ? 90 : 150
+  return `position:relative; width:${size}px; height:${size}px; border-radius:24px; border:none; overflow:hidden;`
+})
 const DEFAULT_SUGGEST_STYLE = { top: 0, left: 0, width: 50, height: 50, rotate: 0, objectFit: 'contain', zIndex: 1, margin: 0, padding: 0, background: '', boxShadow: '', borderWidth: 0, borderStyle: 'none', borderColor: '', borderRadius: 0 }
 const cloneSuggestStyle = (src) => ({ ...(src || DEFAULT_SUGGEST_STYLE) })
 const makeSuggestStyleSet = (src) => {
@@ -4007,7 +4038,6 @@ function setActiveSuggestAsset(i) {
     }
     if (!set.avatarDesktop) set.avatarDesktop = { ...(set.avatar || DEFAULT_SUGGEST_STYLE) }
     if (!set.avatarMobile) set.avatarMobile = { ...(set.avatarDesktop || set.avatar || DEFAULT_SUGGEST_STYLE) }
-    set.avatar = (suggestAvatarDevice.value === 'mobile') ? set.avatarMobile : set.avatarDesktop
     if (!set.cosmeticDesktop) set.cosmeticDesktop = { ...(set.collection || DEFAULT_SUGGEST_STYLE) }
     if (!set.cosmeticMobile) set.cosmeticMobile = { ...(set.cosmeticDesktop || set.collection || DEFAULT_SUGGEST_STYLE) }
   } catch {}
@@ -4131,9 +4161,9 @@ function persistBufferIntoActiveVariant() {
     v.styles.cosmeticDesktop = { ...cosmeticDesktop }
     v.styles.cosmeticMobile = { ...cosmeticMobile }
     v.styles.leaderboard = { ...suggestStyles.value.leaderboard }
-    v.styles.avatarDesktop = { ...(suggestStyles.value.avatarDesktop || suggestStyles.value.avatar) }
-    v.styles.avatarMobile = { ...(suggestStyles.value.avatarMobile || suggestStyles.value.avatarDesktop || suggestStyles.value.avatar) }
-    v.styles.avatar = { ...(suggestStyles.value.avatarDesktop || suggestStyles.value.avatar) }
+    v.styles.avatarDesktop = { ...(suggestStyles.value.avatarDesktop || DEFAULT_SUGGEST_STYLE) }
+    v.styles.avatarMobile = { ...(suggestStyles.value.avatarMobile || DEFAULT_SUGGEST_STYLE) }
+    v.styles.avatar = { ...(suggestStyles.value.avatarDesktop || DEFAULT_SUGGEST_STYLE) }
     v.styles.navbar = { ...suggestStyles.value.navbar }
     v.styles.popupStyle = { ...suggestStyles.value.popupStyle }
     v.flags.removeLeaderboardBorder = !!removeLeaderboardBorder.value
@@ -4171,7 +4201,8 @@ watch(() => suggestStyles.value.cosmeticMobile.width, (w) => { try { const s = s
 watch(() => suggestStyles.value.leaderboard.width, (w) => { try { const s = suggestStyles.value.leaderboard; s.height = Number(w) } catch {} })
 watch(() => suggestStyles.value.popupStyle.width, (w) => { try { const s = suggestStyles.value.popupStyle; s.height = Number(w) } catch {} })
 watch(() => suggestStyles.value.dailyShop.width, (w) => { try { const s = suggestStyles.value.dailyShop; s.height = Number(w) } catch {} })
-watch(() => suggestStyles.value.avatar.width, (w) => { try { const s = suggestStyles.value.avatar; s.height = Number(w) } catch {} })
+watch(() => (suggestAvatarStyle.value ? suggestAvatarStyle.value.width : undefined), (w) => { try { const s = suggestAvatarStyle.value; if (s) s.height = Number(w) } catch {} })
+
 watch(() => suggestStyles.value.navbar.width, (w) => { try { const s = suggestStyles.value.navbar; s.height = Number(w) } catch {} })
 const suggestPlacement = ref({ leaderboard: 'inside', avatar: 'inside', navbar: 'inside' })
 const suggestAssetPlacements = ref({ leaderboard: [], avatar: [], navbar: [] })
@@ -4237,7 +4268,7 @@ function hasAnyPlacementAbove(target) {
 }
 loadActiveVariantIntoBuffer()
 watch(suggestDevice, (dev, prev) => { try { setActiveSuggestAsset(activeSuggestAssetIndex.value) } catch {} })
-watch(suggestAvatarDevice, (dev, prev) => { try { setActiveSuggestAsset(activeSuggestAssetIndex.value) } catch {} })
+watch(suggestAvatarDevice, () => { try { setActiveSuggestAsset(activeSuggestAssetIndex.value) } catch {} })
 watch(suggestCosmeticDevice, (dev, prev) => { try { setActiveSuggestAsset(activeSuggestAssetIndex.value) } catch {} })
 const hoverPlacementLeaderboard = ref(false)
 const hoverPlacementAvatar = ref(false)
@@ -4418,10 +4449,13 @@ async function deleteUserItem(item) { try { const legacyId = Number((typeof item
   const normId = Number((typeof item.legacyId !== 'undefined') ? item.legacyId : item.id); dynamicItems.value = (Array.isArray(dynamicItems.value) ? dynamicItems.value.filter(n => { const nid = Number((typeof n.legacyId !== 'undefined') ? n.legacyId : n.id); const nname = String(n.name || '').trim(); return (Number.isFinite(normId) ? nid !== normId : nname !== name) }) : []); try { if (Number.isFinite(normId)) dynamicInfoById.value.delete(Number(normId)) } catch {} try { if (name) dynamicInfoByName.value.delete(String(name)) } catch {} try { loadWeeklyItems() } catch {} localItemsUpdateKey.value++; try { await secureApiCall('/users/my-items', { method: 'DELETE', body: JSON.stringify({ legacyId: Number.isFinite(legacyId) ? legacyId : undefined, localItemId: localId || undefined, id: (typeof item.id === 'number' ? item.id : undefined), name }) }) } catch {} try { userServerLocalItems.value = (Array.isArray(userServerLocalItems.value) ? userServerLocalItems.value.filter(u => { const uid = (typeof u.legacyId !== 'undefined') ? u.legacyId : u.id; const ulocalId = u && u.meta && u.meta.localItemId; const uname = String(u.name || '').trim(); if (localId && ulocalId) return String(ulocalId) !== String(localId); if (Number.isFinite(legacyId)) return Number(uid) !== legacyId; return uname !== name; }) : []) } catch {} try { await loadUserServerLocalItems() } catch {} try { window.dispatchEvent(new CustomEvent('my-items-changed')) } catch {} alert('Item supprimé de vos items.') } catch {} }
 function onSuggestFile(e) { try { const f = e.target.files && e.target.files[0]; if (!f) return; const name = String(f.name || '').toLowerCase(); const type = String(f.type || '').toLowerCase(); const isWebp = type === 'image/webp' || name.endsWith('.webp'); const isGif = type === 'image/gif' || name.endsWith('.gif'); if (!isWebp && !isGif) { try { alert('Seuls les fichiers WEBP ou GIF sont acceptés.') } catch {} try { e.target.value = '' } catch {} return } const reader = new FileReader(); reader.onload = () => { const data = reader.result; persistBufferIntoActiveVariant(); const v = suggestVariants.value[activeVariantIndex.value]; const list = (v && Array.isArray(v.assetSrcs)) ? v.assetSrcs : (v && v.assetSrc ? [v.assetSrc] : []); const styleList = (v && Array.isArray(v.assetStyles)) ? v.assetStyles : (Array.isArray(suggestAssetStyles.value) ? suggestAssetStyles.value : []); const nextStyle = normalizeSuggestStyleSet(suggestStyles.value); if (v) { v.assetSrcs = [...list, data]; v.assetSrc = v.assetSrcs[0] || ''; v.assetStyles = [...styleList, nextStyle] } suggestAssetSrcs.value = (v && Array.isArray(v.assetSrcs)) ? [...v.assetSrcs] : [data]; suggestAssetStyles.value = (v && Array.isArray(v.assetStyles)) ? [...v.assetStyles] : [...styleList, nextStyle]; activeSuggestAssetIndex.value = suggestAssetStyles.value.length ? (suggestAssetStyles.value.length - 1) : 0; setPlacementForIndex('leaderboard', activeSuggestAssetIndex.value, suggestPlacement.value.leaderboard); setPlacementForIndex('avatar', activeSuggestAssetIndex.value, suggestPlacement.value.avatar); setPlacementForIndex('navbar', activeSuggestAssetIndex.value, suggestPlacement.value.navbar); setActiveSuggestAsset(activeSuggestAssetIndex.value) }; reader.readAsDataURL(f) } catch {} }
 function onSuggestUrl() { try { const u = String(suggestUrl.value || '').trim(); if (!u) return; const raw = u.split('?')[0]; const url = raw + (raw.startsWith('/uploads/') ? `?v=${Date.now()}` : ''); persistBufferIntoActiveVariant(); const v = suggestVariants.value[activeVariantIndex.value]; const list = (v && Array.isArray(v.assetSrcs)) ? v.assetSrcs : (v && v.assetSrc ? [v.assetSrc] : []); const styleList = (v && Array.isArray(v.assetStyles)) ? v.assetStyles : (Array.isArray(suggestAssetStyles.value) ? suggestAssetStyles.value : []); const nextStyle = normalizeSuggestStyleSet(suggestStyles.value); if (v) { v.assetSrcs = [...list, url]; v.assetSrc = v.assetSrcs[0] || ''; v.assetStyles = [...styleList, nextStyle] } suggestAssetSrcs.value = (v && Array.isArray(v.assetSrcs)) ? [...v.assetSrcs] : [url]; suggestAssetStyles.value = (v && Array.isArray(v.assetStyles)) ? [...v.assetStyles] : [...styleList, nextStyle]; activeSuggestAssetIndex.value = suggestAssetStyles.value.length ? (suggestAssetStyles.value.length - 1) : 0; setPlacementForIndex('leaderboard', activeSuggestAssetIndex.value, suggestPlacement.value.leaderboard); setPlacementForIndex('avatar', activeSuggestAssetIndex.value, suggestPlacement.value.avatar); setPlacementForIndex('navbar', activeSuggestAssetIndex.value, suggestPlacement.value.navbar); setActiveSuggestAsset(activeSuggestAssetIndex.value) } catch {} }
-function centerSuggest(key) { try { const s = (key === 'collection') ? ((suggestCosmeticDevice.value === 'mobile') ? (suggestStyles.value.cosmeticMobile || suggestStyles.value.collection || {}) : (suggestStyles.value.cosmeticDesktop || suggestStyles.value.collection || {})) : (suggestStyles.value[key] || {}); if (!s) return; const root = weeklyContainerRef.value; let el = null; if (key === 'leaderboard') { const sel = (suggestPlacement.value.leaderboard === 'above') ? '.preview-card.preview-leaderboard .leaderboard-item .user-avatar-container' : '.preview-card.preview-leaderboard .avatar-img'; el = root && root.querySelector(sel) } else if (key === 'avatar') { const sel = (suggestPlacement.value.avatar === 'above') ? '.preview-card.preview-avatar .profile-avatar-scaler' : '.preview-card.preview-avatar .avatar-img'; el = root && root.querySelector(sel) } else if (key === 'navbar') { const sel = '.preview-card.preview-navbar .navbar-stage'; el = root && root.querySelector(sel) } else if (key === 'dailyShop') { el = root && root.querySelector('.preview-card.preview-daily-shop .item-img-container') } else if (key === 'collectionPreview') { el = root && root.querySelector('.preview-card.preview-collection .item-img-container') } else if (key === 'popupStyle') { el = root && root.querySelector('.preview-card.preview-popup-style .item-img-container') } else { el = root && root.querySelector('.preview-card.preview-item .item-img-container') }
+function centerSuggest(key) { try { const s = (key === 'collection') ? ((suggestCosmeticDevice.value === 'mobile') ? (suggestStyles.value.cosmeticMobile || suggestStyles.value.collection || {}) : (suggestStyles.value.cosmeticDesktop || suggestStyles.value.collection || {})) : (key === 'avatar' ? (suggestAvatarStyle.value || {}) : (suggestStyles.value[key] || {})); if (!s) return; const root = weeklyContainerRef.value; let el = null; if (key === 'leaderboard') { const sel = (suggestPlacement.value.leaderboard === 'above') ? '.preview-card.preview-leaderboard .leaderboard-item .user-avatar-container' : '.preview-card.preview-leaderboard .avatar-img'; el = root && root.querySelector(sel) } else if (key === 'avatar') { const sel = (suggestPlacement.value.avatar === 'above') ? '.preview-card.preview-avatar .profile-avatar-scaler' : '.preview-card.preview-avatar .avatar-img'; el = root && root.querySelector(sel) } else if (key === 'navbar') { const sel = '.preview-card.preview-navbar .navbar-stage'; el = root && root.querySelector(sel) } else if (key === 'dailyShop') { el = root && root.querySelector('.preview-card.preview-daily-shop .item-img-container') } else if (key === 'collectionPreview') { el = root && root.querySelector('.preview-card.preview-collection .item-img-container') } else if (key === 'popupStyle') { el = root && root.querySelector('.preview-card.preview-popup-style .item-img-container') } else { el = root && root.querySelector('.preview-card.preview-item .item-img-container') }
     const rect = el ? el.getBoundingClientRect() : null
-    const avatarBoxW = (suggestPlacement.value.avatar === 'above') ? (suggestAvatarDevice.value === 'mobile' ? 250 : 351) : 150
-    const avatarBoxH = (suggestPlacement.value.avatar === 'above') ? Number(suggestAvatarStageHeight.value || 250) : 150
+    const avatarStageW = (suggestAvatarDevice.value === 'mobile') ? 100 : 351
+    const avatarStageH = (suggestAvatarDevice.value === 'mobile') ? 100 : Number(suggestAvatarStageHeight.value || 250)
+    const avatarBox = (suggestAvatarDevice.value === 'mobile') ? 100 : 150
+    const avatarBoxW = (suggestPlacement.value.avatar === 'above') ? avatarStageW : avatarBox
+    const avatarBoxH = (suggestPlacement.value.avatar === 'above') ? avatarStageH : avatarBox
     const cosmeticBoxW = (suggestCosmeticDevice.value === 'mobile') ? 250 : 350
     const cosmeticBoxH = (suggestCosmeticDevice.value === 'mobile') ? 180 : 145
     const boxW = rect ? rect.width : (key === 'leaderboard' ? 57 : key === 'avatar' ? avatarBoxW : key === 'navbar' ? 57 : key === 'collectionPreview' ? (suggestDevice.value === 'mobile' ? 80 : 90) : key === 'collection' ? cosmeticBoxW : key === 'popupStyle' ? 120.5 : key === 'dailyShop' ? 90 : 100)
@@ -4436,7 +4470,46 @@ function getSuggestAssetsForPlacement(target, placement, isYou) {
   } catch { return [] }
 }
 function getSuggestStackStyle(i) { try { const idx = Number(i) || 0; if (idx <= 0) return {}; const delta = Math.min(24, idx * 6); return { marginLeft: delta + 'px', marginTop: delta + 'px' } } catch { return {} } }
-function getSuggestStyle(key, assetIndex) { try { const set = getSuggestStyleSetForIndex(assetIndex); const s = (key === 'collectionPreview') ? ((suggestDevice.value === 'mobile') ? (set.collectionPreviewMobile || set.collectionPreview || set.collection || {}) : (set.collectionPreviewDesktop || set.collectionPreview || set.collection || {})) : (key === 'avatar') ? ((suggestAvatarDevice.value === 'mobile') ? (set.avatarMobile || set.avatar || {}) : (set.avatarDesktop || set.avatar || {})) : (key === 'collection') ? ((suggestCosmeticDevice.value === 'mobile') ? (set.cosmeticMobile || set.collection || {}) : (set.cosmeticDesktop || set.collection || {})) : (set[key] || {}); const style = { position: 'absolute' }; if (typeof s.top === 'number') style.top = s.top + 'px'; if (typeof s.left === 'number') style.left = s.left + 'px'; if (typeof s.width === 'number') style.width = s.width + 'px'; if (typeof s.height === 'number') style.height = s.height + 'px'; if (typeof s.rotate === 'number') style.transform = `rotate(${s.rotate}deg)`; if (typeof s.zIndex === 'number') style.zIndex = s.zIndex; try { const isAvatarAbove = (key === 'avatar' && getPlacementForIndex('avatar', assetIndex) === 'above'); const isLeaderboardAbove = (key === 'leaderboard' && getPlacementForIndex('leaderboard', assetIndex) === 'above'); const isNavbarAbove = (key === 'navbar' && getPlacementForIndex('navbar', assetIndex) === 'above'); if (isAvatarAbove || isLeaderboardAbove || isNavbarAbove) { style.zIndex = Math.max(Number(style.zIndex || 0), 100) } } catch {} if (typeof s.objectFit === 'string') style.objectFit = s.objectFit; if (typeof s.margin === 'number') style.margin = s.margin + 'px'; if (typeof s.padding === 'number') style.padding = s.padding + 'px'; if (s.background) style.background = s.background; if (s.boxShadow) style.boxShadow = s.boxShadow; if (typeof s.borderWidth === 'number') style.borderWidth = s.borderWidth + 'px'; if (typeof s.borderStyle === 'string') style.borderStyle = s.borderStyle; if (s.borderColor) style.borderColor = s.borderColor; if (typeof s.borderRadius === 'number') style.borderRadius = s.borderRadius + 'px'; return style } catch { return { position: 'absolute' } } }
+function getSuggestStyle(key, assetIndex) {
+  try {
+    const set = getSuggestStyleSetForIndex(assetIndex)
+    let s = set[key] || {}
+    if (key === 'collectionPreview') {
+      s = (suggestDevice.value === 'mobile') ? (set.collectionPreviewMobile || set.collectionPreview || set.collection || {}) : (set.collectionPreviewDesktop || set.collectionPreview || set.collection || {})
+    } else if (key === 'avatar') {
+      s = (suggestAvatarDevice.value === 'mobile') ? (set.avatarMobile || DEFAULT_SUGGEST_STYLE) : (set.avatarDesktop || DEFAULT_SUGGEST_STYLE)
+    } else if (key === 'collection') {
+      s = (suggestCosmeticDevice.value === 'mobile') ? (set.cosmeticMobile || set.collection || {}) : (set.cosmeticDesktop || set.collection || {})
+    }
+    const style = { position: 'absolute' }
+    if (typeof s.top === 'number') style.top = s.top + 'px'
+    if (typeof s.left === 'number') style.left = s.left + 'px'
+    if (typeof s.width === 'number') style.width = s.width + 'px'
+    if (typeof s.height === 'number') style.height = s.height + 'px'
+    if (typeof s.rotate === 'number') style.transform = `rotate(${s.rotate}deg)`
+    if (typeof s.zIndex === 'number') style.zIndex = s.zIndex
+    try {
+      const isAvatarAbove = (key === 'avatar' && getPlacementForIndex('avatar', assetIndex) === 'above')
+      const isLeaderboardAbove = (key === 'leaderboard' && getPlacementForIndex('leaderboard', assetIndex) === 'above')
+      const isNavbarAbove = (key === 'navbar' && getPlacementForIndex('navbar', assetIndex) === 'above')
+      if (isAvatarAbove || isLeaderboardAbove || isNavbarAbove) {
+        style.zIndex = Math.max(Number(style.zIndex || 0), 100)
+      }
+    } catch {}
+    if (typeof s.objectFit === 'string') style.objectFit = s.objectFit
+    if (typeof s.margin === 'number') style.margin = s.margin + 'px'
+    if (typeof s.padding === 'number') style.padding = s.padding + 'px'
+    if (s.background) style.background = s.background
+    if (s.boxShadow) style.boxShadow = s.boxShadow
+    if (typeof s.borderWidth === 'number') style.borderWidth = s.borderWidth + 'px'
+    if (typeof s.borderStyle === 'string') style.borderStyle = s.borderStyle
+    if (s.borderColor) style.borderColor = s.borderColor
+    if (typeof s.borderRadius === 'number') style.borderRadius = s.borderRadius + 'px'
+    return style
+  } catch {
+    return { position: 'absolute' }
+  }
+}
 const suggestPreviewBorderColor = ref(null)
 function refreshSuggestPreviewBorderColor() { try { const root = weeklyContainerRef.value; const sels = ['.preview-card.preview-collection .item-img-wrapper.large', '.preview-card.preview-daily-shop .item-img-wrapper.large', '.preview-card.preview-avatar .profile-avatar-stage']; let color = ''; for (const s of sels) { const el = root && root.querySelector(s); if (!el) continue; const cs = window.getComputedStyle(el); const c = cs.getPropertyValue('border-color') || cs.borderColor || ''; if (c && c !== 'transparent') { color = c; break } } suggestPreviewBorderColor.value = color || '#00FF80' } catch { suggestPreviewBorderColor.value = '#00FF80' } }
 function getPopupWrapperStyle() { try { const c = suggestPreviewBorderColor.value || '#00FF80'; return { borderColor: c } } catch { return {} } }
@@ -4446,7 +4519,7 @@ const draggingKey = ref(null)
 const dragStart = ref({ x: 0, y: 0 })
 const initialPos = ref({ top: 0, left: 0 })
 let rafId = null
-function getDragStyleForKey(key) { try { if (key === 'collection') { return (suggestCosmeticDevice.value === 'mobile') ? (suggestStyles.value.cosmeticMobile || suggestStyles.value.collection || {}) : (suggestStyles.value.cosmeticDesktop || suggestStyles.value.collection || {}) } return suggestStyles.value[key] || {} } catch { return {} } }
+function getDragStyleForKey(key) { try { if (key === 'collection') { return (suggestCosmeticDevice.value === 'mobile') ? (suggestStyles.value.cosmeticMobile || suggestStyles.value.collection || {}) : (suggestStyles.value.cosmeticDesktop || suggestStyles.value.collection || {}) } if (key === 'avatar') { return suggestAvatarStyle.value || {} } return suggestStyles.value[key] || {} } catch { return {} } }
 function startDrag(key, assetIndex, e) { try { setActiveSuggestAsset(assetIndex); if (draggingKey.value === key) { endDrag(); return } draggingKey.value = key; dragStart.value = { x: e.clientX, y: e.clientY }; const s = getDragStyleForKey(key); initialPos.value = { top: Number(s.top)||0, left: Number(s.left)||0 }; window.addEventListener('mousemove', onDrag, { passive: true }); setTimeout(() => { window.addEventListener('click', handleDropClick, { once: true }) }, 0) } catch {} }
 function handleDropClick() { try { endDrag() } catch {} }
 function onDrag(e) { try { if (!draggingKey.value) return; const key = draggingKey.value; const s = getDragStyleForKey(key); const dx = e.clientX - dragStart.value.x; const dy = e.clientY - dragStart.value.y; if (rafId) cancelAnimationFrame(rafId); rafId = requestAnimationFrame(() => { s.left = initialPos.value.left + dx; s.top = initialPos.value.top + dy }) } catch {} }
@@ -4487,9 +4560,9 @@ function saveSuggestion() {
         leaderboardStyle: { ...set.leaderboard },
         navbarStyle: { ...set.navbar },
         navbarStyleMobile: { ...set.navbar },
-        largeAvatarStyle: { ...(set.avatarDesktop || set.avatar) },
-        largeAvatarStyleMobile: { ...(set.avatarMobile || set.avatarDesktop || set.avatar) },
-        profilePopupStyle: { ...(set.avatarDesktop || set.avatar) },
+        largeAvatarStyle: { ...(set.avatarDesktop || DEFAULT_SUGGEST_STYLE) },
+        largeAvatarStyleMobile: { ...(set.avatarMobile || DEFAULT_SUGGEST_STYLE) },
+        profilePopupStyle: { ...(set.avatarDesktop || DEFAULT_SUGGEST_STYLE) },
         popupStyleStyle: { ...set.popupStyle },
         cosmeticPreviewStyle: { ...(set.cosmeticDesktop || set.collection) },
         cosmeticPreviewStyleMobile: { ...(set.cosmeticMobile || set.cosmeticDesktop || set.collection) },
@@ -4536,9 +4609,9 @@ function saveSuggestion() {
               leaderboardStyle: { ...set.leaderboard },
               navbarStyle: { ...set.navbar },
               navbarStyleMobile: { ...set.navbar },
-              largeAvatarStyle: { ...(set.avatarDesktop || set.avatar) },
-              largeAvatarStyleMobile: { ...(set.avatarMobile || set.avatarDesktop || set.avatar) },
-              profilePopupStyle: { ...(set.avatarDesktop || set.avatar) },
+              largeAvatarStyle: { ...(set.avatarDesktop || DEFAULT_SUGGEST_STYLE) },
+              largeAvatarStyleMobile: { ...(set.avatarMobile || DEFAULT_SUGGEST_STYLE) },
+              profilePopupStyle: { ...(set.avatarDesktop || DEFAULT_SUGGEST_STYLE) },
               popupStyleStyle: { ...set.popupStyle },
               cosmeticPreviewStyle: { ...(set.cosmeticDesktop || set.collection) },
               cosmeticPreviewStyleMobile: { ...(set.cosmeticMobile || set.cosmeticDesktop || set.collection) },
@@ -4976,9 +5049,11 @@ function getDynProfilePopupAssetStyle(asset) {
   
   // Priorité à largeAvatarStyle si défini (non-défaut), sinon profilePopupStyle
   const mobile = !!isMobile.value
-  const largeStyle = mobile ? (asset?.largeAvatarStyleMobile || asset?.largeAvatarStyle) : asset?.largeAvatarStyle
+  const largeMobile = asset?.largeAvatarStyleMobile
+  const largeDesktop = asset?.largeAvatarStyle
+  const largeStyle = mobile ? largeMobile : largeDesktop
   const largeIsSet = largeStyle && !isDefault(largeStyle)
-  const useLarge = largeIsSet
+  const useLarge = mobile ? !!largeMobile : largeIsSet
   
   const s = (asset && (useLarge ? largeStyle : asset.profilePopupStyle)) || asset?.leaderboardStyle || asset?.navbarStyle || asset?.style || {}
   
@@ -8017,7 +8092,7 @@ onUnmounted(() => {
 @media (max-width: 480px) {
   .header-info-row { display: flex; flex-direction: column; align-items: center; }
 }
-.coins-wallet { background: #ffd84a; border: 2px solid #5bc682; border-radius: 12px; padding: 20px 14px; display: inline-flex; align-items: center; gap: 8px; color: #111; box-shadow: 0 4px 10px rgba(0,0,0,0.12); }
+.coins-wallet { background: #ffd84a; border: 2px solid #5bc682; border-radius: 16px; padding: 20px 14px; display: inline-flex; align-items: center; gap: 8px; color: #111; box-shadow: 0 4px 10px rgba(0,0,0,0.12); }
 .coins-wallet .coin-icon { width: 22px; height: 22px; }
 .coins-wallet .coins-value { font-size: 20px; line-height: 1; }
 .header-right { display: flex;    align-items: center; gap: 8px; margin-left: auto; justify-content: flex-end; }
@@ -8142,7 +8217,7 @@ onUnmounted(() => {
   color: #111;
   border: 2px solid #5bc682;
   padding: 15px;
-  border-radius: 12px;
+  border-radius: 16px;
   text-align: center;
   margin-bottom: 20px;
 }
@@ -8403,6 +8478,15 @@ onUnmounted(() => {
   .preview-card.preview-avatar:not(.roi-preview) .profile-avatar-stage { border: none; border-radius: 30px; width: 351px !important; height: 250px !important; box-sizing: border-box; }
   .preview-card.preview-avatar:not(.roi-preview) .profile-avatar-scaler { width: 351px !important; height: 250px !important; display:flex; align-items:center; justify-content:center; border: 5px solid #5bc682; border-radius: 30px; box-sizing: border-box; margin: 0 auto; position: relative; }
   .preview-card.preview-avatar .profile-avatar { width: 150px !important; height: 150px !important; border-width: 5px !important; }
+  .preview-card.preview-avatar.avatar-mobile-card .profile-avatar-wrap.profile-popup { display:flex; align-items:center; justify-content:center; width: 224px !important; height: 110px !important; margin: 0 auto; border: 5px solid #5bc682; border-radius: 30px !important; box-sizing: border-box; overflow: visible; scrollbar-width: none; -ms-overflow-style: none; }
+  .preview-card.preview-avatar.avatar-mobile-card .profile-avatar-stage,
+  .preview-card.preview-avatar.avatar-mobile-card .profile-avatar-scaler { width: 100px !important; height: 110px !important; border-radius: 24px !important; margin: 0 auto !important; overflow: visible; scrollbar-width: none; -ms-overflow-style: none; }
+  .preview-card.preview-avatar.avatar-mobile-card .profile-avatar-scaler { border: none !important; display:flex !important; align-items:center; justify-content:center; box-sizing: border-box; overflow: visible; scrollbar-width: none; -ms-overflow-style: none; }
+  .preview-card.preview-avatar.avatar-mobile-card .profile-avatar { width: 100px !important; height: 100px !important; border-width: 5px !important; border-radius: 24px !important; }
+  .preview-card.preview-avatar.avatar-mobile-card .avatar-img { width: 100px !important; height: 100px !important; } 
+  .preview-card.preview-avatar.avatar-mobile-card .profile-avatar-wrap.profile-popup::-webkit-scrollbar,
+  .preview-card.preview-avatar.avatar-mobile-card .profile-avatar-stage::-webkit-scrollbar,
+  .preview-card.preview-avatar.avatar-mobile-card .profile-avatar-scaler::-webkit-scrollbar { width: 0; height: 0; display: none; }
   .preview-card.preview-avatar.roi-preview .profile-avatar-stage { height: 400px !important; }
   .preview-card.preview-avatar.roi-preview .profile-avatar-scaler { width: 345px !important; height: 400px !important; border: 5px solid #5bc682 !important; border-radius: 30px !important; }
   .preview-card.preview-avatar.roi-preview .equipped-roi-overlay { top: 30px !important; left: 85px !important; width: 55% !important; height: 27% !important; z-index: 15; }
