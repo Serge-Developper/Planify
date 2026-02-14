@@ -12284,10 +12284,10 @@ onUnmounted(() => {
 
 .faction-col {
   flex: 1;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 12px;
   padding: 15px;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   flex-direction: column;
 }
@@ -12334,20 +12334,20 @@ onUnmounted(() => {
   width: 315px;
   max-width: 315px;
   overflow-x: hidden;
-  overflow-y: auto !important;
-  max-height: 600px !important;
-  padding-right: 12px !important;
+  overflow-y: auto;
+  max-height: 600px;
+  padding-right: 12px;
   scrollbar-gutter: stable both-edges;
 }
 .leaderboard-list.faction-leaderboard-list .leaderboard-item {
-  width: 325px !important;
-  height: 120px !important;
-  min-height: 120px !important;
+  width: 325px;
+  height: 120px ;
+  min-height: 120px ;
 }
 @media (min-width: 1025px) {
   .leaderboard-list.faction-leaderboard-list {
-    width: 360px !important;
-    max-width: 360px !important;
+    width: 360px;
+    max-width: 360px;
     overflow-x: hidden;
     padding-right: 0 !important;
     scrollbar-gutter: stable both-edges;
@@ -12356,6 +12356,21 @@ onUnmounted(() => {
     width: 100%;
     height: 120px;
     min-height: 120px;
+  }
+
+  
+}
+
+/* Scrollbars plus fins (leaderboard + factions) */
+.leaderboard-list::-webkit-scrollbar,
+  .faction-leaderboard-list::-webkit-scrollbar {
+    width: 4px !important;
+  }
+
+/* Mobile: retirer le scrollbar-gutter sur la liste des factions */
+@media (max-width: 1024px) {
+  .leaderboard-list.faction-leaderboard-list {
+    scrollbar-gutter: auto !important;
   }
 }
 
@@ -12447,18 +12462,28 @@ onUnmounted(() => {
   }
   
   .faction-col {
-   padding: 12px;
+        padding: 0px 0px 0px !important;
         width: 100% !important;
-        max-width: 100% !important;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
+        max-width: 107% !important;
+        border-radius: 18% 18% 0% 0%;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+  }
+
+  .faction-total-card,
+  .faction-total-card.selected {
+        width: 275px !important;
+        max-width: 275px !important;
+        margin: 0 auto !important;
+        position: relative !important;
+        z-index: 2 !important;
   }
 
 
   .faction-member-badge {
-    width: 85%;
+    width: 93%;
     font-size: 0.7rem;
   }
 
@@ -13071,8 +13096,7 @@ onUnmounted(() => {
     padding: 0 !important;
   }
   .leaderboard-container > div {
-    width: 100% !important;
-    max-width: 100% !important;
+    width: 270px !important;
     display: flex !important;
     align-items: center !important;
   }
@@ -13147,7 +13171,7 @@ onUnmounted(() => {
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
-    width: 111% !important;
+    width: 277px !important;
     grid-template-columns: none !important;
     gap: 20px !important;
     position: relative !important;
@@ -13156,101 +13180,52 @@ onUnmounted(() => {
   .factions-grid::before {
     content: "";
     position: absolute;
-    top: 119.25px;
+    top: 0;
     left: 0;
     right: 0;
-    bottom: 0;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 0 0 12px 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    height: 119.25px;
+    background: #1a1a1a;
+    z-index: 1;
     pointer-events: none;
   }
 
   .faction-col {
-    padding: 0px 5px 5px 5px !important;
+    padding: 0px 0px 0px 0px !important;
     width: 100% !important;
     max-width: 100% !important;
     border-radius: 18% 18% 0% 0%;
-    background: transparent !important;
-    border: none !important;
-    gap: 0 !important;
-    position: relative !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
   }
 
-  .faction-col::before {
-    content: "";
-    position: absolute;
-    top: 119.25px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 0 0 12px 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    pointer-events: none;
-  }
-
-  .faction-total-card {
-    position: relative !important;
-    z-index: 1 !important;
-  }
-
-  .faction-col::before {
-    content: "";
-    position: absolute;
-    top: 119.25px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 0 0 12px 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    pointer-events: none;
-  }
-
-  .faction-total-card {
-    position: relative !important;
-    z-index: 1 !important;
-  }
-
   /* Centering cards and lists */
   .faction-total-card,
   .faction-total-card.selected {
-    width: 270px !important;
-    max-width: 270px !important;
+    width: 277px !important;
+    max-width: 274px !important;
     margin: 0 auto !important;
+    position: relative !important;
+    z-index: 2 !important;
   }
 
   .leaderboard-list {
-    width: 280px !important;
+    width: 270px !important;
     max-width: 280px !important;
-    margin: 0 auto !important;
+    padding-top: 5px;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
   }
   .faction-leaderboard-list {
-    width: 300px !important;
-    max-width: 300px !important;
-    margin: 0 auto !important;
-    display: flex !important;
-    padding: 0px 0px 0px 0px;
-    flex-direction: column !important;
-    align-items: center !important;
-  }
-
-  .faction-col .leaderboard-item + .faction-leaderboard-list {
-    margin-top: 0 !important;
+    padding: 0px !important;
   }
 
   .leaderboard-list .leaderboard-item,
   .faction-leaderboard-list .leaderboard-item {
     width: 270px !important;
-    max-width: 270px !important;
+    max-width: 259px !important;
     height: 120px !important;
     min-height: 120px !important;
     margin: 0 auto 10px auto !important;
@@ -13402,10 +13377,6 @@ onUnmounted(() => {
     object-fit: contain !important;
     pointer-events: none !important;
     z-index: 15 !important;
-  }
-
-  [data-theme="dark"] .weekly-preview .item-name {
-    color: #fff !important;
   }
 
   .weekly-preview .preview-card.preview-item .buy-btn {
