@@ -9281,7 +9281,7 @@ onUnmounted(() => {
   /* Appliquer aussi dans le leaderboard de faction */
   .faction-leaderboard-list .equipped-angel-wings {
     position: absolute !important;
-    top: -50px !important;
+    top: -44px !important;
     left: -30px !important;
     width: 220% !important;
     height: 148% !important;
@@ -12284,10 +12284,10 @@ onUnmounted(() => {
 
 .faction-col {
   flex: 1;
-  background: rgba(255, 255, 255, 0.05);
+  background: transparent;
   border-radius: 12px;
   padding: 15px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: none;
   display: flex;
   flex-direction: column;
 }
@@ -13150,6 +13150,20 @@ onUnmounted(() => {
     width: 111% !important;
     grid-template-columns: none !important;
     gap: 20px !important;
+    position: relative !important;
+  }
+
+  .factions-grid::before {
+    content: "";
+    position: absolute;
+    top: 119.25px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 0 0 12px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    pointer-events: none;
   }
 
   .faction-col {
@@ -13157,10 +13171,50 @@ onUnmounted(() => {
     width: 100% !important;
     max-width: 100% !important;
     border-radius: 18% 18% 0% 0%;
+    background: transparent !important;
+    border: none !important;
+    gap: 0 !important;
+    position: relative !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
+  }
+
+  .faction-col::before {
+    content: "";
+    position: absolute;
+    top: 119.25px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 0 0 12px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    pointer-events: none;
+  }
+
+  .faction-total-card {
+    position: relative !important;
+    z-index: 1 !important;
+  }
+
+  .faction-col::before {
+    content: "";
+    position: absolute;
+    top: 119.25px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 0 0 12px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    pointer-events: none;
+  }
+
+  .faction-total-card {
+    position: relative !important;
+    z-index: 1 !important;
   }
 
   /* Centering cards and lists */
@@ -13187,6 +13241,10 @@ onUnmounted(() => {
     padding: 0px 0px 0px 0px;
     flex-direction: column !important;
     align-items: center !important;
+  }
+
+  .faction-col .leaderboard-item + .faction-leaderboard-list {
+    margin-top: 0 !important;
   }
 
   .leaderboard-list .leaderboard-item,
@@ -13344,6 +13402,10 @@ onUnmounted(() => {
     object-fit: contain !important;
     pointer-events: none !important;
     z-index: 15 !important;
+  }
+
+  [data-theme="dark"] .weekly-preview .item-name {
+    color: #fff !important;
   }
 
   .weekly-preview .preview-card.preview-item .buy-btn {
