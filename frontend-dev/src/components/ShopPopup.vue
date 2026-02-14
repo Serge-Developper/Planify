@@ -4885,9 +4885,9 @@ const isMobile = ref(false)
 function updateIsMobile() {
   try {
     if (window && typeof window.matchMedia === 'function') {
-      isMobile.value = window.matchMedia('(max-width: 1024px)').matches
+      isMobile.value = window.matchMedia('(max-width: 1218px)').matches
     } else {
-      isMobile.value = window.innerWidth <= 1024
+      isMobile.value = window.innerWidth <= 1218
     }
   } catch {
     isMobile.value = false
@@ -7863,6 +7863,12 @@ onUnmounted(() => {
   }
 })
 
+ watch(isMobile, (v, prev) => {
+  if (!v && prev && leaderboardFilter.value === 'factions') {
+    leaderboardFilter.value = 'coins'
+  }
+})
+
  // Rafraîchir les factions quand l'item équipé change (local store)
  watch(() => coinsStore.equippedItemId, async (newId, oldId) => {
    try {
@@ -9313,7 +9319,7 @@ onUnmounted(() => {
 
 
 /* Media query pour les écrans de 320px à 768px - Collection centrée en colonne */
-@media (min-width: 320px) and (max-width: 1286px) {
+@media (min-width: 320px) and (max-width: 1218px) {
 
   .leaderboard-empty {
     text-align: center;
@@ -9730,8 +9736,8 @@ onUnmounted(() => {
   /* @media (min-width: 340px) block removed/merged */
 
 
-/* Media query pour les écrans PC à partir de 1025px */
-@media (min-width: 1025px) {
+/* Media query pour les écrans PC à partir de 1219px */
+@media (min-width: 1219px) {
   .shop-grid {
         /* display: flex !important; */
         flex-direction: column !important;
@@ -10224,7 +10230,7 @@ onUnmounted(() => {
 .factions-section {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 10px;
 }
 
 .factions-header-title {
@@ -10287,12 +10293,17 @@ onUnmounted(() => {
   gap: 10px;
 }
 
+.faction-col.selected {
+  width: 364px;
+}
+
 .faction-total-card {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 20px 20px 0 0;
   padding: 20px;
   text-align: center;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  width: 325px;
 }
 
 .faction-total-card.winner {
@@ -12336,29 +12347,36 @@ onUnmounted(() => {
   overflow-x: hidden;
   overflow-y: auto;
   max-height: 600px;
-  padding-right: 12px;
-  scrollbar-gutter: stable both-edges;
+  padding-right: 5px;
+  scrollbar-gutter: auto;
 }
 .leaderboard-list.faction-leaderboard-list .leaderboard-item {
   width: 325px;
   height: 120px ;
   min-height: 120px ;
 }
-@media (min-width: 1025px) {
-  .leaderboard-list.faction-leaderboard-list {
-    width: 360px;
+@media (min-width: 1219px) {
+  .factions-section .leaderboard-list.faction-leaderboard-list {
+    width: 340px;
     max-width: 360px;
     overflow-x: hidden;
-    padding-right: 0 !important;
-    scrollbar-gutter: stable both-edges;
+    padding-right: 0px !important;
+    margin-right: -23px;
+    scrollbar-gutter: auto;
   }
-  .leaderboard-list.faction-leaderboard-list .leaderboard-item {
-    width: 100%;
+  .factions-section .leaderboard-list.faction-leaderboard-list .leaderboard-item {
+    width: 325px;
     height: 120px;
     min-height: 120px;
   }
 
   
+}
+
+@media (min-width: 1025px) and (max-width: 1218px) {
+  .leaderboard-list.faction-leaderboard-list {
+    width: 275px !important;
+  }
 }
 
 /* Scrollbars plus fins (leaderboard + factions) */
@@ -12407,7 +12425,7 @@ onUnmounted(() => {
 }
 
 .join-faction-btn {
-  width: 100%;
+  width: 98%;
   padding: 10px 15px;
   margin-bottom: 15px;
   background: linear-gradient(135deg, #4CAF50, #45a049);
@@ -12433,7 +12451,7 @@ onUnmounted(() => {
 }
 
 .faction-member-badge {
-  width: 100%;
+  width: 325px;
   padding: 10px 15px;
   margin-bottom: 15px;
   background: linear-gradient(135deg, #2196F3, #1976D2);
@@ -12441,6 +12459,13 @@ onUnmounted(() => {
   border-radius: 8px;
   font-size: 0.8rem;
   text-align: center;
+}
+
+@media (max-width: 1218px) {
+  .faction-member-badge {
+    width: 93%;
+    font-size: 0.7rem;
+  }
 }
 
 .faction-leaderboard-list .leaderboard-item {
@@ -13075,16 +13100,16 @@ onUnmounted(() => {
 /* Leaderboard: layout desktop en grille */
 .leaderboard-container {
   display: grid !important;
-  grid-template-columns: 30% 69% !important;
-  gap: 2% !important;
+  grid-template-columns: 30% 68% !important;
+  gap: 4% !important;
   align-items: start !important;
 }
 .personal-section { display: flex; flex-direction: column; gap: 20px; order: 1 !important; height: 100%; width: 350px; }
-.factions-section { display: flex; flex-direction: column; gap: 20px; order: 2 !important; }
+.factions-section { display: flex; flex-direction: column; gap: 10px; order: 2 !important; }
 .factions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 
 /* Fallback mobile (≤1024px): colonne */
-@media (max-width: 1024px) {
+@media (max-width: 1218px) {
   .leaderboard-container {
     display: flex !important;
     flex-direction: column !important;
@@ -13220,6 +13245,9 @@ onUnmounted(() => {
   }
   .faction-leaderboard-list {
     padding: 0px !important;
+  }
+  .leaderboard-list.faction-leaderboard-list {
+    width: 275px !important;
   }
 
   .leaderboard-list .leaderboard-item,
@@ -13390,7 +13418,7 @@ onUnmounted(() => {
 }
 
 /* Hide mobile filters on Desktop */
-@media (min-width: 1025px) {
+@media (min-width: 1219px) {
   .mobile-only-filters { display: none !important; }
 }
 .profile-left, .profile-right { justify-content: center; }
