@@ -1127,17 +1127,20 @@
                   {{ formatCoins(factionTotalCoins.bagnat) }} <img src="@/assets/logo_bagnat.webp" alt="Bagnat" class="coin-icon" style="width:45px !important; height:32px !important;" />
                 </div>
               </div>
-              <button 
-                v-if="userFaction !== 'Bagnat'" 
-                @click="joinFaction('Bagnat')" 
-                :disabled="joiningFaction"
-                class="join-faction-btn"
-              >
-                {{ joiningFaction ? 'Rejoindre...' : 'Rejoindre Bagnat' }}
-              </button>
-              <div v-else class="faction-member-badge">
-                ✅ Vous êtes membre de cette faction
-              </div>
+              <transition :name="justJoinedFaction === 'Bagnat' ? 'faction-join' : 'faction-join-static'" mode="out-in">
+                <button 
+                  v-if="userFaction !== 'Bagnat'" 
+                  @click="joinFaction('Bagnat')" 
+                  :disabled="joiningFaction"
+                  class="join-faction-btn"
+                  key="join-bagnat"
+                >
+                  {{ joiningFaction ? 'Rejoindre...' : 'Rejoindre Bagnat' }}
+                </button>
+                <div v-else class="faction-member-badge" :class="{ 'just-joined': justJoinedFaction === 'Bagnat' }" :key="justJoinedFaction === 'Bagnat' ? 'member-bagnat-anim' : 'member-bagnat-static'">
+                  ✅ Vous êtes membre de cette faction
+                </div>
+              </transition>
               <div v-if="shouldShowPinnedMe('Bagnat')" class="leaderboard-item">
                 <div class="leaderboard-position">
                   <!-- Médailles pour top 3 -->
@@ -1694,17 +1697,20 @@
                   {{ formatCoins(factionTotalCoins.fermier) }} <img src="@/assets/logo_fermier.webp" alt="Fermier" class="coin-icon" style="width:45px !important; height:32px !important;" />
                 </div>
               </div>
-              <button 
-                v-if="userFaction !== 'Fermier'" 
-                @click="joinFaction('Fermier')" 
-                :disabled="joiningFaction"
-                class="join-faction-btn"
-              >
-                {{ joiningFaction ? 'Rejoindre...' : 'Rejoindre Fermier' }}
-              </button>
-              <div v-else class="faction-member-badge">
-                ✅ Vous êtes membre de cette faction
-              </div>
+              <transition :name="justJoinedFaction === 'Fermier' ? 'faction-join' : 'faction-join-static'" mode="out-in">
+                <button 
+                  v-if="userFaction !== 'Fermier'" 
+                  @click="joinFaction('Fermier')" 
+                  :disabled="joiningFaction"
+                  class="join-faction-btn"
+                  key="join-fermier"
+                >
+                  {{ joiningFaction ? 'Rejoindre...' : 'Rejoindre Fermier' }}
+                </button>
+                <div v-else class="faction-member-badge" :class="{ 'just-joined': justJoinedFaction === 'Fermier' }" :key="justJoinedFaction === 'Fermier' ? 'member-fermier-anim' : 'member-fermier-static'">
+                  ✅ Vous êtes membre de cette faction
+                </div>
+              </transition>
               
               <div v-if="shouldShowPinnedMe('Fermier')" class="leaderboard-item">
                 <div class="leaderboard-position">
@@ -3288,7 +3294,7 @@
 </template>
 
 <script setup>
- import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+ import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCoinsStore } from '@/stores/coins'
 import { useAuthStore } from '@/stores/auth'
@@ -6081,6 +6087,7 @@ function togglePopupMute() {
 const factionUsers = ref({ bagnat: [], fermier: [] })
 const factionLoading = ref(false)
 const userFaction = ref(null)
+const justJoinedFaction = ref(null)
 const showFullBagnat = ref(true)
 const showFullFermier = ref(true)
 const joiningFaction = ref(false)
@@ -7595,6 +7602,10 @@ const confirmJoinFaction = async () => {
 
     if (response?.success) {
       userFaction.value = response.faction
+      justJoinedFaction.value = null
+      try { await nextTick() } catch {}
+      justJoinedFaction.value = response.faction
+      try { window.setTimeout(() => { justJoinedFaction.value = null }, 600) } catch {}
 
       try {
         const uid = authStore.user?._id || authStore.user?.id
@@ -7640,6 +7651,8 @@ async function doJoinFaction(factionName, viaConfirm = false) {
 
     if (response?.success) {
       userFaction.value = response.faction
+      justJoinedFaction.value = response.faction
+      try { window.setTimeout(() => { justJoinedFaction.value = null }, 500) } catch {}
 
       try {
         const uid = authStore.user?._id || authStore.user?.id
@@ -7691,6 +7704,10 @@ const joinFaction = async (factionName) => {
 
     if (response?.success) {
       userFaction.value = response.faction
+      justJoinedFaction.value = null
+      try { await nextTick() } catch {}
+      justJoinedFaction.value = response.faction
+      try { window.setTimeout(() => { justJoinedFaction.value = null }, 600) } catch {}
 
       try {
         const uid = authStore.user?._id || authStore.user?.id
@@ -12450,20 +12467,63 @@ onUnmounted(() => {
   box-shadow: none;
 }
 
+.faction-join-enter-active,
+.faction-join-leave-active {
+  transition: transform 0.35s ease, opacity 0.35s ease;
+}
+.faction-join-enter-from,
+.faction-join-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+.faction-join-enter-to,
+.faction-join-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.faction-join-static-enter-active,
+.faction-join-static-leave-active {
+  transition: none;
+}
+.faction-join-static-enter-from,
+.faction-join-static-leave-to {
+  opacity: 1;
+  transform: none;
+}
+.faction-join-static-enter-to,
+.faction-join-static-leave-from {
+  opacity: 1;
+  transform: none;
+}
+
 .faction-member-badge {
   width: 325px;
   padding: 10px 15px;
+  margin-top: -10px;
   margin-bottom: 15px;
   background: linear-gradient(135deg, #2196F3, #1976D2);
   color: white;
-  border-radius: 8px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
   font-size: 0.8rem;
   text-align: center;
 }
 
+.faction-member-badge.just-joined {
+  animation: faction-clip-in 0.35s ease both;
+}
+
+@keyframes faction-clip-in {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
 @media (max-width: 1218px) {
   .faction-member-badge {
-    width: 93%;
+    width: 100%;
     font-size: 0.7rem;
   }
 }
@@ -12508,7 +12568,7 @@ onUnmounted(() => {
 
 
   .faction-member-badge {
-    width: 93%;
+    width: 100%;
     font-size: 0.7rem;
   }
 
@@ -13229,7 +13289,7 @@ onUnmounted(() => {
   .faction-total-card,
   .faction-total-card.selected {
     width: 277px !important;
-    max-width: 274px !important;
+    max-width: 275px !important;
     margin: 0 auto !important;
     position: relative !important;
     z-index: 2 !important;
