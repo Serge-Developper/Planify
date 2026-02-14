@@ -1836,8 +1836,9 @@ const navbarVariantUpdateKey = ref(0)
 
 // Computed property réactive qui dépend du store pour forcer les mises à jour
 const dynamicVariantsState = computed(() => {
-  // Cette computed property se met à jour quand le store change
-  return coinsStore.dynamicItemVariants.size
+  // Dépendance explicite pour forcer la mise à jour
+  const _ = navbarVariantUpdateKey.value
+  return Array.from(coinsStore.dynamicItemVariants.entries()).map(([k, v]) => k + ':' + v).join('|')
 })
 
 // Fonction pour obtenir les assets de la variante sélectionnée pour un item dynamique
@@ -6144,7 +6145,7 @@ body, html {
 .equipped-absolute-cinema-overlay-right {
   position: absolute;
   top: -10px;
-  left: 59px;
+  left: 57px;
   width: 30%;
   height: 100%;
   object-fit: cover;
@@ -6156,7 +6157,7 @@ body, html {
 .equipped-absolute-cinema-overlay-mobile {
   position: absolute;
   top: -10px;
-  left: -15px;
+  left: -17px;
   width: 30%;
   height: 100%;
   object-fit: cover;
@@ -6167,7 +6168,7 @@ body, html {
 .equipped-absolute-cinema-overlay-right-mobile {
   position: absolute;
   top: -10px;
-  left: 59px;
+  left: 57px;
   width: 30%;
   height: 100%;
   object-fit: cover;

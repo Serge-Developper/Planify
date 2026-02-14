@@ -3685,8 +3685,9 @@ const variantUpdateKey = ref(0)
 
 // Computed property réactive qui dépend du store pour forcer les mises à jour
 const dynamicVariantsState = computed(() => {
-  // Cette computed property se met à jour quand le store change
-  return coinsStore.dynamicItemVariants.size
+  // Dépendance explicite pour forcer la mise à jour
+  const _ = variantUpdateKey.value
+  return Array.from(coinsStore.dynamicItemVariants.entries()).map(([k, v]) => k + ':' + v).join('|')
 })
 
 // Map des computed properties pour chaque item dynamique
@@ -8089,7 +8090,7 @@ onUnmounted(() => {
 }
 .header-left { display: flex; flex-direction: column; gap: 6px; }
 .header-info-row { display: flex; align-items: flex-start; gap: 12px; }
-@media (max-width: 480px) {
+@media (max-width: 1286px) {
   .header-info-row { display: flex; flex-direction: column; align-items: center; }
 }
 .coins-wallet { background: #ffd84a; border: 2px solid #5bc682; border-radius: 16px; padding: 20px 14px; display: inline-flex; align-items: center; gap: 8px; color: #111; box-shadow: 0 4px 10px rgba(0,0,0,0.12); }
@@ -8510,7 +8511,7 @@ onUnmounted(() => {
 .preview-card.preview-avatar .profile-avatar-scaler .equipped-clown-overlay { position: absolute !important; left: 50% !important; top: 72% !important; width: 60% !important; height: 72% !important; object-fit: contain !important; transform: translate(-50%, -85%) scale(1.18) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 16 !important; }
 .preview-card.preview-avatar .profile-avatar-scaler .equipped-vinyle-overlay { position: absolute !important; left: 50% !important; top: 36% !important; width: 30% !important; height: 48% !important; object-fit: contain !important; transform: translate(-50%, -72%) scale(1.05) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 16 !important; }
   .preview-card.preview-avatar .profile-avatar-scaler .equipped-stars { position: absolute !important; left: 50% !important; top: 65% !important; width: 56% !important; height: 66% !important; object-fit: contain !important; transform: translate(-50%, -72%) scale(1.02) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 16 !important; }
-  .preview-card.preview-avatar .profile-avatar-scaler .equipped-rainbow { position: absolute !important; left: 50% !important; top: 75% !important; width: 45% !important; height: 51% !important; object-fit: contain !important; transform: translate(-50%, -85%) scale(1.3) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 16 !important; }
+  .preview-card.preview-avatar .profile-avatar-scaler .equipped-rainbow { position: absolute !important; left: 50% !important; top: 76% !important; width: 48% !important; height: 53% !important; object-fit: contain !important; transform: translate(-50%, -85%) scale(1.3) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 16 !important; }
   .preview-card.preview-avatar .profile-avatar-scaler .equipped-royal-frame { position: absolute !important; left: 50% !important; top: 82% !important; width: 77% !important; height: 89% !important; object-fit: contain !important; transform: translate(-50%, -85%) scale(1.02) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 16 !important; }
   .preview-card.preview-avatar .profile-avatar-scaler .equipped-gentleman-overlay { position: absolute !important; left: 50% !important; top: 35% !important; width: 53% !important; height: 26% !important; object-fit: contain !important; transform: translate(-50%, -72%) scale(1.02) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 16 !important; }
 .preview-card.preview-avatar .profile-avatar-scaler .equipped-asteroide-overlay { position: absolute !important; left: 38% !important; top: 75% !important; width: 25% !important; height: 30% !important; object-fit: contain !important; transform: translate(-50%, -72%) scale(1.0) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 16 !important; }
@@ -9312,7 +9313,7 @@ onUnmounted(() => {
 
 
 /* Media query pour les écrans de 320px à 768px - Collection centrée en colonne */
-@media (min-width: 320px) and (max-width: 1024px) {
+@media (min-width: 320px) and (max-width: 1286px) {
 
   .leaderboard-empty {
     text-align: center;
@@ -9455,8 +9456,8 @@ onUnmounted(() => {
   }
   
   .coin-icon {
-    width: 16px !important;
-    height: 16px !important;
+    width: 22px !important;
+    height: 22px !important;
   }
   
   .shop-tabs {
@@ -11426,10 +11427,10 @@ onUnmounted(() => {
 
   .equipped-rainbow {
   position: absolute;
-  top: -2px;
+  top: -3px;
     left: 0px;
-    width: 141%;
-    height: 122%;
+    width: 129%;
+    height: 110%;
     transform: translate(-10%);
     pointer-events: none;
   z-index: 3;
@@ -11584,11 +11585,14 @@ onUnmounted(() => {
     overscroll-behavior: auto;
   }
 
-  @media (max-width: 480px) {
+  @media (max-width: 1300px) {
     .color-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
       max-height: 60vh;
     }
+    .suggest-toolbar { flex-direction: column; align-items: center; }
+    .variant-actions { justify-content: center; flex-direction: column; }
+    .variants-ui { flex-direction: column; }
     .preview-card.preview-avatar:not(.roi-preview) .profile-avatar-scaler { width: 250px !important; }
     .profile-avatar-stage { width: 250px !important; }
     .profile-avatar-stage { width: 250px !important; }
@@ -11646,7 +11650,7 @@ onUnmounted(() => {
     .preview-card.preview-item .item-img-wrapper.large { width: 250px !important; height: 250px !important; }
     .preview-card.preview-item .jojo-text-preview,
   .weekly-item .jojo-text-preview,
-  .jojo-text-preview { top: 3px !important; left: 15px !important; width: 61% !important; }
+  .jojo-text-preview { top: 8px !important; left: 42px !important; width: 61% !important; }
     .weekly-section .shop-item.weekly-item.small-card .discord-item-shop .discord-img-shop { top: 15px !important; left: 30px !important; }
     .preview-card.preview-avatar .profile-avatar-scaler .equipped-angel-wings { top: -66px !important; left: -1px !important; }
     .weekly-section .shop-item.weekly-item.small-card .gentleman-item-shop .gentleman-img-shop { top: 20px !important; left: 42px !important; max-width: 50% !important; }
@@ -13024,6 +13028,9 @@ onUnmounted(() => {
     font-weight: 600;
     text-align: center;
   }
+  .weekly-section .shop-item.weekly-item.small-card .jojo-text-preview.jojotext-fade[data-v-dfad078d] { 
+    left: 31px !important; 
+  }
 }
 /* Thème sombre: label en blanc */
 [data-theme="dark"] .mobile-faction-label {
@@ -13210,7 +13217,7 @@ onUnmounted(() => {
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 1286px) {
   .leaderboard-container .equipped-royal-frame,
   .leaderboard-container .equipped-royal-frame-overlay {
     position: absolute !important;
@@ -13338,6 +13345,15 @@ onUnmounted(() => {
     pointer-events: none !important;
     z-index: 15 !important;
   }
+
+  .weekly-preview .preview-card.preview-item .buy-btn {
+    width: 100% !important;
+    max-width: 340px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    font-size: 22px !important;
+    margin: 10px auto !important;
+  }
 }
 
 /* Hide mobile filters on Desktop */
@@ -13378,5 +13394,14 @@ onUnmounted(() => {
 /* Fix alignement item-actions boutique quotidienne */
 .weekly-shop-container .item-actions {
   align-items: initial;
+}
+
+@media (max-width: 1300px) {
+  .weekly-preview .item-name {
+    font-size: 22px !important;
+  }
+  .weekly-preview .item-price {
+    font-size: 22px !important;
+  }
 }
 </style>
