@@ -1,6 +1,6 @@
 <template>
   <div v-if="show" class="shop-overlay" @click.self="emitClose">
-    <div class="shop-modal">
+    <div class="shop-modal" :class="{ 'collection-desktop-override': activeTab === 'main', 'weekly-desktop-override': activeTab === 'weekly', 'leaderboard-desktop-override': activeTab === 'leaderboard' }">
       <div class="shop-header">
         <div class="header-left">
           <h1 class="shop-title">{{ activeTab === 'leaderboard' ? 'Leaderboard' : (activeTab === 'main' ? 'Collection' : 'Boutique Planify') }}</h1>
@@ -363,7 +363,7 @@
           </div>
         </div>
       </div>
-      <div v-if="activeTab === 'main' && !showSuggestionEditor" class="shop-grid">
+      <div v-if="activeTab === 'main' && !showSuggestionEditor" class="shop-grid collection-grid" :class="{ 'my-items-grid': showMyItemsPanel }">
         <div 
           v-for="(item, index) in (showMyItemsPanel ? myCreatedItems : filteredCollectionItems)" 
           :key="item.id" 
@@ -4953,6 +4953,7 @@ onMounted(() => {
     window.addEventListener('dynamic-variant-changed', (event) => { 
       // Forcer le re-render de la boutique hebdo
       variantUpdateKey.value++
+      syncCurrentUserDynamicVariants()
     }) 
   } catch {}
   // Écouter les updates de note publique des utilisateurs (profil/leaderboard)
@@ -5202,6 +5203,9 @@ function shouldRemoveProfilePopupBorder(item) {
     if (variant && (variant.removeProfilePopupBorder === true)) return true
     if (item.meta && (item.meta.removeProfilePopupBorder === true)) return true
     if (item.name === 'Discord' || item.displayType === 'discord') return true
+    const nm = String(item.name || '').toLowerCase()
+    if (nm === 'galaxie' || nm === 'galaxy' || nm === 'coeur' || nm === 'planify' || nm === 'prestige') return true
+    if (item.displayType === 'coeur') return true
   } catch {}
   return false
 }
@@ -5237,6 +5241,9 @@ function shouldRemoveLeaderboardBorder(item, owner) {
     if (variant && (variant.removeLeaderboardBorder === true)) return true
     if (item.meta && (item.meta.removeLeaderboardBorder === true)) return true
     if (item.name === 'Discord' || item.displayType === 'discord') return true
+    const nm = String(item.name || '').toLowerCase()
+    if (nm === 'galaxie' || nm === 'galaxy' || nm === 'coeur' || nm === 'planify' || nm === 'prestige') return true
+    if (item.displayType === 'coeur') return true
   } catch {}
   return false
 }
@@ -6380,6 +6387,35 @@ function handleUserPublicNoteChanged(e) {
   } catch {}
 }
 
+function syncCurrentUserDynamicVariants() {
+  try {
+    const variantsObj = Object.fromEntries(coinsStore.dynamicItemVariants)
+    if (selectedUser.value && isCurrentUser(selectedUser.value)) {
+      selectedUser.value = { ...selectedUser.value, dynamicItemVariants: variantsObj }
+    }
+    if (currentUserFactionEntry.value && isCurrentUser(currentUserFactionEntry.value)) {
+      currentUserFactionEntry.value = { ...currentUserFactionEntry.value, dynamicItemVariants: variantsObj }
+    }
+    if (Array.isArray(leaderboardUsers.value) && leaderboardUsers.value.length) {
+      leaderboardUsers.value = leaderboardUsers.value.map(u => {
+        return isCurrentUser(u) ? { ...u, dynamicItemVariants: variantsObj } : u
+      })
+    }
+    if (factionUsers.value) {
+      const bagnat = Array.isArray(factionUsers.value.bagnat)
+        ? factionUsers.value.bagnat.map(u => isCurrentUser(u) ? { ...u, dynamicItemVariants: variantsObj } : u)
+        : []
+      const fermier = Array.isArray(factionUsers.value.fermier)
+        ? factionUsers.value.fermier.map(u => isCurrentUser(u) ? { ...u, dynamicItemVariants: variantsObj } : u)
+        : []
+      factionUsers.value = { ...factionUsers.value, bagnat, fermier }
+    }
+    if (authStore.user && isCurrentUser(authStore.user)) {
+      authStore.user = { ...authStore.user, dynamicItemVariants: variantsObj }
+    }
+  } catch {}
+}
+
 // Helpers d'affichage (labels role/année)
 function afficherRole(role) {
   if (!role) return '—'
@@ -6816,15 +6852,21 @@ function applyDynamicVariant(idx) {
 
   console.log('🎨 Application de la variante', idx, 'pour item', (item.legacyId ?? item.id))
 
+  const normalizedIdRaw = (item && (item.legacyId ?? item.id))
+  if (normalizedIdRaw == null) return
+  const normalizedIdNum = Number(normalizedIdRaw)
+  const useNumericId = Number.isFinite(normalizedIdNum)
+  const variantKey = useNumericId ? normalizedIdNum : String(normalizedIdRaw)
+
   // Mode suggestion: mise à jour locale uniquement, pas d'appel API
   if (showSuggestionEditor.value) {
     try {
-      const normalizedId = (item && (item.legacyId ?? item.id))
       // On met à jour directement le Map local du store sans appeler le setter qui déclenche l'API
-      coinsStore.dynamicItemVariants.set(normalizedId, idx)
+      coinsStore.dynamicItemVariants.set(variantKey, idx)
+      try { localStorage.setItem('dynamicItemVariants', JSON.stringify(Object.fromEntries(coinsStore.dynamicItemVariants))) } catch {}
       variantUpdateKey.value++
       window.dispatchEvent(new CustomEvent('dynamic-variant-changed', {
-        detail: { itemId: normalizedId, variantIndex: idx }
+        detail: { itemId: variantKey, variantIndex: idx }
       }))
       console.log('✅ Variante appliquée localement (mode suggestion)')
     } catch (e) {
@@ -6836,15 +6878,19 @@ function applyDynamicVariant(idx) {
 
   // Sauvegarder la variante sélectionnée dans le store
   try {
-    const normalizedId = (item && (item.legacyId ?? item.id))
-    coinsStore.setDynamicItemVariant(normalizedId, idx)
+    if (useNumericId) {
+      coinsStore.setDynamicItemVariant(normalizedIdNum, idx)
+    } else {
+      coinsStore.dynamicItemVariants.set(variantKey, idx)
+      try { localStorage.setItem('dynamicItemVariants', JSON.stringify(Object.fromEntries(coinsStore.dynamicItemVariants))) } catch {}
+    }
     console.log('✅ Variante sauvegardée dans le store')
     // Forcer la mise à jour en incrémentant la clé
     variantUpdateKey.value++
     console.log('🔄 Clé de mise à jour incrémentée:', variantUpdateKey.value)
     // Déclencher l'événement pour notifier la navbar
     window.dispatchEvent(new CustomEvent('dynamic-variant-changed', {
-      detail: { itemId: normalizedId, variantIndex: idx }
+      detail: { itemId: variantKey, variantIndex: idx }
     }))
     console.log('📡 Événement dynamic-variant-changed déclenché')
   } catch (e) {
@@ -7419,6 +7465,7 @@ const sortedLeaderboardUsers = computed(() => {
     const cached = readLeaderboardCache()
     if (Array.isArray(cached.users) && cached.users.length) {
       leaderboardUsers.value = cached.users
+      syncCurrentUserDynamicVariants()
     }
     const ttl = 5 * 60 * 1000
     const need = coinsStore.leaderboardNeedsRefresh || !cached.users.length || ((Date.now() - cached.ts) > ttl)
@@ -7429,6 +7476,7 @@ const sortedLeaderboardUsers = computed(() => {
       leaderboardUsers.value = arr
       writeLeaderboardCache(arr)
       coinsStore.leaderboardNeedsRefresh = false
+      syncCurrentUserDynamicVariants()
     } else {
       leaderboardUsers.value = []
     }
@@ -8049,6 +8097,15 @@ onUnmounted(() => {
   .collection-search .tab-btn { width: 250px; max-width: 250px; display: block; margin: 4px 0 0; }
 }
 
+@media (min-width: 1159px) and (max-width: 1218px) {
+  .collection-search { flex-direction: row !important; align-items: center !important; gap: 12px !important; }
+  .collection-search-input { margin: 0 !important; max-width: 420px !important; }
+  .collection-search .tab-btn { width: auto !important; max-width: none !important; margin: 0 !important; }
+  .shop-grid.collection-grid { display: grid !important; grid-template-columns: repeat(5, minmax(200px, 1fr)) !important; gap: 25px !important; }
+  .shop-grid.collection-grid .shop-item { width: auto !important; max-width: none !important; margin: 0 !important; }
+  .shop-grid.collection-grid .item-img-wrapper { width: 90px !important; height: 90px !important; margin: 0 auto 18px !important; }
+}
+
 /* Éditeur de suggestion d'item */
 .suggest-editor { background: #f9fafb; border: 2px solid #5bc682; border-radius: 12px; padding: 12px; margin-bottom: 16px; color: #111; }
 [data-theme="dark"] .suggest-editor { background: #111; color: #fff; border-color: #333; }
@@ -8109,8 +8166,8 @@ onUnmounted(() => {
   .suggest-top-row { justify-content: center; }
   .suggest-right-group { flex-direction: column; align-items: center; width: 100%; gap: 12px; }
   .suggest-actions { flex-direction: row; justify-content: center; width: 100%; }
-  .suggest-meta-group { justify-content: center; width: 100%; }
-  .suggest-upload-group { justify-content: center; width: 100%; }
+  .suggest-meta-group { justify-content: center; width: 100%; padding: 20px 0px; }
+  .suggest-upload-group { justify-content: center; width: 100%; flex: 1 1 89px; margin-bottom: 15px; }
 }
 .suggest-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
 .suggest-previews { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
@@ -8191,10 +8248,41 @@ onUnmounted(() => {
 @media (max-width: 1218px) {
   .header-info-row { align-items: center; }
 }
+@media (max-width: 1218px) {
+  .shop-header {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-areas: "title" "tabs" "info";
+    align-items: center;
+    justify-items: center;
+    gap: 0px;
+  }
+  .header-left, .header-right { display: contents; }
+  .shop-title { grid-area: title; }
+  .shop-tabs { grid-area: tabs; width: 272px; }
+  .header-info-row {
+    grid-area: info;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .weekly-timer { order: 1; }
+  .coins-wallet { order: 2; }
+  .header-right { margin: 0 !important; }
+}
+@media (min-width: 1184px) and (max-width: 1218px) {
+  .shop-modal .shop-header {
+    display: flex !important;
+    align-items: baseline !important;
+    flex-direction: row;
+    justify-content: space-between !important;
+    gap: 12px !important;
+  }
+}
 .coins-wallet { background: #ffd84a; border: 2px solid #5bc682; border-radius: 16px; padding: 20px 14px; display: inline-flex; align-items: center; gap: 8px; color: #111; box-shadow: 0 4px 10px rgba(0,0,0,0.12); }
 .coins-wallet .coin-icon { width: 22px; height: 22px; }
 .coins-wallet .coins-value { font-size: 20px; line-height: 1; }
-.header-right { display: flex;    align-items: center; gap: 8px; margin-left: auto; justify-content: flex-end; }
+.header-right { display: flex;    align-items: center; gap: 8px;  justify-content: flex-end; }
 .item-img-wrapper { position: relative; }
 .item-img-wrapper .apercu-icon { position: absolute; top: 8px; left: 10px; z-index: 2; }
 .item-img-wrapper .palette-icon { position: absolute; top: 8px; right: 10px; z-index: 2; }
@@ -8481,6 +8569,8 @@ onUnmounted(() => {
   .weekly-shop-container .admin-preview-toolbar button:hover { filter: brightness(0.95); }
 .weekly-shop-container .preview-slider-controls { position: relative; display: flex; justify-content: center; align-items: center; margin: 0 auto; margin-bottom: 8px; width: 96%; z-index: 1000; justify-content: space-between; }
 .weekly-shop-container .preview-slider-controls .slider-arrow { width: 34px; height: 34px; border-radius: 12px; border: 2px solid #3a3a3a; background: #2a2a2a; color: #eaeaea; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 6px 14px rgba(0,0,0,0.35); transition: transform 0.18s ease, filter 0.18s ease, box-shadow 0.18s ease; }
+.weekly-shop-container .preview-slider-controls .right-arrow { margin-left: auto; }
+.weekly-shop-container .preview-slider-controls .left-arrow { margin-right: auto; }
 .weekly-shop-container .preview-slider-controls .slider-arrow:hover { filter: brightness(1.08); transform: translateY(-1px); box-shadow: 0 8px 18px rgba(0,0,0,0.4); }
 .weekly-shop-container .preview-slider-controls .slider-arrow:disabled { opacity: 0.5; cursor: default; transform: none; box-shadow: none; }
 [data-theme="light"] .weekly-shop-container .preview-slider-controls .slider-arrow { background: #f2f2f2; color: #111; border-color: #cfcfcf; box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
@@ -9024,6 +9114,13 @@ onUnmounted(() => {
     z-index: 15 !important;
   }
 
+  /* Discord - Leaderboard factions uniquement */
+  .faction-leaderboard-list .equipped-discord {
+    left: -8px !important;
+    width: 119% !important;
+    height: 115% !important;
+  }
+
   /* Jojo - Leaderboard: tailles à l'intérieur de l'avatar */
   .leaderboard-container .equipped-jojo-inside {
     position: absolute !important;
@@ -9519,7 +9616,7 @@ onUnmounted(() => {
   .timer-value { 
     font-size: 25px !important;
     display: inline-block;
-    min-width: 10ch;
+    min-width: 7ch;
     text-align: center;
     font-variant-numeric: tabular-nums;
   }
@@ -9551,6 +9648,13 @@ onUnmounted(() => {
     justify-content: center !important;
     gap: 20px !important;
     padding: 0 15px !important;
+  }
+
+  @media (min-width: 490px) and (max-width: 768px) {
+    .shop-grid.collection-grid {
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(200px, 0fr)) !important;
+    }
   }
   
   .shop-item {
@@ -9589,6 +9693,12 @@ onUnmounted(() => {
     max-width: 120px !important;
     margin: 0 auto !important;
   }
+  .shop-grid.collection-grid.my-items-grid .item-actions .equip-btn,
+  .shop-grid.collection-grid.my-items-grid .item-actions .tab-btn {
+    width: 100% !important;
+    max-width: 120px !important;
+    margin: 0 auto !important;
+  }
   
   .coin-icon {
     width: 22px !important;
@@ -9601,8 +9711,8 @@ onUnmounted(() => {
     align-items: center !important;
     justify-content: center !important;
     gap: 15px !important;
-    width: 190px;
     margin-bottom: 15px !important;
+    width: 272px !important;
     margin-left: 0 !important;
     border-bottom: none !important;
     padding-bottom: 0 !important;
@@ -9628,7 +9738,7 @@ onUnmounted(() => {
     justify-content: center !important;
     align-items: center !important;
     gap: 0px !important;
-    flex-direction: column !important;
+    flex-direction: row !important;
   }
   
   .clown-hair-shop {
@@ -9865,8 +9975,8 @@ onUnmounted(() => {
   /* @media (min-width: 340px) block removed/merged */
 
 
-/* Media query pour les écrans PC à partir de 1219px */
-@media (min-width: 1219px) {
+/* Media query pour les écrans PC à partir de 1159px */
+@media (min-width: 1159px) {
   .shop-grid {
         /* display: flex !important; */
         flex-direction: column !important;
@@ -9883,6 +9993,36 @@ onUnmounted(() => {
 }
 }
 
+}
+
+@media (min-width: 769px) and (max-width: 1158px) {
+  .shop-grid.collection-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(200px, 0fr)) !important;
+  }
+
+  .collection-search {
+    flex-direction: column;
+  }
+
+  .collection-search-input {
+    padding-right: 60px !important;
+  }
+
+  .variant-actions {
+    flex-direction: row;
+  }
+
+  .variants-ui {
+    flex-direction: row;
+  }
+}
+
+@media (min-width: 900px) and (max-width: 1159px) {
+  .shop-grid.collection-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(200px, 0fr)) !important;
+  }
 }
 
 .shop-item {
@@ -9913,6 +10053,12 @@ onUnmounted(() => {
 
 .shop-item.owned {
   border-color: #5bc682;
+}
+
+@media (max-width: 1183px) {
+  .timer-info {
+    flex-direction: column !important;
+  }
 }
 
   .timer-label {
@@ -10138,6 +10284,13 @@ onUnmounted(() => {
   justify-content: center;
   align-items: center;
   gap: 8px;
+}
+
+.shop-grid.collection-grid.my-items-grid .item-actions .equip-btn,
+.shop-grid.collection-grid.my-items-grid .item-actions .tab-btn {
+  width: 100% !important;
+  max-width: 250px !important;
+  margin: 0 auto;
 }
 
 .buy-btn, .equip-btn, .owned-btn, .info-btn {
@@ -12020,53 +12173,59 @@ onUnmounted(() => {
 
 /* Taille avatar (popup) */
 .profile-popup {
-  --profile-avatar-size: 100px;
-}
-
-/* Pop-up Profil (onglet leaderboard): avatar forcé à 100x100 */
-.profile-popup .profile-avatar-stage,
-.profile-popup .profile-avatar-scaler,
-.profile-popup .profile-avatar {
-  width: var(--profile-avatar-size) !important;
-  height: var(--profile-avatar-size) !important;
+  --profile-avatar-size: 150px;
 }
 
 .profile-popup .profile-avatar-stage {
   position: relative;
+  width: min(100%, 340px) !important;
+  height: auto;
   box-sizing: border-box;
-  border-radius: 24px;
+  border-radius: 12px;
   border: none !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .profile-popup .profile-avatar-scaler {
-  position: static !important;
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
   transform: none !important;
   transform-origin: initial !important;
 }
 
-/* Bordure visuelle 5px (couleur/gradient via getAvatarBorderStyle) et contraintes d'affichage */
 .profile-popup .profile-avatar {
-  overflow: hidden !important;
-  border-radius: 30px !important;
-  box-sizing: border-box !important;
+  width: 150px !important;
+  height: 150px !important;
   border-width: 5px !important;
   border-style: solid;
+  box-sizing: border-box !important;
   line-height: 0;
   box-shadow: none !important;
+  overflow: hidden !important;
+  border-radius: 24px !important;
+  position: relative !important;
+  z-index: 2 !important;
 }
 .profile-popup .profile-avatar.no-border {
   border: none !important;
   background: transparent !important;
 }
 .profile-popup .profile-avatar .avatar-img {
+  display: block !important;
   width: 100% !important;
   height: 100% !important;
-  display: block !important;
   object-fit: cover !important;
   object-position: center !important;
 }
 
-/* Scalers pour items dynamiques basés sur 57px */
 .profile-popup .profile-content-scaler,
 .profile-popup .profile-above-scaler {
   position: absolute;
@@ -12079,10 +12238,36 @@ onUnmounted(() => {
 }
 .profile-popup .profile-above-scaler { pointer-events: none; }
 
-/* Positions des items statiques (mêmes valeurs que Navbar.vue) */
-.profile-popup .equipped-galaxie-overlay { top: -31px !important; left: -33px !important; }
-.profile-popup .equipped-coeur-overlay   { top: -12px !important; left: -23px !important; }
-/* (d’autres classes existent dans Navbar.vue; ajoute-les ici si tu les utilises) */
+.profile-popup .matrix-rain-inside { top: 0%; left: 0%; width: 100%; height: 100%; }
+.profile-popup .equipped-cat-ears { top: -22%; left: 14%; width: 70%; height: 94%; }
+.profile-popup .equipped-stars { top: 9% !important; left: 23% !important; width: 55% !important; height: 80% !important; position: absolute !important; z-index: 2 !important; pointer-events: none !important; }
+.profile-popup .equipped-rainbow { top: 17%; left: 25%; width: 62%; height: 65%; }
+.profile-popup .equipped-flash-overlay { position: absolute; top: 18%; left: 27%; width: 50%; height: 53%; object-fit: contain; pointer-events: none; z-index: 2; }
+.profile-popup .equipped-clown-overlay { top: -11%; left: 24%; width: 66%; height: 100%; }
+.profile-popup .equipped-clown-nose { width: 65%; height: 65%; }
+.profile-popup .equipped-target-inside { top: -15px; left: -10px; }
+.profile-popup .equipped-roi-overlay { top: -26%; left: 22%; width: 63%; height: 56%; }
+.profile-popup .equipped-royal-frame { top: 6%; left: 14%; width: 96%; height: 88%; }
+.profile-popup .equipped-gentleman-overlay { top: -13%; left: 24%; width: 63%; height: 45%; }
+.profile-popup .equipped-moustache-inside { top: 20px; left: 8px; width: 80%; height: 75%; }
+.profile-popup .equipped-vinyle-overlay { top: -21%; left: 33%; width: 46%; height: 56%; }
+.profile-popup .equipped-advisory-inside { top: 97px; left: 76px; width: 56%; height: 37%; }
+.profile-popup .equipped-asteroide-overlay { top: 133px; left: 102px; width: 23%; height: 30%; }
+.profile-popup .equipped-absolute-cinema-overlay { left: 24px !important; top: 8% !important; width: 30% !important; height: 70% !important; }
+.profile-popup .equipped-absolute-cinema-overlay-right { left: 214px !important; top: 8% !important; width: 30% !important; height: 70% !important; }
+.profile-popup .equipped-camera-overlay { top: 56%; left: 29%; width: 24%; height: 28%; }
+.profile-popup .equipped-chat-overlay { top: -13% !important; left: 13% !important; width: 109%; height: 70%; }
+.profile-popup .equipped-pate-overlay { pointer-events: none !important; position: absolute !important; top: 59%; left: 27%; width: 22% !important; height: 19% !important; object-fit: contain !important; z-index: 15 !important; }
+.profile-popup .equipped-nokia-inside { top: 80% !important; left: 13% !important; width: 60% !important; }
+.profile-popup .equipped-clippy-inside { top: 38px !important; left: 74px !important; }
+.leaderboard-container .leaderboard-profile-popup .equipped-daftpunk-overlay { top: -24% !important; left: 31% !important; width: 36% !important; height: 44% !important; }
+.profile-popup .equipped-jojo-inside { bottom: -2px; left: 150px; width: 95%; height: 38%; }
+.profile-popup .equipped-jojotext-inside { top: -12px; right: 20px; width: 75%; height: 85%; }
+.profile-popup .equipped-galaxie-overlay { top: -38px !important; left: -36px !important; }
+.profile-popup .equipped-coeur-overlay { top: -12px !important; left: -23px !important; }
+.profile-popup .equipped-angel-wings { position: absolute !important; top: -28% !important; left: 2% !important; width: 96% !important; height: 75% !important; z-index: 0 !important; pointer-events: none !important; }
+.profile-popup .equipped-tomb-raider { position: absolute !important; top: -73px !important; left: 0px !important; width: 102% !important; height: 71% !important; z-index: 0 !important; pointer-events: none !important; }
+.profile-popup .equipped-lunettes-pixel-inside { position: absolute; top: 53%; left: 50%; width: 109%; height: 108%; object-fit: contain; transform: translate(-50%, -50%); pointer-events: none; z-index: 1; }
 
 .leaderboard-profile-music .profile-music-block {
   display: flex;
@@ -12256,8 +12441,9 @@ onUnmounted(() => {
 }
 .profile-popup .equipped-chat-overlay {
   position: absolute !important;
-  top: -35px !important;
-  left: 35px !important;
+  top: -56px !important;
+  left: 117px !important;
+  width: 55% !important;
   z-index: 2 !important;
   pointer-events: none !important;
 }
@@ -12343,8 +12529,8 @@ onUnmounted(() => {
 }
 
 /* Nokia: Daft Punk + Clippy */
-.profile-popup .equipped-daftpunk-overlay { top: -68px; left: 15px; width: 70%; }
-.profile-popup .equipped-clippy-inside { top: 27px; left: 51px; width: 43%; }
+.profile-popup .equipped-daftpunk-overlay { top: -24% !important; left: 31% !important; width: 36%; height: 44%; }
+.profile-popup .equipped-clippy-inside { top: 56px; left: 84px; width: 43%; }
 
 /* Discord (leaderboard – pop-up profil) */
 .profile-popup .equipped-discord-overlay { top: -6px !important; left: -15px !important; width: 120% !important; height: 121% !important; }
@@ -13461,12 +13647,6 @@ onUnmounted(() => {
     overflow: hidden !important;
   }
 
-  /* Mobile header layout and close button */
-  .shop-header { display: grid !important; grid-template-columns: 1fr; grid-template-areas: 'title' 'tabs' 'info'; align-items: center !important; justify-items: center !important; gap: 0px; }
-  .header-left, .header-right { display: contents !important; }
-  .shop-title { grid-area: title; }
-  .shop-tabs { grid-area: tabs; }
-  .header-info-row { grid-area: info; }
   .header-close { position: absolute !important; top: 12px !important; right: 16px !important; width: 40px !important; height: 40px !important; padding: 0 !important; }
   .header-close .close-img { width: 32px !important; height: 32px !important; }
 
@@ -13475,6 +13655,247 @@ onUnmounted(() => {
 
   .join-faction-btn {
     width: 85% !important;
+  }
+}
+
+@media (min-width: 1159px) and (max-width: 1183px) {
+  .shop-modal.collection-desktop-override .collection-search {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin: 0 0 16px !important;
+  }
+  .shop-modal.collection-desktop-override .collection-search-input {
+    margin: 0 auto !important;
+    max-width: 250px !important;
+  }
+  .shop-modal.collection-desktop-override .collection-search .info-icon-btn {
+    align-self: center !important;
+  }
+  .shop-modal.collection-desktop-override .collection-search .tab-btn {
+    width: 250px !important;
+    max-width: 250px !important;
+    display: block !important;
+    margin: 4px 0 0 !important;
+  }
+}
+
+@media (min-width: 1184px) {
+  .shop-tabs { width: 372px !important; }
+  .shop-modal.collection-desktop-override .shop-header {
+    display: flex !important;
+    align-items: baseline !important;
+    flex-direction: row;
+    justify-content: space-between !important;
+    gap: 12px !important;
+  }
+  .shop-modal.collection-desktop-override .header-left {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+  }
+  .shop-modal.collection-desktop-override .shop-title {
+    text-align: left !important;
+    margin: 0 0 12px 0 !important;
+    color: #00c97b !important;
+    font-size: 3.4rem !important;
+  }
+  .shop-modal.collection-desktop-override .header-right {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    justify-content: flex-end !important;
+  }
+  .shop-modal.collection-desktop-override .shop-tabs {
+    display: flex !important;
+    gap: 4px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    flex-direction: row !important;
+  }
+  .shop-modal.collection-desktop-override .tab-btn {
+    padding: 12px 20px !important;
+    border: none !important;
+    background: #f8f9fa !important;
+    border-radius: 10px !important;
+    font-size: 15px !important;
+    cursor: pointer !important;
+    color: #666 !important;
+    border: 2px #5150503d solid !important;
+    transition: all 0.3s !important;
+    position: relative !important;
+    width: auto !important;
+    max-width: none !important;
+    margin: 0 !important;
+  }
+  .shop-modal.collection-desktop-override .tab-btn:hover {
+    background: #e9ecef !important;
+    color: #333 !important;
+  }
+  .shop-modal.collection-desktop-override .tab-btn.active {
+    background: #5bc682 !important;
+    color: #fff !important;
+    border: none !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0, 201, 123, 0.3) !important;
+  }
+  .shop-modal.collection-desktop-override .tab-btn:active,
+  .shop-modal.collection-desktop-override .tab-btn:focus {
+    border: none !important;
+    outline: none !important;
+  }
+  .shop-modal.collection-desktop-override .header-close {
+    position: static !important;
+    right: auto !important;
+    top: auto !important;
+    width: 60px !important;
+    height: 60px !important;
+    padding: 0 !important;
+  }
+  .shop-modal.collection-desktop-override .header-close .close-img {
+    width: 48px !important;
+    height: 48px !important;
+  }
+  .shop-modal.weekly-desktop-override .shop-header,
+  .shop-modal.leaderboard-desktop-override .shop-header {
+    display: flex !important;
+    align-items: baseline !important;
+    flex-direction: row;
+    justify-content: space-between !important;
+    gap: 12px !important;
+  }
+  .shop-modal.weekly-desktop-override .header-left,
+  .shop-modal.leaderboard-desktop-override .header-left {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+  }
+  .shop-modal.weekly-desktop-override .shop-title,
+  .shop-modal.leaderboard-desktop-override .shop-title {
+    text-align: left !important;
+    margin: 0 0 12px 0 !important;
+    color: #00c97b !important;
+    font-size: 3.4rem !important;
+  }
+  .shop-modal.weekly-desktop-override .header-right,
+  .shop-modal.leaderboard-desktop-override .header-right {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    justify-content: flex-end !important;
+  }
+  .shop-modal.weekly-desktop-override .shop-tabs,
+  .shop-modal.leaderboard-desktop-override .shop-tabs {
+    display: flex !important;
+    gap: 4px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    flex-direction: row !important;
+  }
+  .shop-modal.weekly-desktop-override .tab-btn,
+  .shop-modal.leaderboard-desktop-override .tab-btn {
+    padding: 12px 20px !important;
+    border: none !important;
+    background: #f8f9fa !important;
+    border-radius: 10px !important;
+    font-size: 15px !important;
+    cursor: pointer !important;
+    color: #666 !important;
+    border: 2px #5150503d solid !important;
+    transition: all 0.3s !important;
+    position: relative !important;
+    width: auto !important;
+    max-width: none !important;
+    margin: 0 !important;
+  }
+  .shop-modal.weekly-desktop-override .tab-btn:hover,
+  .shop-modal.leaderboard-desktop-override .tab-btn:hover {
+    background: #e9ecef !important;
+    color: #333 !important;
+  }
+  .shop-modal.weekly-desktop-override .tab-btn.active,
+  .shop-modal.leaderboard-desktop-override .tab-btn.active {
+    background: #5bc682 !important;
+    color: #fff !important;
+    border: none !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0, 201, 123, 0.3) !important;
+  }
+  .shop-modal.weekly-desktop-override .tab-btn:active,
+  .shop-modal.weekly-desktop-override .tab-btn:focus,
+  .shop-modal.leaderboard-desktop-override .tab-btn:active,
+  .shop-modal.leaderboard-desktop-override .tab-btn:focus {
+    border: none !important;
+    outline: none !important;
+  }
+  .shop-modal.weekly-desktop-override .header-close,
+  .shop-modal.leaderboard-desktop-override .header-close {
+    position: static !important;
+    right: auto !important;
+    top: auto !important;
+    width: 60px !important;
+    height: 60px !important;
+    padding: 0 !important;
+  }
+  .shop-modal.weekly-desktop-override .header-close .close-img,
+  .shop-modal.leaderboard-desktop-override .header-close .close-img {
+    width: 48px !important;
+    height: 48px !important;
+  }
+  .shop-modal.weekly-desktop-override .header-info-row {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 12px !important;
+  }
+  .shop-modal.weekly-desktop-override .timer-label { font-size: 20px !important; }
+  .shop-modal.weekly-desktop-override .timer-value { font-size: 20px !important; }
+  .shop-modal.weekly-desktop-override .coins-wallet .coins-value { font-size: 20px !important; }
+  .shop-modal.collection-desktop-override .collection-search {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    margin: 0 0 16px 0 !important;
+  }
+  .shop-modal.collection-desktop-override .collection-search-input {
+    width: 100% !important;
+    max-width: 420px !important;
+    padding: 10px 12px !important;
+    border: 1px solid #E9E9EA !important;
+    border-radius: 12px !important;
+    background: #fff !important;
+    color: #111 !important;
+    margin: 0 !important;
+  }
+  .shop-modal.collection-desktop-override .info-icon-btn {
+    background: #fffc !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 999px !important;
+    width: 28px !important;
+    height: 28px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+  }
+  .shop-modal.collection-desktop-override .collection-grid {
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(200px, 1fr)) !important;
+    gap: 25px !important;
+  }
+  .shop-modal.collection-desktop-override .collection-grid .shop-item {
+    width: auto !important;
+    max-width: none !important;
+    margin: 0 !important;
+  }
+  .shop-modal.collection-desktop-override .collection-grid .item-img-wrapper {
+    width: 90px !important;
+    height: 90px !important;
+    margin: 0 auto 18px !important;
   }
 }
 
@@ -13663,11 +14084,11 @@ onUnmounted(() => {
 .profile-popup .equipped-gentleman-overlay { top: -50px !important; left: 95px !important; width: 55% !important; height: 55% !important; }
 .profile-popup .equipped-asteroide-overlay { top: 100px !important; left: 100px !important; width: 20% !important; height: 50% !important; }
 .leaderboard-container .equipped-absolute-cinema, .leaderboard-container .equipped-absolute-cinema-overlay { position: absolute; top: -10%; left: -31%; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 15; }
-.profile-popup .equipped-absolute-cinema-overlay-right { left: 224px !important; top: -10% !important; width: 30% !important; height: 100% !important; }
+.profile-popup .equipped-absolute-cinema-overlay-right { left: 224px; top: -10%; width: 30%; height: 100%; }
 .leaderboard-container .equipped-camera-overlay { position: absolute; top: 40%; left: 30%; width: 18%; height: 70%; object-fit: contain; pointer-events: none; z-index: 3; }
 .profile-popup .equipped-pate-overlay { position: absolute !important; top: 60% !important; left: 21% !important; width: 33% !important; height: 25% !important; object-fit: contain !important; pointer-events: none !important; z-index: 15 !important; }
 .leaderboard-container .equipped-chat-overlay { position: absolute; top: -13%; left: 17%; width: 108%; height: 70%; object-fit: contain; pointer-events: none; z-index: 3; }
-.profile-popup .equipped-lunettes-pixel-inside { top: 50% !important; left: 50% !important; height: 75% !important; width: 71% !important; }
+.profile-popup .equipped-lunettes-pixel-inside { top: 50% !important; left: 50% !important; height: 108% !important; width: 107% !important; }
 .leaderboard-container .equipped-clippy-inside { position: absolute; top: 50px; left: 83px; width: 43%; height: 78%; object-fit: contain; pointer-events: none; z-index: 2; }
 .leaderboard-container .equipped-daftpunk, .leaderboard-container .equipped-daftpunk-overlay { position: absolute; top: -65% !important; left: 11% !important; width: 80%; height: 90%; object-fit: contain; pointer-events: none; z-index: 15; }
 .profile-popup .equipped-discord-overlay, .profile-popup .equipped-discord { top: 16px !important; left: 4px !important; width: 92% !important; height: 94% !important; }

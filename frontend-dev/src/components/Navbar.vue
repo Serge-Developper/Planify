@@ -5810,10 +5810,10 @@ body, html {
 /* Galaxie = mêmes propriétés que Discord (desktop et mobile) */
 .equipped-galaxie-overlay {
   position: absolute !important;
-    top: -18px !important;
-    left: -18px !important;
-    width: 169% !important;
-    height: 170% !important;
+    top: -21px !important;
+    left: -21px !important;
+    width: 173% !important;
+    height: 174% !important;
     object-fit: contain !important;
     pointer-events: none !important;
     z-index: 15 !important;
@@ -6368,8 +6368,8 @@ body, html {
 
 .equipped-clippy-inside {
   position: absolute;
-  top: 14px;
-  left: 30px;
+  top: 13px;
+  left: 27px;
   width: 50%;
   height: 100%;
   object-fit: contain;
