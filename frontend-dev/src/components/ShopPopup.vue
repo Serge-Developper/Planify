@@ -39,7 +39,7 @@
           v-if="showLeaderboardTab"
           class="tab-btn" 
           :class="{ active: activeTab === 'leaderboard' }" 
-          @click="activeTab = 'leaderboard'"
+          @click="activeTab = 'leaderboard'; showSuggestionEditor = false"
         >
           Leaderboard
         </button>
@@ -259,6 +259,7 @@
                   <div class="user-avatar-container">
                     <div class="user-avatar" :class="{ 'no-border': removeLeaderboardBorder }">
                       <div class="avatar-img" style="position:relative;">
+                        <img class="avatar-img" :src="(u && u.isYou) ? getUserAvatar(authStore.user) : FALLBACK_AVATAR_DATA_URL" :alt="(u && u.isYou) ? (authStore.user?.username || 'Vous') : 'Avatar'" :style="(u && u.isYou) ? getAvatarImageStyle(authStore.user) : null" />
                         <img v-for="asset in getSuggestAssetsForPlacement('leaderboard','inside', u.isYou)" :key="'leaderboard-in-'+asset.si" :src="asset.src" :class="['draggable', draggingKey==='leaderboard' ? 'drag-active' : '']" :style="getSuggestStyle('leaderboard', asset.si)" @click="startDrag('leaderboard', asset.si, $event)" @touchstart.prevent.stop="startDragTouch('leaderboard', asset.si, $event)" />
                       </div>
                     </div>
@@ -289,6 +290,7 @@
                   <div class="profile-avatar-scaler" :style="suggestAvatarScalerInlineStyle">
                     <div class="profile-avatar" :class="{ 'no-border': removeAvatarBorder }" style="position:relative;">
                       <div class="avatar-img" :style="suggestAvatarImgInlineStyle">
+                        <img class="avatar-img" :src="getUserAvatar(authStore.user)" :alt="authStore.user?.username || 'avatar'" :style="getAvatarImageStyle(authStore.user)" />
                         <img v-for="asset in getSuggestAssetsForPlacement('avatar','inside', true)" :key="'avatar-in-'+asset.si" :src="asset.src" :class="['draggable', draggingKey==='avatar' ? 'drag-active' : '']" :style="getSuggestStyle('avatar', asset.si)" @click="startDrag('avatar', asset.si, $event)" @touchstart.prevent.stop="startDragTouch('avatar', asset.si, $event)" />
                       </div>
                     </div>
@@ -321,6 +323,7 @@
               <div class="preview-title">Aperçu Navbar</div>
               <div class="item-img-wrapper large">
                 <div class="navbar-stage" :style="getNavbarStageStyle()" style="position:relative;width:57px;height:57px;display:flex;align-items:center;justify-content:center;">
+                  <img class="avatar-img" :src="getUserAvatar(authStore.user)" :alt="authStore.user?.username || 'avatar'" :style="getAvatarImageStyle(authStore.user)" />
                   <img v-for="asset in getSuggestAssetsForPlacement('navbar','inside', true)" :key="'navbar-in-'+asset.si" :src="asset.src" :class="['item-img','draggable', (draggingKey==='navbar' && activeSuggestAssetIndex===asset.si) ? 'drag-active' : '']" :style="getSuggestStyle('navbar', asset.si)" @click="startDrag('navbar', asset.si, $event)" @touchstart.prevent.stop="startDragTouch('navbar', asset.si, $event)" />
                 </div>
                 <img v-for="asset in getSuggestAssetsForPlacement('navbar','above', true)" :key="'navbar-above-'+asset.si" :src="asset.src" :class="['item-img','draggable', (draggingKey==='navbar' && activeSuggestAssetIndex===asset.si) ? 'drag-active' : '']" :style="getSuggestStyle('navbar', asset.si)" @click="startDrag('navbar', asset.si, $event)" @touchstart.prevent.stop="startDragTouch('navbar', asset.si, $event)" />
@@ -630,7 +633,7 @@
               Modifier
             </button>
             <button
-              v-if="showMyItemsPanel && canEditItem(item)"
+              v-if="showMyItemsPanel && canEditItem(item) && isAdminOnly"
               class="tab-btn"
               type="button"
               @click.stop="exportUserItemJson(item)"
@@ -674,9 +677,11 @@
                     <div class="dyn-bg" :style="getCosmeticPreviewBgStyle(purchasePreviewItem)"></div>
                     <img v-for="(a, ai) in getDynVariantAssets(purchasePreviewItem)" :key="'ppv-'+ai+'-'+variantUpdateKey" :src="resolveAssetSrc(a.src)" :style="getDynVariantPreviewStyle(a)" />
                   </template>
-                  <img v-if="purchasePreviewItem && purchasePreviewItem.name === 'Clown'" :src="clowncheveux" alt="Cheveux de clown" class="clown-hair-shop" />
-                  <img v-if="purchasePreviewItem && purchasePreviewItem.name === 'Clown'" :src="clownnose" alt="Nez de clown" class="clown-nose-shop" />
-                  <div v-if="purchasePreviewItem && purchasePreviewItem.name === 'Vinyle'" class="vinyle-item-shop">
+                  <div v-else-if="purchasePreviewItem && purchasePreviewItem.name === 'Clown'" class="clown-item-shop">
+                    <img :src="clowncheveux" alt="Cheveux de clown" class="clown-hair-shop" />
+                    <img :src="clownnose" alt="Nez de clown" class="clown-nose-shop" />
+                  </div>
+                  <div v-else-if="purchasePreviewItem && purchasePreviewItem.name === 'Vinyle'" class="vinyle-item-shop">
                     <img :src="vinyle" :alt="purchasePreviewItem.name" class="vinyle-img-shop" />
                   </div>
                   <div v-else-if="purchasePreviewItem && (purchasePreviewItem.name === 'Matrix' || purchasePreviewItem.displayType === 'matrix')" class="matrix-rain-inside-shop">
@@ -2705,20 +2710,6 @@
                     (getUserEquippedItemData(selectedUser) && shouldRemoveProfilePopupBorder(getUserEquippedItemData(selectedUser)))
                 }"
               >
-                                <!-- Bras gauche Absolute Cinema -->
-                <img 
-                  v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'absolute-cinema'"
-                  :src="bras"
-                  :alt="getUserEquippedItemData(selectedUser).name"
-                  class="equipped-absolute-cinema-overlay"
-                />
-                <!-- Bras droit Absolute Cinema -->
-                <img 
-                    v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'absolute-cinema'"
-                    :src="bras"
-                    :alt="getUserEquippedItemData(selectedUser).name"
-                    class="equipped-absolute-cinema-overlay-right"
-                  />
                 <div class="profile-avatar-scaler" data-darkreader-ignore>
                   <div
                     class="profile-avatar"
@@ -2737,7 +2728,7 @@
                     <img
                       v-for="(a, ai) in getProfilePopupAssetsForTargetPlacement(getUserEquippedItemData(selectedUser), 'profile-avatar', 'below')"
                       :key="'profile-below-'+ai+'-'+dynamicVariantsState"
-                      :src="resolveAssetSrc(a.src)"
+                      :src="resolveDynSrc(a.src)"
                       :style="getDynProfilePopupAssetStyle(a)"
                     />
 
@@ -2760,7 +2751,7 @@
                     <img
                       v-for="(a, ai) in getProfilePopupAssetsForTargetPlacement(getUserEquippedItemData(selectedUser), 'profile-avatar', 'inside')"
                       :key="'profile-inside-'+ai+'-'+dynamicVariantsState"
-                      :src="resolveAssetSrc(a.src)"
+                      :src="resolveDynSrc(a.src)"
                       :style="getDynProfilePopupAssetStyle(a)"
                     />
                     <!-- Ajout: Animation Matrix à l’intérieur de l’avatar -->
@@ -2823,6 +2814,12 @@
                       class="equipped-dvd-inside"
                     />
                     <img 
+                      v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'lunettes-pixel'" 
+                      :src="mlglunette" 
+                      :alt="getUserEquippedItemData(selectedUser).name"
+                      class="equipped-lunettes-pixel-inside"
+                    />
+                    <img 
                       v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'nokia'" 
                       :src="nokia" 
                       :alt="getUserEquippedItemData(selectedUser).name"
@@ -2846,31 +2843,59 @@
                   <img
                     v-for="(a, ai) in getProfilePopupAssetsForTargetPlacement(getUserEquippedItemData(selectedUser), 'profile-avatar-scaler', 'below')"
                     :key="'pp-scaler-below-'+ai+'-'+dynamicVariantsState"
-                    :src="resolveAssetSrc(a.src)"
+                    :src="resolveDynSrc(a.src)"
                     :style="getDynProfilePopupAssetStyle(a)"
                   />
                   <img
                     v-for="(a, ai) in getProfilePopupAssetsForTargetPlacement(getUserEquippedItemData(selectedUser), 'profile-avatar-scaler', 'inside')"
                     :key="'pp-scaler-inside-'+ai+'-'+dynamicVariantsState"
-                    :src="resolveAssetSrc(a.src)"
+                    :src="resolveDynSrc(a.src)"
                     :style="getDynProfilePopupAssetStyle(a)"
                   />
 
                   <!-- Items statiques ABOVE (au-dessus du carré) -->
                   <img
                     v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'discord'"
-                    :src="[discordon, discordnepasderange, discordderange][coinsStore.discordVariantIndex || 0]"
-                    alt="Discord"
-                    class="equipped-discord"
+                    :src="[discordon, discordnepasderange, discordderange][coinsStore.discordVariantIndex]"
+                    :alt="getUserEquippedItemData(selectedUser).name"
+                    class="equipped-discord-overlay"
                   />
-                  <img v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).name === 'Galaxie'"
-                       :src="galaxie" alt="Galaxie" class="equipped-galaxie" />
-                  <img v-if="getUserEquippedItemData(selectedUser) && (getUserEquippedItemData(selectedUser).name === 'Coeur' || getUserEquippedItemData(selectedUser).displayType === 'coeur')"
-                       :src="coeur" alt="Coeur" class="equipped-coeur" />
-                  <img v-if="getUserEquippedItemData(selectedUser) && (getUserEquippedItemData(selectedUser).name === 'Prestige' || getUserEquippedItemData(selectedUser).displayType === 'alpha')"
-                       :src="alphaImg" alt="Prestige" class="equipped-alpha" />
-                  <img v-if="getUserEquippedItemData(selectedUser) && (getUserEquippedItemData(selectedUser).name === 'Planify' || getUserEquippedItemData(selectedUser).displayType === 'admin-planify')"
-                       :src="adminPlanify" alt="Planify" class="equipped-admin-planify" />
+                  <img
+                    v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).name === 'Galaxie'"
+                    :src="galaxie"
+                    :alt="getUserEquippedItemData(selectedUser).name"
+                    class="equipped-galaxie-overlay"
+                  />
+                  <img
+                    v-if="getUserEquippedItemData(selectedUser) && (getUserEquippedItemData(selectedUser).name === 'Coeur' || getUserEquippedItemData(selectedUser).displayType === 'coeur')"
+                    :src="coeur"
+                    :alt="getUserEquippedItemData(selectedUser).name"
+                    class="equipped-coeur-overlay"
+                  />
+                  <img
+                    v-if="getUserEquippedItemData(selectedUser) && (getUserEquippedItemData(selectedUser).displayType === 'alpha' || getUserEquippedItemData(selectedUser).name === 'Alpha')"
+                    :src="alphaImg"
+                    :alt="getUserEquippedItemData(selectedUser).name"
+                    class="equipped-alpha-overlay"
+                  />
+                  <img
+                    v-if="getUserEquippedItemData(selectedUser) && (getUserEquippedItemData(selectedUser).displayType === 'admin-planify' || getUserEquippedItemData(selectedUser).name === 'Admin Planify')"
+                    :src="adminPlanify"
+                    :alt="getUserEquippedItemData(selectedUser).name"
+                    class="equipped-admin-planify-overlay"
+                  />
+                  <img
+                    v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'absolute-cinema'"
+                    :src="bras"
+                    :alt="getUserEquippedItemData(selectedUser).name"
+                    class="equipped-absolute-cinema-overlay"
+                  />
+                  <img
+                    v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'absolute-cinema'"
+                    :src="bras"
+                    :alt="getUserEquippedItemData(selectedUser).name"
+                    class="equipped-absolute-cinema-overlay-right"
+                  />
                   <!-- Ajout: Overlays statiques Tomb Raider + Ange -->
                   <img 
                     v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'tomb-raider'"
@@ -2958,12 +2983,7 @@
                     :alt="getUserEquippedItemData(selectedUser).name"
                     class="equipped-gentleman-overlay"
                   />
-                  <img 
-                    v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'lunettes-pixel'"
-                    :src="mlglunette"
-                    :alt="getUserEquippedItemData(selectedUser).name"
-                    class="equipped-lunettes-pixel-inside"
-                  />
+
                   <img 
                     v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'flash'"
                     :src="flash"
@@ -3006,18 +3026,11 @@
                     :class="getEquippedItemClass(getUserEquippedItemData(selectedUser).name)"
                   />
 
-                  <!-- Dyn: ABOVE (au-dessus du carré avatar) -->
-                  <img
-                    v-for="(a, ai) in getProfilePopupAssetsForTargetPlacement(getUserEquippedItemData(selectedUser), 'profile-avatar', 'above')"
-                    :key="'profile-above-'+ai+'-'+dynamicVariantsState"
-                    :src="resolveAssetSrc(a.src)"
-                    :style="getDynProfilePopupAssetStyle(a)"
-                  />
                   <!-- Extérieur “above” (scaler) -->
                   <img
                     v-for="(a, ai) in getProfilePopupAssetsForTargetPlacement(getUserEquippedItemData(selectedUser), 'profile-avatar-scaler', 'above')"
                     :key="'pp-scaler-above-'+ai+'-'+dynamicVariantsState"
-                    :src="resolveAssetSrc(a.src)"
+                    :src="resolveDynSrc(a.src)"
                     :style="getDynProfilePopupAssetStyle(a)"
                   />
                 </div>
@@ -3031,7 +3044,16 @@
               <div class="profile-left-row">
                 <div class="profile-role-with-group">
                   <div class="profile-pill profile-role">{{ selectedUser?.role ? afficherRole(selectedUser.role) : '—' }}</div>
-                  <div class="profile-group-outlet"><img v-if="selectedGroupLogoSrc" :src="selectedGroupLogoSrc" alt="Groupe" class="group-logo" /><span v-else class="group-text">{{ selectedUser?.groupe || '—' }}</span></div>
+                  <div class="profile-outlets-row">
+                    <div class="profile-dept-outlet">
+                      <img v-if="selectedDepartmentLogoSrc" :src="selectedDepartmentLogoSrc" alt="Études" class="dept-logo" />
+                      <span v-else class="dept-text">{{ selectedUser?.department || selectedUser?.etude || '—' }}</span>
+                    </div>
+                    <div class="profile-group-outlet">
+                      <img v-if="selectedGroupLogoSrc" :src="selectedGroupLogoSrc" alt="Groupe" class="group-logo" />
+                      <span v-else class="group-text">{{ selectedUser?.groupe || '—' }}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div class="profile-pill profile-coins">{{ formatCoins((selectedUser?.leaderboardCoins ?? selectedUser?.coins ?? 0)) }} <img src="@/assets/img/planicoins.webp" alt="Coin" class="coin-icon" /></div>
@@ -3361,6 +3383,11 @@ import groupeAprime from '@/assets/img/groupe_Aprime.webp'
 import groupeB from '@/assets/img/groupe_B.webp'
 import groupeBprime from '@/assets/img/groupe_Bprime.webp'
 import groupePromo from '@/assets/img/groupe_Promo.webp'
+import mmiPill from '@/assets/MMI_pill.webp'
+import tcPill from '@/assets/TC_pill.webp'
+import infoPill from '@/assets/INFO_pill.webp'
+import infocomPill from '@/assets/INFOCOM_pill.webp'
+import geaPill from '@/assets/GEA_pill.webp'
 import jojo from '@/assets/img/tobecontinued.webp'
 import jojotext from '@/assets/img/jojotext.gif'
 import infoIcon from '@/assets/img/infos_items.webp'
@@ -4862,6 +4889,17 @@ const getDynVariantBgStyleReactive = (item) => {
   })
 }
 
+function resolveDynSrc(src) {
+  try {
+    if (typeof src === 'string' && src.startsWith('/uploads/')) {
+      const orig = API_URL || ''
+      const base = orig.endsWith('/api') ? orig.slice(0, -4) : orig.replace('/api','')
+      return base + src
+    }
+  } catch {}
+  return src
+}
+
 function resolveAssetSrc(path) {
   try {
     if (typeof path !== 'string' || !path) return ''
@@ -5960,6 +5998,20 @@ const selectedGroupLogoSrc = computed(() => {
       case "B'": return groupeBprime
       case 'B"': return groupeBprime
       case 'Promo': return groupePromo
+      default: return null
+    }
+  } catch { return null }
+})
+
+const selectedDepartmentLogoSrc = computed(() => {
+  try {
+    const d = String((selectedUser.value && (selectedUser.value.department || selectedUser.value['etude'])) || '').trim().toUpperCase()
+    switch (d) {
+      case 'MMI': return mmiPill
+      case 'TC': return tcPill
+      case 'INFO': return infoPill
+      case 'INFOCOM': return infocomPill
+      case 'GEA': return geaPill
       default: return null
     }
   } catch { return null }
@@ -8114,7 +8166,13 @@ onUnmounted(() => {
 .header-left { display: flex; flex-direction: column; gap: 6px; }
 .header-info-row { display: flex; align-items: flex-start; gap: 12px; }
 @media (max-width: 1286px) {
-  .header-info-row { display: flex; flex-direction: column; align-items: center; }
+  .header-info-row { display: flex; flex-direction: column; }
+}
+@media (min-width: 1219px) {
+  .header-info-row { display: flex; flex-direction: row; }
+}
+@media (max-width: 1218px) {
+  .header-info-row { align-items: center; }
 }
 .coins-wallet { background: #ffd84a; border: 2px solid #5bc682; border-radius: 16px; padding: 20px 14px; display: inline-flex; align-items: center; gap: 8px; color: #111; box-shadow: 0 4px 10px rgba(0,0,0,0.12); }
 .coins-wallet .coin-icon { width: 22px; height: 22px; }
@@ -8245,7 +8303,7 @@ onUnmounted(() => {
   text-align: center;
   margin-bottom: 20px;
 }
-@media (max-width: 480px) {
+@media (max-width: 1218px) {
   .weekly-timer { margin-bottom: 0px !important; }
 }
 
@@ -8264,6 +8322,7 @@ onUnmounted(() => {
   }
 
   .weekly-shop-container {
+    --weekly-item-img-width: 235px;
     display: grid;
     grid-template-columns: 0fr 0.3fr;
     gap: 18px;
@@ -8331,11 +8390,17 @@ onUnmounted(() => {
   .weekly-shop-container .item-actions {
     align-items: initial !important;
   }
+  @media (min-width: 1025px) {
+    .weekly-shop-container .preview-card.preview-item .item-actions {
+      width: 340px;
+      margin: 10px auto;
+    }
+  }
   .weekly-shop-container .weekly-section:first-child .shop-item .item-img-wrapper {
     background: #fff;
     border: 5px solid #5bc682;
     border-radius: 30px;
-    width: 235px !important;
+    width: var(--weekly-item-img-width) !important;
     height: 140px !important;
     margin: 0 25px 12px !important;
     position: relative;
@@ -8349,7 +8414,7 @@ onUnmounted(() => {
     background: #fff;
     border: 5px solid #5bc682;
     border-radius: 30px;
-    width: 235px !important;
+    width: var(--weekly-item-img-width) !important;
     height: 140px !important;
     margin: 0 auto 12px !important;
     position: relative;
@@ -8416,10 +8481,30 @@ onUnmounted(() => {
 .slide-right .suggest-slider-leave-to,
 .slide-right.suggest-slider-leave-to { transform: translateX(-40px); }
   .weekly-section:first-child .shop-grid.small-grid { grid-template-columns: repeat(2, 1fr) !important; height: 100%; align-items: stretch; grid-auto-rows: 1fr; gap: 12px !important; width: 658px !important; margin-left: auto; margin-right: auto; }
-  @media (max-width: 480px) {
+  @media (max-width: 768px) {
     .weekly-section:first-child .shop-grid.small-grid { gap: 25px !important; }
   }
   @media (max-width: 768px) {
+    .weekly-shop-container .item-actions .buy-btn.price-hover {
+      width: var(--weekly-item-img-width) !important;
+      max-width: var(--weekly-item-img-width) !important;
+    }
+  }
+  @media (min-width: 768px) and (max-width: 1285px) {
+    .weekly-shop-container .item-actions .buy-btn.price-hover {
+      width: var(--weekly-item-img-width) !important;
+      max-width: var(--weekly-item-img-width) !important;
+    }
+  }
+  @media (min-width: 320px) and (max-width: 768px) {
+    .weekly-shop-container .shop-grid {
+      grid-template-columns: repeat(1, 1fr) !important;
+    }
+  }
+  @media (max-width: 768px) {
+    .weekly-shop-container {
+      --weekly-item-img-width: 190px;
+    }
     .weekly-section:first-child .shop-grid {
       display: flex !important;
       grid-template-columns: repeat(1, 1fr) !important;
@@ -8432,13 +8517,13 @@ onUnmounted(() => {
       max-width: 250px !important;
     }
     .weekly-shop-container .weekly-section:first-child .shop-item .item-img-wrapper {
-      width: 190px !important;
+      width: var(--weekly-item-img-width) !important;
     }
     .weekly-shop-container .weekly-section:first-child .item-actions .buy-btn,
     .weekly-shop-container .weekly-section:first-child .item-actions .buy-btn.price-hover {
       display: block;
-      width: 190px !important;
-      max-width: 190px !important;
+      width: var(--weekly-item-img-width) !important;
+      max-width: var(--weekly-item-img-width) !important;
       margin: 0 auto;
     }
     .weekly-shop-container .weekly-section:nth-of-type(2) .shop-item.weekly-item.small-card {
@@ -8449,16 +8534,24 @@ onUnmounted(() => {
       max-width: 250px !important;
     }
     .weekly-shop-container .weekly-section:nth-of-type(2) .shop-item .item-img-wrapper {
-      width: 190px !important;
+      width: var(--weekly-item-img-width) !important;
     }
     .weekly-shop-container .weekly-section:nth-of-type(2) .item-actions .buy-btn,
     .weekly-shop-container .weekly-section:nth-of-type(2) .item-actions .buy-btn.price-hover {
       display: block;
-      width: 190px !important;
-      max-width: 190px !important;
+      width: var(--weekly-item-img-width) !important;
+      max-width: var(--weekly-item-img-width) !important;
       margin: 0 auto;
     }
+    .weekly-shop-container .item-actions .buy-btn.price-hover {
+      width: var(--weekly-item-img-width) !important;
+      max-width: var(--weekly-item-img-width) !important;
+    }
     .weekly-shop-container .item-actions .buy-btn { border-radius: 12px !important; }
+    .weekly-shop-container .preview-card.preview-item .jojo-text-preview,
+    .weekly-shop-container .weekly-item .jojo-text-preview,
+    .weekly-shop-container .jojo-text-preview { top: -7px !important; }
+    .preview-card.preview-leaderboard .equipped-angel-wings { top: -46px; left: -30px; }
     .weekly-shop-container .moustache-img-shop { top: 65px !important; left: 50px !important; }
     .weekly-shop-container .gentleman-img-shop { top: 20px !important; left: 37px !important; }
   }
@@ -8533,7 +8626,7 @@ onUnmounted(() => {
 .preview-card.preview-avatar .profile-avatar-scaler .equipped-cat-ears { position: absolute !important; left: 49% !important; top: 52% !important; width: 55% !important; height: 75% !important; object-fit: contain !important; transform: translate(-50%, -72%) scale(1.25) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 16 !important; }
 .preview-card.preview-avatar .profile-avatar-scaler .equipped-clown-overlay { position: absolute !important; left: 50% !important; top: 72% !important; width: 60% !important; height: 72% !important; object-fit: contain !important; transform: translate(-50%, -85%) scale(1.18) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 16 !important; }
 .preview-card.preview-avatar .profile-avatar-scaler .equipped-vinyle-overlay { position: absolute !important; left: 50% !important; top: 36% !important; width: 30% !important; height: 48% !important; object-fit: contain !important; transform: translate(-50%, -72%) scale(1.05) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 16 !important; }
-  .preview-card.preview-avatar .profile-avatar-scaler .equipped-stars { position: absolute !important; left: 50% !important; top: 65% !important; width: 56% !important; height: 66% !important; object-fit: contain !important; transform: translate(-50%, -72%) scale(1.02) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 16 !important; }
+  .preview-card.preview-avatar .profile-avatar-scaler .equipped-stars { position: absolute !important; left: 51% !important; top: 66% !important; width: 75% !important; height: 69% !important; object-fit: contain !important; transform: translate(-50%, -72%) scale(1.02) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 16 !important; }
   .preview-card.preview-avatar .profile-avatar-scaler .equipped-rainbow { position: absolute !important; left: 50% !important; top: 76% !important; width: 48% !important; height: 53% !important; object-fit: contain !important; transform: translate(-50%, -85%) scale(1.3) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 16 !important; }
   .preview-card.preview-avatar .profile-avatar-scaler .equipped-royal-frame { position: absolute !important; left: 50% !important; top: 82% !important; width: 77% !important; height: 89% !important; object-fit: contain !important; transform: translate(-50%, -85%) scale(1.02) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 16 !important; }
   .preview-card.preview-avatar .profile-avatar-scaler .equipped-gentleman-overlay { position: absolute !important; left: 50% !important; top: 35% !important; width: 53% !important; height: 26% !important; object-fit: contain !important; transform: translate(-50%, -72%) scale(1.02) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 16 !important; }
@@ -8609,6 +8702,8 @@ onUnmounted(() => {
   .weekly-preview .item-name { font-size: 22px; }
   .weekly-preview .item-price { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 20px; }
   .weekly-preview .item-price .coin-icon { width: 24px; height: 24px; }
+  [data-theme="dark"] .weekly-preview .item-name,
+  [data-theme="dark"] .weekly-preview .item-price { color: #ffffff !important; }
   .preview-card.preview-item .buy-btn { display: block; width: 100%; margin: 5px 0 0; max-width: none; padding: 14px 26px; font-size: 22px;  color: #fff; background: linear-gradient(135deg, #a8ffce 0%, #5fffa1 100%); border: none; border-radius: 18px; box-shadow: 0 6px 16px rgba(0, 201, 123, 0.25); }
   .weekly-preview .leaderboard-item { height: 56px; min-height: 0; padding: 4px; margin-bottom: 3px; }
   .weekly-preview .leaderboard-item .user-avatar { width: 50px; height: 50px; }
@@ -9365,9 +9460,9 @@ onUnmounted(() => {
 
   .weekly-shop-container .shop-grid {
     display: grid !important;
-    grid-template-columns: repeat(1, 1fr) !important;
+    grid-template-columns: repeat(2, 1fr);
     gap: 20px !important;
-    width: 100% !important;
+    width: 658px !important;
     max-width: 100% !important;
     padding: 0 !important;
     justify-items: center;
@@ -9654,7 +9749,7 @@ onUnmounted(() => {
     object-fit: contain !important;
   }
   /* Desktop weekly override: Jojo text position */
-  .weekly-section .shop-item.weekly-item.small-card .jojo-text-preview.jojotext-fade { left: 65px !important; }
+  .weekly-section .shop-item.weekly-item.small-card .jojo-text-preview.jojotext-fade { left: 32px !important; }
 
   .jojo-img-shop {
     position: absolute !important;
@@ -10066,6 +10161,9 @@ onUnmounted(() => {
   box-shadow: 0 6px 16px rgba(47,191,113,0.35);
 }
 .weekly-shop-container .item-actions .buy-btn.price-hover .btn-label { opacity: 1; transition: opacity 0.25s ease; }
+@media (min-width: 768px) {
+  .weekly-shop-container .item-actions .buy-btn.price-hover .btn-label { font-size: 15px; }
+}
 @media (max-width: 480px) {
   .weekly-shop-container .item-actions .buy-btn.price-hover .btn-label { font-size: 13px; }
 }
@@ -10396,27 +10494,27 @@ onUnmounted(() => {
 .user-avatar.no-border { border: none !important; background: transparent !important; }
 
 /* Preview Leaderboard placement for Miaou (same as classic leaderboard) */
-.preview-card.preview-leaderboard .equipped-pate-inside { position: absolute !important; top: 53% !important; left: -1% !important; width: 60% !important; height: 54% !important; object-fit: contain !important; pointer-events: none !important; z-index: 3 !important; }
+.preview-card.preview-leaderboard .equipped-pate-inside { position: absolute !important; top: 48% !important; left: 6% !important; width: 50% !important; height: 43% !important; object-fit: contain !important; pointer-events: none !important; z-index: 3 !important; }
 .preview-card.preview-leaderboard .equipped-chat-overlay { position: absolute !important; top: -34% !important; left: 1% !important; width: 25% !important; height: 100% !important; object-fit: contain !important; pointer-events: none !important; z-index: 3 !important; }
 .preview-card.preview-leaderboard .equipped-camera-overlay { position: absolute !important; top: 55% !important; left: 0% !important; width: 10% !important; height: 70% !important; object-fit: contain !important; z-index: 3 !important; }
 .preview-card.preview-leaderboard .equipped-flash-overlay { position: absolute !important; top: 3% !important; left: -16% !important; width: 50% !important; height: 100% !important; z-index: 3 !important; }
 .preview-card.preview-leaderboard .user-avatar-container .equipped-cat-ears { position: absolute !important; left: 56% !important; top: 115% !important; width: 120% !important; height: 120% !important; object-fit: contain !important; transform: translate(-50%, -60%) scale(1.50) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 3 !important; }
 .preview-card.preview-leaderboard .equipped-cat-ears { position: absolute !important; inset: 0 !important; top: -48px !important; width: 100% !important; height: 100% !important; margin: auto !important; object-fit: contain !important; transform: scale(1.15) !important; transform-origin: center top !important; pointer-events: none !important; z-index: 3 !important; }
-  .preview-card.preview-leaderboard .equipped-stars-overlay { position: absolute !important; inset: 0 !important; top: -3px !important; left: 3px !important; width: 100% !important; height: 100% !important; margin: auto !important; object-fit: contain !important; transform: scale(1.22) !important; transform-origin: center top !important; pointer-events: none !important; z-index: 3 !important; }
-  .preview-card.preview-leaderboard .user-avatar-container .equipped-royal-frame-overlay { position: absolute !important; left: 60% !important; top: 89% !important; width: 162% !important; height: 160% !important; object-fit: contain !important; transform: translate(-50%, -62%) scale(1.08) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 3 !important; }
-.preview-card.preview-leaderboard .user-avatar-container .equipped-vinyle-overlay { position: absolute !important; left: 61% !important; top: -2% !important; width: 120% !important; height: 120% !important; object-fit: contain !important; transform: translate(-50%, -62%) scale(1.05) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 3 !important; }
+  .preview-card.preview-leaderboard .equipped-stars-overlay { position: absolute !important; inset: 0 !important; top: -9px !important; left: 0px !important; width: 94% !important; height: 90% !important; margin: auto !important; object-fit: contain !important; transform: scale(1.22) !important; transform-origin: center top !important; pointer-events: none !important; z-index: 3 !important; }
+  .preview-card.preview-leaderboard .user-avatar-container .equipped-royal-frame-overlay { position: absolute !important; left: 49% !important; top: 75% !important; width: 148% !important; height: 147% !important; object-fit: contain !important; transform: translate(-50%, -62%) scale(1.08) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 3 !important; }
+.preview-card.preview-leaderboard .user-avatar-container .equipped-vinyle-overlay { position: absolute !important; left: 50% !important; top: -2% !important; width: 120% !important; height: 120% !important; object-fit: contain !important; transform: translate(-50%, -62%) scale(1.05) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 3 !important; }
 .preview-card.preview-leaderboard .user-avatar-container .equipped-dvd-inside, .preview-card.preview-leaderboard .user-avatar .equipped-dvd-inside { position: absolute !important; top: 30%; left: 30%; width: 60% !important; height: 60% !important; object-fit: contain !important; transform: translate(-50%, -50%) !important; pointer-events: none !important; z-index: 3 !important; animation: dvdBounceShop 4s linear infinite !important; will-change: top, left; backface-visibility: hidden; }
-.preview-card.preview-leaderboard .user-avatar-container .equipped-nokia-inside { position: absolute !important; left: 14% !important; top: 99% !important; width: 75% !important; height: 140% !important; object-fit: contain !important; transform: translate(-50%, -62%) !important; pointer-events: none !important; z-index: 2 !important; }
-.preview-card.preview-leaderboard .user-avatar-container .equipped-clippy-inside { position: absolute !important; left: 85% !important; top: 85% !important; width: 60% !important; height: auto !important; object-fit: contain !important; transform: translate(-50%, -62%) !important; pointer-events: none !important; z-index: 3 !important; }
-.preview-card.preview-leaderboard .user-avatar-container .equipped-daftpunk-overlay { position: absolute !important; left: 56% !important; top: -25% !important; width: 100% !important; height: auto !important; object-fit: contain !important; transform: translate(-50%, -50%) !important; pointer-events: none !important; z-index: 4 !important; }
+.preview-card.preview-leaderboard .user-avatar-container .equipped-nokia-inside { position: absolute !important; left: 14% !important; top: 91% !important; width: 75% !important; height: 140% !important; object-fit: contain !important; transform: translate(-50%, -62%) !important; pointer-events: none !important; z-index: 2 !important; }
+.preview-card.preview-leaderboard .user-avatar-container .equipped-clippy-inside { position: absolute !important; left: 74% !important; top: 81% !important; width: 60% !important; height: auto !important; object-fit: contain !important; transform: translate(-50%, -62%) !important; pointer-events: none !important; z-index: 3 !important; }
+.preview-card.preview-leaderboard .user-avatar-container .equipped-daftpunk-overlay { position: absolute !important; left: 50% !important; top: -20% !important; width: 80% !important; height: auto !important; object-fit: contain !important; transform: translate(-50%, -50%) !important; pointer-events: none !important; z-index: 4 !important; }
 .preview-card.preview-leaderboard .user-avatar-container .equipped-discord-overlay { position: absolute !important; top: -1px !important; left: -20px !important; width: 26% !important; height: 120% !important; object-fit: contain !important; pointer-events: none !important; z-index: 4 !important; }
-.preview-card.preview-leaderboard .equipped-discord-overlay { position: absolute !important; top: -1px !important; left: -12px !important; width: 24% !important; height: 132% !important; object-fit: contain !important; pointer-events: none !important; z-index: 4 !important; }
+.preview-card.preview-leaderboard .equipped-discord-overlay { position: absolute !important; top: -5px !important; left: -10px !important; width: 34% !important; height: 132% !important; object-fit: contain !important; pointer-events: none !important; z-index: 4 !important; }
 .preview-card.preview-leaderboard .equipped-tomb-raider { position: absolute !important; top: -36px !important; left: -135px !important; width: 116% !important; height: 116% !important; object-fit: contain !important; pointer-events: none !important; z-index: 2 !important; }
 /* Clown (preview leaderboard): hair above avatar, nose centered inside */
-.preview-card.preview-leaderboard .user-avatar-container .equipped-clown-overlay { position: absolute !important; left: 56% !important; top: 44px !important; width: 63% !important; height: 70% !important; object-fit: contain !important; transform: translate(-50%, -60%) scale(2.6) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 3 !important; }
+.preview-card.preview-leaderboard .user-avatar-container .equipped-clown-overlay { position: absolute !important; left: 48% !important; top: 48px !important; width: 51% !important; height: 70% !important; object-fit: contain !important; transform: translate(-50%, -60%) scale(2.6) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 3 !important; }
 .preview-card.preview-leaderboard .user-avatar .equipped-clown-nose { position: absolute !important; left: 50% !important; top: 52% !important; width: 60% !important; height: auto !important; object-fit: contain !important; transform: translate(-50%, -50%) !important; pointer-events: none !important; z-index: 3 !important; }
 .preview-card.preview-leaderboard .equipped-absolute-cinema-overlay { position: absolute !important; top: -10% !important; left: -64% !important; width: 100% !important; height: 100% !important; object-fit: contain !important; pointer-events: none !important; z-index: 15 !important; }
-.preview-card.preview-leaderboard .equipped-absolute-cinema-overlay-right { position: absolute !important; top: -10% !important; left: 77% !important; width: 100% !important; height: 100% !important; object-fit: contain !important; pointer-events: none !important; z-index: 15 !important; transform: scaleX(-1) !important; transform-origin: center !important; }
+.preview-card.preview-leaderboard .equipped-absolute-cinema-overlay-right { position: absolute !important; top: -10% !important; left: 63% !important; width: 100% !important; height: 100% !important; object-fit: contain !important; pointer-events: none !important; z-index: 15 !important; transform: scaleX(-1) !important; transform-origin: center !important; }
 
 .avatar-img {
   width: 100%;
@@ -10463,10 +10561,10 @@ onUnmounted(() => {
   color: #e6e6e6 !important;
 }
 
-/* Thème sombre: noms des items en sombre (cartes blanches) */
+/* Thème sombre: noms des items en blanc */
 [data-theme="dark"] .shop-item .item-name,
 [data-theme="dark"] .leaderboard-container .item-name {
-  color: #333 !important;
+  color: #ffffff !important;
 }
 
 /* Thème sombre: noms des items/couleurs en blanc dans la boutique quotidienne */
@@ -11392,7 +11490,7 @@ onUnmounted(() => {
 
 .equipped-chat-overlay {
   position: absolute;
-  top: 2%;
+  top: 0%;
   left: 33%;
   width: 60%;
   height: 50%;
@@ -11613,7 +11711,7 @@ onUnmounted(() => {
     overscroll-behavior: auto;
   }
 
-  @media (max-width: 1300px) {
+  @media (max-width: 1218px) {
     .color-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
       max-height: 60vh;
@@ -11655,7 +11753,7 @@ onUnmounted(() => {
     .preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { top: 22% !important; left: 28% !important; width: 45% !important; height: 60% !important; }
     .preview-card.preview-avatar .profile-avatar-scaler .equipped-camera-overlay { top: 51% !important; left: 20% !important; width: 35% !important; height: 40% !important; }
     .preview-card.preview-leaderboard .equipped-flash-overlay { top: 3% !important; left: -9% !important; width: 50% !important; height: 100% !important; }
-    .preview-card.preview-leaderboard .equipped-camera-overlay { top: 47% !important; left: -1% !important; width: 17% !important; height: 90% !important; object-fit: contain !important; }
+    .preview-card.preview-leaderboard .equipped-camera-overlay { top: 36% !important; left: -1% !important; width: 17% !important; height: 90% !important; object-fit: contain !important; }
     .preview-card.preview-item .daftpunk-img-shop { width: 45% !important; }
     .preview-card.preview-item .nokia-img-shop { width: 30% !important; left: 35% !important; top: 60% !important; }
     .preview-card.preview-item .clippy-img-shop { width: 25% !important; left: 61% !important; top: 60% !important; }
@@ -11667,7 +11765,7 @@ onUnmounted(() => {
     .preview-card.preview-item .miaou-item-shop .chat-img-shop { top: 40% !important; left: 63% !important; max-width: 65% !important; }
     .preview-card.preview-item .miaou-item-shop .pate-img-shop { top: 130px !important; left: 30% !important;  max-height: 20% !important; }
     .preview-card.preview-leaderboard .equipped-chat-overlay { top: -35% !important; left: 5% !important; width: 35% !important; }
-    .preview-card.preview-avatar .profile-avatar-scaler .equipped-chat-overlay { top: 1% !important; left: 42% !important; width: 60% !important; }
+    .preview-card.preview-avatar .profile-avatar-scaler .equipped-chat-overlay { top: 1% !important; left: 26% !important; width: 86% !important; }
     .preview-card.preview-avatar .profile-avatar-scaler .equipped-pate-inside { top: 56% !important; left: 23% !important; width: 25% !important; height: 20% !important; }
     .preview-card.preview-avatar .profile-avatar-scaler .equipped-daftpunk-overlay { left: 22% !important; top: 11% !important; width: 55% !important; }
     .preview-card.preview-avatar .profile-avatar-scaler .equipped-nokia-inside { left: 28% !important; top: 60% !important; width: 40% !important; height: 23% !important; }
@@ -11678,7 +11776,20 @@ onUnmounted(() => {
     .preview-card.preview-item .item-img-wrapper.large { width: 250px !important; height: 250px !important; }
     .preview-card.preview-item .jojo-text-preview,
   .weekly-item .jojo-text-preview,
-  .jojo-text-preview { top: 8px !important; left: 42px !important; width: 61% !important; }
+  .jojo-text-preview { top: -7px !important; left: 42px !important; width: 61% !important; }
+    .preview-card.preview-item.cosmetic-mobile-card .jojo-text-preview { top: 10px !important; }
+
+@media (max-width: 1300px) {
+  .preview-card.preview-item .jojo-text-preview,
+  .weekly-item .jojo-text-preview,
+  .jojo-text-preview { top: 10px !important; }
+}
+@media (max-width: 768px) {
+  .preview-card.preview-item.cosmetic-mobile-card .jojo-text-preview { top: 10px !important; }
+  .weekly-shop-container .preview-card.preview-item .jojo-text-preview,
+  .weekly-shop-container .weekly-item .jojo-text-preview,
+  .weekly-shop-container .jojo-text-preview { top: -10px !important; }
+}
     .weekly-section .shop-item.weekly-item.small-card .discord-item-shop .discord-img-shop { top: 15px !important; left: 30px !important; }
     .preview-card.preview-avatar .profile-avatar-scaler .equipped-angel-wings { top: -66px !important; left: -1px !important; }
     .weekly-section .shop-item.weekly-item.small-card .gentleman-item-shop .gentleman-img-shop { top: 20px !important; left: 42px !important; max-width: 50% !important; }
@@ -13482,10 +13593,20 @@ onUnmounted(() => {
   .mobile-only-filters { display: none !important; }
 }
 .profile-left, .profile-right { justify-content: center; }
+.profile-left-row { display:flex; gap:40px; justify-content: center; }
+.profile-role-with-group { position: relative; display: inline-flex; align-items: center; gap: 15px; }
+.profile-role-with-group .profile-outlets-row { display: inline-flex; align-items: center; gap: 10px; }
+.profile-role-with-group .profile-role { position: relative; z-index: 2; }
+.profile-group-outlet { position: relative; margin-left: 0; border: 4px solid #3ddc84; border-radius: 18px; width: 81px; height: 68px; display:flex; align-items:center; justify-content:center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow:hidden; }
+.profile-group-outlet .group-logo { width: 39px; height: 30px; object-fit: contain; display:block; }
+.profile-group-outlet .group-text { font-size: 18px; font-weight: 700; color: #000; }
+.profile-dept-outlet { position: relative; margin-left: 0; border: 4px solid #3ddc84; border-radius: 18px; width: 81px; height: 68px; display:flex; align-items:center; justify-content:center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow:hidden; }
+.profile-dept-outlet .dept-logo { width: 51px; height: 26px; object-fit: contain; display:block; }
+.profile-dept-outlet .dept-text { font-size: 18px; font-weight: 700; color: #000; }
 .profile-popup { --profile-avatar-size: 150px; padding: 90px 32px 50px; }
-.profile-popup .profile-avatar-stage { width: 340px !important; height: 200px !important; box-sizing: border-box; border-radius: 12px; border: none !important; display: flex !important; align-items: center; justify-content: center; }
+.profile-popup .profile-avatar-stage { width: 340px !important; height: 200px !important; box-sizing: border-box; border-radius: 24px; border: none !important; display: flex !important; align-items: center; justify-content: center; }
 .profile-popup .profile-avatar-scaler { position: static !important; width: auto !important; height: auto !important; transform: none !important; transform-origin: initial !important; }
-.profile-popup .profile-avatar { width: 150px !important; height: 150px !important; border-width: 5px !important; border-style: solid; box-sizing: border-box; overflow: hidden !important; border-radius: 12px !important; position: relative !important; z-index: 2 !important; line-height: 0; }
+.profile-popup .profile-avatar { width: 150px !important; height: 150px !important; border-width: 5px !important; border-style: solid; box-sizing: border-box; overflow: hidden !important; border-radius: 30px !important; position: relative !important; z-index: 2 !important; line-height: 0; }
 .profile-popup .profile-avatar .avatar-img { width: 100% !important; height: 100% !important; display: block !important; object-fit: cover !important; object-position: center !important; }
 @media (max-width: 768px) { .profile-card-grid { grid-template-columns: 1fr; } .profile-divider { display: none; } }
 .profile-popup .equipped-roi-overlay { top: -51% !important; left: 15% !important; width: 86% !important; height: 75% !important; }
