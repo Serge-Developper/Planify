@@ -1458,7 +1458,7 @@ function openMusicUploadChoice(){ try{ showUploadChoice.value = true; showYoutub
 function closeMusicUploadChoice(){ try{ showUploadChoice.value = false }catch{} }
 function triggerMusicLocalFile(){ try{ showUploadChoice.value = false; nextTick(() => { try{ profileMusicInputRef.value?.click() }catch{} }) }catch{} }
 function isValidYouTubeUrl(u){ try{ const s=String(u||'').trim(); return /^https?:\/\/(www\.)?(youtube\.com\/(watch\?v=[^&\s]+|shorts\/[^?\s]+)|youtu\.be\/[^?\s]+)/i.test(s) } catch { return false } }
-async function saveYoutubeLink(){ try{ youtubeError.value=''; const url=String(youtubeUrl.value||'').trim(); if(!isValidYouTubeUrl(url)){ youtubeError.value='Lien YouTube invalide'; return } savingYoutube.value=true; let title='YouTube'; try{ const id = extractYouTubeId(url); if (id) { const canonical = `https://www.youtube.com/watch?v=${id}`; const r = await fetch(`https://www.youtube.com/oembed?format=json&url=${encodeURIComponent(canonical)}`); if(r.ok){ const data = await r.json(); title = String(data.title || title) } } } catch {} const payload={ musicSrc: url, musicTitle: title }; const updated = { ...(auth.user||{}), ...payload }; try{ auth.login(updated, true) } catch{} musicTitle.value = updated.musicTitle || musicTitle.value; showUploadChoice.value=false } catch(e){ youtubeError.value='Erreur réseau'; } finally{ savingYoutube.value=false } }
+async function saveYoutubeLink(){ try{ youtubeError.value=''; const url=String(youtubeUrl.value||'').trim(); if(!isValidYouTubeUrl(url)){ youtubeError.value='Lien YouTube invalide'; return } savingYoutube.value=true; let title='YouTube'; try{ const id = extractYouTubeId(url); if (id) { const canonical = `https://www.youtube.com/watch?v=${id}`; const r = await fetch(`https://www.youtube.com/oembed?format=json&url=${encodeURIComponent(canonical)}`); if(r.ok){ const data = await r.json(); title = String(data.title || title) } } } catch {} const payload={ musicSrc: url, musicTitle: title }; let saved=null; try{ const res=await secureApiCall('/users/me/music-link',{method:'PUT',body:JSON.stringify(payload)}); if(res && (res.musicSrc || res.musicTitle || typeof res.musicStartSeconds!=='undefined')) saved=res }catch{} const updated = { ...(auth.user||{}), ...payload }; if(saved){ if(typeof saved.musicSrc!=='undefined') updated.musicSrc=saved.musicSrc||''; if(typeof saved.musicTitle!=='undefined') updated.musicTitle=saved.musicTitle||''; updated.musicStartSeconds = (typeof saved.musicStartSeconds !== 'undefined') ? saved.musicStartSeconds : null; updated.musicDurationSeconds = (typeof saved.musicDurationSeconds !== 'undefined') ? saved.musicDurationSeconds : null } try{ auth.login(updated, true) } catch{} musicTitle.value = updated.musicTitle || musicTitle.value; showUploadChoice.value=false } catch(e){ youtubeError.value='Erreur réseau'; } finally{ savingYoutube.value=false } }
 onMounted(() => {
   try {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window['MSStream'];
@@ -4900,7 +4900,7 @@ body, html {
 }
 
 .coins-counter.with-timer {
-    right: -280px;
+    right: -300px;
 }
 
 @media (min-width: 1025px) and (max-width: 1200px) {

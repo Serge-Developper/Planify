@@ -2690,7 +2690,7 @@
       <!-- Popup profil depuis le leaderboard -->
       <transition name="fade">
         <div v-if="showUserProfile" class="profile-popup-overlay" data-darkreader-ignore @click.self="closeLeaderboardProfile">
-          <div class="profile-popup" data-darkreader-ignore>
+          <div class="profile-popup leaderboard-profile-popup" data-darkreader-ignore>
             <button class="close-btn" @click="closeLeaderboardProfile" @mouseover="hoverCloseProfile = true" @mouseleave="hoverCloseProfile = false">
               <img :src="hoverCloseProfile ? closeHoverImg : closeImg" alt="Fermer" class="close-img" />
             </button>
@@ -3064,7 +3064,7 @@
 
             <!-- Musique de profil (si disponible) -->
             <div v-if="showUserProfile && selectedUser" class="leaderboard-profile-music">
-              <div v-if="selectedUser.musicSrc" class="profile-pill profile-music-row">
+              <div v-if="selectedUserMusicSrc" class="profile-pill profile-music-row">
                 <div class="profile-music-left">
                   <div class="profile-left-controls">
                     <button type="button" class="btn btn-icon play-btn" @click="togglePopupPlay" :title="isPopupPlaying ? 'Pause' : 'Lire'">
@@ -3074,18 +3074,18 @@
                       <button type="button" class="btn btn-icon volume-btn" @click="togglePopupMute" :title="isPopupMuted ? 'Son coupé' : 'Son actif'">
                         <img :src="popupCurrentVolumeIcon" :key="popupCurrentVolumeIcon" :class="['volume-btn-img', { 'is-mute': isPopupMuted || popupMusicVolume === 0 }]" alt="Volume" />
                       </button>
-                      <div class="volume-slider-container" :class="{ visible: isVolumeHovered }">
-                        <div class="volume-seek-bar-vertical" @mousedown="startPopupVolumeDrag" @touchstart="startPopupVolumeDrag">
+                      <div class="volume-slider-container" :class="{ visible: isVolumeHovered, horizontal: isMobile }">
+                        <div :class="isMobile ? 'volume-seek-bar-horizontal' : 'volume-seek-bar-vertical'" @mousedown="startPopupVolumeDrag" @touchstart="startPopupVolumeDrag">
                           <div class="seek-track-vertical"></div>
-                          <div class="seek-fill-vertical" :style="{ height: popupMusicVolume + '%' }"></div>
-                          <div class="seek-thumb-vertical" :style="{ bottom: popupMusicVolume + '%' }"></div>
+                          <div class="seek-fill-vertical" :style="isMobile ? { width: popupMusicVolume + '%' } : { height: popupMusicVolume + '%' }"></div>
+                          <div class="seek-thumb-vertical" :style="isMobile ? { left: popupMusicVolume + '%' } : { bottom: popupMusicVolume + '%' }"></div>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
                 <div class="profile-music-player">
-                  <div class="profile-music-title">{{ selectedUser.musicTitle || 'Aucune musique' }}</div>
+                  <div class="profile-music-title">{{ selectedUserMusicTitle }}</div>
                   <div class="profile-progress-container">
                     <div class="profile-seek-bar" @mousedown="startPopupSeekDrag" @touchstart="startPopupSeekDrag">
                       <div class="seek-track"></div>
@@ -3096,7 +3096,7 @@
                   </div>
                   <audio
                     ref="popupAudioEl"
-                    :src="resolveAssetSrc(selectedUser.musicSrc)"
+                    :src="resolveAssetSrc(selectedUserMusicSrc)"
                     preload="metadata"
                     playsinline
                     @loadedmetadata="onPopupLoadedMetadata"
@@ -6017,6 +6017,23 @@ const selectedDepartmentLogoSrc = computed(() => {
   } catch { return null }
 })
 
+const selectedUserMusicSrc = computed(() => {
+  try {
+    const u = selectedUser.value || {}
+    const raw = u.musicSrc || u.musicUrl || u.musicLink || (u.music && u.music.src) || u.music
+    return typeof raw === 'string' ? raw.trim() : ''
+  } catch { return '' }
+})
+
+const selectedUserMusicTitle = computed(() => {
+  try {
+    const u = selectedUser.value || {}
+    const raw = u.musicTitle || u.musicName || (u.music && u.music.title) || ''
+    const title = typeof raw === 'string' ? raw.trim() : ''
+    return title || 'Aucune musique'
+  } catch { return 'Aucune musique' }
+})
+
 const isVolumeHovered = ref(false)
 const isPopupMuted = ref(false)
 
@@ -8025,7 +8042,7 @@ onUnmounted(() => {
 .collection-search { display: flex; align-items: center; gap: 12px; margin: 0 0 16px 0; }
 .collection-search-input { width: 100%; max-width: 420px; padding: 10px 12px; border: 1px solid #E9E9EA; border-radius: 12px; background: #fff; color: #111; }
 [data-theme="dark"] .collection-search-input { background: #222; color: #fff; border-color: #333; }
-@media (max-width: 480px) {
+@media (max-width: 1218px) {
   .collection-search { flex-direction: column; align-items: center; gap: 8px; }
   .collection-search-input { margin: 0 auto; max-width: 250px; }
   .collection-search .info-icon-btn { align-self: center; }
@@ -11915,6 +11932,11 @@ onUnmounted(() => {
   text-align: left;
   color: #111;
 }
+.profile-popup .public-note-title {
+  display: flex;
+  justify-content: center;
+  text-align: center;
+}
 .public-note-box {
   white-space: pre-wrap;
   word-break: break-word;
@@ -12163,10 +12185,17 @@ onUnmounted(() => {
 .profile-popup .volume-slider-container { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); width: 32px; height: 0; background: #fff; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); overflow: hidden; transition: height 0.2s ease, padding 0.2s ease; z-index: 50; display: flex; justify-content: center; padding: 0; }
 .profile-popup .volume-slider-container.visible { height: 120px; padding: 10px 0; }
 .profile-popup .volume-seek-bar-vertical { width: 20px; height: 100%; position: relative; cursor: pointer; display: flex; justify-content: center; touch-action: none; }
+.profile-popup .volume-seek-bar-horizontal { width: 100%; height: 20px; position: relative; cursor: pointer; display: flex; align-items: center; touch-action: none; }
 .profile-popup .seek-track-vertical { width: 4px; height: 100%; background: #9ca3af; border-radius: 2px; position: absolute; }
 .profile-popup .seek-fill-vertical { width: 4px; background: #3ddc84; border-radius: 2px; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); pointer-events: none; }
 .profile-popup .seek-thumb-vertical { width: 16px; height: 16px; background: #ff0000; border-radius: 50%; position: absolute; left: 50%; transform: translate(-50%, 50%); pointer-events: none; box-shadow: 0 1px 3px rgba(0,0,0,0.3); transition: transform 0.1s; }
 .profile-popup .volume-seek-bar-vertical:hover .seek-thumb-vertical { transform: translate(-50%, 50%) scale(1.2); }
+.profile-popup .volume-slider-container.horizontal { width: 160px; height: 0; padding: 0; }
+.profile-popup .volume-slider-container.horizontal.visible { height: 32px; padding: 6px 10px; }
+.profile-popup .volume-seek-bar-horizontal .seek-track-vertical { width: 100%; height: 4px; }
+.profile-popup .volume-seek-bar-horizontal .seek-fill-vertical { height: 4px; width: 0; left: 0; top: 50%; bottom: auto; transform: translateY(-50%); }
+.profile-popup .volume-seek-bar-horizontal .seek-thumb-vertical { top: 50%; bottom: auto; left: 0; transform: translate(-50%, -50%); }
+.profile-popup .volume-seek-bar-horizontal:hover .seek-thumb-vertical { transform: translate(-50%, -50%) scale(1.2); }
 /* Assure que le slider de volume vertical passe au-dessus de la Note publique */
 .profile-popup .volume-seek-bar-vertical {
   position: relative;
@@ -13608,7 +13637,19 @@ onUnmounted(() => {
 .profile-popup .profile-avatar-scaler { position: static !important; width: auto !important; height: auto !important; transform: none !important; transform-origin: initial !important; }
 .profile-popup .profile-avatar { width: 150px !important; height: 150px !important; border-width: 5px !important; border-style: solid; box-sizing: border-box; overflow: hidden !important; border-radius: 30px !important; position: relative !important; z-index: 2 !important; line-height: 0; }
 .profile-popup .profile-avatar .avatar-img { width: 100% !important; height: 100% !important; display: block !important; object-fit: cover !important; object-position: center !important; }
-@media (max-width: 768px) { .profile-card-grid { grid-template-columns: 1fr; } .profile-divider { display: none; } }
+@media (max-width: 768px) {
+  .profile-popup.leaderboard-profile-popup { padding: 28px 32px 32px 32px; }
+  .profile-popup.leaderboard-profile-popup .profile-card-grid { display: flex; align-items: center; justify-content: center; flex-direction: column; }
+  .profile-popup.leaderboard-profile-popup .profile-left,
+  .profile-popup.leaderboard-profile-popup .profile-right { width: 100%; max-width: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+  .profile-popup.leaderboard-profile-popup .profile-left-stack { width: 100%; }
+  .profile-popup.leaderboard-profile-popup .profile-role-with-group { position: relative; display: inline-flex; align-items: center; gap: 15px; justify-content: center; flex-direction: column; }
+  .profile-popup.leaderboard-profile-popup .profile-role-with-group .profile-role { order: 1; }
+  .profile-popup.leaderboard-profile-popup .profile-role-with-group .profile-outlets-row { order: 2; display: inline-flex; gap: 25px; justify-content: center; }
+  .profile-popup.leaderboard-profile-popup .profile-avatar-stage { width: 100% !important; max-width: 320px !important; margin-left: auto; margin-right: auto; }
+  .profile-popup.leaderboard-profile-popup .profile-divider { display: none; }
+  .profile-popup.leaderboard-profile-popup .profile-section-title { font-size: 18px !important; }
+}
 .profile-popup .equipped-roi-overlay { top: -51% !important; left: 15% !important; width: 86% !important; height: 75% !important; }
 .profile-popup .equipped-cat-ears { top: -76px !important; left: -59px !important; width: 133% !important; height: 117% !important; }
 .profile-popup .equipped-clown-nose { position: absolute !important; width: 41% !important; height: 42% !important; z-index: 2 !important; pointer-events: none !important; }

@@ -223,6 +223,34 @@ router.post('/upload-music', verifyToken, (req, res, next) => {
   }
 });
 
+router.put('/me/music-link', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.id || req.user._id;
+    let { musicSrc, musicTitle } = (req && req.body) ? req.body : {};
+    const rawSrc = (typeof musicSrc === 'string') ? musicSrc.trim() : '';
+    const rawTitle = (typeof musicTitle === 'string') ? musicTitle.trim() : '';
+    const src = rawSrc ? rawSrc.slice(0, 1000) : null;
+    const title = rawTitle ? rawTitle.slice(0, 200) : null;
+    const updated = await User.findByIdAndUpdate(
+      userId,
+      { musicSrc: src, musicTitle: title, musicStartSeconds: null, musicDurationSeconds: null },
+      { new: true }
+    ).select('-password');
+    if (!updated) {
+      return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    }
+    return res.json({
+      musicSrc: updated.musicSrc || null,
+      musicTitle: updated.musicTitle || null,
+      musicStartSeconds: updated.musicStartSeconds ?? null,
+      musicDurationSeconds: updated.musicDurationSeconds ?? null
+    });
+  } catch (error) {
+    console.error('Erreur sauvegarde musique URL:', error);
+    return res.status(500).json({ message: 'Erreur lors de la sauvegarde de la musique' });
+  }
+});
+
 // Route pour uploader plusieurs fichiers en masse
 router.post('/upload-multiple', verifyToken, (req, res, next) => {
   upload.array('files', 100)(req, res, (err) => {
