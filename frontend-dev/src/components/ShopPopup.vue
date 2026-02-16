@@ -1268,6 +1268,11 @@
                         @error="handleAvatarError"
                         @load="handleAvatarLoad"
                       />
+                      <template v-if="getUserEquippedItemData(currentUserFactionEntry)">
+                        <img v-for="(a, ai) in getLeaderboardAssetsForTargetPlacement(currentUserFactionEntry, getUserEquippedItemData(currentUserFactionEntry), 'user-avatar', 'below')" :key="'dyn-lb-below-faction-bagnat-user-'+ai+'-'+dynamicVariantsState" :src="resolveAssetSrc(a.src)" :style="getDynLeaderboardAssetStyle(a)" />
+                        <img v-for="(a, ai) in getLeaderboardAssetsForTargetPlacement(currentUserFactionEntry, getUserEquippedItemData(currentUserFactionEntry), 'user-avatar', 'inside')" :key="'dyn-lb-inside-faction-bagnat-user-'+ai+'-'+dynamicVariantsState" :src="resolveAssetSrc(a.src)" :style="getDynLeaderboardAssetStyle(a)" :class="getDynLeaderboardAssetClass(a)" />
+                        <img v-for="(a, ai) in getLeaderboardAssetsForTargetPlacement(currentUserFactionEntry, getUserEquippedItemData(currentUserFactionEntry), 'user-avatar', 'above')" :key="'dyn-lb-above-faction-bagnat-user-'+ai+'-'+dynamicVariantsState" :src="resolveAssetSrc(a.src)" :style="getDynLeaderboardAssetStyle(a)" :class="getDynLeaderboardAssetClass(a)" />
+                      </template>
                       <!-- Animation Matrix à l'intérieur de l'avatar (Bagnat - utilisateur courant) -->
                       <div v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'matrix'" class="matrix-rain-inside">
                         <div class="matrix-column" v-for="i in 20" :key="'f-bagnat-mx-'+i" :style="{ left: (i * 5) + '%', animationDelay: (Math.random() * 2) + 's' }">
@@ -1533,26 +1538,10 @@
                           @error="handleAvatarError"
                           @load="handleAvatarLoad"
                         />
-                        <!-- Items dynamiques placés derrière l'avatar (Bagnat - liste) -->
                         <template v-if="getUserEquippedItemData(user)">
-                          <template v-if="getUserEquippedItemData(user).isDynamic && Array.isArray(getUserEquippedItemData(user).variants) && getUserEquippedItemData(user).variants.length > 0">
-                            <img
-                              v-for="(a, ai) in getDynVariantAssetsForLeaderboard(user, getUserEquippedItemData(user))"
-                              v-if="a && a.meta && a.meta.leaderboardPlacement === 'below' && isAssetTargetingAvatar(getUserEquippedItemData(user), a)"
-                              :key="'dyn-lb-below-faction-bagnat-'+ai+'-'+dynamicVariantsState"
-                              :src="resolveAssetSrc(a.src)"
-                              :style="getDynLeaderboardAssetStyle(a)"
-                            />
-                          </template>
-                          <template v-else-if="getUserEquippedItemData(user).isDynamic">
-                            <img
-                              v-for="(a, ai) in getUserEquippedItemData(user).assets"
-                              v-if="a && a.meta && a.meta.leaderboardPlacement === 'below' && isAssetTargetingAvatar(getUserEquippedItemData(user), a)"
-                              :key="'dyn-below-faction-bagnat-'+ai"
-                              :src="resolveAssetSrc(a.src)"
-                              :style="getDynLeaderboardAssetStyle(a)"
-                            />
-                          </template>
+                          <img v-for="(a, ai) in getLeaderboardAssetsForTargetPlacement(user, getUserEquippedItemData(user), 'user-avatar', 'below')" :key="'dyn-lb-below-faction-bagnat-'+ai+'-'+dynamicVariantsState" :src="resolveAssetSrc(a.src)" :style="getDynLeaderboardAssetStyle(a)" />
+                          <img v-for="(a, ai) in getLeaderboardAssetsForTargetPlacement(user, getUserEquippedItemData(user), 'user-avatar', 'inside')" :key="'dyn-lb-inside-faction-bagnat-'+ai+'-'+dynamicVariantsState" :src="resolveAssetSrc(a.src)" :style="getDynLeaderboardAssetStyle(a)" :class="getDynLeaderboardAssetClass(a)" />
+                          <img v-for="(a, ai) in getLeaderboardAssetsForTargetPlacement(user, getUserEquippedItemData(user), 'user-avatar', 'above')" :key="'dyn-lb-above-faction-bagnat-'+ai+'-'+dynamicVariantsState" :src="resolveAssetSrc(a.src)" :style="getDynLeaderboardAssetStyle(a)" :class="getDynLeaderboardAssetClass(a)" />
                         </template>
 
                         <!-- Animation Matrix à l'intérieur de l'avatar (Bagnat - liste) -->
@@ -1839,6 +1828,11 @@
                         @error="handleAvatarError"
                         @load="handleAvatarLoad"
                       />
+                      <template v-if="getUserEquippedItemData(currentUserFactionEntry)">
+                        <img v-for="(a, ai) in getLeaderboardAssetsForTargetPlacement(currentUserFactionEntry, getUserEquippedItemData(currentUserFactionEntry), 'user-avatar', 'below')" :key="'dyn-lb-below-faction-fermier-user-'+ai+'-'+dynamicVariantsState" :src="resolveAssetSrc(a.src)" :style="getDynLeaderboardAssetStyle(a)" />
+                        <img v-for="(a, ai) in getLeaderboardAssetsForTargetPlacement(currentUserFactionEntry, getUserEquippedItemData(currentUserFactionEntry), 'user-avatar', 'inside')" :key="'dyn-lb-inside-faction-fermier-user-'+ai+'-'+dynamicVariantsState" :src="resolveAssetSrc(a.src)" :style="getDynLeaderboardAssetStyle(a)" :class="getDynLeaderboardAssetClass(a)" />
+                        <img v-for="(a, ai) in getLeaderboardAssetsForTargetPlacement(currentUserFactionEntry, getUserEquippedItemData(currentUserFactionEntry), 'user-avatar', 'above')" :key="'dyn-lb-above-faction-fermier-user-'+ai+'-'+dynamicVariantsState" :src="resolveAssetSrc(a.src)" :style="getDynLeaderboardAssetStyle(a)" :class="getDynLeaderboardAssetClass(a)" />
+                      </template>
                       <div v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'matrix'" class="matrix-rain-inside">
                         <div class="matrix-column" v-for="i in 20" :key="'f-fermier-mx-'+i" :style="{ left: (i * 5) + '%', animationDelay: (Math.random() * 2) + 's' }">
                           <span v-for="j in 5" :key="'f-fermier-mx-ch-'+j" class="matrix-char">{{ getRandomMatrixChar() }}</span>
@@ -2107,22 +2101,10 @@
                           @load="handleAvatarLoad"
                         />
 
-                        <!-- Items dynamiques placés derrière l'avatar (sous bordure) -->
                         <template v-if="getUserEquippedItemData(user)">
-                          <template v-if="getUserEquippedItemData(user).isDynamic && Array.isArray(getUserEquippedItemData(user).variants) && getUserEquippedItemData(user).variants.length > 0">
-                            <img v-for="(a, ai) in getDynVariantAssetsForLeaderboard(user, getUserEquippedItemData(user))"
-                                 v-if="a && a.meta && a.meta.leaderboardPlacement === 'below' && isAssetTargetingAvatar(getUserEquippedItemData(user), a)"
-                                 :key="'dyn-lb-below-faction-fermier-'+ai+'-'+dynamicVariantsState"
-                                 :src="resolveAssetSrc(a.src)"
-                                 :style="getDynLeaderboardAssetStyle(a)" />
-                          </template>
-                          <template v-else-if="getUserEquippedItemData(user).isDynamic">
-                            <img v-for="(a, ai) in getUserEquippedItemData(user).assets"
-                                 v-if="a && a.meta && a.meta.leaderboardPlacement === 'below' && isAssetTargetingAvatar(getUserEquippedItemData(user), a)"
-                                 :key="'dyn-below-faction-fermier-'+ai"
-                                 :src="resolveAssetSrc(a.src)"
-                                 :style="getDynLeaderboardAssetStyle(a)" />
-                          </template>
+                          <img v-for="(a, ai) in getLeaderboardAssetsForTargetPlacement(user, getUserEquippedItemData(user), 'user-avatar', 'below')" :key="'dyn-lb-below-faction-fermier-'+ai+'-'+dynamicVariantsState" :src="resolveAssetSrc(a.src)" :style="getDynLeaderboardAssetStyle(a)" />
+                          <img v-for="(a, ai) in getLeaderboardAssetsForTargetPlacement(user, getUserEquippedItemData(user), 'user-avatar', 'inside')" :key="'dyn-lb-inside-faction-fermier-'+ai+'-'+dynamicVariantsState" :src="resolveAssetSrc(a.src)" :style="getDynLeaderboardAssetStyle(a)" :class="getDynLeaderboardAssetClass(a)" />
+                          <img v-for="(a, ai) in getLeaderboardAssetsForTargetPlacement(user, getUserEquippedItemData(user), 'user-avatar', 'above')" :key="'dyn-lb-above-faction-fermier-'+ai+'-'+dynamicVariantsState" :src="resolveAssetSrc(a.src)" :style="getDynLeaderboardAssetStyle(a)" :class="getDynLeaderboardAssetClass(a)" />
 
                           <!-- Item Gentleman (moustache à l'intérieur) -->
                           <img 
@@ -4978,6 +4960,9 @@ function updateIsMobile() {
 function isProfilePopupLargeAvatarMobile() {
   return !!profilePopupLargeAvatarIsMobile.value
 }
+function shouldForceLeaderboardProfilePopupDesktop() {
+  return !!showUserProfile.value
+}
 onMounted(() => {
   updateIsMobile()
   try { window.addEventListener('resize', updateIsMobile) } catch {}
@@ -5052,7 +5037,10 @@ function getDynLeaderboardAssetStyle(asset) {
   if (!asset || typeof asset !== 'object') {
     return { position: 'absolute', objectFit: 'contain', zIndex: 1 }
   }
-  const s = (asset && asset.leaderboardStyle) || asset?.style || {}
+  const mobile = !!isMobile.value
+  const s = mobile
+    ? ((asset && asset.leaderboardStyleMobile) || asset?.leaderboardStyle || asset?.style || {})
+    : ((asset && asset.leaderboardStyle) || asset?.leaderboardStyleMobile || asset?.style || {})
   const placement = asset && asset.meta && asset.meta.leaderboardPlacement
   const baseZ = typeof s.zIndex === 'number' ? s.zIndex : (placement === 'above' ? 100 : 15)
   const style = { position: 'absolute', objectFit: s.objectFit || 'contain', zIndex: baseZ }
@@ -5135,7 +5123,8 @@ function getDynProfilePopupAssetStyle(asset) {
   }
   
   // Priorité à largeAvatarStyle si défini (non-défaut), sinon profilePopupStyle
-  const mobile = isProfilePopupLargeAvatarMobile()
+  const forceDesktop = shouldForceLeaderboardProfilePopupDesktop()
+  const mobile = !forceDesktop && isProfilePopupLargeAvatarMobile()
   const largeMobile = asset?.largeAvatarStyleMobile
   const largeDesktop = asset?.largeAvatarStyle
   const largeStyle = mobile ? largeMobile : largeDesktop
@@ -5193,16 +5182,19 @@ function getLargeAvatarHeight(item) {
 function getProfilePopupStageInlineStyle(user) {
   try {
     const item = getUserEquippedItemData(user)
-    const w = isMobile.value ? 250 : 351
+    const forceDesktop = shouldForceLeaderboardProfilePopupDesktop()
+    const w = (!forceDesktop && isMobile.value) ? 250 : 351
     const h = getLargeAvatarHeight(item)
-    return `width: ${w}px !important; height: ${h}px !important; margin: 0 auto`
+    const widthImportant = (forceDesktop && isMobile.value) ? '' : ' !important'
+    return `width: ${w}px${widthImportant}; height: ${h}px !important; margin: 0 auto`
   } catch { return '' }
 }
 
 function getProfilePopupScalerInlineStyle(user) {
   try {
     const item = getUserEquippedItemData(user)
-    const w = isMobile.value ? 250 : 351
+    const forceDesktop = shouldForceLeaderboardProfilePopupDesktop()
+    const w = (!forceDesktop && isMobile.value) ? 250 : 351
     const h = getLargeAvatarHeight(item)
     return `width: ${w}px !important; height: ${h}px !important`
   } catch { return '' }
@@ -5347,17 +5339,18 @@ function getDynLeaderboardContainerOverlayStyle(asset) {
   if (!asset || typeof asset !== 'object') {
     return { position: 'absolute', objectFit: 'contain', zIndex: 100, pointerEvents: 'none' }
   }
-  const s = (asset && asset.leaderboardStyle) || asset?.style || {}
-  // Position absolue par rapport à user-info, avec un z-index très élevé
+  const mobile = !!isMobile.value
+  const s = mobile
+    ? ((asset && asset.leaderboardStyleMobile) || asset?.leaderboardStyle || asset?.style || {})
+    : ((asset && asset.leaderboardStyle) || asset?.leaderboardStyleMobile || asset?.style || {})
   const style = { 
     position: 'absolute', 
     objectFit: s.objectFit || 'contain', 
-    zIndex: 100, // Très élevé pour être vraiment au-dessus
-    pointerEvents: 'none' // Pour ne pas bloquer les clics
+    zIndex: 100,
+    pointerEvents: 'none'
   }
-  // Les positions sont relatives à user-info maintenant
   if (typeof s.top === 'number') style.top = s.top + 'px'
-  if (typeof s.left === 'number') style.left = (s.left + 0) + 'px' // Ajuster si nécessaire
+  if (typeof s.left === 'number') style.left = (s.left + 0) + 'px'
   if (typeof s.width === 'number') style.width = s.width + 'px'
   if (typeof s.height === 'number') style.height = s.height + 'px'
   if (typeof s.rotate === 'number') style.transform = `rotate(${s.rotate}deg)`
@@ -7022,6 +7015,23 @@ const getUserEquippedItemData = (user) => {
         variants: di.variants || [],
         meta: di.meta || {},
         legacyId: di.id
+      }
+    }
+  }
+  if (!item && Array.isArray(userServerLocalItems.value)) {
+    const usli = userServerLocalItems.value.find(u => Number((typeof u.legacyId !== 'undefined') ? u.legacyId : u.id) === Number(equippedItemId))
+    if (usli) {
+      item = {
+        id: usli.id,
+        name: usli.name,
+        img: usli.assets && usli.assets[0] ? resolveAssetSrc(usli.assets[0].src) : '',
+        isDynamic: true,
+        isLocal: true,
+        assets: usli.assets || [],
+        backgrounds: usli.backgrounds || {},
+        variants: usli.variants || [],
+        meta: usli.meta || {},
+        legacyId: (typeof usli.legacyId !== 'undefined') ? usli.legacyId : usli.id
       }
     }
   }
@@ -13637,11 +13647,7 @@ onUnmounted(() => {
     max-width: 100% !important;
     padding: 0 !important;
   }
-  .leaderboard-container > div {
-    width: 270px !important;
-    display: flex !important;
-    align-items: center !important;
-  }
+
 
   /* Mobile Filters */
   .mobile-only-filters {
@@ -14184,21 +14190,54 @@ onUnmounted(() => {
 .profile-dept-outlet { position: relative; margin-left: 0; border: 4px solid #3ddc84; border-radius: 18px; width: 81px; height: 68px; display:flex; align-items:center; justify-content:center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow:hidden; }
 .profile-dept-outlet .dept-logo { width: 51px; height: 26px; object-fit: contain; display:block; }
 .profile-dept-outlet .dept-text { font-size: 18px; font-weight: 700; color: #000; }
-.profile-popup { --profile-avatar-size: 150px; padding: 90px 32px 90px; }
+.profile-popup-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  z-index: 9999;
+  overflow: hidden;
+}
+.profile-popup-overlay .profile-popup {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 24px #0003;
+  padding: 28px 32px 32px 32px;
+  width: min(900px, calc(100vw - 48px));
+  position: relative;
+  text-align: center;
+  font-family: 'Cobe Heavy', Inter, sans-serif;
+  --profile-avatar-size: 140px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: calc(100dvh - 48px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: auto;
+}
 .profile-popup .profile-avatar-stage { width: 340px !important; height: 200px !important; box-sizing: border-box; border-radius: 24px; border: none !important; display: flex !important; align-items: center; justify-content: center; }
 .profile-popup .profile-avatar-scaler { position: static !important; width: auto !important; height: auto !important; transform: none !important; transform-origin: initial !important; }
 .profile-popup .profile-avatar { width: 150px !important; height: 150px !important; border-width: 5px !important; border-style: solid !important; box-sizing: border-box; overflow: hidden !important; border-radius: 30px !important; position: relative !important; z-index: 2 !important; line-height: 0; }
 .profile-popup .profile-avatar.no-border { border: none !important; border-style: none !important; border-width: 0 !important; background: transparent !important; box-shadow: none !important; }
 .profile-popup .profile-avatar .avatar-img { width: 100% !important; height: 100% !important; display: block !important; object-fit: cover !important; object-position: center !important; }
 @media (max-width: 768px) {
-  .profile-popup.leaderboard-profile-popup { padding: 28px 32px 32px 32px; }
+  .profile-popup.leaderboard-profile-popup { padding: 28px 32px 32px 32px;         max-width: 100%;
+        width: min(350px, 100%);
+        border-radius: 12px;
+        display: flex;
+        align-items: center; }
   .profile-popup.leaderboard-profile-popup .profile-card-grid { display: flex; align-items: center; justify-content: center; flex-direction: column; }
   .profile-popup.leaderboard-profile-popup .profile-left,
-  .profile-popup.leaderboard-profile-popup .profile-right { width: 100%; max-width: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+  .profile-popup.leaderboard-profile-popup .profile-right { width: 100%; max-width: 83%; display: flex; align-items: center; justify-content: center; flex-direction: column; }
   .profile-popup.leaderboard-profile-popup .profile-left-stack { width: 100%; }
   .profile-popup.leaderboard-profile-popup .profile-role-with-group { position: relative; display: inline-flex; align-items: center; gap: 15px; justify-content: center; flex-direction: column; }
   .profile-popup.leaderboard-profile-popup .profile-role-with-group .profile-role { order: 1; }
-  .profile-popup.leaderboard-profile-popup .profile-role-with-group .profile-outlets-row { order: 2; display: inline-flex; gap: 25px; justify-content: center; }
+  .profile-popup.leaderboard-profile-popup .profile-role-with-group .profile-outlets-row { order: 2; display: inline-flex; gap: 15px; justify-content: center; }
   .profile-popup.leaderboard-profile-popup .profile-avatar-stage { width: 100% !important; max-width: 320px !important; margin-left: auto; margin-right: auto; }
   .profile-popup.leaderboard-profile-popup .profile-divider { display: none; }
   .profile-popup.leaderboard-profile-popup .profile-section-title { font-size: 18px !important; }
