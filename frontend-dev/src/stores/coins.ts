@@ -102,7 +102,7 @@ export const useCoinsStore = defineStore('coins', {
     lossStreak: 0 as number,
     protectionReady: false as boolean,
     leaderboardNeedsRefresh: false as boolean,
-    dynamicItemVariants: new Map<number, number>(),
+    dynamicItemVariants: new Map<string | number, number>(),
     favorites: [] as number[]
   }),
 
@@ -881,9 +881,11 @@ async initialize() {
 
     // Définir la variante d'un item dynamique (persistance locale + serveur)
     async setDynamicItemVariant(itemId: number | string, variantIndex: number) {
-      const normalizedId = (typeof itemId === 'string') ? Number(itemId) : itemId
-      if (!Number.isFinite(normalizedId) || typeof variantIndex !== 'number') return;
-      this.dynamicItemVariants.set(normalizedId, variantIndex)
+      const normalizedNum = (typeof itemId === 'string') ? Number(itemId) : itemId
+      const hasNumericId = Number.isFinite(normalizedNum)
+      const key = hasNumericId ? normalizedNum : String(itemId)
+      if (typeof variantIndex !== 'number') return
+      this.dynamicItemVariants.set(key, variantIndex)
       // Persister localement
       try {
         const variants = Object.fromEntries(this.dynamicItemVariants)
@@ -891,20 +893,26 @@ async initialize() {
       } catch (e) {
         console.warn('Impossible de sauvegarder les variantes dynamiques:', e)
       }
-      // Persister côté serveur
-      try {
-        await secureApiCall('/users/dynamic-item-variants', {
-          method: 'POST',
-          body: JSON.stringify({ itemId: normalizedId, variantIndex })
-        })
-      } catch {}
+      // Persister côté serveur (uniquement si ID numérique)
+      if (hasNumericId) {
+        try {
+          await secureApiCall('/users/dynamic-item-variants', {
+            method: 'POST',
+            body: JSON.stringify({ itemId: normalizedNum, variantIndex })
+          })
+        } catch {}
+      }
     },
 
     // Obtenir la variante d'un item dynamique
     getDynamicItemVariant(itemId: number | string): number {
-      const normalizedId = (typeof itemId === 'string') ? Number(itemId) : itemId
-      if (!Number.isFinite(normalizedId)) return 0
-      return this.dynamicItemVariants.get(normalizedId) || 0
+      const normalizedNum = (typeof itemId === 'string') ? Number(itemId) : itemId
+      if (Number.isFinite(normalizedNum)) {
+        const numHit = this.dynamicItemVariants.get(normalizedNum)
+        if (typeof numHit === 'number') return numHit
+      }
+      const key = String(itemId)
+      return this.dynamicItemVariants.get(key) || 0
     },
 
     // Charger les variantes (serveur si dispo, sinon localStorage)
@@ -915,11 +923,21 @@ async initialize() {
         if (auth?.user?.token) {
           const res = await secureApiCall('/users/dynamic-item-variants');
           if (res && res.success && res.variants) {
-            const entries: [number, number][] =
-              Object.entries(res.variants).map(([k, v]) => [Number(k), Number(v as any)] as [number, number]);
-            this.dynamicItemVariants = new Map<number, number>(entries);
+            const entries: [string | number, number][] =
+              Object.entries(res.variants).map(([k, v]) => {
+                const n = Number(k)
+                const key = Number.isFinite(n) ? n : k
+                return [key, Number(v as any)] as [string | number, number]
+              });
+            const merged = new Map<string | number, number>(entries)
+            if (this.dynamicItemVariants && this.dynamicItemVariants.size) {
+              for (const [k, v] of this.dynamicItemVariants.entries()) {
+                if (typeof v === 'number') merged.set(k, v)
+              }
+            }
+            this.dynamicItemVariants = merged
             try {
-              localStorage.setItem('dynamicItemVariants', JSON.stringify(Object.fromEntries(this.dynamicItemVariants)));
+              localStorage.setItem('dynamicItemVariants', JSON.stringify(Object.fromEntries(merged)));
             } catch {}
             return;
           }
@@ -930,9 +948,13 @@ async initialize() {
         const stored = localStorage.getItem('dynamicItemVariants');
         if (stored) {
           const variants = JSON.parse(stored) as Record<string, number>;
-          const entries: [number, number][] =
-            Object.entries(variants).map(([k, v]) => [Number(k), Number(v)] as [number, number]);
-          this.dynamicItemVariants = new Map<number, number>(entries);
+          const entries: [string | number, number][] =
+            Object.entries(variants).map(([k, v]) => {
+              const n = Number(k)
+              const key = Number.isFinite(n) ? n : k
+              return [key, Number(v)] as [string | number, number]
+            });
+          this.dynamicItemVariants = new Map<string | number, number>(entries);
         }
       } catch (e) {
         console.warn('Impossible de charger les variantes dynamiques:', e);

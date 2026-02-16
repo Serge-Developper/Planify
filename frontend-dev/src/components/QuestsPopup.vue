@@ -124,7 +124,7 @@
             </div>
           </div>
         </section>
-        <div class="dev-actions-bottom">
+        <div v-if="isAdminUser" class="dev-actions-bottom">
           <button class="secondary-btn" @click="simulateDailyProgress">Simuler progression</button>
           <button class="secondary-btn" @click="triggerTestToast">Tester la notification</button>
           <button class="secondary-btn" @click="toggleAdmin">Admin: choisir quêtes</button>
@@ -214,6 +214,8 @@ import { useCoinsStore } from '@/stores/coins'
 const props = defineProps({ show: { type: Boolean, default: false } })
 const emit = defineEmits(['close'])
 const coinsStore = useCoinsStore()
+const authStore = useAuthStore()
+const isAdminUser = computed(() => authStore.user && authStore.user.role === 'admin')
 const hoverCloseQuests = ref(false)
 watch(() => props.show, (val) => { if (val) { hoverCloseQuests.value = false; (async () => { try { await loadDailyFromBackend(); await loadRepeatableStatus(); await loadAchievementsStatus(); loadWheelSpinCount(); prevDone.value = dailyQuests.value.map(q => !!q.done) } catch {} })() } })
 function handleClose() { hoverCloseQuests.value = false; emit('close') }
@@ -371,6 +373,10 @@ const repeatableQuests = [
   { id: 'daily-25', title: 'Compléter 25 quêtes journalières', reward: 150, actions: 3, progress: 0 },
   { id: 'daily-50', title: 'Compléter 50 quêtes journalières', reward: 300, actions: 3, progress: 0 }
 ]
+function getRepeatableTitle(id) {
+  const found = repeatableQuests.find(q => q.id === id)
+  return found ? found.title : 'Quête répétable'
+}
 async function loadRepeatableStatus() {
   try {
     const a = useAuthStore(); if (!a?.isLoggedIn) { return }
@@ -747,8 +753,18 @@ watch(dailyQuests, async (qs) => {
     const now = !!q.done
     const before = !!prevDone.value[i]
     if (now && !before) {
-      showQuestToast(q.title, q.reward, q.id)
-      try { const a = useAuthStore(); if (a?.isLoggedIn) { await secureApiCall('/quests/complete', { method: 'POST', body: JSON.stringify({ questId: q.id }) }) } } catch {}
+      let res = null
+      try { const a = useAuthStore(); if (a?.isLoggedIn) { res = await secureApiCall('/quests/complete', { method: 'POST', body: JSON.stringify({ questId: q.id }) }) } } catch {}
+      const questReward = (res && typeof res.questReward === 'number') ? Number(res.questReward) : Number(q.reward || 0)
+      showQuestToast(q.title, questReward, q.id)
+      const rep = Array.isArray(res?.repeatableRewards) ? res.repeatableRewards : []
+      for (const r of rep) {
+        const amount = Number(r?.reward || 0)
+        if (!amount) continue
+        showQuestToast(getRepeatableTitle(r?.id), amount, r?.id)
+      }
+      const newCoins = (res && typeof res.coins === 'number') ? Number(res.coins) : null
+      if (newCoins !== null) { coinsStore.balance = newCoins; coinsStore.leaderboardNeedsRefresh = true }
       try { await loadRepeatableStatus(); await loadAchievementsStatus() } catch {}
     }
     prevDone.value[i] = now
@@ -888,10 +904,29 @@ onUnmounted(() => {
 .progress-fill.orange { background: linear-gradient(90deg, #34d399, #10b981); }
 
 /* Scrollbar interne – style aligné sur Leaderboard */
-.quests-modal::-webkit-scrollbar { width: 10px; }
+.quests-modal::-webkit-scrollbar { width: 4px; }
 .quests-modal::-webkit-scrollbar-track { background: transparent; margin: 12px 0; }
 .quests-modal::-webkit-scrollbar-thumb { background: #cfcfcf; border-radius: 8px; }
-.quests-modal::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+.quests-modal::-webkit-scrollbar-button,
+.quests-modal::-webkit-scrollbar-button:single-button,
+.quests-modal::-webkit-scrollbar-button:double-button,
+.quests-modal::-webkit-scrollbar-button:single-button:vertical:decrement,
+.quests-modal::-webkit-scrollbar-button:single-button:vertical:increment,
+.quests-modal::-webkit-scrollbar-button:single-button:vertical:start:decrement,
+.quests-modal::-webkit-scrollbar-button:single-button:vertical:end:increment,
+.quests-modal::-webkit-scrollbar-button:single-button:horizontal:decrement,
+.quests-modal::-webkit-scrollbar-button:single-button:horizontal:increment,
+.quests-modal::-webkit-scrollbar-button:vertical:decrement,
+.quests-modal::-webkit-scrollbar-button:vertical:increment,
+.quests-modal::-webkit-scrollbar-button:horizontal:decrement,
+.quests-modal::-webkit-scrollbar-button:horizontal:increment {
+  -webkit-appearance: none;
+  display: none;
+  width: 0;
+  height: 0;
+  background: transparent;
+  border: 0;
+}
 
 .section-title { font-size: 26px; color: #fff; margin-bottom: 10px; }
 .daily-list, .repeat-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }

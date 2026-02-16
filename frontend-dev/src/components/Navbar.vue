@@ -1408,6 +1408,10 @@ const mobileMenuRef = ref(null)
 watch(showMobileMenu, (v) => {
 })
 const isMobile = ref(false)
+const profilePopupLargeAvatarIsMobile = ref(false)
+function isProfilePopupLargeAvatarMobile() {
+  return !!profilePopupLargeAvatarIsMobile.value
+}
 const showLoginPopup = ref(false)
 const showUserDropdown = ref(false)
 const showProfilePopup = ref(false)
@@ -2359,7 +2363,7 @@ function getDynNavbarOverlayStyle(asset) {
 
 // Style spécifique pour la popup Profil: reproduit exactement l'aperçu Large/Avatar
 function getDynProfilePopupAssetStyle(asset) {
-  const mobile = !!isMobile.value
+  const mobile = isProfilePopupLargeAvatarMobile()
   const s = mobile
     ? (asset?.largeAvatarStyleMobile || asset?.largeAvatarStyle || asset?.profilePopupStyleMobile || asset?.profilePopupStyle || asset?.navbarStyleMobile || asset?.navbarStyle || asset?.style || {})
     : (asset?.largeAvatarStyle || asset?.profilePopupStyle || asset?.navbarStyle || asset?.style || {})
@@ -4176,6 +4180,7 @@ function goShop() {
 
 function handleResize() {
   isMobile.value = window.innerWidth <= 1024;
+  profilePopupLargeAvatarIsMobile.value = window.innerWidth <= 480;
   if (!isMobile.value) {
     showMobileMenu.value = false;
     showNotificationBtn.value = false;

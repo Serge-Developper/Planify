@@ -2715,6 +2715,7 @@
               <div
                 class="profile-avatar-stage"
                 data-darkreader-ignore
+                :style="getProfilePopupStageInlineStyle(selectedUser)"
                 :class="{
                   'no-border':
                     (getUserEquippedItemData(selectedUser) &&
@@ -2722,7 +2723,7 @@
                     (getUserEquippedItemData(selectedUser) && shouldRemoveProfilePopupBorder(getUserEquippedItemData(selectedUser)))
                 }"
               >
-                <div class="profile-avatar-scaler" data-darkreader-ignore>
+                <div class="profile-avatar-scaler" data-darkreader-ignore :style="getProfilePopupScalerInlineStyle(selectedUser)">
                   <div
                     class="profile-avatar"
                     data-darkreader-ignore
@@ -4947,6 +4948,20 @@ function resolveAssetSrc(path) {
 }
 
 const isMobile = ref(false)
+const profilePopupLargeAvatarIsMobile = ref(false)
+function updateProfilePopupLargeAvatarIsMobile() {
+  try {
+    if (window && typeof window.matchMedia === 'function') {
+      profilePopupLargeAvatarIsMobile.value = window.matchMedia('(max-width: 480px)').matches
+      return
+    }
+    if (window && typeof window.innerWidth === 'number') {
+      profilePopupLargeAvatarIsMobile.value = window.innerWidth <= 480
+      return
+    }
+  } catch {}
+  profilePopupLargeAvatarIsMobile.value = false
+}
 function updateIsMobile() {
   try {
     if (window && typeof window.matchMedia === 'function') {
@@ -4957,6 +4972,11 @@ function updateIsMobile() {
   } catch {
     isMobile.value = false
   }
+  updateProfilePopupLargeAvatarIsMobile()
+}
+
+function isProfilePopupLargeAvatarMobile() {
+  return !!profilePopupLargeAvatarIsMobile.value
 }
 onMounted(() => {
   updateIsMobile()
@@ -5065,7 +5085,7 @@ function getEffectiveProfilePopupTarget(item, asset) {
     if (itemLevel) return String(itemLevel)
 
     // Heuristique legacy: si largeAvatarStyle non-défaut et aucune cible explicite → scaler
-    const mobile = !!isMobile.value
+    const mobile = isProfilePopupLargeAvatarMobile()
     const s = mobile ? (asset?.largeAvatarStyleMobile || asset?.largeAvatarStyle) : (asset?.largeAvatarStyle)
     const t = typeof s?.top === 'number' ? s.top : 0
     const l = typeof s?.left === 'number' ? s.left : 0
@@ -5115,7 +5135,7 @@ function getDynProfilePopupAssetStyle(asset) {
   }
   
   // Priorité à largeAvatarStyle si défini (non-défaut), sinon profilePopupStyle
-  const mobile = !!isMobile.value
+  const mobile = isProfilePopupLargeAvatarMobile()
   const largeMobile = asset?.largeAvatarStyleMobile
   const largeDesktop = asset?.largeAvatarStyle
   const largeStyle = mobile ? largeMobile : largeDesktop
@@ -5168,6 +5188,24 @@ function getLargeAvatarHeight(item) {
     if (Number.isFinite(ni)) return Math.max(250, Math.min(400, ni))
   } catch {}
   return 250
+}
+
+function getProfilePopupStageInlineStyle(user) {
+  try {
+    const item = getUserEquippedItemData(user)
+    const w = isMobile.value ? 250 : 351
+    const h = getLargeAvatarHeight(item)
+    return `width: ${w}px !important; height: ${h}px !important; margin: 0 auto`
+  } catch { return '' }
+}
+
+function getProfilePopupScalerInlineStyle(user) {
+  try {
+    const item = getUserEquippedItemData(user)
+    const w = isMobile.value ? 250 : 351
+    const h = getLargeAvatarHeight(item)
+    return `width: ${w}px !important; height: ${h}px !important`
+  } catch { return '' }
 }
 
 // Helpers: assets pour l'aperçu Leaderboard (filtrés par cible et placement)

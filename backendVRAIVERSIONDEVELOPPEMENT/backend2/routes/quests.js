@@ -251,13 +251,17 @@ router.get('/stats', verifyToken, async (req, res) => {
   }
 })
 
-function incAndAward(user, key, threshold, amount) {
+function incAndAward(user, key, threshold, amount, out, id) {
   user.repeatable = user.repeatable || {}
   user.repeatable[key] = Math.max(0, Number(user.repeatable[key] || 0)) + 1
   if (user.repeatable[key] >= threshold) {
     user.repeatable[key] -= threshold
-    user.coins = (user.coins || 0) + amount
+    if (Array.isArray(out) && id) out.push({ id, reward: amount })
+    user.achievements = user.achievements || {}
+    user.achievements.repeatCompleted = Math.max(0, Number(user.achievements.repeatCompleted || 0)) + 1
+    return amount
   }
+  return 0
 }
 
 router.get('/repeatable', verifyToken, async (req, res) => {
@@ -340,6 +344,7 @@ router.post('/complete', verifyToken, async (req, res) => {
     await replaceTaskInfoIfNoDevoirs(user, { hasTodoDevoirs })
     const q = (user.dailyQuests||[]).find(x => x.id === String(questId))
     if (!q) return res.status(404).json({ success: false, message: 'Quête introuvable' })
+    if (q.done) return res.json({ success: true, alreadyDone: true, questReward: 0, repeatableRewards: [], coins: Number(user.coins || 0) })
     q.done = true
     user.achievements = user.achievements || {}
     const prev = Math.max(0, Number(user.achievements.dailyCompleted || 0))
@@ -349,11 +354,23 @@ router.post('/complete', verifyToken, async (req, res) => {
     if (user.achievements.dailyCompleted >= 15) awardAchievement(user, 'daily-complete-15')
     if (user.achievements.dailyCompleted >= 30) awardAchievement(user, 'daily-complete-30')
     if (user.achievements.dailyCompleted >= 50) awardAchievement(user, 'daily-complete-50')
-    incAndAward(user, 'daily10', 10, 50)
-    incAndAward(user, 'daily25', 25, 150)
-    incAndAward(user, 'daily50', 50, 300)
+    const repeatableRewards = []
+    let repeatableTotal = 0
+    repeatableTotal += incAndAward(user, 'daily10', 10, 50, repeatableRewards, 'daily-10')
+    repeatableTotal += incAndAward(user, 'daily25', 25, 150, repeatableRewards, 'daily-25')
+    repeatableTotal += incAndAward(user, 'daily50', 50, 300, repeatableRewards, 'daily-50')
+    const questReward = Math.max(0, Number(q.reward || 0))
+    const totalAward = questReward + repeatableTotal
+    if (totalAward > 0) {
+      user.coins = (user.coins || 0) + totalAward
+      user.leaderboardCoins = (user.leaderboardCoins || 0) + totalAward
+      if (user.faction) user.factionCoins = (user.factionCoins || 0) + totalAward
+    }
     await user.save()
-    return res.json({ success: true })
+    if (totalAward > 0 && user.faction) {
+      await Faction.updateOne({ name: user.faction }, { $inc: { totalCoins: totalAward } }, { upsert: true })
+    }
+    return res.json({ success: true, questReward, repeatableRewards, coins: Number(user.coins || 0), totalAward })
   } catch (e) {
     return res.status(500).json({ success: false, message: 'Erreur serveur' })
   }
