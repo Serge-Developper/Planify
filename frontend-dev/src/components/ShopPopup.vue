@@ -8181,6 +8181,14 @@ onUnmounted(() => {
 .suggest-add-btn,
 .suggest-dup-btn,
 .suggest-remove-btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; }
+
+@media (min-width: 320px) and (max-width: 442px) {
+  .variant-actions { display: flex; flex-direction: row; width: none; }
+}
+
+@media (min-width: 390px) {
+  .variant-actions { flex-direction: row !important; }
+}
 .suggest-add-btn { background: #3bbf6c; color: #fff; }
 .suggest-dup-btn { background: #4aa3ff; color: #fff; }
 .suggest-remove-btn { background: #e25454; color: #fff; }
