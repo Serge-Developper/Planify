@@ -1478,6 +1478,18 @@
                         class="equipped-galaxie"
                       />
                       <img 
+                        v-if="getUserEquippedItemData(user) && (getUserEquippedItemData(user).name === 'Coeur' || getUserEquippedItemData(user).displayType === 'coeur')"
+                        :src="coeur"
+                        alt="Coeur"
+                        class="equipped-coeur"
+                      />
+                      <img 
+                        v-if="getUserEquippedItemData(user) && (getUserEquippedItemData(user).name === 'Prestige' || getUserEquippedItemData(user).displayType === 'alpha')"
+                        :src="alphaImg"
+                        :alt="'Prestige'"
+                        class="equipped-alpha"
+                      />
+                      <img 
                         v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'roi'"
                         :src="roi"
                         :alt="getUserEquippedItemData(user).name"
@@ -2706,7 +2718,7 @@
                 :class="{
                   'no-border':
                     (getUserEquippedItemData(selectedUser) &&
-                      (getUserEquippedItemData(selectedUser).displayType === 'discord' || getUserEquippedItemData(selectedUser).name === 'Galaxie' || getUserEquippedItemData(selectedUser).name === 'Coeur' || getUserEquippedItemData(selectedUser).name === 'Prestige' || getUserEquippedItemData(selectedUser).name === 'Planify' || getUserEquippedItemData(selectedUser).name === 'Alpha')) ||
+                      (getUserEquippedItemData(selectedUser).displayType === 'discord' || getUserEquippedItemData(selectedUser).displayType === 'coeur' || getUserEquippedItemData(selectedUser).displayType === 'alpha' || getUserEquippedItemData(selectedUser).displayType === 'admin-planify' || getUserEquippedItemData(selectedUser).name === 'Galaxie' || getUserEquippedItemData(selectedUser).name === 'Coeur' || getUserEquippedItemData(selectedUser).name === 'Prestige' || getUserEquippedItemData(selectedUser).name === 'Planify' || getUserEquippedItemData(selectedUser).name === 'Admin Planify' || getUserEquippedItemData(selectedUser).name === 'Alpha')) ||
                     (getUserEquippedItemData(selectedUser) && shouldRemoveProfilePopupBorder(getUserEquippedItemData(selectedUser)))
                 }"
               >
@@ -2714,12 +2726,12 @@
                   <div
                     class="profile-avatar"
                     data-darkreader-ignore
-                    :style="getAvatarBorderStyle(selectedUser)"
+                    :style="getProfilePopupAvatarBorderStyle(selectedUser)"
                     :class="{
                       'jojo-sepia': getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'jojo',
                       'no-border':
                         (getUserEquippedItemData(selectedUser) &&
-                          (getUserEquippedItemData(selectedUser).displayType === 'discord' || getUserEquippedItemData(selectedUser).name === 'Galaxie' || getUserEquippedItemData(selectedUser).name === 'Coeur' || getUserEquippedItemData(selectedUser).name === 'Prestige' || getUserEquippedItemData(selectedUser).name === 'Planify' || getUserEquippedItemData(selectedUser).name === 'Alpha')) ||
+                          (getUserEquippedItemData(selectedUser).displayType === 'discord' || getUserEquippedItemData(selectedUser).displayType === 'coeur' || getUserEquippedItemData(selectedUser).displayType === 'alpha' || getUserEquippedItemData(selectedUser).displayType === 'admin-planify' || getUserEquippedItemData(selectedUser).name === 'Galaxie' || getUserEquippedItemData(selectedUser).name === 'Coeur' || getUserEquippedItemData(selectedUser).name === 'Prestige' || getUserEquippedItemData(selectedUser).name === 'Planify' || getUserEquippedItemData(selectedUser).name === 'Admin Planify' || getUserEquippedItemData(selectedUser).name === 'Alpha')) ||
                         (getUserEquippedItemData(selectedUser) && shouldRemoveProfilePopupBorder(getUserEquippedItemData(selectedUser)))
                     }"
                   >
@@ -3987,12 +3999,12 @@ const ensureAvatarStyle = () => {
 const suggestAvatarStyle = computed(() => ensureAvatarStyle())
 const suggestAvatarStageHeight = ref(250)
 const suggestAvatarStageInlineStyle = computed(() => {
-  const w = (suggestAvatarDevice.value === 'mobile') ? 100 : 351
+  const w = (suggestAvatarDevice.value === 'mobile') ? 100 : (isMobile.value ? 250 : 351)
   const h = (suggestAvatarDevice.value === 'mobile') ? 100 : suggestAvatarStageHeight.value
   return `width: ${w}px !important; height: ${h}px !important`
 })
 const suggestAvatarScalerInlineStyle = computed(() => {
-  const w = (suggestAvatarDevice.value === 'mobile') ? 100 : 351
+  const w = (suggestAvatarDevice.value === 'mobile') ? 100 : (isMobile.value ? 250 : 351)
   const h = (suggestAvatarDevice.value === 'mobile') ? 100 : suggestAvatarStageHeight.value
   return `width: ${w}px !important; height: ${h}px !important`
 })
@@ -5204,8 +5216,8 @@ function shouldRemoveProfilePopupBorder(item) {
     if (item.meta && (item.meta.removeProfilePopupBorder === true)) return true
     if (item.name === 'Discord' || item.displayType === 'discord') return true
     const nm = String(item.name || '').toLowerCase()
-    if (nm === 'galaxie' || nm === 'galaxy' || nm === 'coeur' || nm === 'planify' || nm === 'prestige') return true
-    if (item.displayType === 'coeur') return true
+    if (nm === 'galaxie' || nm === 'galaxy' || nm === 'coeur' || nm === 'planify' || nm === 'admin planify' || nm === 'prestige' || nm === 'alpha') return true
+    if (item.displayType === 'coeur' || item.displayType === 'alpha' || item.displayType === 'admin-planify' || item.displayType === 'galaxie') return true
   } catch {}
   return false
 }
@@ -7211,6 +7223,18 @@ const getAvatarBorderStyle = (user) => {
   }
 }
 
+const getProfilePopupAvatarBorderStyle = (user) => {
+  try {
+    const equipped = getUserEquippedItemData(user)
+    if (equipped && shouldRemoveProfilePopupBorder(equipped)) {
+      return { border: 'none', background: 'transparent' }
+    }
+    return getAvatarBorderStyle(user)
+  } catch {
+    return { border: 'none', background: 'transparent' }
+  }
+}
+
 // Style de bordure pour l'aperçu des bordures en prévisualisation d'achat (couleur sélectionnée)
 const getPreviewBorderStyle = (item) => {
   try {
@@ -8166,8 +8190,12 @@ onUnmounted(() => {
   .suggest-top-row { justify-content: center; }
   .suggest-right-group { flex-direction: column; align-items: center; width: 100%; gap: 12px; }
   .suggest-actions { flex-direction: row; justify-content: center; width: 100%; }
-  .suggest-meta-group { justify-content: center; width: 100%; padding: 20px 0px; }
+  .suggest-meta-group { justify-content: center; flex-direction: column; width: 100%; padding: 20px 0px; }
   .suggest-upload-group { justify-content: center; width: 100%; flex: 1 1 89px; margin-bottom: 15px; }
+}
+
+@media (min-width: 320px) and (max-width: 980px) {
+  .suggest-top-row { flex-direction: column;  }
 }
 .suggest-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
 .suggest-previews { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
@@ -8265,6 +8293,7 @@ onUnmounted(() => {
     display: flex;
     flex-direction: column;
     align-items: center;
+    margin-bottom: 20px;
   }
   .weekly-timer { order: 1; }
   .coins-wallet { order: 2; }
@@ -8625,6 +8654,11 @@ onUnmounted(() => {
     }
     .weekly-shop-container .weekly-section:first-child .shop-item .item-img-wrapper {
       width: var(--weekly-item-img-width) !important;
+    }
+    .weekly-shop-container .weekly-section:first-child .item-actions {
+      width: var(--weekly-item-img-width) !important;
+      max-width: var(--weekly-item-img-width) !important;
+      margin: 0 auto;
     }
     .weekly-shop-container .weekly-section:first-child .item-actions .buy-btn,
     .weekly-shop-container .weekly-section:first-child .item-actions .buy-btn.price-hover {
@@ -9063,10 +9097,10 @@ onUnmounted(() => {
   }
   .leaderboard-container .equipped-coeur{
     position: absolute !important;
-    top: -6px !important;
-    left: -6px !important;
-    width: 122% !important;
-    height: 125% !important;
+    top: -8px !important;
+    left: -8px !important;
+    width: 134% !important;
+    height: 130% !important;
     object-fit: contain !important;
     pointer-events: none !important;
     z-index: 15 !important;
@@ -9074,9 +9108,9 @@ onUnmounted(() => {
   .leaderboard-container .equipped-alpha{
     position: absolute !important;
     top: -2px !important;
-    left: -2px !important;
+    left: -1px !important;
     width: 108% !important;
-    height: 107% !important;
+    height: 104% !important;
     z-index: 4 !important;
     object-fit: contain !important;
     pointer-events: none !important;
@@ -9084,8 +9118,8 @@ onUnmounted(() => {
   .leaderboard-container .equipped-admin-planify{
     position: absolute !important;
     top: -2px !important;
-    left: -2px !important;
-    width: 107% !important;
+    left: 0px !important;
+    width: 103% !important;
     height: 108% !important;
     z-index: 4 !important;
     object-fit: contain !important;
@@ -9877,6 +9911,13 @@ onUnmounted(() => {
   }
   /* Desktop weekly override: Jojo text position */
   .weekly-section .shop-item.weekly-item.small-card .jojo-text-preview.jojotext-fade { left: 32px !important; }
+  @media (min-width: 769px) and (max-width: 1218px) {
+    .weekly-section .shop-item.weekly-item.small-card .jojo-text-preview.jojotext-fade {
+      left: 55px !important;
+      top: -8px !important;
+      width: 49% !important;
+    }
+  }
 
   .jojo-img-shop {
     position: absolute !important;
@@ -11946,8 +11987,8 @@ onUnmounted(() => {
     .preview-card.preview-item .item-img-wrapper.large { width: 250px !important; height: 250px !important; }
     .preview-card.preview-item .jojo-text-preview,
   .weekly-item .jojo-text-preview,
-  .jojo-text-preview { top: -7px !important; left: 42px !important; width: 61% !important; }
-    .preview-card.preview-item.cosmetic-mobile-card .jojo-text-preview { top: 10px !important; }
+  .jojo-text-preview { top: 3px !important; left: 13px !important; width: 61% !important; }
+    .preview-card.preview-item.cosmetic-mobile-card .jojo-text-preview { top: 10px; }
 
 @media (max-width: 1300px) {
   .preview-card.preview-item .jojo-text-preview,
@@ -12160,10 +12201,10 @@ onUnmounted(() => {
 .profile-avatar-stage .equipped-alpha-overlay,
 .profile-avatar-stage .equipped-admin-planify-overlay { 
   position: absolute !important; 
-  top: -2px !important; 
-  left: -2px !important; 
-  width: 108% !important; 
-  height: 108% !important; 
+  top: 19px !important;
+    left: -2px !important;
+    width: 102% !important;
+    height: 80% !important;
   object-fit: contain !important; 
   pointer-events: none !important; 
   z-index: 6 !important; 
@@ -12263,7 +12304,10 @@ onUnmounted(() => {
 .leaderboard-container .leaderboard-profile-popup .equipped-daftpunk-overlay { top: -24% !important; left: 31% !important; width: 36% !important; height: 44% !important; }
 .profile-popup .equipped-jojo-inside { bottom: -2px; left: 150px; width: 95%; height: 38%; }
 .profile-popup .equipped-jojotext-inside { top: -12px; right: 20px; width: 75%; height: 85%; }
-.profile-popup .equipped-galaxie-overlay { top: -38px !important; left: -36px !important; }
+.profile-popup .equipped-galaxie-overlay { top: -36px !important;
+    left: -19px !important;
+    width: 110% !important;
+    height: 136% !important; }
 .profile-popup .equipped-coeur-overlay { top: -12px !important; left: -23px !important; }
 .profile-popup .equipped-angel-wings { position: absolute !important; top: -28% !important; left: 2% !important; width: 96% !important; height: 75% !important; z-index: 0 !important; pointer-events: none !important; }
 .profile-popup .equipped-tomb-raider { position: absolute !important; top: -73px !important; left: 0px !important; width: 102% !important; height: 71% !important; z-index: 0 !important; pointer-events: none !important; }
@@ -12539,37 +12583,37 @@ onUnmounted(() => {
 /* Galaxie (pop-up profil leaderboard) */
 .profile-popup .equipped-galaxie,
 .profile-popup .equipped-galaxie-overlay {
-  top: -37px !important;
-  left: -35px !important;
-  width: 171% !important;
-  height: 175% !important;
+      top: -72px;
+    left: 30px;
+    width: 81%;
+    height: 173%;
 }
 
 /* Coeur (pop-up profil leaderboard) */
 .profile-popup .equipped-coeur,
 .profile-popup .equipped-coeur-overlay {
-  top: -18px !important;
-  left: -23px !important;
-  width: 144% !important;
-  height: 134% !important;
+  top: -2px !important;
+    left: -46px !important;
+    width: 128% !important;
+    height: 100% !important;
 }
 
 /* Alpha (pop-up profil leaderboard) */
 .profile-popup .equipped-alpha,
 .profile-popup .equipped-alpha-overlay {
-  top: -5px !important;
-  left: -17px !important;
-  width: 133% !important;
-  height: 106% !important;
+  top: 17px !important;
+    left: -32px !important;
+    width: 120% !important;
+    height: 80% !important;
 }
 
 /* Leaderboard (hors pop-up) – Coeur */
 .leaderboard-container .equipped-coeur,
 .leaderboard-container .equipped-coeur-overlay {
-  top: -6px !important;
-  left: -7px !important;
-  width: 129% !important;
-  height: 125% !important;
+  top: -7px;
+  left: -8px;
+  width: 133%;
+  height: 128%;
 }
 
 /* Pate (leaderboard – pop-up profil) */
@@ -14056,7 +14100,8 @@ onUnmounted(() => {
 .profile-popup { --profile-avatar-size: 150px; padding: 90px 32px 50px; }
 .profile-popup .profile-avatar-stage { width: 340px !important; height: 200px !important; box-sizing: border-box; border-radius: 24px; border: none !important; display: flex !important; align-items: center; justify-content: center; }
 .profile-popup .profile-avatar-scaler { position: static !important; width: auto !important; height: auto !important; transform: none !important; transform-origin: initial !important; }
-.profile-popup .profile-avatar { width: 150px !important; height: 150px !important; border-width: 5px !important; border-style: solid; box-sizing: border-box; overflow: hidden !important; border-radius: 30px !important; position: relative !important; z-index: 2 !important; line-height: 0; }
+.profile-popup .profile-avatar { width: 150px !important; height: 150px !important; border-width: 5px !important; border-style: solid !important; box-sizing: border-box; overflow: hidden !important; border-radius: 30px !important; position: relative !important; z-index: 2 !important; line-height: 0; }
+.profile-popup .profile-avatar.no-border { border: none !important; border-style: none !important; border-width: 0 !important; background: transparent !important; box-shadow: none !important; }
 .profile-popup .profile-avatar .avatar-img { width: 100% !important; height: 100% !important; display: block !important; object-fit: cover !important; object-position: center !important; }
 @media (max-width: 768px) {
   .profile-popup.leaderboard-profile-popup { padding: 28px 32px 32px 32px; }
@@ -14070,6 +14115,9 @@ onUnmounted(() => {
   .profile-popup.leaderboard-profile-popup .profile-avatar-stage { width: 100% !important; max-width: 320px !important; margin-left: auto; margin-right: auto; }
   .profile-popup.leaderboard-profile-popup .profile-divider { display: none; }
   .profile-popup.leaderboard-profile-popup .profile-section-title { font-size: 18px !important; }
+  .profile-popup .equipped-galaxie-overlay { top: -29px !important; left: -35px !important; width: 168% !important; height: 154% !important; }
+  .profile-popup .equipped-coeur-overlay { top: -13px !important; left: -20px !important; width: 139% !important; height: 122% !important; }
+  .profile-popup .equipped-admin-planify-overlay { height: 102% !important; left: -1px !important; }
 }
 .profile-popup .equipped-roi-overlay { top: -51% !important; left: 15% !important; width: 86% !important; height: 75% !important; }
 .profile-popup .equipped-cat-ears { top: -76px !important; left: -59px !important; width: 133% !important; height: 117% !important; }

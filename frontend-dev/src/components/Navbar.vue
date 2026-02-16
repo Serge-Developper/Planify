@@ -51,7 +51,9 @@
               'classic-border-equipped': equippedItem && equippedItem.name === 'Bordure Classique',
               'discord-equipped': equippedItem && equippedItem.displayType === 'discord',
               'galaxie-equipped': equippedItem && equippedItem.name === 'Galaxie',
+              'coeur-equipped': equippedItem && (equippedItem.name === 'Coeur' || equippedItem.displayType === 'coeur'),
               'alpha-equipped': equippedItem && (equippedItem.name === 'Alpha' || equippedItem.displayType === 'alpha'),
+              'planify-equipped': equippedItem && (equippedItem.name === 'Planify' || equippedItem.displayType === 'admin-planify'),
               'no-border': !previewBorderColorId && (
                 shouldRemoveNavbarBorder() || (
                   (equippedItem && (equippedItem.displayType === 'discord' || equippedItem.name === 'Galaxie' || equippedItem.name === 'Coeur' || equippedItem.name === 'Alpha' || equippedItem.name === 'Admin Planify'))
@@ -440,7 +442,9 @@
               'rainbow-equipped': equippedItem && equippedItem.name === 'Roses', 
               'discord-equipped': equippedItem && equippedItem.displayType === 'discord', 
               'galaxie-equipped': equippedItem && equippedItem.name === 'Galaxie', 
+              'coeur-equipped': equippedItem && (equippedItem.name === 'Coeur' || equippedItem.displayType === 'coeur'),
               'alpha-equipped': equippedItem && (equippedItem.name === 'Alpha' || equippedItem.displayType === 'alpha'),
+              'planify-equipped': equippedItem && (equippedItem.name === 'Planify' || equippedItem.displayType === 'admin-planify'),
               'no-border': !previewBorderColorId && (
                 shouldRemoveNavbarBorder() || (
                   (equippedItem && (equippedItem.displayType === 'discord' || equippedItem.name === 'Galaxie' || equippedItem.name === 'Coeur' || equippedItem.name === 'Alpha' || equippedItem.name === 'Admin Planify'))
@@ -874,7 +878,7 @@
             class="profile-avatar-stage"
             :style="{ height: getProfilePopupStageHeight(equippedDynItem) + 'px' }"
             :class="{
-              'no-border': (equippedItem && (equippedItem.displayType === 'discord' || equippedItem.name === 'Galaxie' || equippedItem.name === 'Coeur' || equippedItem.name === 'Prestige' || equippedItem.name === 'Planify' || equippedItem.name === 'Alpha'))
+              'no-border': (equippedItem && shouldRemoveProfilePopupBorder(equippedItem))
                           || (equippedDynItem && shouldRemoveProfilePopupBorder(equippedDynItem))
             }"
           >
@@ -882,10 +886,10 @@
               <div
                 class="profile-avatar"
                 data-darkreader-ignore
-                :style="getAccountBorderStyle()"
+                :style="getProfilePopupAvatarBorderStyle()"
                 :class="{
                   'jojo-sepia': equippedItem && equippedItem.displayType === 'jojo',
-                  'no-border': (equippedItem && (equippedItem.displayType === 'discord' || equippedItem.name === 'Galaxie' || equippedItem.name === 'Coeur' || equippedItem.name === 'Prestige' || equippedItem.name === 'Planify' || equippedItem.name === 'Alpha'))
+                  'no-border': (equippedItem && shouldRemoveProfilePopupBorder(equippedItem))
                                || (equippedDynItem && shouldRemoveProfilePopupBorder(equippedDynItem))
                 }"
               >
@@ -2410,6 +2414,9 @@ function shouldRemoveProfilePopupBorder(item) {
     const variant = Array.isArray(item.variants) ? item.variants[vi] : null
     if (variant && (variant.removeProfilePopupBorder === true || variant.removeNavbarBorder === true)) return true
     if (item.meta && (item.meta.removeProfilePopupBorder === true || item.meta.removeNavbarBorder === true)) return true
+    const nm = String(item.name || '').toLowerCase()
+    if (nm === 'galaxie' || nm === 'coeur' || nm === 'prestige' || nm === 'planify' || nm === 'alpha' || nm === 'admin planify') return true
+    if (item.displayType === 'discord' || item.displayType === 'coeur' || item.displayType === 'alpha' || item.displayType === 'admin-planify' || item.displayType === 'galaxie') return true
   } catch {}
   return false
 }
@@ -2630,6 +2637,17 @@ function getAccountBorderStyle() {
     return { border: `3px solid ${selected.color}` }
   }
   return {}
+}
+
+function getProfilePopupAvatarBorderStyle() {
+  try {
+    if ((equippedItem && shouldRemoveProfilePopupBorder(equippedItem)) || (equippedDynItem && shouldRemoveProfilePopupBorder(equippedDynItem))) {
+      return { border: 'none', background: 'transparent', boxShadow: 'none' }
+    }
+    return getAccountBorderStyle()
+  } catch {
+    return { border: 'none', background: 'transparent', boxShadow: 'none' }
+  }
 }
 
 // Fonction pour gérer l'équipement d'un item
@@ -5198,6 +5216,19 @@ body, html {
   gap: 16px;
   align-items: stretch;
 }
+
+@media (max-width: 480px) {
+  .profile-popup .equipped-coeur-overlay { top: -13px !important; left: -20px !important; width: 139% !important; height: 122% !important; }
+  .profile-popup .equipped-admin-planify-overlay { top: -3px !important;
+        height: 105% !important;
+        left: -1px !important;
+        width: 104% !important; }
+  .profile-popup .equipped-galaxie-overlay { top: -29px !important; left: -35px !important; width: 168% !important; height: 154% !important; }
+}
+
+
+
+
 @media (max-width: 768px) {
   .profile-card-grid {
     display: flex;
@@ -5227,6 +5258,10 @@ body, html {
   .profile-popup .profile-avatar-stage { width: 100% !important; max-width: 320px !important; margin-left: auto; margin-right: auto; }
   .profile-divider { display: none; }
   .profile-section-title { font-size: 18px !important; }
+  .profile-popup .equipped-galaxie-overlay { top: -3px;
+        left: -112px;
+        width: 170%;
+        height: 103%; }
 }
 
 [data-theme="light"] .choice-title {
@@ -5732,10 +5767,10 @@ body, html {
 /* Alpha overlay (desktop + mobile) */
 .equipped-alpha-overlay {
   position: absolute !important;
-    top: -2px !important;
-    left: 2px !important;
-    width: 97% !important;
-    height: 108% !important;
+    top: -2px;
+    left: 0px;
+    width: 101%;
+    height: 111%;
     object-fit: contain !important;
     pointer-events: none !important;
     z-index: 1 !important;
@@ -5743,8 +5778,8 @@ body, html {
 .equipped-alpha-overlay-mobile {
   position: absolute;
     top: 0px;
-    left: 2px;
-    width: 98%;
+ left: 2px;
+    width: 92%;
     height: 100%;
     object-fit: contain;
     pointer-events: none;
@@ -5754,20 +5789,20 @@ body, html {
 /* Admin Planify overlay (desktop + mobile) */
 .equipped-admin-planify-overlay {
   position: absolute !important;
-    top: -2px !important;
-    left: 2px !important;
-    width: 97% !important;
-    height: 108% !important;
+    top: -2px;
+    left: 0px;
+    width: 101%;
+    height: 108%;
     object-fit: contain !important;
     pointer-events: none !important;
     z-index: 1 !important;
 }
 .equipped-admin-planify-overlay-mobile {
   position: absolute;
-    top: 0px;
+top: 2px;
     left: 2px;
-    width: 98%;
-    height: 100%;
+    width: 94%;
+    height: 97%;
     object-fit: contain;
     pointer-events: none;
     z-index: 1;
@@ -5810,10 +5845,10 @@ body, html {
 /* Galaxie = mêmes propriétés que Discord (desktop et mobile) */
 .equipped-galaxie-overlay {
   position: absolute !important;
-    top: -21px !important;
-    left: -21px !important;
-    width: 173% !important;
-    height: 174% !important;
+    top: -21px;
+    left: -21px;
+    width: 173%;
+    height: 174%;
     object-fit: contain !important;
     pointer-events: none !important;
     z-index: 15 !important;
@@ -5832,10 +5867,10 @@ body, html {
 /* Coeur = mêmes propriétés que Galaxie (desktop et mobile) */
 .equipped-coeur-overlay {
   position: absolute !important;
-    top: -7px !important;
-    left: -12px !important;
-    width: 145% !important;
-    height: 125% !important;
+    top: -9px;
+    left: -15px;
+    width: 149% ;
+    height: 132%;
     object-fit: contain !important;
     pointer-events: none !important;
     z-index: 15 !important;
@@ -5906,10 +5941,10 @@ body, html {
 }
 
 .equipped-default {
-  top: -4px;
-  left: 0;
-  width: 104%;
-  height: 115%;
+  top: -22px;
+    left: -22px;
+    width: 178%;
+    height: 179%;
 }
 
 /* Styles pour les ailes d'ange par-dessus le bouton account */
@@ -6529,6 +6564,12 @@ body, html {
   width: 51px;
   height: 51px;
 }
+.account-btn.galaxie-equipped .avatar-image-container-mobile .avatar-img,
+.account-btn.coeur-equipped .avatar-image-container-mobile .avatar-img,
+.account-btn.alpha-equipped .avatar-image-container-mobile .avatar-img,
+.account-btn.planify-equipped .avatar-image-container-mobile .avatar-img {
+  border-radius: 12px;
+}
 .avatar-image-container-mobile.jojo-sepia .avatar-img { animation: jojo-sepia-cycle 4.7s steps(1, end) infinite; }
 
 @keyframes jojo-sepia-cycle {
@@ -6903,7 +6944,10 @@ body, html {
 }
 .profile-popup .profile-avatar.no-border {
   border: none !important;
+  border-style: none !important;
+  border-width: 0 !important;
   background: transparent !important; /* retire aussi un éventuel gradient inline */
+  box-shadow: none !important;
 }
 
 .profile-popup .profile-avatar .avatar-img {
@@ -6960,8 +7004,12 @@ body, html {
 .profile-popup .equipped-daftpunk-overlay { top: -12%; left: 29%; width: 41%; height: 38%; }
 .profile-popup .equipped-jojo-inside { bottom: -2px; left: 150px; width: 95%; height: 38%; }
 .profile-popup .equipped-jojotext-inside { top: -12px; right: 20px; width: 75%; height: 85%; }
-.profile-popup .equipped-galaxie-overlay { top: -38px !important; left: -36px !important; }
-.profile-popup .equipped-coeur-overlay { top: -12px !important; left: -23px !important; }
+.profile-popup .equipped-galaxie-overlay { top: -5px; left: -86px; width: 150%;
+    height: 105%; }
+.profile-popup .equipped-coeur-overlay { top: 19px;
+    left: 15px;
+    width: 91%;
+    height: 84% }
 
 .profile-popup .equipped-angel-wings {
   position: absolute !important;
@@ -7267,10 +7315,30 @@ body, html {
 
 
 /* Pop-up profil (Navbar) – Alpha overlay */
-.profile-popup .equipped-alpha-overlay { top: -4px !important; z-index: 2 !important; }
+.profile-popup .equipped-alpha-overlay { z-index: 2 !important;
+    left: 0px !important;
+    top: 0px !important;
+    width: 101% !important;
+    height: 111% !important; }
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .profile-popup .equipped-admin-planify-overlay {     top: 42px !important;
+    left: -1px !important;
+    width: 101% !important;
+    height: 67% !important; }
+  .profile-popup .equipped-alpha-overlay { z-index: 2 !important; left: 77px !important; top: -15px !important; width: 52% !important; height: 111% !important; }
+  .profile-popup .equipped-galaxie-overlay { top: -3px !important; left: -112px !important; width: 170% !important; height: 103% !important; }
+}
+
+@media (min-width: 320px) and (max-width: 480px) {
+  .profile-popup .equipped-alpha-overlay { z-index: 2 !important; left: -1px !important; top: -13px !important; width: 101% !important; height: 120% !important; }
+}
 
 /* Pop-up profil (Navbar) – Admin Planify overlay */
-.profile-popup .equipped-admin-planify-overlay { z-index: 2 !important; top: -4px !important; height: 120%; }
+.profile-popup .equipped-admin-planify-overlay { z-index: 2 !important;
+    top: 42px;
+    height: 67%;
+    left: -2px; }
 
 /* Pop-up profil (Navbar) – Jojo: n’anime QUE l’avatar, pas la bordure */
 .profile-popup .jojo-sepia .avatar-img { filter: sepia(0); animation: jojo-sepia-cycle 4.7s steps(1,end) infinite; }
