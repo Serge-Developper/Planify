@@ -880,9 +880,10 @@ async initialize() {
     },
 
     // Définir la variante d'un item dynamique (persistance locale + serveur)
-    async setDynamicItemVariant(itemId: number, variantIndex: number) {
-      if (typeof itemId !== 'number' || typeof variantIndex !== 'number') return;
-      this.dynamicItemVariants.set(itemId, variantIndex)
+    async setDynamicItemVariant(itemId: number | string, variantIndex: number) {
+      const normalizedId = (typeof itemId === 'string') ? Number(itemId) : itemId
+      if (!Number.isFinite(normalizedId) || typeof variantIndex !== 'number') return;
+      this.dynamicItemVariants.set(normalizedId, variantIndex)
       // Persister localement
       try {
         const variants = Object.fromEntries(this.dynamicItemVariants)
@@ -894,14 +895,16 @@ async initialize() {
       try {
         await secureApiCall('/users/dynamic-item-variants', {
           method: 'POST',
-          body: JSON.stringify({ itemId, variantIndex })
+          body: JSON.stringify({ itemId: normalizedId, variantIndex })
         })
       } catch {}
     },
 
     // Obtenir la variante d'un item dynamique
-    getDynamicItemVariant(itemId: number): number {
-      return this.dynamicItemVariants.get(itemId) || 0
+    getDynamicItemVariant(itemId: number | string): number {
+      const normalizedId = (typeof itemId === 'string') ? Number(itemId) : itemId
+      if (!Number.isFinite(normalizedId)) return 0
+      return this.dynamicItemVariants.get(normalizedId) || 0
     },
 
     // Charger les variantes (serveur si dispo, sinon localStorage)

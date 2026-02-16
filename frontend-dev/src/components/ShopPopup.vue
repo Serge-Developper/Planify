@@ -210,8 +210,8 @@
               </div>
               <div class="item-actions" style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
                 <label>Taille: <input type="range" min="10" max="120" v-model.number="suggestStyles.dailyShop.width" /></label>
-                <label>Top: <input type="number" v-model.number="suggestStyles.dailyShop.top" /></label>
-                <label>Left: <input type="number" v-model.number="suggestStyles.dailyShop.left" /></label>
+                <label class="suggest-stepper">Bas/Haut: <div class="stepper-input"><button type="button" class="stepper-btn" @click="bumpNumber(suggestStyles.dailyShop, 'top', -1)">▲</button><input type="number" v-model.number="suggestStyles.dailyShop.top" /><button type="button" class="stepper-btn" @click="bumpNumber(suggestStyles.dailyShop, 'top', 1)">▼</button></div></label>
+                <label class="suggest-stepper">Droite/Gauche: <div class="stepper-input"><button type="button" class="stepper-btn" @click="bumpNumber(suggestStyles.dailyShop, 'left', -1)">▲</button><input type="number" v-model.number="suggestStyles.dailyShop.left" /><button type="button" class="stepper-btn" @click="bumpNumber(suggestStyles.dailyShop, 'left', 1)">▼</button></div></label>
                 <button class="close-btn-small center-btn" @click="centerSuggest('dailyShop')" @mouseover="hoverCenterDaily = true" @mouseleave="hoverCenterDaily = false"><img :src="hoverCenterDaily ? centerHoverImg : centerImg" alt="Centrer" class="close-img" /></button>
               </div>
             </div>
@@ -223,13 +223,13 @@
                 </div>
               </div>
               <div class="preview-actions" style="display:flex;gap:8px;justify-content:center;">
-                <button class="tab-btn" :class="{ active: suggestDevice==='desktop' }" @click="suggestDevice='desktop'">Desktop</button>
+                <button class="tab-btn" :class="{ active: suggestDevice==='desktop' }" @click="suggestDevice='desktop'">PC</button>
                 <button class="tab-btn" :class="{ active: suggestDevice==='mobile' }" @click="suggestDevice='mobile'">Mobile</button>
               </div>
               <div class="item-actions" style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
                 <label>Taille: <input type="range" min="10" max="120" v-model.number="suggestStyles.collectionPreview.width" /></label>
-                <label>Top: <input type="number" v-model.number="suggestStyles.collectionPreview.top" /></label>
-                <label>Left: <input type="number" v-model.number="suggestStyles.collectionPreview.left" /></label>
+                <label class="suggest-stepper">Haut/Bas: <div class="stepper-input"><button type="button" class="stepper-btn" @click="bumpNumber(suggestStyles.collectionPreview, 'top', -1)">▲</button><input type="number" v-model.number="suggestStyles.collectionPreview.top" /><button type="button" class="stepper-btn" @click="bumpNumber(suggestStyles.collectionPreview, 'top', 1)">▼</button></div></label>
+                <label class="suggest-stepper">Gauche/Droite: <div class="stepper-input"><button type="button" class="stepper-btn" @click="bumpNumber(suggestStyles.collectionPreview, 'left', -1)">▲</button><input type="number" v-model.number="suggestStyles.collectionPreview.left" /><button type="button" class="stepper-btn" @click="bumpNumber(suggestStyles.collectionPreview, 'left', 1)">▼</button></div></label>
                 <button class="close-btn-small center-btn" @click="centerSuggest('collectionPreview')" @mouseover="hoverCenterCollectionPreview = true" @mouseleave="hoverCenterCollectionPreview = false"><img :src="hoverCenterCollectionPreview ? centerHoverImg : centerImg" alt="Centrer" class="close-img" /></button>
               </div>
             </div>
@@ -241,13 +241,13 @@
                 </div>
               </div>
               <div class="preview-actions" style="display:flex;gap:8px;justify-content:center;">
-                <button class="tab-btn" :class="{ active: suggestCosmeticDevice==='desktop' }" @click="suggestCosmeticDevice='desktop'">Desktop</button>
+                <button class="tab-btn" :class="{ active: suggestCosmeticDevice==='desktop' }" @click="suggestCosmeticDevice='desktop'">PC</button>
                 <button class="tab-btn" :class="{ active: suggestCosmeticDevice==='mobile' }" @click="suggestCosmeticDevice='mobile'">Mobile</button>
               </div>
               <div class="item-actions" style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
                 <label>Taille: <input type="range" min="10" max="120" v-model.number="suggestCosmeticStyle.width" /></label>
-                <label>Top: <input type="number" v-model.number="suggestCosmeticStyle.top" /></label>
-                <label>Left: <input type="number" v-model.number="suggestCosmeticStyle.left" /></label>
+                <label class="suggest-stepper">Haut/Bas: <div class="stepper-input"><button type="button" class="stepper-btn" @click="bumpNumber(suggestCosmeticStyle, 'top', -1)">▲</button><input type="number" v-model.number="suggestCosmeticStyle.top" /><button type="button" class="stepper-btn" @click="bumpNumber(suggestCosmeticStyle, 'top', 1)">▼</button></div></label>
+                <label class="suggest-stepper">Gauche/Droite: <div class="stepper-input"><button type="button" class="stepper-btn" @click="bumpNumber(suggestCosmeticStyle, 'left', -1)">▲</button><input type="number" v-model.number="suggestCosmeticStyle.left" /><button type="button" class="stepper-btn" @click="bumpNumber(suggestCosmeticStyle, 'left', 1)">▼</button></div></label>
                 <button class="close-btn-small center-btn" @click="centerSuggest('collection')" @mouseover="hoverCenterCollection = true" @mouseleave="hoverCenterCollection = false"><img :src="hoverCenterCollection ? centerHoverImg : centerImg" alt="Centrer" class="close-img" /></button>
               </div>
             </div>
@@ -270,8 +270,8 @@
               </div>
               <div class="item-actions" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px;">
                 <label>Taille: <input type="range" min="10" max="120" v-model.number="suggestStyles.leaderboard.width" /></label>
-                <label>Top: <input type="number" v-model.number="suggestStyles.leaderboard.top" /></label>
-                <label>Left: <input type="number" v-model.number="suggestStyles.leaderboard.left" /></label>
+                <label class="suggest-stepper">Haut/Bas: <div class="stepper-input"><button type="button" class="stepper-btn" @click="bumpNumber(suggestStyles.leaderboard, 'top', -1)">▲</button><input type="number" v-model.number="suggestStyles.leaderboard.top" /><button type="button" class="stepper-btn" @click="bumpNumber(suggestStyles.leaderboard, 'top', 1)">▼</button></div></label>
+                <label class="suggest-stepper">Gauche/Droite: <div class="stepper-input"><button type="button" class="stepper-btn" @click="bumpNumber(suggestStyles.leaderboard, 'left', -1)">▲</button><input type="number" v-model.number="suggestStyles.leaderboard.left" /><button type="button" class="stepper-btn" @click="bumpNumber(suggestStyles.leaderboard, 'left', 1)">▼</button></div></label>
                 <div class="actions-row">
                   <button class="close-btn-small placement-btn" :class="{ active: suggestPlacement.leaderboard === 'above' }" @click="togglePlacement('leaderboard')" @mouseover="hoverPlacementLeaderboard = true" @mouseleave="hoverPlacementLeaderboard = false" :aria-label="suggestPlacement.leaderboard === 'inside' ? 'À l’intérieur' : 'Par-dessus'" :title="suggestPlacement.leaderboard === 'inside' ? 'À l’intérieur' : 'Par-dessus'">
                     <img :src="getPlacementImg('leaderboard', hoverPlacementLeaderboard)" alt="Placement" class="close-img" />
@@ -299,14 +299,14 @@
                 </div>
               </div>
               <div class="preview-actions" style="display:flex;gap:8px;justify-content:center;margin-top:8px;">
-                <button class="tab-btn" :class="{ active: suggestAvatarDevice === 'desktop' }" @click="suggestAvatarDevice='desktop'">Desktop</button>
+                <button class="tab-btn" :class="{ active: suggestAvatarDevice === 'desktop' }" @click="suggestAvatarDevice='desktop'">PC</button>
                 <button class="tab-btn" :class="{ active: suggestAvatarDevice === 'mobile' }" @click="suggestAvatarDevice='mobile'">Mobile</button>
               </div>
               <div class="item-actions" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px;">
                 <label>Taille: <input type="range" min="10" max="300" step="1" v-model.number="suggestAvatarStyle.width" /></label>
                 <label>Hauteur: <input type="range" min="250" max="400" step="1" v-model.number="suggestAvatarStageHeight" /></label>
-                <label>Top: <input type="number" v-model.number="suggestAvatarStyle.top" /></label>
-                <label>Left: <input type="number" v-model.number="suggestAvatarStyle.left" /></label>
+                <label class="suggest-stepper">Haut/Bas: <div class="stepper-input"><button type="button" class="stepper-btn" @click="bumpNumber(suggestAvatarStyle, 'top', -1)">▲</button><input type="number" v-model.number="suggestAvatarStyle.top" /><button type="button" class="stepper-btn" @click="bumpNumber(suggestAvatarStyle, 'top', 1)">▼</button></div></label>
+                <label class="suggest-stepper">Gauche/Droite: <div class="stepper-input"><button type="button" class="stepper-btn" @click="bumpNumber(suggestAvatarStyle, 'left', -1)">▲</button><input type="number" v-model.number="suggestAvatarStyle.left" /><button type="button" class="stepper-btn" @click="bumpNumber(suggestAvatarStyle, 'left', 1)">▼</button></div></label>
                 <div class="actions-row">
                   <button class="close-btn-small placement-btn" :class="{ active: suggestPlacement.avatar === 'above' }" @click="togglePlacement('avatar')" @mouseover="hoverPlacementAvatar = true" @mouseleave="hoverPlacementAvatar = false" :aria-label="suggestPlacement.avatar === 'inside' ? 'À l’intérieur' : 'Par-dessus'" :title="suggestPlacement.avatar === 'inside' ? 'À l’intérieur' : 'Par-dessus'">
                     <img :src="getPlacementImg('avatar', hoverPlacementAvatar)" alt="Placement" class="close-img" />
@@ -330,8 +330,8 @@
               </div>
               <div class="item-actions" style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
                 <label>Taille: <input type="range" min="10" max="120" v-model.number="suggestStyles.navbar.width" /></label>
-                <label>Top: <input type="number" v-model.number="suggestStyles.navbar.top" /></label>
-                <label>Left: <input type="number" v-model.number="suggestStyles.navbar.left" /></label>
+                <label class="suggest-stepper">Haut/Bas: <div class="stepper-input"><button type="button" class="stepper-btn" @click="bumpNumber(suggestStyles.navbar, 'top', -1)">▲</button><input type="number" v-model.number="suggestStyles.navbar.top" /><button type="button" class="stepper-btn" @click="bumpNumber(suggestStyles.navbar, 'top', 1)">▼</button></div></label>
+                <label class="suggest-stepper">Gauche/Droite: <div class="stepper-input"><button type="button" class="stepper-btn" @click="bumpNumber(suggestStyles.navbar, 'left', -1)">▲</button><input type="number" v-model.number="suggestStyles.navbar.left" /><button type="button" class="stepper-btn" @click="bumpNumber(suggestStyles.navbar, 'left', 1)">▼</button></div></label>
                 <div class="actions-row">
                   <button class="close-btn-small placement-btn" :class="{ active: suggestPlacement.navbar === 'above' }" @click="togglePlacement('navbar')" @mouseover="hoverPlacementNavbar = true" @mouseleave="hoverPlacementNavbar = false" :aria-label="suggestPlacement.navbar === 'inside' ? 'À l’intérieur' : 'Par-dessus'" :title="suggestPlacement.navbar === 'inside' ? 'À l’intérieur' : 'Par-dessus'">
                     <img :src="getPlacementImg('navbar', hoverPlacementNavbar)" alt="Placement" class="close-img" />
@@ -354,8 +354,8 @@
               </div>
               <div class="item-actions" style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
                 <label>Taille: <input type="range" min="10" max="300" step="0.5" v-model.number="suggestStyles.popupStyle.width" /></label>
-                <label>Top: <input type="number" v-model.number="suggestStyles.popupStyle.top" /></label>
-                <label>Left: <input type="number" v-model.number="suggestStyles.popupStyle.left" /></label>
+                <label class="suggest-stepper">Haut/Bas: <div class="stepper-input"><button type="button" class="stepper-btn" @click="bumpNumber(suggestStyles.popupStyle, 'top', -1)">▲</button><input type="number" v-model.number="suggestStyles.popupStyle.top" /><button type="button" class="stepper-btn" @click="bumpNumber(suggestStyles.popupStyle, 'top', 1)">▼</button></div></label>
+                <label class="suggest-stepper">Gauche/Droite: <div class="stepper-input"><button type="button" class="stepper-btn" @click="bumpNumber(suggestStyles.popupStyle, 'left', -1)">▲</button><input type="number" v-model.number="suggestStyles.popupStyle.left" /><button type="button" class="stepper-btn" @click="bumpNumber(suggestStyles.popupStyle, 'left', 1)">▼</button></div></label>
                 <button class="close-btn-small center-btn" @click="centerSuggest('popupStyle')" @mouseover="hoverCenterPopup = true" @mouseleave="hoverCenterPopup = false"><img :src="hoverCenterPopup ? centerHoverImg : centerImg" alt="Centrer" class="close-img" /></button>
               </div>
             </div>
@@ -4352,6 +4352,7 @@ const hoverCenterLeaderboard = ref(false)
 const hoverCenterAvatar = ref(false)
 const hoverCenterPopup = ref(false)
 const hoverCenterNavbar = ref(false)
+function bumpNumber(target, key, delta) { try { if (!target || !key) return; const next = Number(target[key] ?? 0); target[key] = next + Number(delta || 0) } catch {} }
 function togglePlacement(target){ try { const idx = activeSuggestAssetIndex.value; const current = getPlacementForIndex(target, idx); const next = (current === 'above') ? 'inside' : 'above'; setPlacementForIndex(target, idx, next); const v = suggestVariants.value[activeVariantIndex.value]; if (v && v.flags) { if (target === 'leaderboard') v.flags.leaderboardPlacement = String(next); else if (target === 'avatar') v.flags.profilePopupPlacement = String(next); else if (target === 'navbar') v.flags.navbarPlacement = String(next); } } catch {} }
 function getPlacementImg(target, hover){ try { const idx = activeSuggestAssetIndex.value; const isAbove = (getPlacementForIndex(target, idx) === 'above'); if (isAbove) return aboveIcon; return hover ? aboveIcon : insideIcon } catch { return insideIcon } }
 function openSuggestEditor() { currentEditingLocalId.value = null; currentEditingServerId.value = null; showSuggestionEditor.value = true; try { syncWeeklyHeight() } catch {} ; try { showPurchasePreview.value = true } catch { showPurchasePreview = true } ; try { suggestAssetSrcs.value = []; suggestAssetStyles.value = []; suggestAssetPlacements.value = { leaderboard: [], avatar: [], navbar: [] }; suggestPlacement.value = { leaderboard: 'inside', avatar: 'inside', navbar: 'inside' }; activeSuggestAssetIndex.value = 0; suggestUrl.value = ''; suggestName.value = ''; previewWindowIndex.value = 0; suggestDevice.value = 'desktop'; suggestAvatarDevice.value = 'desktop'; suggestCosmeticDevice.value = 'desktop'; if (Array.isArray(suggestVariants.value)) { suggestVariants.value.forEach(v => { if (v) { v.assetSrcs = []; v.assetSrc = ''; v.assetStyles = []; v.assetPlacements = { leaderboard: [], avatar: [], navbar: [] } } }) } resetSuggestUsers() } catch {} }
@@ -8166,6 +8167,16 @@ onUnmounted(() => {
 .suggest-name-input:focus { outline: none; }
 .price-label { display: inline-flex; align-items: center; gap: 6px; }
 .suggest-actions { display: flex; flex-direction: column; gap: 10px; align-items: stretch; min-width: 150px; }
+.suggest-stepper { display: inline-flex; align-items: center; gap: 6px; }
+.suggest-stepper .stepper-input { position: relative; display: inline-flex; align-items: center; }
+.suggest-stepper .stepper-input input { padding-right: 22px; }
+.suggest-stepper .stepper-btn { display: none; align-items: center; justify-content: center; width: 18px; height: 12px; border-radius: 4px; border: 1px solid #3a3a3a; background: #2f2f2f; color: #eaeaea; cursor: pointer; font-weight: 700; padding: 0; line-height: 1; position: absolute; right: 4px; }
+.suggest-stepper .stepper-btn:first-of-type { top: 3px; }
+.suggest-stepper .stepper-btn:last-of-type { bottom: 3px; }
+[data-theme="light"] .suggest-stepper .stepper-btn { background: #e9ecef; border-color: #cfcfcf; color: #222; }
+@media (max-width: 768px) { .suggest-stepper .stepper-btn { display: inline-flex; } }
+@media (max-width: 1024px) { .suggest-stepper .stepper-input input { width: 125px; } }
+@media (max-width: 520px) { .suggest-editor .item-actions input[type="number"] { width: 100px; height: 22px; font-size: 12px; padding: 2px 6px; } }
 .suggest-save-btn { display: inline-flex; align-items: center; gap: 8px; justify-content: center; padding: 10px 18px; border-radius: 999px; background: #2ea85b; color: #fff; border: none; font-weight: 700; cursor: pointer; }
 .suggest-save-btn:hover { filter: brightness(1.05); }
 .suggest-close-btn { display: inline-flex; align-items: center; gap: 8px; justify-content: center; padding: 10px 18px; border-radius: 999px; background: #3a3a3a; color: #eaeaea; border: none; font-weight: 600; cursor: pointer; }
@@ -8175,7 +8186,7 @@ onUnmounted(() => {
 .variants-label { font-weight: 600; }
 .variant-slider-viewport { overflow: hidden; min-width: 0; padding-right: 2px; width: 345px !important; }
 .variant-slider-track { display: flex; flex-wrap: nowrap; gap: 8px; align-items: center; will-change: transform; }
-.variant-chips-slider { display: flex; align-items: center; gap: 8px; width: 100%; max-width: 100%; min-width: 0; overflow: hidden; }
+.variant-chips-slider { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; max-width: 100%; min-width: 0; overflow: hidden; }
 .variant-arrow { width: 30px; height: 30px; border-radius: 10px; background: #2f2f2f; border: 2px solid #3a3a3a; color: #eaeaea; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
 
 @media (min-width: 1025px) {
@@ -8185,10 +8196,10 @@ onUnmounted(() => {
 
 @media (max-width: 520px) {
   .suggest-variants-row { width: 100%; }
-  .variants-ui { width: 100%; }
+  .variants-ui { width: 100%; min-width: 0; }
   .variant-slider-track { display: flex; gap: 10px; width: 274px; will-change: transform; flex-direction: row; }
-  .variant-chips-slider { justify-content: center; }
-  .variant-slider-viewport { width: 200px !important; }
+  .variant-chips-slider { justify-content: center; min-width: 0; }
+  .variant-slider-viewport { flex: 1 1 auto; width: auto !important; min-width: 0; }
   .variant-arrow { flex: 0 0 30px; }
   .variant-add-chip { flex: 0 0 32px; }
 }
@@ -8767,7 +8778,7 @@ onUnmounted(() => {
   .preview-card.preview-leaderboard { max-width: 390px; }
   .preview-card.preview-avatar { max-width: 390px; }
   .preview-card.preview-avatar.avatar-mobile-card { align-items: center; }
-  .preview-card.preview-popup-style .item-img-wrapper.large { position: relative; width: 120.5px; height: 64px; margin: 0 auto; border-radius: 12px; }
+.preview-card.preview-popup-style .item-img-wrapper.large { position: relative; width: 120.5px !important; height: 64px !important; margin: 0 auto; border-radius: 12px; }
   .preview-card.preview-avatar:not(.roi-preview) .profile-avatar-stage { border: none; border-radius: 30px; width: 351px !important; height: 250px !important; box-sizing: border-box; }
   .preview-card.preview-avatar:not(.roi-preview) .profile-avatar-scaler { width: 351px !important; height: 250px !important; display:flex; align-items:center; justify-content:center; border: 5px solid #5bc682; border-radius: 30px; box-sizing: border-box; margin: 0 auto; position: relative; }
   .preview-card.preview-avatar .profile-avatar { width: 150px !important; height: 150px !important; border-width: 5px !important; }
@@ -8927,7 +8938,7 @@ onUnmounted(() => {
   .preview-list .leaderboard-item { display:flex; align-items:center; gap:10px; background:#fff; border-radius:10px; padding:8px; margin-bottom:8px; }
   .preview-desc { background:#fff; border-radius:10px; padding:10px; color:#666; text-align:center; margin-top:8px; white-space: pre-line; }
   .item-img-wrapper.large { width: 350px; height: 145px; margin: 0 auto 12px; }
-  @media (max-width: 1024px) {
+  @media (max-width: 1265px) {
     .fenetre-collection .preview-card.preview-daily-shop .item-img-wrapper.large {
       width: 250px !important;
       height: 250px !important;
@@ -11957,14 +11968,17 @@ onUnmounted(() => {
     overscroll-behavior: auto;
   }
 
+  @media (max-width: 1265px) {
+    .suggest-toolbar { flex-direction: column; align-items: center; }
+    .variant-actions { justify-content: center; flex-direction: column; }
+    .variants-ui { flex-direction: column; }
+  }
+
   @media (max-width: 1262px) {
     .color-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
       max-height: 60vh;
     }
-    .suggest-toolbar { flex-direction: column; align-items: center; }
-    .variant-actions { justify-content: center; flex-direction: column; }
-    .variants-ui { flex-direction: column; }
     .preview-card.preview-avatar:not(.roi-preview) .profile-avatar-scaler { width: 250px !important; }
     .profile-avatar-stage { width: 250px !important; }
     .profile-avatar-stage { width: 250px !important; }
