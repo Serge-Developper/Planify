@@ -9006,49 +9006,49 @@ onUnmounted(() => {
   .preview-card.preview-avatar.avatar-mobile-card .profile-avatar-scaler::-webkit-scrollbar { width: 0; height: 0; display: none; }
   .preview-card.preview-avatar.roi-preview .profile-avatar-stage { height: 400px !important; }
   .preview-card.preview-avatar.roi-preview .profile-avatar-scaler { width: 345px !important; height: 400px !important; border: 5px solid #5bc682 !important; border-radius: 30px !important; }
-  .preview-card.preview-avatar.roi-preview .equipped-roi-overlay { top: 30px !important; left: 85px !important; width: 55% !important; height: 27% !important; z-index: 15; }
+  .preview-card.preview-avatar.roi-preview .equipped-roi-overlay { top: 30px; left: 85px; width: 55%; height: 27%; z-index: 15; }
   .preview-card.preview-avatar.gentleman-preview .profile-avatar-stage { height: 400px !important; }
   .preview-card.preview-avatar.gentleman-preview .profile-avatar-scaler { width: 345px !important; height: 400px !important; }
   .preview-card.preview-avatar.vinyle-preview .profile-avatar-stage { height: 400px !important; }
   .preview-card.preview-avatar.vinyle-preview .profile-avatar-scaler { width: 345px !important; height: 400px !important; }
-  .preview-card.preview-avatar.vinyle-preview .equipped-vinyle-overlay { left: 50% !important; top: 52% !important; width: 115% !important; height: 115% !important; transform: translate(-50%, -72%) scale(1.08) !important; }
+  .preview-card.preview-avatar.vinyle-preview .equipped-vinyle-overlay { left: 50%; top: 52%; width: 115%; height: 115%; transform: translate(-50%, -72%) scale(1.08); }
   .preview-card.preview-avatar.nokia-preview .profile-avatar-stage { height: 400px !important; }
   .preview-card.preview-avatar.nokia-preview .profile-avatar-scaler { width: 345px !important; height: 400px !important; }
   .preview-card.preview-avatar .matrix-char { font-size: 16px; line-height: 16px; }
-  .preview-card.preview-avatar .profile-avatar-scaler .equipped-angel-wings { top: -70px !important; left: 0px !important; width: 100% !important; height: 84% !important; }
-  .preview-card.preview-avatar .profile-avatar-scaler .equipped-tomb-raider { position: absolute !important; top: 0px !important; left: 50px !important; width: 71% !important; height: 45% !important; z-index: 2 !important; }
-.preview-card.preview-avatar .profile-avatar-scaler:has(.equipped-angel-wings) { height: 400px !important; }
-.preview-card.preview-avatar .profile-avatar-wrap:has(.equipped-tomb-raider) { height: 400px !important; }
-.preview-card.preview-avatar .profile-avatar-stage:has(.equipped-tomb-raider) { height: 400px !important; }
-.preview-card.preview-avatar .profile-avatar-scaler:has(.equipped-tomb-raider) { height: 400px !important; }
-  .preview-card.preview-leaderboard .equipped-roi-overlay { width: 22% !important; }
+  .preview-card.preview-avatar .profile-avatar-scaler .equipped-angel-wings { top: -70px; left: 0px; width: 100%; height: 84%; }
+  .preview-card.preview-avatar .profile-avatar-scaler .equipped-tomb-raider { position: absolute; top: 0px; left: 50px; width: 71%; height: 45%; z-index: 2; }
+.preview-card.preview-avatar .profile-avatar-scaler:has(.equipped-angel-wings) { height: 400px; }
+.preview-card.preview-avatar .profile-avatar-wrap:has(.equipped-tomb-raider) { height: 400px; }
+preview-card.preview-avatar .profile-avatar-stage:has(.equipped-tomb-raider) { height: 400px; }
+preview-card.preview-avatar .profile-avatar-scaler:has(.equipped-tomb-raider) { height: 400px; }
+  .preview-card.preview-leaderboard .equipped-roi-overlay { width: 22%; }
 
-.preview-card.preview-avatar .profile-avatar-scaler .equipped-cat-ears { position: absolute !important; left: 49% !important; top: 52% !important; width: 55% !important; height: 75% !important; object-fit: contain !important; transform: translate(-50%, -72%) scale(1.25) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 16 !important; }
-.preview-card.preview-avatar .profile-avatar-scaler .equipped-clown-overlay { position: absolute !important; left: 50% !important; top: 72% !important; width: 60% !important; height: 72% !important; object-fit: contain !important; transform: translate(-50%, -85%) scale(1.18) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 16 !important; }
-.preview-card.preview-avatar .profile-avatar-scaler .equipped-vinyle-overlay { position: absolute !important; left: 50% !important; top: 36% !important; width: 30% !important; height: 48% !important; object-fit: contain !important; transform: translate(-50%, -72%) scale(1.05) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 16 !important; }
-  .preview-card.preview-avatar .profile-avatar-scaler .equipped-stars { position: absolute !important; left: 51% !important; top: 66% !important; width: 75% !important; height: 69% !important; object-fit: contain !important; transform: translate(-50%, -72%) scale(1.02) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 16 !important; }
-  .preview-card.preview-avatar .profile-avatar-scaler .equipped-rainbow { position: absolute !important; left: 50% !important; top: 76% !important; width: 48% !important; height: 53% !important; object-fit: contain !important; transform: translate(-50%, -85%) scale(1.3) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 16 !important; }
-  .preview-card.preview-avatar .profile-avatar-scaler .equipped-royal-frame { position: absolute !important; left: 50% !important; top: 82% !important; width: 77% !important; height: 89% !important; object-fit: contain !important; transform: translate(-50%, -85%) scale(1.02) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 16 !important; }
-  .preview-card.preview-avatar .profile-avatar-scaler .equipped-gentleman-overlay { position: absolute !important; left: 50% !important; top: 35% !important; width: 53% !important; height: 26% !important; object-fit: contain !important; transform: translate(-50%, -72%) scale(1.02) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 16 !important; }
-.preview-card.preview-avatar .profile-avatar-scaler .equipped-asteroide-overlay { position: absolute !important; left: 38% !important; top: 75% !important; width: 25% !important; height: 30% !important; object-fit: contain !important; transform: translate(-50%, -72%) scale(1.0) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 16 !important; }
-.preview-card.preview-avatar .profile-avatar-scaler .equipped-absolute-cinema-overlay { position: absolute !important; left: 4.5% !important; top: 5% !important; width: 34% !important; height: 70% !important; object-fit: contain !important; z-index: 16 !important; }
-.preview-card.preview-avatar .profile-avatar-scaler .equipped-absolute-cinema-overlay-right { position: absolute !important; left: 61.5% !important; top: 5% !important; width: 34% !important; height: 70% !important; object-fit: contain !important; z-index: 16 !important; }
-.preview-card.preview-avatar .profile-avatar-scaler .equipped-pate-overlay { position: absolute !important; left: 20% !important; top: 78% !important; width: 35% !important; height: 35% !important; object-fit: contain !important; pointer-events: none !important; z-index: 16 !important; }
-.preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { left: 26% !important; z-index: 15; }
+preview-card.preview-avatar .profile-avatar-scaler .equipped-cat-ears { position: absolute !important; left: 49% !important; top: 52% !important; width: 55% !important; height: 75% !important; object-fit: contain !important; transform: translate(-50%, -72%) scale(1.25) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 16 !important; }
+preview-card.preview-avatar .profile-avatar-scaler .equipped-clown-overlay { position: absolute !important; left: 50% !important; top: 72% !important; width: 60% !important; height: 72% !important; object-fit: contain !important; transform: translate(-50%, -85%) scale(1.18) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 16 !important; }
+preview-card.preview-avatar .profile-avatar-scaler .equipped-vinyle-overlay { position: absolute; left: 50%; top: 36%; width: 30%; height: 48%; object-fit: contain; transform: translate(-50%, -72%) scale(1.05); transform-origin: center bottom; pointer-events: none; z-index: 16; }
+  .preview-card.preview-avatar .profile-avatar-scaler .equipped-stars { position: absolute; left: 51%; top: 66%; width: 75%; height: 69%; object-fit: contain; transform: translate(-50%, -72%) scale(1.02); transform-origin: center bottom; pointer-events: none; z-index: 16; }
+  .preview-card.preview-avatar .profile-avatar-scaler .equipped-rainbow { position: absolute; left: 50%; top: 76%; width: 48%; height: 53%; object-fit: contain; transform: translate(-50%, -85%) scale(1.3); transform-origin: center bottom; pointer-events: none; z-index: 16; }
+  .preview-card.preview-avatar .profile-avatar-scaler .equipped-royal-frame { position: absolute; left: 50%; top: 82%; width: 77%; height: 89%; object-fit: contain; transform: translate(-50%, -85%) scale(1.02); transform-origin: center bottom; pointer-events: none; z-index: 16; }
+  .preview-card.preview-avatar .profile-avatar-scaler .equipped-gentleman-overlay { position: absolute; left: 50%; top: 35%; width: 53%; height: 26%; object-fit: contain; transform: translate(-50%, -72%) scale(1.02); transform-origin: center bottom; pointer-events: none; z-index: 16; }
+preview-card.preview-avatar .profile-avatar-scaler .equipped-asteroide-overlay { position: absolute; left: 38%; top: 75%; width: 25%; height: 30%; object-fit: contain; transform: translate(-50%, -72%) scale(1.0); transform-origin: center bottom; pointer-events: none; z-index: 16; }
+preview-card.preview-avatar .profile-avatar-scaler .equipped-absolute-cinema-overlay { position: absolute; left: 4.5%; top: 5%; width: 34%; height: 70%; object-fit: contain; z-index: 16; }
+preview-card.preview-avatar .profile-avatar-scaler .equipped-absolute-cinema-overlay-right { position: absolute; left: 61.5%; top: 5%; width: 34%; height: 70%; object-fit: contain; z-index: 16; }
+preview-card.preview-avatar .profile-avatar-scaler .equipped-pate-overlay { position: absolute; left: 20%; top: 78%; width: 35%; height: 35%; object-fit: contain; pointer-events: none; z-index: 16; }
+preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { left: 26%; z-index: 15; }
 .preview-card.preview-avatar .profile-avatar .equipped-clown-nose { position: absolute !important; left: 50% !important; top: 52% !important; width: 60% !important; height: auto !important; object-fit: contain !important; transform: translate(-50%, -40%) !important; pointer-events: none !important; z-index: 16 !important; }
 .preview-card.preview-avatar .profile-avatar .equipped-moustache-inside { position: absolute !important; left: 50% !important; top: 63% !important; width: 70% !important; transform: translate(-50%, -50%) !important; object-fit: contain !important; z-index: 16 !important; }
 .preview-card.preview-avatar .profile-avatar .equipped-spacestars-inside { position: absolute !important; left: 50% !important; top: 50% !important; width: 100% !important; height: 100% !important; transform: translate(-50%, -50%) !important; object-fit: contain !important; z-index: 14 !important; }
 .preview-card.preview-avatar .profile-avatar .equipped-lunettes-pixel-inside { position: absolute !important; left: 50% !important; top: 50% !important; width: 100% !important; transform: translate(-50%, -50%) !important; object-fit: contain !important; z-index: 16 !important; }
 .preview-card.preview-avatar .profile-avatar .equipped-matrix-glasses { position: absolute !important; left: 50% !important; top: 45% !important; width: 85% !important; transform: translate(-50%, -50%) !important; object-fit: contain !important; z-index: 16 !important; }
 .preview-card.preview-avatar .profile-avatar .equipped-dvd-inside { position: absolute !important; left: 50%; top: 55%; width: 80% !important; transform: translate(-50%, -50%) !important; object-fit: contain !important; z-index: 16 !important; animation: dvdBounceShopLarge 4s linear infinite !important; will-change: top, left; backface-visibility: hidden; }
-.preview-card.preview-avatar .profile-avatar .equipped-advisory-inside { position: absolute !important; left: 80% !important; top: 88% !important; width: 65% !important; transform: translate(-50%, -50%) !important; object-fit: contain !important; z-index: 16 !important; }
+.preview-card.preview-avatar .profile-avatar .equipped-advisory-inside { position: absolute; left: 80%; top: 88%; width: 65%; transform: translate(-50%, -50%); object-fit: contain; z-index: 16; }
 .preview-card.preview-avatar .profile-avatar .equipped-target-inside { position: absolute !important; left: 50% !important; top: 50% !important; width: 100% !important; transform: translate(-50%, -50%) !important; object-fit: contain !important; z-index: 16 !important; }
 .preview-card.preview-avatar .profile-avatar-scaler .equipped-nokia-inside { position: absolute !important; left: 34% !important; top: 60% !important; width: 26% !important; height: 23% !important; object-fit: contain !important; z-index: 16 !important; }
-.preview-card.preview-avatar .profile-avatar-scaler .equipped-daftpunk-overlay { position: absolute !important; left: 29% !important; top: 12% !important; width: 40% !important; height: 22% !important; object-fit: contain !important; z-index: 16 !important; }
-.preview-card.preview-avatar .profile-avatar-scaler .equipped-clippy-inside { position: absolute !important; left: 53% !important; top: 54% !important; width: 19% !important; height: 14% !important; object-fit: contain !important; z-index: 16 !important; }
-.preview-card.preview-avatar .profile-avatar-scaler .equipped-discord-overlay { position: absolute !important; left: 19% !important; top: 16% !important; width: 55% !important; height: 74% !important; object-fit: contain !important; z-index: 16 !important; }
-.preview-card.preview-avatar .equipped-jojo-inside { position: absolute !important; bottom: -2px !important; left: 150px !important; width: 95% !important; height: 40% !important; object-fit: contain !important; pointer-events: none !important; z-index: 6 !important; animation: jojo-swipe 4.7s ease-in-out infinite !important; will-change: transform !important; }
-.preview-card.preview-avatar .equipped-jojotext-inside { position: absolute !important; width: 84% !important; left: 7% !important; height: 74% !important; top: -4% !important; }
+.preview-card.preview-avatar .profile-avatar-scaler .equipped-daftpunk-overlay { position: absolute; left: 29%; top: 12%; width: 40%; height: 22%; object-fit: contain; z-index: 16; }
+.preview-card.preview-avatar .profile-avatar-scaler .equipped-clippy-inside { position: absolute; left: 53%; top: 54%; width: 19%; height: 14%; object-fit: contain; z-index: 16; }
+.preview-card.preview-avatar .profile-avatar-scaler .equipped-discord-overlay { position: absolute; left: 19%; top: 16%; width: 55%; height: 74%; object-fit: contain; z-index: 16; }
+.preview-card.preview-avatar .equipped-jojo-inside { position: absolute; bottom: -2px; left: 150px; width: 95%; height: 40%; object-fit: contain; pointer-events: none; z-index: 6; animation: jojo-swipe 4.7s ease-in-out infinite; will-change: transform; }
+.preview-card.preview-avatar .equipped-jojotext-inside { position: absolute; width: 84%; left: 7%; height: 74%; top: -4%; }
   .preview-card.preview-item .item-img-wrapper {
     background: #fff;
     border: 5px solid #5bc682;
@@ -9253,8 +9253,7 @@ onUnmounted(() => {
   /* Tailles personnalisées pour chaque item dans le leaderboard */
   
   /* Clown - Plus petit */
-  .leaderboard-container .equipped-clown,
-  .leaderboard-container .equipped-clown-overlay {
+  .leaderboard-container .equipped-clown {
     pointer-events: none !important;
   position: absolute;
     top: -35.7%;
@@ -9263,6 +9262,17 @@ onUnmounted(() => {
     height: 130%;
   transform: translate(-10%);
   pointer-events: none;
+    z-index: 15;
+  }
+  .leaderboard-container .equipped-clown-overlay {
+    pointer-events: none !important;
+    position: absolute;
+    top: -26.7% !important;
+    left: -1% !important;
+    width: 125% !important;
+    height: 127% !important;
+    transform: translate(-10%);
+    pointer-events: none;
     z-index: 15;
   }
 
@@ -12543,7 +12553,7 @@ onUnmounted(() => {
 
 .profile-popup .matrix-rain-inside { top: 0%; left: 0%; width: 100%; height: 100%; }
 .profile-popup .equipped-cat-ears { top: -22%; left: 14%; width: 70%; height: 94%; }
-.profile-popup .equipped-stars { top: 9% !important; left: 23% !important; width: 55% !important; height: 80% !important; position: absolute !important; z-index: 2 !important; pointer-events: none !important; }
+.profile-popup .equipped-stars { top: 9%; left: 23%; width: 55%; height: 80%; position: absolute; z-index: 2; pointer-events: none; }
 .profile-popup .equipped-rainbow { top: 17%; left: 25%; width: 62%; height: 65%; }
 .profile-popup .equipped-flash-overlay { position: absolute; top: 18%; left: 27%; width: 50%; height: 53%; object-fit: contain; pointer-events: none; z-index: 2; }
 .profile-popup .equipped-clown-overlay { top: -11%; left: 24%; width: 66%; height: 100%; }
@@ -12556,27 +12566,28 @@ onUnmounted(() => {
 .profile-popup .equipped-vinyle-overlay { top: -21%; left: 33%; width: 46%; height: 56%; }
 .profile-popup .equipped-advisory-inside { top: 97px; left: 76px; width: 56%; height: 37%; }
 .profile-popup .equipped-asteroide-overlay { top: 133px; left: 102px; width: 23%; height: 30%; }
-.profile-popup .equipped-absolute-cinema-overlay { left: 24px !important; top: 8% !important; width: 30% !important; height: 70% !important; }
-.profile-popup .equipped-absolute-cinema-overlay-right { left: 214px !important; top: 8% !important; width: 30% !important; height: 70% !important; }
+.profile-popup .equipped-absolute-cinema-overlay { left: 24px; top: 8%; width: 30%; height: 70%; }
+.profile-popup .equipped-absolute-cinema-overlay-right { left: 214px; top: 8%; width: 30%; height: 70%; }
 .profile-popup .equipped-camera-overlay { top: 56%; left: 29%; width: 24%; height: 28%; }
-.profile-popup .equipped-chat-overlay { top: -13% !important; left: 13% !important; width: 109%; height: 70%; }
-.profile-popup .equipped-pate-overlay { pointer-events: none !important; position: absolute !important; top: 59%; left: 27%; width: 22% !important; height: 19% !important; object-fit: contain !important; z-index: 15 !important; }
-.profile-popup .equipped-nokia-inside { top: 80% !important; left: 13% !important; width: 60% !important; }
-.profile-popup .equipped-clippy-inside { top: 38px !important; left: 74px !important; }
-.leaderboard-container .leaderboard-profile-popup .equipped-daftpunk-overlay { top: -24% !important; left: 31% !important; width: 36% !important; height: 44% !important; }
+.profile-popup .equipped-chat-overlay { top: -13%; left: 13%; width: 109%; height: 70%; }
+.profile-popup .equipped-pate-overlay { pointer-events: none; position: absolute; top: 59%; left: 27%; width: 22%; height: 19%; object-fit: contain; z-index: 15; }
+.profile-popup .equipped-nokia-inside { top: 80%; left: 13%; width: 60%; }
+.profile-popup .equipped-clippy-inside { top: 38px; left: 74px; }
+.leaderboard-container .leaderboard-profile-popup .equipped-daftpunk-overlay { top: -24%; left: 31%; width: 36%; height: 44%; }
 .profile-popup .equipped-jojo-inside { bottom: -2px; left: 150px; width: 95%; height: 38%; }
 .profile-popup .equipped-jojotext-inside { top: -12px; right: 20px; width: 75%; height: 85%; }
-.profile-popup .equipped-galaxie-overlay { top: -36px !important;
-    left: -19px !important;
-    width: 110% !important;
-    height: 136% !important; }
-.profile-popup .equipped-coeur-overlay { top: -12px !important; left: -23px !important; }
-.profile-popup .equipped-angel-wings { position: absolute !important; top: -28% !important; left: 2% !important; width: 96% !important; height: 75% !important; z-index: 0 !important; pointer-events: none !important; }
-.profile-popup .equipped-tomb-raider { position: absolute !important; top: -73px !important; left: 0px !important; width: 102% !important; height: 71% !important; z-index: 0 !important; pointer-events: none !important; }
+.profile-popup .equipped-galaxie-overlay { top: -36px;
+    left: -19px;
+    width: 110%;
+    height: 136%; }
+.profile-popup .equipped-coeur-overlay { top: -12px; left: -23px; }
+.profile-popup .equipped-angel-wings { position: absolute; top: -28%; left: 2%; width: 96%; height: 75%; z-index: 0; pointer-events: none; }
+.profile-popup .equipped-tomb-raider { position: absolute; top: -73px; left: 0px; width: 102%; height: 71%; z-index: 0; pointer-events: none; }
 .profile-popup .equipped-lunettes-pixel-inside { position: absolute; top: 53%; left: 50%; width: 109%; height: 108%; object-fit: contain; transform: translate(-50%, -50%); pointer-events: none; z-index: 1; }
 
 @media (min-width: 320px) and (max-width: 768px) {
   .leaderboard-profile-popup .equipped-roi-overlay { top: -17% !important; left: 19% !important; width: 71% !important; height: 62% !important; }
+  .leaderboard-profile-popup .equipped-cat-ears { top: -80px !important; left: 11px !important; width: 89% !important; height: 117% !important; }
   .leaderboard-profile-popup .equipped-angel-wings { top: -12% !important; left: 0% !important; width: 100% !important; height: 75% !important; z-index: 0 !important; }
   .leaderboard-profile-popup .equipped-tomb-raider { top: 12px !important; left: 8% !important; width: 83% !important; height: 43% !important; }
   .leaderboard-profile-popup .equipped-stars { top: 10% !important; left: 18% !important; width: 64% !important; height: 80% !important; }
@@ -12599,6 +12610,28 @@ onUnmounted(() => {
   .leaderboard-profile-popup .equipped-jojotext-inside { top: -5px !important; right: 2px !important; width: 95% !important; height: 74% !important; }
   .leaderboard-profile-popup .equipped-alpha-overlay { top: 42px !important; left: 55px !important; width: 59% !important; height: 65% !important; }
   .leaderboard-profile-popup .equipped-admin-planify-overlay { height: 63% !important; left: -1px !important; top: 18% !important; }
+  .leaderboard-container .equipped-clown-nose {
+    position: absolute !important;
+    top: 54% !important;
+    left: 48% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 87% !important;
+    height: 40% !important;
+    object-fit: contain !important;
+    pointer-events: none !important;
+    z-index: 16 !important;
+  }
+  .leaderboard-container .equipped-clown-overlay {
+    pointer-events: none !important;
+    position: absolute;
+    top: -11.7% !important;
+    left: 17% !important;
+    width: 82% !important;
+    height: 106% !important;
+    transform: translate(-10%);
+    pointer-events: none;
+    z-index: 15 !important;
+  }
 }
 
 .leaderboard-profile-music .profile-music-block {
@@ -12730,71 +12763,71 @@ onUnmounted(() => {
 
 /* Ange – uniquement dans la pop-up profil du leaderboard */
 .profile-popup .equipped-angel-wings {
-  position: absolute !important;
-  top: -76px !important;
-  left: -48px !important;
-  width: 197% !important;
-  height: 148% !important;
-  z-index: 0 !important;             /* Derrière la bordure de l’avatar */
-  pointer-events: none !important;
+  position: absolute;
+  top: -76px;
+  left: -48px;
+  width: 197%;
+  height: 148%;
+  z-index: 0;             /* Derrière la bordure de l’avatar */
+  pointer-events: none;
 }
 
 /* Tomb Raider – uniquement dans la pop-up profil du leaderboard */
 .profile-popup .equipped-tomb-raider {
-  position: absolute !important;
-  top: -47px !important;
-  left: 0px !important;
-  width: 102% !important;
-  height: 71% !important;
-  z-index: 0 !important;              /* Derrière la bordure de l’avatar */
-  pointer-events: none !important;
+  position: absolute;
+  top: -47px;
+  left: 0px;
+  width: 102%;
+  height: 71%;
+  z-index: 0;              /* Derrière la bordure de l’avatar */
+  pointer-events: none;
 }
 
 
 .profile-popup .equipped-cat-ears {
-  position: absolute !important;
-  top: -101px !important;
-  left: -47px !important;
-  width: 158% !important;
-  height: 155% !important;
-  z-index: 2 !important;           /* Passe au-dessus de la bordure/avatar */
-  pointer-events: none !important; /* Ne capte pas les clics */
+  position: absolute;
+  top: -101px;
+  left: -47px;
+  width: 158%;
+  height: 155%;
+  z-index: 2;           /* Passe au-dessus de la bordure/avatar */
+  pointer-events: none; /* Ne capte pas les clics */
 }
 
 /* AJOUT: alignements des overlays manquants avec la Navbar */
 .profile-popup .equipped-vinyle-overlay {
-  position: absolute !important;
-  top: -45px !important;
-  left: 19px !important;
-  width: 82% !important;
-  height: 65% !important;
-  z-index: 2 !important;
-  pointer-events: none !important;
+  position: absolute;
+  top: -45px;
+  left: 19px;
+  width: 82%;
+  height: 65%;
+  z-index: 2;
+  pointer-events: none;
 }
 .profile-popup .equipped-chat-overlay {
-  position: absolute !important;
-  top: -56px !important;
-  left: 117px !important;
-  width: 55% !important;
-  z-index: 2 !important;
-  pointer-events: none !important;
+  position: absolute;
+  top: -56px;
+  left: 117px;
+  width: 55%;
+  z-index: 2;
+  pointer-events: none;
 }
 /* AJOUT: Clown (profil popup) */
 .profile-popup .equipped-clown-overlay {
-  position: absolute !important;
-  top: -42px !important;
-  left: 79px !important;
-  width: 65% !important;
-  height: 110% !important;
-  z-index: 2 !important;
-  pointer-events: none !important;
+  position: absolute;
+  top: -42px;
+  left: 79px;
+  width: 65%;
+  height: 110%;
+  z-index: 2;
+  pointer-events: none;
 }
 .profile-popup .equipped-clown-nose {
-  position: absolute !important;
-  width: 65% !important;
-  height: 65% !important;
-  z-index: 2 !important;
-  pointer-events: none !important;
+  position: absolute;
+  width: 65%;
+  height: 65%;
+  z-index: 2;
+  pointer-events: none;
 }
 /* Valeurs par défaut sûres pour Lunettes pixel en pop-up profil */
 .profile-popup .equipped-lunettes-pixel-inside {
@@ -12831,8 +12864,8 @@ onUnmounted(() => {
 .profile-popup .equipped-clippy-inside,
 .profile-popup .equipped-moustache-inside {
   position: absolute;
-  z-index: 2 !important;
-  pointer-events: none !important;
+  z-index: 2;
+  pointer-events: none;
 }
 
 /* Ajustements spécifiques de la Navbar reproduits ici pour la pop-up profil */
@@ -12842,12 +12875,12 @@ onUnmounted(() => {
 .profile-popup .equipped-advisory-inside { top: 50px; left: 56px; }
 .profile-popup .equipped-absolute-cinema-overlay { top: -10px; left: -30px; width: 30%; height: 100%; }
                   .profile-popup .equipped-absolute-cinema-overlay-right { left: 224px; top: -10%; width: 30%; height: 100%; }
-.profile-popup .equipped-nokia-inside { top: 80%; left: 15%; width: 60% !important; }
+.profile-popup .equipped-nokia-inside { top: 80%; left: 15%; width: 60%; }
 .profile-popup .equipped-jojo-inside { bottom: -2px; left: 109px; width: 111%; height: 38%; }
 .profile-popup .equipped-jojotext-inside { top: -12px; right: 6px; width: 90%; height: 85%; }
 
 /* Ajustements demandés pour la pop-up de profil via leaderboard */
-.profile-popup .equipped-advisory-inside { width: 75% !important; height: 63%; }
+.profile-popup .equipped-advisory-inside { width: 75%; height: 63%; }
 .profile-popup .equipped-asteroide-overlay { top: 53px; left: 7px; width: 50%; height: 50%; }
 .profile-popup .equipped-flash-overlay { left: 7px; width: 85%; height: 100%; }
 .profile-popup .equipped-chat-overlay { width: 101%; }
@@ -12855,18 +12888,18 @@ onUnmounted(() => {
 
 /* Lunettes pixel */
 .profile-popup .equipped-lunettes-pixel-inside {
-  top: 58px !important;
-  left: 51px !important;
-  width: 95% !important;
+  top: 58px;
+  left: 51px;
+  width: 95%;
 }
 
 /* Nokia: Daft Punk + Clippy */
-.profile-popup .equipped-daftpunk-overlay { top: -24% !important; left: 31% !important; width: 36%; height: 44%; }
+.profile-popup .equipped-daftpunk-overlay { top: -24%; left: 31%; width: 36%; height: 44%; }
 .profile-popup .equipped-clippy-inside { top: 56px; left: 84px; width: 43%; }
 
 /* Discord (leaderboard – pop-up profil) */
-.profile-popup .equipped-discord-overlay { top: -6px !important; left: -15px !important; width: 120% !important; height: 121% !important; }
-.profile-popup .equipped-discord { top: -6px !important; left: -15px !important; width: 120% !important; height: 121% !important; }
+.profile-popup .equipped-discord-overlay { top: -6px; left: -15px; width: 120%; height: 121%; }
+.profile-popup .equipped-discord { top: -6px; left: -15px; width: 120%; height: 121%; }
 
 /* Galaxie (pop-up profil leaderboard) */
 .profile-popup .equipped-galaxie,
@@ -12880,19 +12913,19 @@ onUnmounted(() => {
 /* Coeur (pop-up profil leaderboard) */
 .profile-popup .equipped-coeur,
 .profile-popup .equipped-coeur-overlay {
-  top: -2px !important;
-    left: -46px !important;
-    width: 128% !important;
-    height: 100% !important;
+  top: -2px;
+    left: -46px;
+    width: 128%;
+    height: 100%;
 }
 
 /* Alpha (pop-up profil leaderboard) */
 .profile-popup .equipped-alpha,
 .profile-popup .equipped-alpha-overlay {
-  top: 17px !important;
-    left: -32px !important;
-    width: 120% !important;
-    height: 80% !important;
+  top: 17px;
+    left: -32px;
+    width: 120%;
+    height: 80%;
 }
 
 /* Leaderboard (hors pop-up) – Coeur */
@@ -12906,14 +12939,14 @@ onUnmounted(() => {
 
 /* Pate (leaderboard – pop-up profil) */
 .profile-popup .equipped-pate-overlay {
-  pointer-events: none !important;
-  position: absolute !important;
+  pointer-events: none;
+  position: absolute;
   top: 55%;
   left: 10%;
-  width: 35% !important;
-  height: 35% !important;
-  object-fit: contain !important;
-  z-index: 15 !important;
+  width: 35%;
+  height: 35%;
+  object-fit: contain;
+  z-index: 15;
 }
 
 /* Styles pour les factions */
@@ -14233,8 +14266,8 @@ onUnmounted(() => {
     position: absolute !important;
     top: -22%;
     left: -16%;
-    width: 162% !important;
-    height: 143% !important;
+    width: 162%;
+    height: 143%;
     object-fit: contain !important;
     pointer-events: none !important;
     z-index: 15 !important;
@@ -14432,33 +14465,33 @@ onUnmounted(() => {
   .profile-popup.leaderboard-profile-popup .profile-avatar-stage { width: 100% !important; max-width: 320px !important; margin-left: auto; margin-right: auto; }
   .profile-popup.leaderboard-profile-popup .profile-divider { display: none; }
   .profile-popup.leaderboard-profile-popup .profile-section-title { font-size: 18px !important; }
-  .profile-popup .equipped-galaxie-overlay { top: -29px !important; left: -35px !important; width: 168% !important; height: 154% !important; }
-  .profile-popup .equipped-coeur-overlay { top: -13px !important; left: -20px !important; width: 139% !important; height: 122% !important; }
-  .profile-popup .equipped-admin-planify-overlay { height: 102% !important; left: -1px !important; }
+  .profile-popup .equipped-galaxie-overlay { top: -29px; left: -35px; width: 168%; height: 154%; }
+  .profile-popup .equipped-coeur-overlay { top: -13px; left: -20px; width: 139%; height: 122%; }
+  .profile-popup .equipped-admin-planify-overlay { height: 102%; left: -1px; }
 }
-.profile-popup .equipped-roi-overlay { top: -51% !important; left: 15% !important; width: 86% !important; height: 75% !important; }
-.profile-popup .equipped-cat-ears { top: -76px !important; left: -59px !important; width: 133% !important; height: 117% !important; }
-.profile-popup .equipped-clown-nose { position: absolute !important; width: 41% !important; height: 42% !important; z-index: 2 !important; pointer-events: none !important; }
-.profile-popup .equipped-angel-wings { position: absolute !important; top: -90px !important; left: -162px !important; width: 197% !important; height: 90% !important; z-index: 0 !important; pointer-events: none !important; }
-.profile-popup .equipped-tomb-raider { position: absolute !important; top: -70px !important; left: 0 !important; width: 102% !important; height: 71% !important; z-index: 0 !important; pointer-events: none !important; }
-.profile-popup .equipped-royal-frame, .profile-popup .equipped-royal-frame-overlay { position: absolute !important; top: -5% !important; left: -3% !important; width: 132% !important; height: 110% !important; object-fit: contain !important; pointer-events: none !important; z-index: 15 !important; }
-.profile-popup .equipped-rainbow, .profile-popup .equipped-rainbow-overlay { position: absolute !important; top: 8% !important; left: 12% !important; width: 94% !important; height: 83% !important; object-fit: contain !important; pointer-events: none !important; z-index: 15 !important; }
-.profile-popup .equipped-gentleman-overlay { top: -115px !important; left: 95px !important; width: 55% !important; height: 55% !important; }
-.profile-popup .equipped-vinyle-overlay { position: absolute !important; top: -61px !important; left: 54px !important; width: 85% !important; height: 65% !important; z-index: 2 !important; pointer-events: none !important; }
-.profile-popup .equipped-asteroide-overlay { top: 50px !important; left: 100px !important; width: 20% !important; height: 50% !important; }
-.profile-popup .equipped-gentleman-overlay { top: -50px !important; left: 95px !important; width: 55% !important; height: 55% !important; }
-.profile-popup .equipped-asteroide-overlay { top: 100px !important; left: 100px !important; width: 20% !important; height: 50% !important; }
+.profile-popup .equipped-roi-overlay { top: -51%; left: 15%; width: 86%; height: 75%; }
+.profile-popup .equipped-cat-ears { top: -76px; left: -59px; width: 133%; height: 117%; }
+.profile-popup .equipped-clown-nose { position: absolute; width: 41%; height: 42%; z-index: 2; pointer-events: none; }
+.profile-popup .equipped-angel-wings { position: absolute; top: -90px; left: -162px; width: 197%; height: 90%; z-index: 0; pointer-events: none; }
+.profile-popup .equipped-tomb-raider { position: absolute; top: -70px; left: 0; width: 102%; height: 71%; z-index: 0; pointer-events: none; }
+.profile-popup .equipped-royal-frame, .profile-popup .equipped-royal-frame-overlay { position: absolute; top: -5%; left: -3%; width: 132%; height: 110%; object-fit: contain; pointer-events: none; z-index: 15; }
+.profile-popup .equipped-rainbow, .profile-popup .equipped-rainbow-overlay { position: absolute; top: 8%; left: 12%; width: 94%; height: 83%; object-fit: contain; pointer-events: none; z-index: 15; }
+.profile-popup .equipped-gentleman-overlay { top: -115px; left: 95px; width: 55%; height: 55%; }
+.profile-popup .equipped-vinyle-overlay { position: absolute; top: -61px; left: 54px; width: 85%; height: 65%; z-index: 2; pointer-events: none; }
+.profile-popup .equipped-asteroide-overlay { top: 50px; left: 100px; width: 20%; height: 50%; }
+.profile-popup .equipped-gentleman-overlay { top: -50px; left: 95px; width: 55%; height: 55%; }
+.profile-popup .equipped-asteroide-overlay { top: 100px; left: 100px; width: 20%; height: 50%; }
 .leaderboard-container .equipped-absolute-cinema, .leaderboard-container .equipped-absolute-cinema-overlay { position: absolute; top: -10%; left: -31%; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 15; }
-.profile-popup .equipped-absolute-cinema-overlay-right { left: 224px; top: -10%; width: 30%; height: 100%; }
+profile-popup .equipped-absolute-cinema-overlay-right { left: 224px; top: -10%; width: 30%; height: 100%; }
 .leaderboard-container .equipped-camera-overlay { position: absolute; top: 40%; left: 30%; width: 18%; height: 70%; object-fit: contain; pointer-events: none; z-index: 3; }
-.profile-popup .equipped-pate-overlay { position: absolute !important; top: 60% !important; left: 21% !important; width: 33% !important; height: 25% !important; object-fit: contain !important; pointer-events: none !important; z-index: 15 !important; }
+.profile-popup .equipped-pate-overlay { position: absolute; top: 60%; left: 21%; width: 33%; height: 25%; object-fit: contain; pointer-events: none; z-index: 15; }
 .leaderboard-container .equipped-chat-overlay { position: absolute; top: -13%; left: 17%; width: 108%; height: 70%; object-fit: contain; pointer-events: none; z-index: 3; }
-.profile-popup .equipped-lunettes-pixel-inside { top: 50% !important; left: 50% !important; height: 108% !important; width: 107% !important; }
+.profile-popup .equipped-lunettes-pixel-inside { top: 50%; left: 50%; height: 108%; width: 107%; }
 .leaderboard-container .equipped-clippy-inside { position: absolute; top: 50px; left: 83px; width: 43%; height: 78%; object-fit: contain; pointer-events: none; z-index: 2; }
-.leaderboard-container .equipped-daftpunk, .leaderboard-container .equipped-daftpunk-overlay { position: absolute; top: -65% !important; left: 11% !important; width: 80%; height: 90%; object-fit: contain; pointer-events: none; z-index: 15; }
-.profile-popup .equipped-discord-overlay, .profile-popup .equipped-discord { top: 16px !important; left: 4px !important; width: 92% !important; height: 94% !important; }
-.leaderboard-container .equipped-jojo-inside { position: absolute !important; bottom: -2px !important; left: 45px !important; width: 90% !important; height: 40% !important; object-fit: contain !important; pointer-events: none !important; z-index: 6 !important; }
-.leaderboard-container .equipped-jojotext-inside { position: absolute !important; top: -7px !important; right: 2px !important; width: 95% !important; height: 100% !important; object-fit: contain !important; pointer-events: none !important; z-index: 7 !important; }
+.leaderboard-container .equipped-daftpunk, .leaderboard-container .equipped-daftpunk-overlay { position: absolute; top: -65%; left: 11%; width: 80%; height: 90%; object-fit: contain; pointer-events: none; z-index: 15; }
+.profile-popup .equipped-discord-overlay, .profile-popup .equipped-discord { top: 16px; left: 4px; width: 92%; height: 94%; }
+.leaderboard-container .equipped-jojo-inside { position: absolute; bottom: -2px; left: 45px; width: 90%; height: 40%; object-fit: contain; pointer-events: none; z-index: 6; }
+.leaderboard-container .equipped-jojotext-inside { position: absolute; top: -7px; right: 2px; width: 95%; height: 100%; object-fit: contain; pointer-events: none; z-index: 7; }
 
 /* Fix alignement item-actions boutique quotidienne */
 .weekly-shop-container .item-actions {
