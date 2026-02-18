@@ -4488,7 +4488,7 @@ body, html {
 }
 .odoo-navbar-actions {
   position: absolute;
-  right: -15px;
+  right: -10px;
   top: 50%;
   transform: translateY(-50%);
   display: flex;
@@ -4908,7 +4908,7 @@ body, html {
     border-radius: 16px;
     box-shadow: 0 2px 8px #0000001a;
     position: absolute;
-    right: -225px;
+    right: -240px;
     top: 55% !important;
     transform: translateY(-50%) !important;
     flex-direction: row !important;
@@ -4928,7 +4928,7 @@ body, html {
 
 @media (min-width: 1025px) and (max-width: 1200px) {
   .coins-counter {
-    right: -180px;
+    right: -200px;
   }
 }
 
@@ -6989,8 +6989,10 @@ top: 2px;
 .profile-popup .equipped-vinyle-overlay { top: -21%; left: 33%; width: 46%; height: 56%; }
 .profile-popup .equipped-advisory-inside { top: 97px; left: 76px; width: 56%; height: 37%; }
 .profile-popup .equipped-asteroide-overlay { top: 133px; left: 102px; width: 23%; height: 30%; }
-.profile-popup .equipped-absolute-cinema-overlay { top: 15%; left: 15%; width: 13%; height: 60%; }
-.profile-popup .equipped-absolute-cinema-overlay-right { top: 15%; left: 72%; width: 13%; height: 60%; }
+@media (min-width: 481px) and (max-width: 768px) {
+  .profile-popup .equipped-absolute-cinema-overlay { top: 15%; left: 13%; width: 13%; height: 60%; }
+  .profile-popup .equipped-absolute-cinema-overlay-right { top: 15%; left: 74%; width: 13%; height: 60%; }
+}
 .profile-popup .equipped-camera-overlay { top: 56%; left: 29%; width: 24%; height: 28%; }
 .profile-popup .equipped-chat-overlay { top: -6%; left: 35%; width: 57%; height: 70%; }
 /* AJOUT: Pate (Navbar – pop-up profil) */

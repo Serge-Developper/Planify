@@ -1525,7 +1525,7 @@
                         :alt="getUserEquippedItemData(user).name"
                         class="equipped-gentleman-overlay"
                       />
-                      <div class="user-avatar" :style="getAvatarBorderStyle(user)" :class="{ 'jojo-sepia': getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'jojo', 'no-border': getUserEquippedItemData(user) && (((getUserEquippedItemData(user).displayType === 'discord' || getUserEquippedItemData(user).displayType === 'matrix') && !showBorderForDynEquippedItem(getUserEquippedItemData(user))) || getUserEquippedItemData(user).displayType === 'espace' || getUserEquippedItemData(user).name === 'Galaxie' || shouldRemoveLeaderboardBorder(getUserEquippedItemData(user))) }">
+                      <div class="user-avatar" :style="getAvatarBorderStyle(user)" :class="{ 'jojo-sepia': getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'jojo', 'no-border': getUserEquippedItemData(user) && (((getUserEquippedItemData(user).displayType === 'discord' || getUserEquippedItemData(user).displayType === 'matrix') && !showBorderForDynEquippedItem(getUserEquippedItemData(user))) || getUserEquippedItemData(user).name === 'Galaxie' || shouldRemoveLeaderboardBorder(getUserEquippedItemData(user))) }">
                         <img 
                           :src="getUserAvatar(user)" 
                           class="avatar-img"
@@ -2346,7 +2346,6 @@
     'jojo-sepia': getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'jojo',
     'no-border': getUserEquippedItemData(user) && (
       ((getUserEquippedItemData(user).displayType === 'discord' || getUserEquippedItemData(user).displayType === 'matrix') && !showBorderForDynEquippedItem(getUserEquippedItemData(user), user))
-      || getUserEquippedItemData(user).displayType === 'espace'
       || getUserEquippedItemData(user).name === 'Galaxie'
       || shouldRemoveLeaderboardBorder(getUserEquippedItemData(user), user)
     )
@@ -3089,7 +3088,9 @@
                     </div>
                     <div class="profile-time">{{ formatTime(popupProgress) }}</div>
                   </div>
+                  <iframe v-if="isPopupYouTube" id="leaderboard-youtube-player" ref="popupYouTubeIframeRef" :src="getPopupYouTubeEmbedUrl(selectedUserMusicSrc)" allow="autoplay; encrypted-media" allowfullscreen aria-hidden="true" style="position:absolute;width:1px;height:1px;border:0;clip:rect(0,0,0,0);overflow:hidden;pointer-events:none;" @load="subscribePopupYouTubePlayer"></iframe>
                   <audio
+                    v-else
                     ref="popupAudioEl"
                     :src="resolveAssetSrc(selectedUserMusicSrc)"
                     preload="metadata"
@@ -4984,6 +4985,7 @@ onMounted(() => {
   } catch {}
   // Écouter les updates de note publique des utilisateurs (profil/leaderboard)
   try { window.addEventListener('user-public-note-changed', handleUserPublicNoteChanged) } catch {}
+  try { window.addEventListener('message', handlePopupYouTubeMessage) } catch {}
 })
 // Charger toutes les données de la boutique à l'ouverture de la popup
 watch(() => props.show, (v) => {
@@ -5007,6 +5009,7 @@ onUnmounted(() => {
   try { window.removeEventListener('items-changed', loadDynamicItems) } catch {}
   try { window.removeEventListener('dynamic-variant-changed', () => {}) } catch {}
   try { window.removeEventListener('user-public-note-changed', handleUserPublicNoteChanged) } catch {}
+  try { window.removeEventListener('message', handlePopupYouTubeMessage) } catch {}
 })
 
 async function loadUserServerLocalItems(){ try{ const res=await secureApiCall('/users/my-items'); const arr=(res&&res.items)?res.items:(Array.isArray(res)?res:[]); userServerLocalItems.value=Array.isArray(arr)?arr.map((p,idx)=>({ id:(typeof p.legacyId!=='undefined')?p.legacyId:((typeof p.id!=='undefined')?p.id:(100000+idx)), name:p.name||'Suggestion', price:Number(p.price)||0, isDynamic:true, isLocal:true, assets:Array.isArray(p.assets)?p.assets:[], backgrounds:p.backgrounds||{}, variants:Array.isArray(p.variants)?p.variants:[], meta:p.meta||{} })):[]; try{ const u=authStore.user; const uid=String((u&&(u.id||u._id))||'anon'); const key='my-items-local-'+uid; const raw=localStorage.getItem(key); const localArr=raw?JSON.parse(raw):[]; const serverIds=new Set(arr.map(p=>String((p&&p.meta&&p.meta.serverItemId)||'')).filter(Boolean)); const cleaned=Array.isArray(localArr)?localArr.filter(p=>{ const sid=p&&p.meta&&p.meta.serverItemId?String(p.meta.serverItemId):''; if (sid) return serverIds.has(sid); return true; }):[]; localStorage.setItem(key, JSON.stringify(cleaned)); try { const rAnon = localStorage.getItem('my-items-local-anon'); const anonArr = rAnon ? JSON.parse(rAnon) : []; if (Array.isArray(anonArr) && anonArr.length) { const merged = Array.isArray(cleaned) ? [...cleaned, ...anonArr] : anonArr; localStorage.setItem(key, JSON.stringify(merged)); localStorage.removeItem('my-items-local-anon'); } } catch {} }catch{} }catch{ userServerLocalItems.value=[] } }
@@ -6093,6 +6096,103 @@ const selectedUserMusicTitle = computed(() => {
   } catch { return 'Aucune musique' }
 })
 
+function isValidYouTubeUrl(u) {
+  try {
+    const s = String(u || '').trim()
+    return /^https?:\/\/(www\.)?(youtube\.com\/(watch\?v=[^&\s]+|shorts\/[^?\s]+)|youtu\.be\/[^?\s]+)/i.test(s)
+  } catch { return false }
+}
+const popupYouTubeIframeRef = ref(null)
+const isPopupYouTube = computed(() => isValidYouTubeUrl(selectedUserMusicSrc.value || ''))
+let popupYouTubeProgressTimer = null
+let popupClipStart = 0
+let popupClipEnd = null
+function extractYouTubeId(u) {
+  try {
+    const s = String(u || '').trim()
+    let m = s.match(/[?&]v=([A-Za-z0-9_-]{6,})/)
+    if (m && m[1]) return m[1]
+    m = s.match(/youtu\.be\/([A-Za-z0-9_-]{6,})/)
+    if (m && m[1]) return m[1]
+    m = s.match(/shorts\/([A-Za-z0-9_-]{6,})/)
+    if (m && m[1]) return m[1]
+    return ''
+  } catch { return '' }
+}
+function getPopupYouTubeEmbedUrl(url) {
+  try {
+    const id = extractYouTubeId(url)
+    if (!id) return url
+    const origin = typeof window !== 'undefined' ? encodeURIComponent(window.location.origin) : ''
+    return `https://www.youtube.com/embed/${id}?enablejsapi=1&playsinline=1&origin=${origin}`
+  } catch { return url }
+}
+function sendPopupYouTubeCommand(cmd, args = []) {
+  try {
+    const f = popupYouTubeIframeRef?.value
+    if (!f || !f.contentWindow) return
+    f.contentWindow.postMessage(JSON.stringify({ event: 'command', func: cmd, args }), '*')
+  } catch {}
+}
+function startPopupYouTubeProgressPolling() {
+  try { stopPopupYouTubeProgressPolling() } catch {}
+  popupYouTubeProgressTimer = setInterval(() => {
+    try { sendPopupYouTubeCommand('getCurrentTime') } catch {}
+  }, 500)
+  try { sendPopupYouTubeCommand('getDuration') } catch {}
+}
+function stopPopupYouTubeProgressPolling() {
+  try {
+    if (popupYouTubeProgressTimer) {
+      clearInterval(popupYouTubeProgressTimer)
+      popupYouTubeProgressTimer = null
+    }
+  } catch {}
+}
+function handlePopupYouTubeMessage(e) {
+  try {
+    const origin = String(e.origin || '')
+    if (!/youtube\.com|youtube\-nocookie\.com/i.test(origin)) return
+    let data = e.data
+    if (typeof data === 'string') { try { data = JSON.parse(data) } catch {} }
+    if (!data) return
+    if (data.event === 'onReady') {
+      sendPopupYouTubeCommand('getDuration')
+      sendPopupYouTubeCommand('getCurrentTime')
+      sendPopupYouTubeCommand('addEventListener', ['onStateChange'])
+      return
+    }
+    if (data.event === 'onStateChange') {
+      const s = Number(data.info)
+      if (s === 1 || s === 3) { isPopupPlaying.value = true; startPopupYouTubeProgressPolling() }
+      else if (s === 2 || s === 0) { isPopupPlaying.value = false; stopPopupYouTubeProgressPolling() }
+    }
+    if (data.event === 'infoDelivery' && data.info) {
+      const info = data.info || {}
+      if (typeof info.currentTime === 'number') popupProgress.value = Number(info.currentTime || 0)
+      if (typeof info.duration === 'number' && info.duration > 0) popupDuration.value = Number(info.duration || 0)
+      if (typeof popupClipEnd === 'number' && isFinite(popupClipEnd) && info.currentTime >= popupClipEnd - 0.05) {
+        sendPopupYouTubeCommand('pauseVideo')
+        isPopupPlaying.value = false
+        stopPopupYouTubeProgressPolling()
+      }
+    }
+  } catch {}
+}
+function subscribePopupYouTubePlayer() {
+  try {
+    const iframe = popupYouTubeIframeRef?.value
+    if (!iframe || !iframe.contentWindow) return
+    const id = iframe.id || 'leaderboard-youtube-player'
+    iframe.contentWindow.postMessage(JSON.stringify({ event: 'listening', id, channel: 'widget' }), '*')
+    iframe.contentWindow.postMessage(JSON.stringify({ event: 'listening', id }), '*')
+    sendPopupYouTubeCommand('addEventListener', ['onReady'])
+    sendPopupYouTubeCommand('addEventListener', ['onStateChange'])
+    sendPopupYouTubeCommand('getDuration')
+    sendPopupYouTubeCommand('getCurrentTime')
+  } catch {}
+}
+
 const isVolumeHovered = ref(false)
 const isPopupMuted = ref(false)
 
@@ -6129,9 +6229,15 @@ function startPopupSeekDrag(e) {
   const container = e.currentTarget
   if (!container) return
   isDraggingPopup.value = true
+  const isYt = isValidYouTubeUrl(selectedUserMusicSrc.value || '')
   const el = popupAudioEl?.value
   let wasPlaying = false
-  if (el && !el.paused) { wasPlaying = true; el.pause() }
+  if (isYt) {
+    if (isPopupPlaying.value) { wasPlaying = true; sendPopupYouTubeCommand('pauseVideo') }
+  } else if (el && !el.paused) {
+    wasPlaying = true
+    el.pause()
+  }
   const updateProgress = (clientX) => {
     const rect = container.getBoundingClientRect()
     const offsetX = clientX - rect.left
@@ -6140,7 +6246,9 @@ function startPopupSeekDrag(e) {
     const pct = Math.max(0, Math.min(1, offsetX / width))
     const dur = Number(popupDuration.value) || 0
     popupProgress.value = pct * dur
-    if (el && Number.isFinite(el.duration)) {
+    if (isYt) {
+      if (dur > 0) sendPopupYouTubeCommand('seekTo', [Math.max(0, Math.min(popupProgress.value, dur)), true])
+    } else if (el && Number.isFinite(el.duration)) {
       try { el.currentTime = Math.max(0, Math.min(popupProgress.value, el.duration)) } catch {}
     }
   }
@@ -6157,7 +6265,10 @@ function startPopupSeekDrag(e) {
     document.removeEventListener('mouseup', onUp)
     document.removeEventListener('touchmove', onMove)
     document.removeEventListener('touchend', onUp)
-    if (wasPlaying && el) el.play().catch(() => {})
+    if (wasPlaying) {
+      if (isYt) sendPopupYouTubeCommand('playVideo')
+      else if (el) el.play().catch(() => {})
+    }
   }
   document.addEventListener('mousemove', onMove)
   document.addEventListener('mouseup', onUp)
@@ -6200,13 +6311,16 @@ function togglePopupMute() {
     const el = popupAudioEl?.value
     const next = !isPopupMuted.value
     isPopupMuted.value = next
+    const isYt = isValidYouTubeUrl(selectedUserMusicSrc.value || '')
     if (next) {
       if (popupMusicVolume.value > 0) { previousPopupVolume.value = popupMusicVolume.value }
       popupMusicVolume.value = 0
       if (el) el.muted = true
+      if (isYt) { sendPopupYouTubeCommand('mute'); sendPopupYouTubeCommand('setVolume', [0]) }
     } else {
       popupMusicVolume.value = previousPopupVolume.value > 0 ? previousPopupVolume.value : 60
       if (el) el.muted = false
+      if (isYt) { sendPopupYouTubeCommand('unMute'); sendPopupYouTubeCommand('setVolume', [Math.round(Math.max(0, Math.min(100, Number(popupMusicVolume.value) || 0)))]) }
     }
   } catch {}
 }
@@ -6254,15 +6368,35 @@ function onMobileFactionChange() {
   try { if (el) setPopupElVolume(el, vol) } catch {}
 }
 function togglePopupPlay() {
-  const el = popupAudioEl.value
-  if (!el || !selectedUser?.value) return
+  if (!selectedUser?.value) return
+  const isYt = isValidYouTubeUrl(selectedUserMusicSrc.value || '')
   const start = typeof selectedUser.value.musicStartSeconds === 'number' ? selectedUser.value.musicStartSeconds : 0
   const dur = typeof selectedUser.value.musicDurationSeconds === 'number' ? selectedUser.value.musicDurationSeconds : null
   const end = dur ? start + dur : Infinity
+  popupClipStart = start
+  popupClipEnd = end
 
-  // Appliquer le volume actuel via helper (gère WebAudio iOS ou fallback)
+  if (isYt) {
+    const v100 = Math.round(Math.max(0, Math.min(100, Number(popupMusicVolume.value) || 0)))
+    sendPopupYouTubeCommand('setVolume', [v100])
+    if (v100 > 0) sendPopupYouTubeCommand('unMute')
+    else sendPopupYouTubeCommand('mute')
+    if (!isPopupPlaying.value) {
+      sendPopupYouTubeCommand('seekTo', [start, true])
+      sendPopupYouTubeCommand('playVideo')
+      startPopupYouTubeProgressPolling()
+      isPopupPlaying.value = true
+    } else {
+      sendPopupYouTubeCommand('pauseVideo')
+      stopPopupYouTubeProgressPolling()
+      isPopupPlaying.value = false
+    }
+    return
+  }
+
+  const el = popupAudioEl.value
+  if (!el) return
   try { setPopupElVolume(el, Math.max(0, Math.min(1, (Number(popupMusicVolume.value) || 0) / 100))) } catch {}
-
   if (!isPopupPlaying.value) {
     try { el.currentTime = start } catch {}
     el.play()
@@ -6355,9 +6489,38 @@ async function onPopupAudioPlay() {
 watch(popupMusicVolume, (v) => {
   const el = popupAudioEl?.value
   const vol = Math.max(0, Math.min(1, (Number(v) || 0) / 100))
+  const v100 = Math.round(Math.max(0, Math.min(100, Number(v) || 0)))
   try { if (el) setPopupElVolume(el, vol) } catch {}
   try {
-    localStorage.setItem('musicVolume', String(Math.round(Math.max(0, Math.min(100, Number(v) || 0)))))
+    if (isValidYouTubeUrl(selectedUserMusicSrc.value || '')) {
+      sendPopupYouTubeCommand('setVolume', [v100])
+      if (v100 > 0) { sendPopupYouTubeCommand('unMute'); if (isPopupMuted.value) isPopupMuted.value = false }
+      else { sendPopupYouTubeCommand('mute') }
+    }
+  } catch {}
+  try {
+    localStorage.setItem('musicVolume', String(v100))
+  } catch {}
+})
+
+watch(selectedUserMusicSrc, (src) => {
+  try {
+    isPopupPlaying.value = false
+    popupProgress.value = 0
+    popupDuration.value = 0
+    popupClipStart = 0
+    popupClipEnd = null
+    stopPopupYouTubeProgressPolling()
+    if (isValidYouTubeUrl(src || '')) {
+      try { subscribePopupYouTubePlayer() } catch {}
+    } else {
+      const el = popupAudioEl?.value
+      if (el) {
+        el.pause()
+        el.currentTime = 0
+        try { el.load() } catch {}
+      }
+    }
   } catch {}
 })
 
@@ -6412,6 +6575,8 @@ function closeLeaderboardProfile() {
       popupAudioEl.value.pause()
       popupAudioEl.value.currentTime = 0
     }
+    try { sendPopupYouTubeCommand('stopVideo') } catch {}
+    try { stopPopupYouTubeProgressPolling() } catch {}
     isPopupPlaying.value = false
   } catch {}
   showUserProfile.value = false
@@ -12409,6 +12574,32 @@ onUnmounted(() => {
 .profile-popup .equipped-angel-wings { position: absolute !important; top: -28% !important; left: 2% !important; width: 96% !important; height: 75% !important; z-index: 0 !important; pointer-events: none !important; }
 .profile-popup .equipped-tomb-raider { position: absolute !important; top: -73px !important; left: 0px !important; width: 102% !important; height: 71% !important; z-index: 0 !important; pointer-events: none !important; }
 .profile-popup .equipped-lunettes-pixel-inside { position: absolute; top: 53%; left: 50%; width: 109%; height: 108%; object-fit: contain; transform: translate(-50%, -50%); pointer-events: none; z-index: 1; }
+
+@media (min-width: 320px) and (max-width: 768px) {
+  .leaderboard-profile-popup .equipped-roi-overlay { top: -17% !important; left: 19% !important; width: 71% !important; height: 62% !important; }
+  .leaderboard-profile-popup .equipped-angel-wings { top: -12% !important; left: 0% !important; width: 100% !important; height: 75% !important; z-index: 0 !important; }
+  .leaderboard-profile-popup .equipped-tomb-raider { top: 12px !important; left: 8% !important; width: 83% !important; height: 43% !important; }
+  .leaderboard-profile-popup .equipped-stars { top: 10% !important; left: 18% !important; width: 64% !important; height: 80% !important; }
+  .leaderboard-profile-popup .equipped-royal-frame { top: 6% !important; left: -3% !important; width: 132% !important; height: 88% !important; }
+  .leaderboard-profile-popup .equipped-rainbow { top: 16% !important; left: 12% !important; width: 94% !important; height: 67% !important; }
+  .leaderboard-profile-popup .equipped-gentleman-overlay { top: -1px !important; left: 65px !important; width: 65% !important; height: 55% !important; }
+  .leaderboard-profile-popup .equipped-vinyle-overlay { top: 22px !important; left: 70px !important; width: 62% !important; height: 37% !important; }
+  .leaderboard-profile-popup .equipped-advisory-inside { width: 75% !important; top: 34% !important; left: 40% !important; }
+  .leaderboard-profile-popup .equipped-asteroide-overlay { top: 104px !important; left: 75px !important; width: 25% !important; height: 50% !important; }
+  .leaderboard-profile-popup .equipped-absolute-cinema-overlay { top: 14% !important; left: -37% !important; width: 100% !important; height: 60% !important; }
+  .leaderboard-profile-popup .equipped-absolute-cinema-overlay-right { top: 14% !important; left: 37% !important; width: 100% !important; height: 60% !important; }
+  .leaderboard-profile-popup .equipped-camera-overlay { top: 49% !important; left: 24% !important; width: 26% !important; height: 39% !important; }
+  .leaderboard-profile-popup .equipped-flash-overlay { top: 12% !important; left: 32% !important; width: 41% !important; height: 59% !important; }
+  .leaderboard-profile-popup .equipped-chat-overlay { top: -18% !important; left: 30% !important; width: 70% !important; height: 90% !important; }
+  .leaderboard-profile-popup .equipped-pate-overlay { top: 55% !important; left: 26% !important; width: 18% !important; height: 25% !important; }
+  .leaderboard-profile-popup .equipped-daftpunk-overlay { top: 2% !important; left: 27% !important; width: 45% !important; height: 44% !important; }
+  .leaderboard-profile-popup .equipped-clippy-inside { top: 51% !important; left: 56% !important; width: 49% !important; height: 50% !important; }
+  .leaderboard-profile-popup .equipped-discord-overlay { top: 44px !important; left: 31px !important; width: 72% !important; height: 72% !important; }
+  .leaderboard-profile-popup .equipped-jojo-inside { bottom: -2px !important; left: 145px !important; width: 90% !important; height: 40% !important; }
+  .leaderboard-profile-popup .equipped-jojotext-inside { top: -5px !important; right: 2px !important; width: 95% !important; height: 74% !important; }
+  .leaderboard-profile-popup .equipped-alpha-overlay { top: 42px !important; left: 55px !important; width: 59% !important; height: 65% !important; }
+  .leaderboard-profile-popup .equipped-admin-planify-overlay { height: 63% !important; left: -1px !important; top: 18% !important; }
+}
 
 .leaderboard-profile-music .profile-music-block {
   display: flex;

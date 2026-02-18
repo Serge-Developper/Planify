@@ -19,9 +19,6 @@
     Header set Cache-Control "no-cache, no-store, must-revalidate"
   </Files>
   
-  # Content Security Policy pour autoriser eval() - Public
-  Header set Content-Security-Policy "default-src 'self'; img-src 'self' data: blob:; media-src 'self' data: blob:; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src 'self' fonts.gstatic.com data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://dev-api.planifymmi.fr https://api.planifymmi.fr https://planifymmi.fr wss:; form-action 'self'; frame-ancestors 'self'; base-uri 'self'"
-  
   # Types MIME pour manifest
   AddType application/manifest+json .webmanifest
 </IfModule>
@@ -37,6 +34,6 @@
   </Files>
   
   # Exemple “domaine précis”
-  Header set Content-Security-Policy "default-src 'self'; img-src 'self' data: blob: https://dev-api.planifymmi.fr https://api.planifymmi.fr https://dev.planifymmi.fr; media-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://dev-api.planifymmi.fr https://api.planifymmi.fr https://planifymmi.fr wss: https://fonts.googleapis.com https://fonts.gstatic.com; form-action 'self'; frame-ancestors 'self'; base-uri 'self'"
+  Header set Content-Security-Policy "default-src 'self'; img-src 'self' data: blob: https://dev-api.planifymmi.fr https://api.planifymmi.fr https://dev.planifymmi.fr; media-src 'self' data: blob: https://*.googlevideo.com https://www.youtube.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://dev-api.planifymmi.fr https://api.planifymmi.fr https://planifymmi.fr wss: https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com; frame-src https://www.youtube.com https://www.youtube-nocookie.com; form-action 'self'; frame-ancestors 'self'; base-uri 'self'"
   
 </IfModule>

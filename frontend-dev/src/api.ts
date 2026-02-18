@@ -1,21 +1,10 @@
 // Configuration sécurisée de l'APII
 let RAW_API_URL = (import.meta.env.VITE_API_URL ?? '').toString().trim();
 
-try {
-  const host = typeof window !== 'undefined' ? window.location.hostname : '';
-  const isDevHost = /^dev\.planifymmi\.fr$/i.test(host);
-  const envLooksProd = /api\.planifymmi\.fr/i.test(RAW_API_URL);
-  if (isDevHost && envLooksProd) {
-    RAW_API_URL = 'https://dev-api.planifymmi.fr';
-  }
-} catch {}
-
 if (!RAW_API_URL) {
   try {
     const host = typeof window !== 'undefined' ? window.location.hostname : '';
-    if (/^dev\.planifymmi\.fr$/i.test(host)) {
-      RAW_API_URL = 'https://dev-api.planifymmi.fr';
-    } else if (/^planifymmi\.fr$/i.test(host)) {
+    if (/^planifymmi\.fr$/i.test(host)) {
       RAW_API_URL = 'https://api.planifymmi.fr';
     } else {
       RAW_API_URL = '/api';
