@@ -44,9 +44,9 @@
                 <img src="@/assets/Quetes.svg" alt="Quêtes" class="quests-icon" @click="showQuestsPopup = true" loading="lazy" />
                 <img src="@/assets/img/icons8-boutique-55.webp" alt="Boutique" class="shop-icon" @click="showShopPopup = true" loading="lazy" />
               </div>
-            
-            <button class="account-btn" :class="{ 
-              'stars-equipped': equippedItem && equippedItem.name === 'Étoiles', 
+
+            <button class="account-btn" :class="{
+              'stars-equipped': equippedItem && equippedItem.name === 'Étoiles',
               'rainbow-equipped': equippedItem && equippedItem.name === 'Roses',
               'classic-border-equipped': equippedItem && equippedItem.name === 'Bordure Classique',
               'discord-equipped': equippedItem && equippedItem.displayType === 'discord',
@@ -80,11 +80,11 @@
                   />
                 </template>
                 <img class="avatar-img"
-                  :src="userAvatarWithVersion" 
-                  alt="Compte" 
+                  :src="userAvatarWithVersion"
+                  alt="Compte"
                   :style="[
-                    (equippedItem && equippedItem.name === '8-Bit' 
-                      ? 'width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; image-rendering: -moz-crisp-edges; image-rendering: crisp-edges; filter: contrast(1.2) brightness(1.1) saturate(1.1);' 
+                    (equippedItem && equippedItem.name === '8-Bit'
+                      ? 'width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; image-rendering: -moz-crisp-edges; image-rendering: crisp-edges; filter: contrast(1.2) brightness(1.1) saturate(1.1);'
                       : 'width: 100%; height: 100%; object-fit: cover;'
                     ),
                     getSelfAvatarImageStyle()
@@ -116,51 +116,51 @@
                   </div>
                 </div>
                 <!-- Item Cash à l'intérieur de l'avatar -->
-                <img 
-                  v-if="equippedItem && equippedItem.displayType === 'cash'" 
-                  :src="cash" 
+                <img
+                  v-if="equippedItem && equippedItem.displayType === 'cash'"
+                  :src="cash"
                   :alt="equippedItem.name"
                   class="equipped-cash-inside"
                 />
                 <!-- Item Cible à l'intérieur de l'avatar -->
-                <img 
-                  v-if="equippedItem && equippedItem.displayType === 'target'" 
-                  :src="target" 
+                <img
+                  v-if="equippedItem && equippedItem.displayType === 'target'"
+                  :src="target"
                   :alt="equippedItem.name"
                   class="equipped-target-inside"
                 />
                 <!-- Item Advisory à l'intérieur de l'avatar -->
-                <img 
-                  v-if="equippedItem && equippedItem.displayType === 'advisory'" 
-                  :src="advisory" 
+                <img
+                  v-if="equippedItem && equippedItem.displayType === 'advisory'"
+                  :src="advisory"
                   :alt="equippedItem.name"
                   class="equipped-advisory-inside"
                 />
             <!-- Item Jojo à l'intérieur de l'avatar -->
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'jojo'" 
-              :src="jojo" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'jojo'"
+              :src="jojo"
               :alt="equippedItem.name"
               class="equipped-jojo-inside"
               :key="'jojo-'+coinsStore.jojoVariantIndex"
             />
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'jojo' && coinsStore.jojoVariantIndex === 1" 
-              :src="jojotext" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'jojo' && coinsStore.jojoVariantIndex === 1"
+              :src="jojotext"
               :alt="equippedItem.name"
               class="equipped-jojotext-inside"
               :key="'jojotext-'+coinsStore.jojoVariantIndex"
             />
                 <!-- Item Espace (spacestars à l'intérieur + asteroide par-dessus) -->
-                <img 
-                  v-if="equippedItem && equippedItem.displayType === 'espace'" 
-                  :src="spacestars" 
+                <img
+                  v-if="equippedItem && equippedItem.displayType === 'espace'"
+                  :src="spacestars"
                   :alt="equippedItem.name"
                   class="equipped-spacestars-inside"
                 />
-                <img 
-                  v-if="equippedItem && equippedItem.displayType === 'espace'" 
-                  :src="asteroide" 
+                <img
+                  v-if="equippedItem && equippedItem.displayType === 'espace'"
+                  :src="asteroide"
                   :alt="equippedItem.name"
                   class="equipped-asteroide-overlay"
                 />
@@ -193,210 +193,210 @@
               />
             </template>
             <!-- Item équipé générique (rendu seulement si une image est définie et pas d'item dynamique) -->
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'generic' && equippedItem.img && !equippedDynItem && equippedItem.name !== 'Galaxie' && equippedItem.name !== 'Coeur' && equippedItem.name !== 'Étoiles'" 
-              :src="equippedItem.img" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'generic' && equippedItem.img && !equippedDynItem && equippedItem.name !== 'Galaxie' && equippedItem.name !== 'Coeur' && equippedItem.name !== 'Étoiles'"
+              :src="equippedItem.img"
               :alt="equippedItem.name"
               class="equipped-galaxie-overlay"
               :class="getEquippedItemClass(equippedItem.name)"
             />
             <!-- Item Ange par-dessus le bouton account -->
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'angel'" 
-              :src="equippedItem.img || angelwings" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'angel'"
+              :src="equippedItem.img || angelwings"
               :alt="equippedItem.name"
               class="equipped-angel-wings"
             />
             <!-- Item Étoiles par-dessus le bouton account -->
-            <img 
-              v-if="equippedItem && (equippedItem.displayType === 'etoiles' || equippedItem.name === 'Étoiles')" 
-              :src="star" 
+            <img
+              v-if="equippedItem && (equippedItem.displayType === 'etoiles' || equippedItem.name === 'Étoiles')"
+              :src="star"
               :alt="equippedItem.name"
               class="equipped-stars"
             />
             <!-- Item Alpha par-dessus le bouton account -->
-            <img 
-              v-if="equippedItem && (equippedItem.displayType === 'alpha' || equippedItem.name === 'Alpha')" 
-              :src="alphaImg" 
+            <img
+              v-if="equippedItem && (equippedItem.displayType === 'alpha' || equippedItem.name === 'Alpha')"
+              :src="alphaImg"
               :alt="equippedItem.name"
               class="equipped-alpha-overlay"
             />
             <!-- Item Admin Planify par-dessus le bouton account -->
-            <img 
-              v-if="equippedItem && (equippedItem.displayType === 'admin-planify' || equippedItem.name === 'Admin Planify')" 
-              :src="adminPlanify" 
+            <img
+              v-if="equippedItem && (equippedItem.displayType === 'admin-planify' || equippedItem.name === 'Admin Planify')"
+              :src="adminPlanify"
               :alt="equippedItem.name"
               class="equipped-admin-planify-overlay"
             />
             <!-- Item Tomb Raider derrière le bouton account -->
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'tomb-raider'" 
-              :src="laracroft" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'tomb-raider'"
+              :src="laracroft"
               :alt="equippedItem.name"
               class="equipped-tomb-raider"
             />
             <!-- Item Clown par-dessus le bouton account -->
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'clown'" 
-              :src="clowncheveux" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'clown'"
+              :src="clowncheveux"
               :alt="equippedItem.name"
               class="equipped-clown-overlay"
             />
             <!-- Item Roi par-dessus le bouton account -->
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'roi'" 
-              :src="roi" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'roi'"
+              :src="roi"
               :alt="equippedItem.name"
               class="equipped-roi-overlay"
             />
             <!-- Item Gentleman (moustache à l'intérieur + chapeau par-dessus) -->
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'gentleman'" 
-              :src="moustache" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'gentleman'"
+              :src="moustache"
               :alt="equippedItem.name"
               class="equipped-moustache-inside"
             />
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'gentleman'" 
-              :src="gentleman" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'gentleman'"
+              :src="gentleman"
               :alt="equippedItem.name"
               class="equipped-gentleman-overlay"
             />
             <!-- Item Vinyle par-dessus le bouton account -->
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'vinyle'" 
-              :src="vinyle" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'vinyle'"
+              :src="vinyle"
               :alt="equippedItem.name"
               class="equipped-vinyle-overlay"
             />
             <!-- Item Flash (flash + camera par-dessus) -->
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'flash'" 
-              :src="flash" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'flash'"
+              :src="flash"
               :alt="equippedItem.name"
               class="equipped-flash-overlay"
             />
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'flash'" 
-              :src="camera" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'flash'"
+              :src="camera"
               :alt="equippedItem.name"
               class="equipped-camera-overlay"
             />
             <!-- Item Miaou (pate à l'intérieur + chat par-dessus) -->
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'miaou'" 
-              :src="pate" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'miaou'"
+              :src="pate"
               :alt="equippedItem.name"
               class="equipped-pate-inside"
             />
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'miaou'" 
-              :src="chat" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'miaou'"
+              :src="chat"
               :alt="equippedItem.name"
               class="equipped-chat-overlay"
             />
             <!-- Item DVD à l'intérieur de l'avatar -->
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'dvd'" 
-              :src="dvd" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'dvd'"
+              :src="dvd"
               :alt="equippedItem.name"
               class="equipped-dvd-inside"
             />
             <!-- Item Lunettes pixel à l'intérieur de l'avatar -->
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'lunettes-pixel'" 
-              :src="mlglunette" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'lunettes-pixel'"
+              :src="mlglunette"
               :alt="equippedItem.name"
               class="equipped-lunettes-pixel-inside"
             />
             <!-- Item 2000 à l'intérieur de l'avatar -->
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'nokia'" 
-              :src="nokia" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'nokia'"
+              :src="nokia"
               :alt="equippedItem.name"
               class="equipped-nokia-inside"
             />
             <!-- Item Discord/Galaxie par-dessus le bouton account -->
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'discord'" 
-              :src="[discordon, discordnepasderange, discordderange][coinsStore.discordVariantIndex]" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'discord'"
+              :src="[discordon, discordnepasderange, discordderange][coinsStore.discordVariantIndex]"
               :alt="equippedItem.name"
               class="equipped-discord-overlay"
             />
-            <img 
-              v-if="equippedItem && equippedItem.name === 'Galaxie'" 
-              :src="galaxie" 
+            <img
+              v-if="equippedItem && equippedItem.name === 'Galaxie'"
+              :src="galaxie"
               :alt="equippedItem.name"
               class="equipped-galaxie-overlay"
             />
-            <img 
-              v-if="equippedItem && (equippedItem.name === 'Coeur' || equippedItem.displayType === 'coeur')" 
-              :src="coeur" 
+            <img
+              v-if="equippedItem && (equippedItem.name === 'Coeur' || equippedItem.displayType === 'coeur')"
+              :src="coeur"
               :alt="equippedItem.name"
               class="equipped-coeur-overlay"
             />
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'nokia'" 
-              :src="clippy" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'nokia'"
+              :src="clippy"
               :alt="equippedItem.name"
               class="equipped-clippy-inside"
             />
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'nokia'" 
-              :src="daftpunk" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'nokia'"
+              :src="daftpunk"
               :alt="equippedItem.name"
               class="equipped-daftpunk-overlay"
             />
             <!-- Item Absolute Cinema par-dessus le bouton account -->
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'absolute-cinema'" 
-              :src="bras" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'absolute-cinema'"
+              :src="bras"
               :alt="equippedItem.name"
               class="equipped-absolute-cinema-overlay"
             />
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'absolute-cinema'" 
-              :src="bras" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'absolute-cinema'"
+              :src="bras"
               :alt="equippedItem.name"
               class="equipped-absolute-cinema-overlay-right"
             />
             <!-- Item Oreillettes de chat par-dessus le bouton account -->
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'cat-ears'" 
-              :src="equippedItem.img" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'cat-ears'"
+              :src="equippedItem.img"
               :alt="equippedItem.name"
               class="equipped-cat-ears"
             />
             <!-- Item Cadre royale par-dessus le bouton account -->
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'royal-frame'" 
-              :src="equippedItem.img" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'royal-frame'"
+              :src="equippedItem.img"
               :alt="equippedItem.name"
               class="equipped-royal-frame"
             />
             <!-- Item Roses par-dessus le bouton account -->
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'rainbow'" 
-              :src="equippedItem.img" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'rainbow'"
+              :src="equippedItem.img"
               :alt="equippedItem.name"
               class="equipped-rainbow"
             />
 
 
             <!-- Nez de clown centré sur l'avatar -->
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'clown'" 
-              :src="clownnose" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'clown'"
+              :src="clownnose"
               alt="Nez de clown"
               class="equipped-clown-nose"
             />
 
-            <input 
-              ref="fileInput" 
-              type="file" 
-              accept="image/*" 
-              style="display:none;" 
-              @change="handleAvatarUpload" 
+            <input
+              ref="fileInput"
+              type="file"
+              accept="image/*"
+              style="display:none;"
+              @change="handleAvatarUpload"
             />
             <div v-if="showUserDropdown" class="user-dropdown" @click.stop>
               <button class="dropdown-item" @click="handleProfile">Profil</button>
@@ -437,12 +437,12 @@
                 <img src="@/assets/img/icons8-boutique-55.webp" alt="Boutique" class="shop-icon" @click="showShopPopup = true" loading="lazy" />
               </div>
               <!-- account-btn (mobile) -->
-              <button class="account-btn" :class="{ 
+              <button class="account-btn" :class="{
               'has-equipped-item': !!equippedItem,
-              'stars-equipped': equippedItem && equippedItem.name === 'Étoiles', 
-              'rainbow-equipped': equippedItem && equippedItem.name === 'Roses', 
-              'discord-equipped': equippedItem && equippedItem.displayType === 'discord', 
-              'galaxie-equipped': equippedItem && equippedItem.name === 'Galaxie', 
+              'stars-equipped': equippedItem && equippedItem.name === 'Étoiles',
+              'rainbow-equipped': equippedItem && equippedItem.name === 'Roses',
+              'discord-equipped': equippedItem && equippedItem.displayType === 'discord',
+              'galaxie-equipped': equippedItem && equippedItem.name === 'Galaxie',
               'coeur-equipped': equippedItem && (equippedItem.name === 'Coeur' || equippedItem.displayType === 'coeur'),
               'alpha-equipped': equippedItem && (equippedItem.name === 'Alpha' || equippedItem.displayType === 'alpha'),
               'planify-equipped': equippedItem && (equippedItem.name === 'Planify' || equippedItem.displayType === 'admin-planify'),
@@ -472,11 +472,11 @@
                     />
                   </template>
                   <img class="avatar-img"
-                    :src="userAvatarWithVersion" 
-                    alt="Compte" 
+                    :src="userAvatarWithVersion"
+                    alt="Compte"
                     :style="[
-                      (equippedItem && equippedItem.name === '8-Bit' 
-                        ? 'width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; image-rendering: -moz-crisp-edges; image-rendering: crisp-edges; filter: contrast(1.2) brightness(1.1) saturate(1.1);' 
+                      (equippedItem && equippedItem.name === '8-Bit'
+                        ? 'width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; image-rendering: -moz-crisp-edges; image-rendering: crisp-edges; filter: contrast(1.2) brightness(1.1) saturate(1.1);'
                         : 'width: 100%; height: 100%; object-fit: cover;'
                       ),
                       getSelfAvatarImageStyle()
@@ -502,19 +502,19 @@
                     />
                   </template>
                   <!-- Item Discord/Galaxie (mobile) par-dessus le bouton account -->
-                  <img 
-                    v-if="equippedItem && equippedItem.displayType === 'discord'" 
-                    :src="[discordon, discordnepasderange, discordderange][coinsStore.discordVariantIndex]" 
+                  <img
+                    v-if="equippedItem && equippedItem.displayType === 'discord'"
+                    :src="[discordon, discordnepasderange, discordderange][coinsStore.discordVariantIndex]"
                     :alt="equippedItem.name"
                     class="equipped-discord-overlay-mobile"
                   />
-                  <img 
-                    v-if="equippedItem && equippedItem.name === 'Galaxie'" 
-                    :src="galaxie" 
+                  <img
+                    v-if="equippedItem && equippedItem.name === 'Galaxie'"
+                    :src="galaxie"
                     :alt="equippedItem.name"
                     class="equipped-galaxie-overlay-mobile"
                   />
-                  
+
                   <!-- Animation Matrix à l'intérieur de l'avatar (mobile) -->
                   <div v-if="equippedItem && equippedItem.displayType === 'matrix'" class="matrix-rain-inside-mobile">
                     <div class="matrix-column" v-for="i in 12" :key="i" :style="{ left: (i * 8.33) + '%', animationDelay: (Math.random() * 2) + 's' }">
@@ -522,51 +522,51 @@
                     </div>
                   </div>
                   <!-- Item Cash à l'intérieur de l'avatar (mobile) -->
-                  <img 
-                    v-if="equippedItem && equippedItem.displayType === 'cash'" 
-                    :src="cash" 
+                  <img
+                    v-if="equippedItem && equippedItem.displayType === 'cash'"
+                    :src="cash"
                     :alt="equippedItem.name"
                     class="equipped-cash-inside-mobile"
                   />
                   <!-- Item Cible à l'intérieur de l'avatar (mobile) -->
-                  <img 
-                    v-if="equippedItem && equippedItem.displayType === 'target'" 
-                    :src="target" 
+                  <img
+                    v-if="equippedItem && equippedItem.displayType === 'target'"
+                    :src="target"
                     :alt="equippedItem.name"
                     class="equipped-target-inside-mobile"
                   />
                   <!-- Item Advisory à l'intérieur de l'avatar (mobile) -->
-                  <img 
-                    v-if="equippedItem && equippedItem.displayType === 'advisory'" 
-                    :src="advisory" 
+                  <img
+                    v-if="equippedItem && equippedItem.displayType === 'advisory'"
+                    :src="advisory"
                     :alt="equippedItem.name"
                     class="equipped-advisory-inside-mobile"
                   />
             <!-- Item Jojo à l'intérieur de l'avatar (mobile) -->
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'jojo'" 
-              :src="jojo" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'jojo'"
+              :src="jojo"
               :alt="equippedItem.name"
               class="equipped-jojo-inside-mobile"
               :key="'jojo-m-'+coinsStore.jojoVariantIndex"
             />
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'jojo' && coinsStore.jojoVariantIndex === 1" 
-              :src="jojotext" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'jojo' && coinsStore.jojoVariantIndex === 1"
+              :src="jojotext"
               :alt="equippedItem.name"
               class="equipped-jojotext-inside-mobile"
               :key="'jojotext-m-'+coinsStore.jojoVariantIndex"
             />
                   <!-- Item Espace (spacestars à l'intérieur + asteroide par-dessus) (mobile) -->
-                  <img 
-                    v-if="equippedItem && equippedItem.displayType === 'espace'" 
-                    :src="spacestars" 
+                  <img
+                    v-if="equippedItem && equippedItem.displayType === 'espace'"
+                    :src="spacestars"
                     :alt="equippedItem.name"
                     class="equipped-spacestars-inside-mobile"
                   />
-                  <img 
-                    v-if="equippedItem && equippedItem.displayType === 'espace'" 
-                    :src="asteroide" 
+                  <img
+                    v-if="equippedItem && equippedItem.displayType === 'espace'"
+                    :src="asteroide"
                     :alt="equippedItem.name"
                     class="equipped-asteroide-overlay-mobile"
                   />
@@ -596,196 +596,196 @@
                 :style="getDynNavbarOverlayStyle(a)"
               />
             </template>
-            <img 
-              v-if="equippedItem && (equippedItem.name === 'Coeur' || equippedItem.displayType === 'coeur')" 
-              :src="coeur" 
+            <img
+              v-if="equippedItem && (equippedItem.name === 'Coeur' || equippedItem.displayType === 'coeur')"
+              :src="coeur"
               :alt="equippedItem.name"
               class="equipped-coeur-overlay-mobile"
             />
               <!-- Item équipé générique (mobile) – ne pas doubler si item dynamique -->
-              <img 
-                v-if="equippedItem && equippedItem.displayType === 'generic' && !equippedDynItem && equippedItem.name !== 'Galaxie' && equippedItem.name !== 'Coeur' && equippedItem.name !== 'Étoiles'" 
-                :src="equippedItem.img" 
+              <img
+                v-if="equippedItem && equippedItem.displayType === 'generic' && !equippedDynItem && equippedItem.name !== 'Galaxie' && equippedItem.name !== 'Coeur' && equippedItem.name !== 'Étoiles'"
+                :src="equippedItem.img"
                 :alt="equippedItem.name"
                 class="equipped-item-overlay-mobile"
                 :class="getEquippedItemClass(equippedItem.name)"
               />
               <!-- Item Ange par-dessus le bouton account (mobile) -->
-              <img 
-                v-if="equippedItem && equippedItem.displayType === 'angel'" 
-                :src="equippedItem.img || angelwings" 
+              <img
+                v-if="equippedItem && equippedItem.displayType === 'angel'"
+                :src="equippedItem.img || angelwings"
                 :alt="equippedItem.name"
                 class="equipped-angel-wings-mobile"
               />
               <!-- Item Étoiles par-dessus le bouton account (mobile) -->
-              <img 
-                v-if="equippedItem && (equippedItem.displayType === 'etoiles' || equippedItem.name === 'Étoiles')" 
-                :src="star" 
+              <img
+                v-if="equippedItem && (equippedItem.displayType === 'etoiles' || equippedItem.name === 'Étoiles')"
+                :src="star"
                 :alt="equippedItem.name"
                 class="equipped-stars"
               />
               <!-- Item Alpha par-dessus le bouton account (mobile) -->
-              <img 
-                v-if="equippedItem && (equippedItem.displayType === 'alpha' || equippedItem.name === 'Alpha')" 
-                :src="alphaImg" 
+              <img
+                v-if="equippedItem && (equippedItem.displayType === 'alpha' || equippedItem.name === 'Alpha')"
+                :src="alphaImg"
                 :alt="equippedItem.name"
                 class="equipped-alpha-overlay-mobile"
               />
               <!-- Item Admin Planify par-dessus le bouton account (mobile) -->
-              <img 
-                v-if="equippedItem && (equippedItem.displayType === 'admin-planify' || equippedItem.name === 'Admin Planify')" 
-                :src="adminPlanify" 
+              <img
+                v-if="equippedItem && (equippedItem.displayType === 'admin-planify' || equippedItem.name === 'Admin Planify')"
+                :src="adminPlanify"
                 :alt="equippedItem.name"
                 class="equipped-admin-planify-overlay-mobile"
               />
               <!-- Item Tomb Raider derrière le bouton account (mobile) -->
-              <img 
-                v-if="equippedItem && equippedItem.displayType === 'tomb-raider'" 
-                :src="laracroft" 
+              <img
+                v-if="equippedItem && equippedItem.displayType === 'tomb-raider'"
+                :src="laracroft"
                 :alt="equippedItem.name"
                 class="equipped-tomb-raider-mobile"
               />
               <!-- Item Clown par-dessus le bouton account (mobile) -->
-              <img 
-                v-if="equippedItem && equippedItem.displayType === 'clown'" 
-                :src="clowncheveux" 
+              <img
+                v-if="equippedItem && equippedItem.displayType === 'clown'"
+                :src="clowncheveux"
                 :alt="equippedItem.name"
                 class="equipped-clown-overlay-mobile"
               />
               <!-- Item Roi par-dessus le bouton account (mobile) -->
-              <img 
-                v-if="equippedItem && equippedItem.displayType === 'roi'" 
-                :src="roi" 
+              <img
+                v-if="equippedItem && equippedItem.displayType === 'roi'"
+                :src="roi"
                 :alt="equippedItem.name"
                 class="equipped-roi-overlay-mobile"
               />
               <!-- Item Gentleman (moustache à l'intérieur + chapeau par-dessus) (mobile) -->
-              <img 
-                v-if="equippedItem && equippedItem.displayType === 'gentleman'" 
-                :src="moustache" 
+              <img
+                v-if="equippedItem && equippedItem.displayType === 'gentleman'"
+                :src="moustache"
                 :alt="equippedItem.name"
                 class="equipped-moustache-inside-mobile"
               />
-              <img 
-                v-if="equippedItem && equippedItem.displayType === 'gentleman'" 
-                :src="gentleman" 
+              <img
+                v-if="equippedItem && equippedItem.displayType === 'gentleman'"
+                :src="gentleman"
                 :alt="equippedItem.name"
                 class="equipped-gentleman-overlay-mobile"
               />
               <!-- Item Vinyle par-dessus le bouton account (mobile) -->
-              <img 
-                v-if="equippedItem && equippedItem.displayType === 'vinyle'" 
-                :src="vinyle" 
+              <img
+                v-if="equippedItem && equippedItem.displayType === 'vinyle'"
+                :src="vinyle"
                 :alt="equippedItem.name"
                 class="equipped-vinyle-overlay-mobile"
               />
               <!-- Item Flash (flash + camera par-dessus) (mobile) -->
-              <img 
-                v-if="equippedItem && equippedItem.displayType === 'flash'" 
-                :src="flash" 
+              <img
+                v-if="equippedItem && equippedItem.displayType === 'flash'"
+                :src="flash"
                 :alt="equippedItem.name"
                 class="equipped-flash-overlay-mobile"
               />
-              <img 
-                v-if="equippedItem && equippedItem.displayType === 'flash'" 
-                :src="camera" 
+              <img
+                v-if="equippedItem && equippedItem.displayType === 'flash'"
+                :src="camera"
                 :alt="equippedItem.name"
                 class="equipped-camera-overlay-mobile"
               />
               <!-- Item Miaou (pate à l'intérieur + chat par-dessus) (mobile) -->
-              <img 
-                v-if="equippedItem && equippedItem.displayType === 'miaou'" 
-                :src="pate" 
+              <img
+                v-if="equippedItem && equippedItem.displayType === 'miaou'"
+                :src="pate"
                 :alt="equippedItem.name"
                 class="equipped-pate-inside-mobile"
               />
-              <img 
-                v-if="equippedItem && equippedItem.displayType === 'miaou'" 
-                :src="chat" 
+              <img
+                v-if="equippedItem && equippedItem.displayType === 'miaou'"
+                :src="chat"
                 :alt="equippedItem.name"
                 class="equipped-chat-overlay-mobile"
               />
               <!-- Item DVD à l'intérieur de l'avatar (mobile) -->
-              <img 
-                v-if="equippedItem && equippedItem.displayType === 'dvd'" 
-                :src="dvd" 
+              <img
+                v-if="equippedItem && equippedItem.displayType === 'dvd'"
+                :src="dvd"
                 :alt="equippedItem.name"
                 class="equipped-dvd-inside-mobile"
               />
             <!-- Item Lunettes pixel à l'intérieur de l'avatar (mobile) -->
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'lunettes-pixel'" 
-              :src="mlglunette" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'lunettes-pixel'"
+              :src="mlglunette"
               :alt="equippedItem.name"
               class="equipped-lunettes-pixel-inside-mobile"
             />
             <!-- Item 2000 à l'intérieur de l'avatar (mobile) -->
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'nokia'" 
-              :src="nokia" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'nokia'"
+              :src="nokia"
               :alt="equippedItem.name"
               class="equipped-nokia-inside-mobile"
             />
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'nokia'" 
-              :src="clippy" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'nokia'"
+              :src="clippy"
               :alt="equippedItem.name"
               class="equipped-clippy-inside-mobile"
             />
             <!-- Item Oreillettes de chat par-dessus le bouton account (mobile) -->
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'cat-ears'" 
-              :src="equippedItem.img" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'cat-ears'"
+              :src="equippedItem.img"
               :alt="equippedItem.name"
               class="equipped-cat-ears-mobile"
             />
             <!-- Item Cadre royale par-dessus le bouton account (mobile) -->
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'royal-frame'" 
-              :src="equippedItem.img" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'royal-frame'"
+              :src="equippedItem.img"
               :alt="equippedItem.name"
               class="equipped-royal-frame-mobile"
             />
             <!-- Item Roses par-dessus le bouton account (mobile) -->
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'rainbow'" 
-              :src="equippedItem.img" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'rainbow'"
+              :src="equippedItem.img"
               :alt="equippedItem.name"
               class="equipped-rainbow-mobile"
             />
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'nokia'" 
-              :src="daftpunk" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'nokia'"
+              :src="daftpunk"
               :alt="equippedItem.name"
               class="equipped-daftpunk-overlay-mobile"
             />
             <!-- Item Absolute Cinema par-dessus le bouton account (mobile) -->
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'absolute-cinema'" 
-              :src="bras" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'absolute-cinema'"
+              :src="bras"
               :alt="equippedItem.name"
               class="equipped-absolute-cinema-overlay-mobile"
             />
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'absolute-cinema'" 
-              :src="bras" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'absolute-cinema'"
+              :src="bras"
               :alt="equippedItem.name"
               class="equipped-absolute-cinema-overlay-right-mobile"
             />
             <!-- Nez de clown centré sur l'avatar (mobile) -->
-            <img 
-              v-if="equippedItem && equippedItem.displayType === 'clown'" 
-              :src="clownnose" 
+            <img
+              v-if="equippedItem && equippedItem.displayType === 'clown'"
+              :src="clownnose"
               alt="Nez de clown"
               class="equipped-clown-nose-mobile"
             />
 
-              <input 
-                ref="fileInputMobile" 
-                type="file" 
-                accept="image/*" 
-                style="display:none;" 
-                @change="handleAvatarUpload" 
+              <input
+                ref="fileInputMobile"
+                type="file"
+                accept="image/*"
+                style="display:none;"
+                @change="handleAvatarUpload"
               />
               <div v-if="showUserDropdown" class="user-dropdown" @click.stop>
                 <button class="dropdown-item" @click="handleProfile">Profil</button>
@@ -805,7 +805,7 @@
     <LoginPopup v-if="showLoginPopup" @close="showLoginPopup = false" @login-success="handleLoginSuccess" />
     <EphemeralPopup />
     <ForgotPasswordPopup v-if="showForgotPasswordProfile" @close="showForgotPasswordProfile = false" />
-    
+
     <!-- Modal Roue de la Fortune -->
     <div v-if="showFortuneWheel" class="fortune-wheel-overlay" @click.self="closeFortuneWheel">
       <div class="fortune-wheel-modal">
@@ -818,7 +818,7 @@
           Tournez la roue pour gagner des PlanifyCoins !
           <span v-if="isWeekend" class="weekend-bonus">🎉 WEEKEND BONUS x1.5 !</span>
         </p>
-        
+
         <div class="fortune-wheel-container">
           <!-- Debug: Afficher les segments -->
           <div style="display: none;">
@@ -846,7 +846,7 @@
             <button class="test-btn" @click="forceLossOnce">Forcer Perdu</button>
           </div>
         </div>
-        
+
                 <div class="coins-info">
           <p>
             Vos PlanifyCoins actuels :
@@ -860,7 +860,7 @@
         <div v-if="spinMessage" class="spin-message">{{ spinMessage }}</div>
       </div>
     </div>
-    
+
     <div v-if="showProfilePopup" class="profile-popup-overlay" @click.self="closeProfilePopup">
       <div class="profile-popup">
         <div class="profile-popup-header">
@@ -1856,11 +1856,11 @@ const getDynVariantAssetsForNavbar = (item) => {
     if (!item || !item.variants || !Array.isArray(item.variants)) {
       return []
     }
-    
+
     // Utiliser legacyId si disponible, sinon id
     const itemId = item.legacyId !== undefined ? item.legacyId : item.id
     const variantIndex = coinsStore.getDynamicItemVariant(itemId)
-    
+
     const variant = item.variants[variantIndex]
     if (!variant) {
       return []
@@ -1868,7 +1868,7 @@ const getDynVariantAssetsForNavbar = (item) => {
 
     const variantPlacements = Array.isArray(variant.navbarPlacements) ? variant.navbarPlacements : null
     const basePlacements = item && item.meta && Array.isArray(item.meta.navbarPlacements) ? item.meta.navbarPlacements : null
-    
+
     // Si c'est un style texte uniquement, retourner les assets de la base avec les styles de la variante
     if (variant.textOnly) {
       const baseAssets = Array.isArray(item.assets) ? item.assets : []
@@ -1920,7 +1920,7 @@ const getDynVariantAssetsForNavbar = (item) => {
         }
       })
     }
-    
+
     if (!Array.isArray(variant.assets)) {
       return []
     }
@@ -2140,6 +2140,16 @@ function getEffectiveProfilePopupTarget(item, asset) {
     if (explicit) return String(explicit)
     const itemLevel = item && item.meta && item.meta.profilePopupTarget
     if (itemLevel) return String(itemLevel)
+    const mobile = isProfilePopupLargeAvatarMobile()
+    const ps = mobile
+      ? (asset?.profilePopupStyleMobile || asset?.profilePopupStyle)
+      : (asset?.profilePopupStyle || asset?.profilePopupStyleMobile)
+    const pt = typeof ps?.top === 'number' ? ps.top : 0
+    const pl = typeof ps?.left === 'number' ? ps.left : 0
+    const pw = typeof ps?.width === 'number' ? ps.width : 100
+    const pr = typeof ps?.rotate === 'number' ? ps.rotate : 0
+    const pNonDefault = !(pt === 0 && pl === 0 && pw === 100 && pr === 0)
+    if (pNonDefault) return 'profile-avatar-scaler'
     // Rétro-compat: déduire depuis navbarTarget/container
     const nb = (asset && asset.meta && asset.meta.navbarTarget) || (item && item.meta && item.meta.navbarTarget)
     if (nb === 'avatar-image-container') return 'profile-avatar'
@@ -2268,7 +2278,7 @@ function subscribeYouTubePlayer() {
     // Envoi de l'événement listening avec channel widget pour compatibilité accrue
     iframe.contentWindow.postMessage(JSON.stringify({ event: 'listening', id, channel: 'widget' }), '*')
     iframe.contentWindow.postMessage(JSON.stringify({ event: 'listening', id }), '*')
-    
+
     sendYouTubeCommand('addEventListener', ['onReady'])
     sendYouTubeCommand('addEventListener', ['onStateChange'])
     sendYouTubeCommand('getDuration')
@@ -2366,8 +2376,8 @@ function getDynNavbarOverlayStyle(asset) {
 function getDynProfilePopupAssetStyle(asset) {
   const mobile = isProfilePopupLargeAvatarMobile()
   const s = mobile
-    ? (asset?.largeAvatarStyleMobile || asset?.largeAvatarStyle || asset?.profilePopupStyleMobile || asset?.profilePopupStyle || asset?.navbarStyleMobile || asset?.navbarStyle || asset?.style || {})
-    : (asset?.largeAvatarStyle || asset?.profilePopupStyle || asset?.navbarStyle || asset?.style || {})
+    ? (asset?.profilePopupStyleMobile || asset?.profilePopupStyle || asset?.largeAvatarStyleMobile || asset?.largeAvatarStyle || asset?.navbarStyleMobile || asset?.navbarStyle || asset?.style || {})
+    : (asset?.profilePopupStyle || asset?.profilePopupStyleMobile || asset?.largeAvatarStyle || asset?.navbarStyle || asset?.style || {})
   const placement = asset?.meta?.profilePopupPlacement ?? asset?.meta?.navbarPlacement
   const style = { position: 'absolute', objectFit: s.objectFit || 'contain', pointerEvents: 'none' }
   if (typeof s.top === 'number') style.top = s.top + 'px'
@@ -2440,8 +2450,28 @@ async function loadDynamicItems() {
   try {
     const res = await secureApiCall('/items')
     if (res && res.success && Array.isArray(res.items)) {
+      const normalized = res.items.map((it) => ({
+        id: (it.legacyId !== undefined && it.legacyId !== null) ? it.legacyId : (it.id ?? it._id ?? (it.meta && (it.meta.serverItemId || it.meta.localItemId))),
+        legacyId: (it.legacyId !== undefined && it.legacyId !== null) ? it.legacyId : (it.id ?? it._id ?? (it.meta && (it.meta.serverItemId || it.meta.localItemId))),
+        name: it.name,
+        price: Number(it.price) || 0,
+        isDynamic: true,
+        isSuggested: !!it.isSuggested,
+        infoOnly: !!it.infoOnly,
+        infoDescription: it.infoDescription || null,
+        assets: Array.isArray(it.assets) ? it.assets : [],
+        backgrounds: it.backgrounds || {},
+        variants: Array.isArray(it.variants) ? it.variants.map(v => ({
+          ...v,
+          showText: !!v.showText,
+          textOnly: !!v.textOnly,
+          textContent: v.textContent || ''
+        })) : [],
+        meta: (it && typeof it.meta === 'object') ? it.meta : {},
+        variantIndex: 0
+      }))
       const map = new Map()
-      for (const it of res.items) {
+      for (const it of normalized) {
         if (typeof it.legacyId !== 'undefined') map.set(Number(it.legacyId), it)
         if (typeof it.id !== 'undefined') map.set(Number(it.id), it)
       }
@@ -2497,15 +2527,15 @@ onMounted(() => {
   try { window.addEventListener('popstate', () => { previewItem.value = null; previewBorderColorId.value = null }) } catch {}
   try { window.addEventListener('hashchange', () => { previewItem.value = null; previewBorderColorId.value = null }) } catch {}
   // Écouter les changements de variantes pour forcer la mise à jour de la navbar
-  try { 
-    window.addEventListener('dynamic-variant-changed', (event) => { 
+  try {
+    window.addEventListener('dynamic-variant-changed', (event) => {
       console.log('📡 Navbar: Événement dynamic-variant-changed reçu:', event.detail)
       navbarVariantUpdateKey.value++
       console.log('🔄 Navbar: Clé de mise à jour incrémentée:', navbarVariantUpdateKey.value)
-    }) 
+    })
   } catch {}
 })
-onUnmounted(() => { 
+onUnmounted(() => {
   try { window.removeEventListener('items-changed', loadDynamicItems) } catch {}
   try { window.removeEventListener('dynamic-variant-changed', () => { navbarVariantUpdateKey.value++ }) } catch {}
 })
@@ -2729,10 +2759,10 @@ async function handleSpinRequest() {
   spinMessage.value = ''
   // Ne masque plus les indicateurs: le bouclier reste visible pendant le spin
   showProtectionIndicators.value = true
-  
+
   try {
     const result = await coinsStore.spinWheelRaw()
-    
+
     if (result.success) {
       // Chercher l'index du segment correspondant à la récompense
       let index = -1
@@ -2766,17 +2796,17 @@ async function handleSpinRequest() {
         console.log('⚠️ wheelSegments non disponible ou invalide:', wheelSegments.value)
         index = 0
       }
-      
+
       console.log('🎯 Index final sélectionné:', index, 'pour la récompense:', result.rewardName)
       if (wheelSegments.value && wheelSegments.value[index]) {
         console.log('🎯 Segment correspondant:', wheelSegments.value[index])
       } else {
         console.log('⚠️ Segment non trouvé à l\'index:', index)
       }
-      
+
       // Stocker le résultat pour l'utiliser dans handleWheelResult
       lastSpinResult.value = result
-      
+
       // Forcer l'animation à s'arrêter sur le bon segment
       forcedResultIndex.value = index
     } else {
@@ -2788,7 +2818,7 @@ async function handleSpinRequest() {
       }
       spinning.value = false
     }
-    
+
   } catch (e) {
     console.error('❌ Erreur lors du spin:', e)
     spinMessage.value = 'Erreur lors du tirage de la roue.'
@@ -2799,7 +2829,7 @@ async function handleSpinRequest() {
 // Nouvelle version de handleWheelResult
 async function handleWheelResult(segment) {
   console.log('🎉 Résultat de la roue (animation):', segment)
-  
+
   // Mettre à jour le solde maintenant que l'animation est terminée
   if (lastSpinResult.value && lastSpinResult.value.success) {
     // Mise à jour optimiste immédiate
@@ -2821,7 +2851,7 @@ async function handleWheelResult(segment) {
     await coinsStore.loadBalance()
     lastSpinResult.value = null
   }
-  
+
   // Gérer le cas Perdu et les récompenses positives
   if (segment.label === 'Perdu') {
     // Met à jour la série de pertes et l'état de protection
@@ -2860,7 +2890,7 @@ async function handleWheelResult(segment) {
       ? `🎉 WEEKEND BONUS x1.5 ! Félicitations ! Vous avez gagné ${won} coins !`
       : `🎉 Félicitations ! Vous avez gagné ${won} coins !`
   }
-  
+
   // Toujours recharger le statut et mettre à jour le timer après le spin
   await coinsStore.loadSpinStatus()
   checkSpinAvailability()
@@ -3191,7 +3221,7 @@ function handleLoginSuccess(payload) {
   auth.login(payload.user, payload.rememberMe !== false);
   showLoginPopup.value = false;
   passwordValue.value = payload.password;
-  
+
   // Charger l'avatar après connexion via endpoint public par userId
   const src = getAvatarUrlForUser(payload.user)
   if (src) {
@@ -3201,11 +3231,11 @@ function handleLoginSuccess(payload) {
     console.log('❌ Impossible de déterminer l\'URL avatar, chargement depuis la DB...');
     loadUserAvatar();
   }
-  
+
   // Charger les coins après connexion
   loadUserCoins();
   checkSpinAvailability();
-  
+
   window.location.reload(); // Ajout pour refresh global après connexion
 }
 function logout() {
@@ -3214,10 +3244,10 @@ function logout() {
   showUserDropdown.value = false
   showProfilePopup.value = false
   userAvatar.value = FALLBACK_AVATAR_DATA_URL; // Remettre l'icône par défaut
-  
+
   // Remettre l'icône par défaut
   userAvatar.value = FALLBACK_AVATAR_DATA_URL;
-  
+
   router.push('/')
 }
 function handleProfile() {
@@ -3422,7 +3452,7 @@ watch(musicVolume, (v) => {
       // IMPORTANT : D'abord définir le volume, PUIS gérer le mute/unmute
       // Cela corrige le bug où le son reste coupé en remontant de 0
       sendYouTubeCommand('setVolume', [v100])
-      
+
       if (v100 > 0) {
         sendYouTubeCommand('unMute')
         // Synchro état local
@@ -3433,7 +3463,7 @@ watch(musicVolume, (v) => {
       }
     }
   } catch {}
-  
+
   try { localStorage.setItem('musicVolume', String(v100)) } catch {}
 })
 
@@ -3912,7 +3942,7 @@ function toggleProfileMute() {
     const el = profileAudioEl?.value
     const next = !isProfileMuted.value
     isProfileMuted.value = next
-    
+
     if (next) {
       if (musicVolume.value > 0) { previousVolume.value = musicVolume.value }
       musicVolume.value = 0
@@ -4324,11 +4354,11 @@ onMounted(async () => {
 
   handleResize();
   window.addEventListener('resize', handleResize);
-  
+
   if (user.value && user.value.id) {
     loadUserAvatar();
   }
-  
+
   if (user.value) {
     await coinsStore.initialize();
     checkSpinAvailability();
@@ -4338,7 +4368,7 @@ onMounted(async () => {
       if (arr.length) { try { localStorage.setItem('planify_leaderboard_cache_v1', JSON.stringify({ ts: Date.now(), users: arr })) } catch {} }
     } catch {}
   }
-  
+
   setInterval(updateSpinTimer, 60000);
 });
 
@@ -4360,7 +4390,7 @@ watch(user, async (newUser) => {
       publicNoteDraft.value = serverNote
       lastSyncedPublicNote.value = serverNote
     }
-    
+
     await coinsStore.initialize();
     checkSpinAvailability();
   } else {
@@ -4665,7 +4695,7 @@ body, html {
   background: #e0e0e0;
   border-radius: 50%;
   box-shadow: 0 0 0 4px #e0e0e0, 0 4px 16px #0002;
-  
+
 }
 .coins-display {
   font-size: 1.1em;
@@ -6914,8 +6944,8 @@ top: 2px;
 /* -------------------------------------------------------------- */
 
 /* Popup: 140x140 (contenu) + bordures = 150px */
-.profile-popup { 
-  --profile-avatar-size: 150px; 
+.profile-popup {
+  --profile-avatar-size: 150px;
 }
 
 .profile-popup .profile-avatar-stage {

@@ -19,26 +19,26 @@
         </div>
         <div class="header-right">
           <div class="shop-tabs">
-        <button 
-          class="tab-btn" 
-          :class="{ active: activeTab === 'main' }" 
+        <button
+          class="tab-btn"
+          :class="{ active: activeTab === 'main' }"
           @click="activeTab = 'main'"
         >
           Collection
         </button>
-        <button 
-          class="tab-btn" 
-          :class="{ active: activeTab === 'weekly' }" 
+        <button
+          class="tab-btn"
+          :class="{ active: activeTab === 'weekly' }"
           @click="switchToWeeklyTab"
         >
           Boutique
           <span v-if="showWeeklyResetNotification" class="weekly-reset-notification">3</span>
         </button>
         <!-- Onglet Leaderboard: visible si non prof OU prof avec leaderboard activé -->
-        <button 
+        <button
           v-if="showLeaderboardTab"
-          class="tab-btn" 
-          :class="{ active: activeTab === 'leaderboard' }" 
+          class="tab-btn"
+          :class="{ active: activeTab === 'leaderboard' }"
           @click="activeTab = 'leaderboard'; showSuggestionEditor = false"
         >
           Leaderboard
@@ -68,8 +68,8 @@
         >
           {{ shopLeaderboardBusy ? 'Mise à jour...' : (authStore.user?.leaderboardEnabled ? 'Désactiver le leaderboard' : 'Activer le leaderboard') }}
         </button>
-      
-      
+
+
 
 
       <!-- Collection -->
@@ -255,7 +255,7 @@
               <div class="preview-title">Aperçu Leaderboard</div>
               <div class="preview-list">
                 <div class="leaderboard-item" v-for="(u, ui) in suggestLeaderboardUsers" :key="'sl-u-'+ui">
-                  
+
                   <div class="user-avatar-container">
                     <div class="user-avatar" :class="{ 'no-border': removeLeaderboardBorder }">
                       <div class="avatar-img" style="position:relative;">
@@ -364,12 +364,12 @@
         </div>
       </div>
       <div v-if="activeTab === 'main' && !showSuggestionEditor" class="shop-grid collection-grid" :class="{ 'my-items-grid': showMyItemsPanel }">
-        <div 
-          v-for="(item, index) in (showMyItemsPanel ? myCreatedItems : filteredCollectionItems)" 
-          :key="item.id" 
-          class="shop-item collection-item" 
-          :class="{ 
-            'not-owned': !coinsStore.hasItem(item.id), 
+        <div
+          v-for="(item, index) in (showMyItemsPanel ? myCreatedItems : filteredCollectionItems)"
+          :key="item.id"
+          class="shop-item collection-item"
+          :class="{
+            'not-owned': !coinsStore.hasItem(item.id),
             'owned': coinsStore.hasItem(item.id) && !coinsStore.isItemEquipped(item.id),
             'equipped': coinsStore.isItemEquipped(item.id)
           }"
@@ -379,7 +379,7 @@
           <!-- Cadenas pour les items verrouillés -->
           <div v-if="!coinsStore.hasItem(item.id)" class="lock-icon">🔒</div>
           <!-- Palette pour Discord: switch d'apparence (affichée même si non possédé) -->
-          <button 
+          <button
             v-if="item.name === 'Discord'"
             class="palette-icon"
             type="button"
@@ -388,9 +388,9 @@
           >
             <img :src="styleIcon" alt="Palette" style="width: 18px; height: 18px; object-fit: contain;" />
           </button>
-          
+
           <!-- Palette pour Jojo: activer/désactiver le texte (affichée même si non possédé) -->
-          <button 
+          <button
             v-if="item.name === 'Jojo'"
             class="palette-icon"
             type="button"
@@ -399,9 +399,9 @@
           >
             <img :src="styleIcon" alt="Palette" style="width: 18px; height: 18px; object-fit: contain;" />
           </button>
-          
+
           <!-- Palette pour les items dynamiques avec variantes (affichée même si non possédé) -->
-          <button 
+          <button
             v-if="item.isDynamic && Array.isArray(item.variants) && item.variants.length > 0"
             class="palette-icon"
             type="button"
@@ -412,7 +412,7 @@
           </button>
 
           <!-- Favori: même composant visuel que palette-icon; sous la palette si l'item a des styles, sinon à sa place -->
-          <button 
+          <button
             class="palette-icon"
             type="button"
             :style="{ top: (item.name === 'Discord' || item.name === 'Jojo' || (item.isDynamic && Array.isArray(item.variants) && item.variants.length > 0)) ? '40px' : '8px', left: '10px' }"
@@ -423,7 +423,7 @@
           >
             <img :src="getFavoriteIconSrc(getStableItemId(item), hoverFavIndex === index)" alt="Favori" style="width: 18px; height: 18px; object-fit: contain;" />
           </button>
-          
+
                       <div class="item-img-wrapper" :style="item.name === 'Roi' || item.name === 'Matrix' || item.name === 'Oreilles de chat' || item.name === 'Ange' || item.name === 'Tomb Raider' || item.name === 'Clown' || item.name === 'Cash' || item.name === 'Cible' || item.name === 'Étoiles' || item.name === 'Cadre royale' || item.name === 'Roses' || item.name === 'Gentleman' || item.name === 'Vinyle' || item.name === 'Advisory' || item.name === 'Espace' || item.name === 'Absolute Cinema' || item.name === 'Flash' || item.name === 'Miaou' || item.name === 'DVD' || item.name === 'Lunettes pixel' || item.name === '2000' ? 'background: #fff;' : ''">
               <div v-if="item.name !== 'Cash'" class="item-img-container" :key="item.name === 'Jojo' ? 'jj-'+jojoAnimKey : 'imgc-'+index" :class="{ 'black-bg': item.name === 'Étoiles' || item.name === 'Espace' || item.name === 'DVD', 'jojo-bg-anim': (item.displayType === 'jojo' || item.name === 'Jojo') }">
                 <!-- Aperçu couleur pour Bordure classique (aucune image) -->
@@ -443,7 +443,7 @@
                 </template>
 
                 <img v-else-if="item.id !== 0 && item.name !== 'Matrix' && item.name !== 'Clown' && item.name !== 'Cash' && item.name !== 'Roi' && item.name !== 'Cible' && item.name !== 'Étoiles' && item.name !== 'Cadre royale' && item.name !== 'Roses' && item.name !== 'Gentleman' && item.name !== 'Vinyle' && item.name !== 'Advisory' && item.name !== 'Espace' && item.name !== 'Absolute Cinema' && item.name !== 'Flash' && item.name !== 'Miaou' && item.name !== 'DVD' && item.name !== 'Lunettes pixel' && item.name !== '2000' && item.name !== 'Ange' && item.name !== 'Discord' && item.name !== 'Jojo' && item.name !== 'Galaxie' && item.name !== 'Coeur' && item.name !== 'Prestige' && item.name !== 'Planify'" :src="item.img" :alt="item.name" class="item-img" loading="lazy" />
-              
+
                 <!-- Animation Matrix -->
                 <div v-if="item.name === 'Matrix'" class="matrix-rain-inside-shop">
                   <div class="matrix-column" v-for="(col, ci) in getMatrixColumns(item)" :key="'mc-'+ci" :style="{ left: (ci * 5) + '%', animationDelay: (col.delay) + 's' }">
@@ -451,25 +451,25 @@
                   </div>
                 </div>
                  <!-- Galaxie: mêmes positions que Discord mais classe dédiée -->
-                <img 
+                <img
                   v-if="item.name === 'Galaxie' && getUserEquippedItemData(authStore.user) && getUserEquippedItemData(authStore.user).name === 'Galaxie'"
                   :src="galaxie"
                   alt="Galaxie"
                   class="equipped-galaxie"
                 />
-                <img 
+                <img
                   v-if="item.name === 'Coeur' && getUserEquippedItemData(authStore.user) && (getUserEquippedItemData(authStore.user).name === 'Coeur' || getUserEquippedItemData(authStore.user).displayType === 'coeur')"
                   :src="coeur"
                   alt="Coeur"
                   class="equipped-coeur"
                 />
-              
+
               <!-- Item Clown -->
                 <div v-if="item.name === 'Clown'" class="clown-item-shop">
                   <img :src="clowncheveux" :alt="item.name" class="clown-hair-shop" loading="lazy" />
                   <img :src="clownnose" alt="Nez de clown" class="clown-nose-shop" loading="lazy" />
                 </div>
-              
+
               <!-- Item Cash -->
 
 
@@ -477,12 +477,12 @@
                 <div v-if="item.name === 'Roi'" class="roi-item-shop">
                   <img :src="roi" :alt="item.name" class="roi-img-shop" loading="lazy" />
                 </div>
-              
+
               <!-- Item Ange -->
                 <div v-if="item.name === 'Ange'" class="angel-item-shop">
                   <img :src="angelwings" :alt="item.name" class="angel-img-shop" loading="lazy" />
                 </div>
-              
+
               <!-- Item Discord -->
                 <div v-if="item.name === 'Discord'" class="discord-item-shop">
                   <img :src="discordDisplayImg" :alt="item.name" class="discord-img-shop" loading="lazy" />
@@ -492,35 +492,35 @@
                   <img :key="'c-jojo-'+jojoAnimKey" :src="jojo" :alt="item.name" class="jojo-img-shop jojo-swipe jojo-sepia-anim" :style="getJojoImgStyle()" />
                   <img v-if="coinsStore.jojoVariantIndex === 1" :key="'c-jojotext-'+jojoAnimKey" :src="jojotext" alt="Jojo texte" class="jojo-text-preview jojotext-fade" :style="getCollectionJojoTextStyle()" />
                 </div>
-              
-              
-              
+
+
+
               <!-- Item Cible -->
                 <div v-if="item.name === 'Cible'" class="target-animation-shop">
                   <img :src="target" :alt="item.name" class="target-img-shop" />
                 </div>
-              
+
               <!-- Item Étoiles -->
                 <div v-if="item.name === 'Étoiles'" class="stars-item-shop">
                   <img :src="star" :alt="item.name" class="stars-img-shop" />
                 </div>
-              
+
               <!-- Item Cadre royale -->
                 <div v-if="item.name === 'Cadre royale'" class="royal-frame-item-shop">
                   <img :src="cadre" :alt="item.name" class="royal-frame-img-shop" />
                 </div>
-              
+
               <!-- Item Roses -->
                 <div v-if="item.name === 'Roses'" class="rainbow-item-shop">
                   <img :src="love" :alt="item.name" class="rainbow-img-shop" />
                 </div>
-              
+
               <!-- Item Gentleman -->
                 <div v-if="item.name === 'Gentleman'" class="gentleman-item-shop">
                   <img :src="moustache" :alt="item.name" class="moustache-img-shop" />
                   <img :src="gentleman" :alt="item.name" class="gentleman-img-shop" />
                 </div>
-              
+
               <!-- Item Vinyle -->
                 <div v-if="item.name === 'Vinyle'" class="vinyle-item-shop">
                   <img :src="vinyle" :alt="item.name" class="vinyle-img-shop" />
@@ -541,46 +541,46 @@
                 <div v-if="item.name === 'Planify'" class="admin-planify-item-shop">
                   <img :src="adminPlanify" :alt="item.name" class="admin-planify-img-shop" />
                 </div>
-              
+
               <!-- Item Advisory -->
                 <div v-if="item.name === 'Advisory'" class="advisory-item-shop">
                   <img :src="advisory" :alt="item.name" class="advisory-img-shop" />
                 </div>
-              
+
               <!-- Item Espace -->
                 <div v-if="item.name === 'Espace'" class="espace-item-shop">
                   <img :src="spacestars" :alt="item.name" class="spacestars-img-shop" />
                   <img :src="asteroide" :alt="item.name" class="asteroide-img-shop" />
                 </div>
-              
+
               <!-- Item Absolute Cinema -->
                 <div v-if="item.name === 'Absolute Cinema'" class="absolute-cinema-item-shop">
                   <img :src="bras" :alt="item.name" class="absolute-cinema-img-shop" />
                   <img :src="bras" :alt="item.name" class="absolute-cinema-img-shop-right" />
                 </div>
-              
+
               <!-- Item Flash -->
                 <div v-if="item.name === 'Flash'" class="flash-item-shop">
                   <img :src="flash" :alt="item.name" class="flash-img-shop" />
                   <img :src="camera" :alt="item.name" class="camera-img-shop" />
                 </div>
-              
+
               <!-- Item Miaou -->
                 <div v-if="item.name === 'Miaou'" class="miaou-item-shop">
                   <img :src="chat" :alt="item.name" class="chat-img-shop" />
                   <img :src="pate" :alt="item.name" class="pate-img-shop" />
                 </div>
-              
+
               <!-- Item DVD -->
                 <div v-if="item.name === 'DVD'" class="dvd-item-shop">
                   <img :src="dvd" :alt="item.name" class="dvd-img-shop" />
                 </div>
-              
+
               <!-- Item Lunettes pixel -->
                 <div v-if="item.name === 'Lunettes pixel'" class="lunettes-pixel-item-shop">
                   <img :src="mlglunette" :alt="item.name" class="lunettes-pixel-img-shop" />
                 </div>
-              
+
               <!-- Item 2000 -->
                 <div v-if="item.name === '2000'" class="nokia-item-shop">
                   <img :src="nokia" :alt="item.name" class="nokia-img-shop" />
@@ -650,7 +650,7 @@
               Supprimer
             </button>
           </div>
-          
+
           <!-- Rendu spécial pour Bordure classique -->
           <template v-else>
             <div class="classic-border-actions">
@@ -815,7 +815,7 @@
                         <img class="avatar-img" :src="getUserAvatar(authStore.user)" :alt="authStore.user?.username || 'Vous'" />
                         <img v-if="purchasePreviewItem && (purchasePreviewItem.displayType === 'clown' || purchasePreviewItem.name === 'Clown')" :src="clownnose" alt="Nez de clown" class="equipped-clown-nose" />
                         <img v-if="purchasePreviewItem && (purchasePreviewItem.displayType === 'cash' || purchasePreviewItem.name === 'Cash' || Number(purchasePreviewItem.id) === 3)" :src="cash" :alt="purchasePreviewItem?.name" class="equipped-cash-inside" />
-  
+
                         <img v-if="purchasePreviewItem && (purchasePreviewItem.displayType === 'target' || purchasePreviewItem.name === 'Cible' || purchasePreviewItem.name === 'Target')" :src="target" :alt="purchasePreviewItem?.name" class="equipped-target-inside" />
                         <img v-if="purchasePreviewItem && (purchasePreviewItem.displayType === 'advisory' || purchasePreviewItem.name === 'Advisory')" :src="advisory" :alt="purchasePreviewItem?.name" class="equipped-advisory-inside" />
                         <img v-if="purchasePreviewItem && (purchasePreviewItem.displayType === 'dvd' || purchasePreviewItem.name === 'DVD')" :src="dvd" :alt="purchasePreviewItem?.name" class="equipped-dvd-inside" />
@@ -855,7 +855,7 @@
                     <img v-if="purchasePreviewItem && (purchasePreviewItem.displayType === 'nokia' || purchasePreviewItem.name === '2000')" :src="daftpunk" :alt="purchasePreviewItem?.name" class="equipped-daftpunk-overlay" />
                     <img v-if="purchasePreviewItem && (purchasePreviewItem.displayType === 'nokia' || purchasePreviewItem.name === '2000')" :src="nokia" :alt="purchasePreviewItem?.name" class="equipped-nokia-inside" />
                     <img v-if="purchasePreviewItem && (purchasePreviewItem.displayType === 'nokia' || purchasePreviewItem.name === '2000')" :src="clippy" :alt="purchasePreviewItem?.name" class="equipped-clippy-inside" />
-                      
+
                     <div class="profile-avatar" :style="getPreviewBorderStyle(purchasePreviewItem)" :class="{ 'no-border': shouldRemoveProfilePopupBorder(purchasePreviewItem) }">
                       <img v-for="(a, ai) in getProfilePopupAssetsForTargetPlacement(purchasePreviewItem, 'profile-avatar', 'below')" :key="'pp-below-'+ai" :src="resolveAssetSrc(a.src)" :style="getDynProfilePopupAssetStyle(a)" />
 
@@ -947,7 +947,7 @@
                   />
                 </template>
                 <img v-if="!item.isDynamic && item.name !== 'Matrix' && item.name !== 'Clown' && item.name !== 'Cash' && item.name !== 'Roi' && item.name !== 'Cible' && item.name !== 'Étoiles' && item.name !== 'Cadre royale' && item.name !== 'Roses' && item.name !== 'Gentleman' && item.name !== 'Vinyle' && item.name !== 'Advisory' && item.name !== 'Espace' && item.name !== 'Absolute Cinema' && item.name !== 'Flash' && item.name !== 'Miaou' && item.name !== 'DVD' && item.name !== 'Lunettes pixel' && item.name !== '2000' && item.name !== 'Tomb Raider' && item.name !== 'Ange' && item.name !== 'Discord' && item.id != 23 && item.name !== 'Jojo' && item.name !== 'Galaxie' && item.name !== 'Coeur'" :src="item.img" :alt="item.name" class="item-img" />
-                
+
                 <!-- Animations spéciales pour les items hebdomadaires -->
                 <div v-if="item.name === 'Matrix'" class="matrix-rain-inside-shop">
                   <div class="matrix-column" v-for="(col, ci) in getMatrixColumns(item)" :key="'mw-'+ci" :style="{ left: (ci * 5) + '%', animationDelay: (col.delay) + 's' }">
@@ -1091,23 +1091,23 @@
       <div v-if="activeTab === 'leaderboard' && showLeaderboardTab" class="leaderboard-container">
         <!-- Filtres de tri (Mobile uniquement) -->
         <div class="leaderboard-filters mobile-only-filters">
-          <button 
-            class="filter-btn" 
-            :class="{ active: leaderboardFilter === 'coins' }" 
+          <button
+            class="filter-btn"
+            :class="{ active: leaderboardFilter === 'coins' }"
             @click="leaderboardFilter = 'coins'"
           >
             <img src="@/assets/img/planicoins.webp" alt="Coin" class="coin-icon" />
           </button>
-          <button 
-            class="filter-btn" 
-            :class="{ active: leaderboardFilter === 'tasks' }" 
+          <button
+            class="filter-btn"
+            :class="{ active: leaderboardFilter === 'tasks' }"
             @click="leaderboardFilter = 'tasks'"
           >
             <img src="@/assets/img/bouton_valider_cocher.png" alt="Tâches" class="coin-icon" />
           </button>
-          <button 
-            class="filter-btn" 
-            :class="{ active: leaderboardFilter === 'factions' }" 
+          <button
+            class="filter-btn"
+            :class="{ active: leaderboardFilter === 'factions' }"
             @click="leaderboardFilter = 'factions'"
           >
             ⚔️
@@ -1132,9 +1132,9 @@
                 </div>
               </div>
               <transition :name="justJoinedFaction === 'Bagnat' ? 'faction-join' : 'faction-join-static'" mode="out-in">
-                <button 
-                  v-if="userFaction !== 'Bagnat'" 
-                  @click="joinFaction('Bagnat')" 
+                <button
+                  v-if="userFaction !== 'Bagnat'"
+                  @click="joinFaction('Bagnat')"
                   :disabled="joiningFaction"
                   class="join-faction-btn"
                   key="join-bagnat"
@@ -1164,13 +1164,13 @@
                   <img v-for="(a, ai) in getLeaderboardAssetsForTargetPlacement(currentUserFactionEntry, getUserEquippedItemData(currentUserFactionEntry), 'user-avatar-container', 'above')" :key="'dyn-container-above-faction-bagnat-user-'+ai+'-'+dynamicVariantsState" :src="resolveAssetSrc(a.src)" :style="getDynLeaderboardContainerOverlayStyle(a)" class="dynamic-container-overlay" />
                   <div class="user-avatar-container" data-darkreader-ignore @click="openLeaderboardProfile(currentUserFactionEntry)">
                     <!-- Absolute Cinema: bras droit dans le user-avatar-container (Faction Bagnat - utilisateur courant) -->
-                    <img 
-                      v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'absolute-cinema'" 
-                      :src="bras" 
+                    <img
+                      v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'absolute-cinema'"
+                      :src="bras"
                       :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                       class="equipped-absolute-cinema-overlay-right"
                     />
-                    
+
                     <template v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).isDynamic">
                       <img
                         v-for="(a, ai) in getLeaderboardAssetsForTargetPlacement(currentUserFactionEntry, getUserEquippedItemData(currentUserFactionEntry), 'user-avatar-container', 'below')"
@@ -1187,82 +1187,82 @@
                         :class="getDynLeaderboardAssetClass(a)"
                       />
                     </template>
-                    <img 
+                    <img
                       v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'discord'"
                       :src="[discordon, discordnepasderange, discordderange][coinsStore.discordVariantIndex || 0]"
                       alt="Discord"
                       class="equipped-discord"
                     />
-                    <img 
+                    <img
                       v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).name === 'Galaxie'"
                       :src="galaxie"
                       alt="Galaxie"
                       class="equipped-galaxie"
                     />
-                    <img 
+                    <img
                       v-if="getUserEquippedItemData(currentUserFactionEntry) && (getUserEquippedItemData(currentUserFactionEntry).name === 'Coeur' || getUserEquippedItemData(currentUserFactionEntry).displayType === 'coeur')"
                       :src="coeur"
                       alt="Coeur"
                       class="equipped-coeur"
                     />
-                    <img 
+                    <img
                       v-if="getUserEquippedItemData(currentUserFactionEntry) && (getUserEquippedItemData(currentUserFactionEntry).name === 'Prestige' || getUserEquippedItemData(currentUserFactionEntry).displayType === 'alpha')"
                       :src="alphaImg"
                       :alt="'Prestige'"
                       class="equipped-alpha"
                     />
-                    <img 
+                    <img
                       v-if="getUserEquippedItemData(currentUserFactionEntry) && (getUserEquippedItemData(currentUserFactionEntry).name === 'Planify' || getUserEquippedItemData(currentUserFactionEntry).displayType === 'admin-planify')"
                       :src="adminPlanify"
                       :alt="'Planify'"
                       class="equipped-admin-planify"
                     />
-                    <img 
+                    <img
                       v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'discord'"
                       :src="[discordon, discordnepasderange, discordderange][coinsStore.discordVariantIndex || 0]"
                       alt="Discord"
                       class="equipped-discord"
                     />
-                    <img 
+                    <img
                       v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'roi'"
                       :src="roi"
                       :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                       class="equipped-roi-overlay"
                     />
-                    <img 
+                    <img
                       v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'tomb-raider'"
                       :src="laracroft"
                       :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                       class="equipped-tomb-raider"
                     />
-                    <img 
-                      v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'generic' && getUserEquippedItemData(currentUserFactionEntry).name !== 'Jojo' && getUserEquippedItemData(currentUserFactionEntry).name !== 'Galaxie' && getUserEquippedItemData(currentUserFactionEntry).name !== 'Coeur' && getUserEquippedItemData(currentUserFactionEntry).name !== 'Miaou' && !getUserEquippedItemData(currentUserFactionEntry).isDynamic" 
-                      :src="getUserEquippedItemData(currentUserFactionEntry).img" 
+                    <img
+                      v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'generic' && getUserEquippedItemData(currentUserFactionEntry).name !== 'Jojo' && getUserEquippedItemData(currentUserFactionEntry).name !== 'Galaxie' && getUserEquippedItemData(currentUserFactionEntry).name !== 'Coeur' && getUserEquippedItemData(currentUserFactionEntry).name !== 'Miaou' && !getUserEquippedItemData(currentUserFactionEntry).isDynamic"
+                      :src="getUserEquippedItemData(currentUserFactionEntry).img"
                       :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                       :class="getEquippedItemClass(getUserEquippedItemData(currentUserFactionEntry).name)"
                     />
-                    <img 
+                    <img
                       v-if="getUserEquippedItemData(currentUserFactionEntry) && shouldRenderStaticOverlay(getUserEquippedItemData(currentUserFactionEntry)) && getUserEquippedItemData(currentUserFactionEntry).displayType !== 'matrix' && getUserEquippedItemData(currentUserFactionEntry).displayType !== 'absolute-cinema' && getUserEquippedItemData(currentUserFactionEntry).name !== 'Miaou'"
-                      :src="getUserEquippedItemData(currentUserFactionEntry).img" 
+                      :src="getUserEquippedItemData(currentUserFactionEntry).img"
                       :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                       :class="getEquippedItemClass(getUserEquippedItemData(currentUserFactionEntry).name)"
                     />
-                    <img 
-                      v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'gentleman'" 
-                      :src="gentleman" 
+                    <img
+                      v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'gentleman'"
+                      :src="gentleman"
                       :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                       class="equipped-gentleman-overlay"
                     />
                     <!-- Absolute Cinema: bras gauche overlay (Faction Fermier - utilisateur courant) -->
-                    <img 
-                      v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'absolute-cinema'" 
-                      :src="bras" 
+                    <img
+                      v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'absolute-cinema'"
+                      :src="bras"
                       :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                       class="equipped-absolute-cinema-overlay"
                     />
                     <div class="user-avatar" :style="getAvatarBorderStyle(currentUserFactionEntry)" :class="{ 'jojo-sepia': getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'jojo', 'no-border': getUserEquippedItemData(currentUserFactionEntry) && ((getUserEquippedItemData(currentUserFactionEntry).displayType === 'discord' || getUserEquippedItemData(currentUserFactionEntry).name === 'Galaxie' || getUserEquippedItemData(currentUserFactionEntry).name === 'Coeur' || getUserEquippedItemData(currentUserFactionEntry).name === 'Prestige' || getUserEquippedItemData(currentUserFactionEntry).name === 'Planify') || shouldRemoveLeaderboardBorder(getUserEquippedItemData(currentUserFactionEntry))) }">
-                      <img 
-                        :src="getUserAvatar(currentUserFactionEntry)" 
+                      <img
+                        :src="getUserAvatar(currentUserFactionEntry)"
                         class="avatar-img"
                         @error="handleAvatarError"
                         @load="handleAvatarLoad"
@@ -1279,101 +1279,101 @@
                         </div>
                       </div>
                       <!-- Items à l'intérieur de l'avatar (Factions Bagnat) -->
-                      <img 
-                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'cash'" 
-                        :src="getUserEquippedItemData(currentUserFactionEntry).img" 
+                      <img
+                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'cash'"
+                        :src="getUserEquippedItemData(currentUserFactionEntry).img"
                         :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                         class="equipped-cash-inside"
                       />
-                      <img 
-                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'target'" 
-                        :src="getUserEquippedItemData(currentUserFactionEntry).img" 
+                      <img
+                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'target'"
+                        :src="getUserEquippedItemData(currentUserFactionEntry).img"
                         :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                         class="equipped-target-inside"
                       />
                       <!-- Nez de clown à l'intérieur de l'avatar (Factions Bagnat) -->
-                      <img 
-                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'clown'" 
-                        :src="clownnose" 
-                        alt="Nez de clown" 
-                        class="equipped-clown-nose" 
+                      <img
+                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'clown'"
+                        :src="clownnose"
+                        alt="Nez de clown"
+                        class="equipped-clown-nose"
                       />
                       <!-- Gentleman: moustache à l’intérieur (Factions Bagnat) -->
-                      <img 
-                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'gentleman'" 
-                        :src="moustache" 
+                      <img
+                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'gentleman'"
+                        :src="moustache"
                         :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                         class="equipped-moustache-inside"
                       />
                       <!-- Advisory: à l'intérieur -->
-                      <img 
-                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'advisory'" 
-                        :src="advisory" 
+                      <img
+                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'advisory'"
+                        :src="advisory"
                         :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                         class="equipped-advisory-inside"
                       />
 
                       <!-- Espace: étoiles à l'intérieur -->
-                      <img 
-                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'espace'" 
-                        :src="spacestars" 
+                      <img
+                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'espace'"
+                        :src="spacestars"
                         :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                         class="equipped-spacestars-inside"
                       />
                       <!-- Espace: astéroïde à l'intérieur -->
-                      <img 
-                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'espace'" 
-                        :src="asteroide" 
+                      <img
+                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'espace'"
+                        :src="asteroide"
                         :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                         class="equipped-asteroide-overlay"
                       />
                       <!-- DVD: à l'intérieur -->
-                      <img 
-                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'dvd'" 
-                        :src="dvd" 
+                      <img
+                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'dvd'"
+                        :src="dvd"
                         :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                         class="equipped-dvd-inside"
                       />
                       <!-- Lunettes pixel: à l'intérieur -->
-                      <img 
-                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'lunettes-pixel'" 
-                        :src="mlglunette" 
+                      <img
+                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'lunettes-pixel'"
+                        :src="mlglunette"
                         :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                         class="equipped-lunettes-pixel-inside"
                       />
                       <!-- Flash: caméra à l'intérieur -->
-                      <img 
-                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'flash'" 
-                        :src="camera" 
+                      <img
+                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'flash'"
+                        :src="camera"
                         :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                         class="equipped-camera-overlay"
                       />
                       <!-- Item 2000 (Nokia): téléphone à l'intérieur (Faction Bagnat) -->
-                      <img 
-                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'nokia'" 
-                        :src="nokia" 
+                      <img
+                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'nokia'"
+                        :src="nokia"
                         :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                         class="equipped-nokia-inside"
                       />
                       <!-- Item 2000 (Nokia): Clippy à l'intérieur (Faction Bagnat) -->
-                      <img 
-                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'nokia'" 
-                        :src="clippy" 
+                      <img
+                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'nokia'"
+                        :src="clippy"
                         :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                         class="equipped-clippy-inside"
                       />
                       <!-- Item Jojo: à l'intérieur (Faction Fermier) -->
-                      <img 
-                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'jojo'" 
-                        :src="jojo" 
+                      <img
+                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'jojo'"
+                        :src="jojo"
                         :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                         class="equipped-jojo-inside"
                         :key="'faction-jojo-'+getJojoVariantIndexForUser(currentUserFactionEntry)"
                       />
                       <!-- Item Jojo: texte à l'intérieur (Faction Fermier) -->
-                      <img 
-                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'jojo' && getJojoVariantIndexForUser(currentUserFactionEntry) === 1" 
-                        :src="jojotext" 
+                      <img
+                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'jojo' && getJojoVariantIndexForUser(currentUserFactionEntry) === 1"
+                        :src="jojotext"
                         :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                         class="equipped-jojotext-inside"
                         :key="'faction-jojotext-'+getJojoVariantIndexForUser(currentUserFactionEntry)"
@@ -1381,25 +1381,25 @@
 
                     </div>
                     <!-- Item Miaou (chat uniquement) par-dessus l'avatar (positionné dans le conteneur) -->
-                    <img 
-                      v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'miaou'" 
-                      :src="chat" 
+                    <img
+                      v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'miaou'"
+                      :src="chat"
                       :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                       class="equipped-chat-overlay"
                     />
-                    
+
                     <!-- Item Miaou (pate uniquement) par-dessus l'avatar (positionné dans le conteneur) -->
-                    <img 
-                      v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'miaou'" 
-                      :src="pate" 
+                    <img
+                      v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'miaou'"
+                      :src="pate"
                       :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                       class="equipped-pate-overlay"
                     />
-                    
+
                     <!-- Item 2000 (Nokia): Daft Punk par-dessus l'avatar (positionné en dehors du conteneur) -->
-                    <img 
-                      v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'nokia'" 
-                      :src="daftpunk" 
+                    <img
+                      v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'nokia'"
+                      :src="daftpunk"
                       :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                       class="equipped-daftpunk-overlay"
                     />
@@ -1414,7 +1414,7 @@
                     {{ formatCoins(currentUserFactionEntry.factionCoins || 0) }} <img src="@/assets/img/planicoins.webp" alt="Coin" class="coin-icon-small" />
                   </span>
                 </div>
-                
+
                 <!-- Surcouches hors conteneur (Faction Fermier - utilisateur courant) -->
                 <!-- Absolute Cinema: bras gauche seulement (bras droit maintenant dans user-avatar-container) -->
               </div>
@@ -1431,19 +1431,19 @@
                     <span v-if="index < 3" class="medal">{{ index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉' }}</span>
                     <span v-else class="position">{{ index + 1 }}</span>
                   </div>
-                  
+
                   <!-- Avatar et infos utilisateur -->
                   <div class="user-info">
                     <img v-for="(a, ai) in getLeaderboardAssetsForTargetPlacement(user, getUserEquippedItemData(user), 'user-avatar-container', 'above')" :key="'dyn-container-above-faction-bagnat-'+ai+'-'+dynamicVariantsState" :src="resolveAssetSrc(a.src)" :style="getDynLeaderboardContainerOverlayStyle(a)" class="dynamic-container-overlay" />
                     <div class="user-avatar-container" data-darkreader-ignore @click="openLeaderboardProfile(user)">
                       <!-- Absolute Cinema: bras droit dans le user-avatar-container (Faction Bagnat - liste) -->
-                      <img 
-                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'absolute-cinema'" 
-                        :src="bras" 
+                      <img
+                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'absolute-cinema'"
+                        :src="bras"
                         :alt="getUserEquippedItemData(user).name"
                         class="equipped-absolute-cinema-overlay-right"
                       />
-                      
+
                       <template v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).isDynamic">
                         <img
                           v-for="(a, ai) in getLeaderboardAssetsForTargetPlacement(user, getUserEquippedItemData(user), 'user-avatar-container', 'below')"
@@ -1460,48 +1460,48 @@
                           :class="getDynLeaderboardAssetClass(a)"
                         />
                       </template>
-                      
+
                       <!-- Overlays principaux comme sur le leaderboard -->
-                      <img 
+                      <img
                         v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'discord'"
                         :src="[discordon, discordnepasderange, discordderange][coinsStore.discordVariantIndex || 0]"
                         alt="Discord"
                         class="equipped-discord"
                       />
-                      <img 
+                      <img
                         v-if="getUserEquippedItemData(user) && (getUserEquippedItemData(user).name === 'Planify' || getUserEquippedItemData(user).displayType === 'admin-planify')"
                         :src="adminPlanify"
                         :alt="'Planify'"
                         class="equipped-admin-planify"
                       />
                       <!-- Galaxie: overlay conteneur (Bagnat) -->
-                      <img 
+                      <img
                         v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).name === 'Galaxie'"
                         :src="galaxie"
                         alt="Galaxie"
                         class="equipped-galaxie"
                       />
-                      <img 
+                      <img
                         v-if="getUserEquippedItemData(user) && (getUserEquippedItemData(user).name === 'Coeur' || getUserEquippedItemData(user).displayType === 'coeur')"
                         :src="coeur"
                         alt="Coeur"
                         class="equipped-coeur"
                       />
-                      <img 
+                      <img
                         v-if="getUserEquippedItemData(user) && (getUserEquippedItemData(user).name === 'Prestige' || getUserEquippedItemData(user).displayType === 'alpha')"
                         :src="alphaImg"
                         :alt="'Prestige'"
                         class="equipped-alpha"
                       />
-                      <img 
+                      <img
                         v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'roi'"
                         :src="roi"
                         :alt="getUserEquippedItemData(user).name"
                         class="equipped-roi-overlay"
                       />
-                      <img 
+                      <img
                         v-if="getUserEquippedItemData(user) && shouldRenderStaticOverlay(getUserEquippedItemData(user)) && getUserEquippedItemData(user).displayType !== 'matrix' && getUserEquippedItemData(user).displayType !== 'absolute-cinema' && getUserEquippedItemData(user).name !== 'Miaou'"
-                        :src="getUserEquippedItemData(user).img" 
+                        :src="getUserEquippedItemData(user).img"
                         :alt="getUserEquippedItemData(user).name"
                         :class="getEquippedItemClass(getUserEquippedItemData(user).name)"
                       />
@@ -1518,15 +1518,15 @@
                         :alt="getUserEquippedItemData(user).name"
                         class="equipped-pate-overlay"
                       />
-                      <img 
-                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'gentleman'" 
-                        :src="gentleman" 
+                      <img
+                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'gentleman'"
+                        :src="gentleman"
                         :alt="getUserEquippedItemData(user).name"
                         class="equipped-gentleman-overlay"
                       />
                       <div class="user-avatar" :style="getAvatarBorderStyle(user)" :class="{ 'jojo-sepia': getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'jojo', 'no-border': getUserEquippedItemData(user) && (((getUserEquippedItemData(user).displayType === 'discord' || getUserEquippedItemData(user).displayType === 'matrix') && !showBorderForDynEquippedItem(getUserEquippedItemData(user))) || getUserEquippedItemData(user).name === 'Galaxie' || shouldRemoveLeaderboardBorder(getUserEquippedItemData(user))) }">
-                        <img 
-                          :src="getUserAvatar(user)" 
+                        <img
+                          :src="getUserAvatar(user)"
                           class="avatar-img"
                           :style="[
                             (getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'jojo')
@@ -1556,134 +1556,134 @@
                         </div>
 
                         <!-- Nez de clown à l'intérieur de l'avatar (Bagnat - liste) -->
-                        <img 
-                          v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'clown'" 
-                          :src="clownnose" 
-                          alt="Nez de clown" 
-                          class="equipped-clown-nose" 
+                        <img
+                          v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'clown'"
+                          :src="clownnose"
+                          alt="Nez de clown"
+                          class="equipped-clown-nose"
                         />
 
                         <!-- Items à l'intérieur de l'avatar (Factions Bagnat) -->
-                      <img 
-                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'cash'" 
-                        :src="getUserEquippedItemData(user).img" 
+                      <img
+                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'cash'"
+                        :src="getUserEquippedItemData(user).img"
                         :alt="getUserEquippedItemData(user).name"
                         class="equipped-cash-inside"
                       />
-                      <img 
-                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'target'" 
-                        :src="getUserEquippedItemData(user).img" 
+                      <img
+                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'target'"
+                        :src="getUserEquippedItemData(user).img"
                         :alt="getUserEquippedItemData(user).name"
                         class="equipped-target-inside"
                       />
                       <!-- Gentleman: moustache à l’intérieur -->
-                      <img 
-                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'gentleman'" 
-                        :src="moustache" 
+                      <img
+                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'gentleman'"
+                        :src="moustache"
                         :alt="getUserEquippedItemData(user).name"
                         class="equipped-moustache-inside"
                       />
                       <!-- Advisory: à l’intérieur (Factions Bagnat) -->
-                      <img 
-                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'advisory'" 
-                        :src="advisory" 
+                      <img
+                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'advisory'"
+                        :src="advisory"
                         :alt="getUserEquippedItemData(user).name"
                         class="equipped-advisory-inside"
                       />
                       <!-- Espace: étoiles à l'intérieur (Factions Bagnat) -->
-                      <img 
-                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'espace'" 
-                        :src="spacestars" 
+                      <img
+                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'espace'"
+                        :src="spacestars"
                         :alt="getUserEquippedItemData(user).name"
                         class="equipped-spacestars-inside"
                       />
                       <!-- Espace: astéroïde à l'intérieur (Factions Bagnat) -->
-                      <img 
-                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'espace'" 
-                        :src="asteroide" 
+                      <img
+                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'espace'"
+                        :src="asteroide"
                         :alt="getUserEquippedItemData(user).name"
                         class="equipped-asteroide-overlay"
                       />
                       <!-- Lunettes pixel: à l'intérieur (Factions Bagnat) -->
-                      <img 
-                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'lunettes-pixel'" 
-                        :src="mlglunette" 
+                      <img
+                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'lunettes-pixel'"
+                        :src="mlglunette"
                         :alt="getUserEquippedItemData(user).name"
                         class="equipped-lunettes-pixel-inside"
                       />
                       <!-- Item 2000 (Nokia): téléphone à l'intérieur (Faction Bagnat) -->
-                      <img 
-                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'nokia'" 
-                        :src="nokia" 
+                      <img
+                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'nokia'"
+                        :src="nokia"
                         :alt="getUserEquippedItemData(user).name"
                         class="equipped-nokia-inside"
                       />
                       <!-- Item 2000 (Nokia): Clippy à l'intérieur (Faction Bagnat) -->
-                      <img 
-                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'nokia'" 
-                        :src="clippy" 
+                      <img
+                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'nokia'"
+                        :src="clippy"
                         :alt="getUserEquippedItemData(user).name"
                         class="equipped-clippy-inside"
                       />
                       <!-- Item Jojo: à l'intérieur (Faction Fermier) -->
-                      <img 
-                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'jojo'" 
-                        :src="jojo" 
+                      <img
+                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'jojo'"
+                        :src="jojo"
                         :alt="getUserEquippedItemData(user).name"
                         class="equipped-jojo-inside"
                         :key="'faction-jojo-'+getJojoVariantIndexForUser(user)"
                       />
                       <!-- Item Jojo: texte à l'intérieur (Faction Fermier) -->
-                      <img 
-                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'jojo' && getJojoVariantIndexForUser(user) === 1" 
-                        :src="jojotext" 
+                      <img
+                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'jojo' && getJojoVariantIndexForUser(user) === 1"
+                        :src="jojotext"
                         :alt="getUserEquippedItemData(user).name"
                         class="equipped-jojotext-inside"
                         :key="'faction-jojotext-'+getJojoVariantIndexForUser(user)"
                       />
 
                     </div>
-                    <img 
-                      v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'flash'" 
-                      :src="flash" 
+                    <img
+                      v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'flash'"
+                      :src="flash"
                       :alt="getUserEquippedItemData(user).name"
                       class="equipped-flash-overlay"
                     />
-                    <img 
-                      v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'flash'" 
-                      :src="camera" 
+                    <img
+                      v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'flash'"
+                      :src="camera"
                       :alt="getUserEquippedItemData(user).name"
                       class="equipped-camera-overlay"
                     />
-                    <img 
-                      v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'tomb-raider'" 
-                      :src="laracroft" 
+                    <img
+                      v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'tomb-raider'"
+                      :src="laracroft"
                       :alt="getUserEquippedItemData(user).name"
                       class="equipped-tomb-raider"
                     />
                     <!-- Absolute Cinema: bras gauche (AJOUT pour Bagnat - liste) -->
-                    <img 
-                      v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'absolute-cinema'" 
-                      :src="bras" 
+                    <img
+                      v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'absolute-cinema'"
+                      :src="bras"
                       :alt="getUserEquippedItemData(user).name"
                       class="equipped-absolute-cinema-overlay"
                     />
 
                     <!-- Item 2000 (Nokia): Daft Punk par-dessus l'avatar (positionné en dehors du conteneur) -->
-                    <img 
-                      v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'nokia'" 
-                      :src="daftpunk" 
+                    <img
+                      v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'nokia'"
+                      :src="daftpunk"
                       :alt="getUserEquippedItemData(user).name"
                       class="equipped-daftpunk-overlay"
                     />
 
                   </div>
-                    
+
                     <div class="user-details">
                       <div class="username">{{ user.username }}</div>
                     </div>
                   </div>
-                  
+
                   <!-- Score -->
                   <div class="user-score">
                     <span class="score-value">
@@ -1703,9 +1703,9 @@
                 </div>
               </div>
               <transition :name="justJoinedFaction === 'Fermier' ? 'faction-join' : 'faction-join-static'" mode="out-in">
-                <button 
-                  v-if="userFaction !== 'Fermier'" 
-                  @click="joinFaction('Fermier')" 
+                <button
+                  v-if="userFaction !== 'Fermier'"
+                  @click="joinFaction('Fermier')"
                   :disabled="joiningFaction"
                   class="join-faction-btn"
                   key="join-fermier"
@@ -1716,7 +1716,7 @@
                   ✅ Vous êtes membre de cette faction
                 </div>
               </transition>
-              
+
               <div v-if="shouldShowPinnedMe('Fermier')" class="leaderboard-item">
                 <div class="leaderboard-position">
                   <!-- Médailles pour top 3 -->
@@ -1736,13 +1736,13 @@
                   <img v-for="(a, ai) in getLeaderboardAssetsForTargetPlacement(currentUserFactionEntry, getUserEquippedItemData(currentUserFactionEntry), 'user-avatar-container', 'above')" :key="'dyn-container-above-faction-fermier-user-'+ai+'-'+dynamicVariantsState" :src="resolveAssetSrc(a.src)" :style="getDynLeaderboardContainerOverlayStyle(a)" class="dynamic-container-overlay" />
                   <div class="user-avatar-container" data-darkreader-ignore @click="openLeaderboardProfile(currentUserFactionEntry)">
                     <!-- Absolute Cinema: bras droit dans le user-avatar-container (Faction Fermier - utilisateur courant) -->
-                    <img 
-                      v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'absolute-cinema'" 
-                      :src="bras" 
+                    <img
+                      v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'absolute-cinema'"
+                      :src="bras"
                       :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                       class="equipped-absolute-cinema-overlay-right"
                     />
-                    
+
                     <template v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).isDynamic">
                       <img
                         v-for="(a, ai) in getLeaderboardAssetsForTargetPlacement(currentUserFactionEntry, getUserEquippedItemData(currentUserFactionEntry), 'user-avatar-container', 'below')"
@@ -1759,70 +1759,70 @@
                         :class="getDynLeaderboardAssetClass(a)"
                       />
                     </template>
-                    <img 
+                    <img
                       v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'discord'"
                       :src="[discordon, discordnepasderange, discordderange][coinsStore.discordVariantIndex || 0]"
                       alt="Discord"
                       class="equipped-discord"
                     />
-                    <img 
+                    <img
                       v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).name === 'Galaxie'"
                       :src="galaxie"
                       alt="Galaxie"
                       class="equipped-galaxie"
                     />
-                    <img 
+                    <img
                       v-if="getUserEquippedItemData(currentUserFactionEntry) && (getUserEquippedItemData(currentUserFactionEntry).name === 'Coeur' || getUserEquippedItemData(currentUserFactionEntry).displayType === 'coeur')"
                       :src="coeur"
                       alt="Coeur"
                       class="equipped-coeur"
                     />
-                    <img 
+                    <img
                       v-if="getUserEquippedItemData(currentUserFactionEntry) && (getUserEquippedItemData(currentUserFactionEntry).name === 'Prestige' || getUserEquippedItemData(currentUserFactionEntry).displayType === 'alpha')"
                       :src="alphaImg"
                       :alt="'Prestige'"
                       class="equipped-alpha"
                     />
-                    <img 
+                    <img
                       v-if="getUserEquippedItemData(currentUserFactionEntry) && (getUserEquippedItemData(currentUserFactionEntry).name === 'Planify' || getUserEquippedItemData(currentUserFactionEntry).displayType === 'admin-planify')"
                       :src="adminPlanify"
                       :alt="'Planify'"
                       class="equipped-admin-planify"
                     />
-                    <img 
-                      v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'generic' && getUserEquippedItemData(currentUserFactionEntry).name !== 'Jojo' && getUserEquippedItemData(currentUserFactionEntry).name !== 'Galaxie' && getUserEquippedItemData(currentUserFactionEntry).name !== 'Coeur' && getUserEquippedItemData(currentUserFactionEntry).name !== 'Miaou' && !getUserEquippedItemData(currentUserFactionEntry).isDynamic" 
-                      :src="getUserEquippedItemData(currentUserFactionEntry).img" 
+                    <img
+                      v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'generic' && getUserEquippedItemData(currentUserFactionEntry).name !== 'Jojo' && getUserEquippedItemData(currentUserFactionEntry).name !== 'Galaxie' && getUserEquippedItemData(currentUserFactionEntry).name !== 'Coeur' && getUserEquippedItemData(currentUserFactionEntry).name !== 'Miaou' && !getUserEquippedItemData(currentUserFactionEntry).isDynamic"
+                      :src="getUserEquippedItemData(currentUserFactionEntry).img"
                       :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                       :class="getEquippedItemClass(getUserEquippedItemData(currentUserFactionEntry).name)"
                     />
-                    <img 
-                      v-if="getUserEquippedItemData(currentUserFactionEntry) && shouldRenderStaticOverlay(getUserEquippedItemData(currentUserFactionEntry)) && getUserEquippedItemData(currentUserFactionEntry).displayType !== 'matrix' && getUserEquippedItemData(currentUserFactionEntry).displayType !== 'absolute-cinema' && getUserEquippedItemData(currentUserFactionEntry).name !== 'Miaou'" 
-                      :src="getUserEquippedItemData(currentUserFactionEntry).img" 
+                    <img
+                      v-if="getUserEquippedItemData(currentUserFactionEntry) && shouldRenderStaticOverlay(getUserEquippedItemData(currentUserFactionEntry)) && getUserEquippedItemData(currentUserFactionEntry).displayType !== 'matrix' && getUserEquippedItemData(currentUserFactionEntry).displayType !== 'absolute-cinema' && getUserEquippedItemData(currentUserFactionEntry).name !== 'Miaou'"
+                      :src="getUserEquippedItemData(currentUserFactionEntry).img"
                       :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                       :class="getEquippedItemClass(getUserEquippedItemData(currentUserFactionEntry).name)"
                     />
                     <!-- AJOUT overlays manquants pour l'utilisateur courant (Faction Fermier) -->
-                    <img 
+                    <img
                       v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'roi'"
                       :src="roi"
                       :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                       class="equipped-roi-overlay"
                     />
-                    <img 
+                    <img
                       v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'tomb-raider'"
                       :src="laracroft"
                       :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                       class="equipped-tomb-raider"
                     />
-                    <img 
-                      v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'gentleman'" 
-                      :src="gentleman" 
+                    <img
+                      v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'gentleman'"
+                      :src="gentleman"
                       :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                       class="equipped-gentleman-overlay"
                     />
                     <div class="user-avatar" :style="getAvatarBorderStyle(currentUserFactionEntry)" :class="{ 'jojo-sepia': getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'jojo', 'no-border': getUserEquippedItemData(currentUserFactionEntry) && ((getUserEquippedItemData(currentUserFactionEntry).displayType === 'discord' || getUserEquippedItemData(currentUserFactionEntry).name === 'Galaxie' || getUserEquippedItemData(currentUserFactionEntry).name === 'Coeur' || getUserEquippedItemData(currentUserFactionEntry).name === 'Prestige' || getUserEquippedItemData(currentUserFactionEntry).name === 'Planify') || shouldRemoveLeaderboardBorder(getUserEquippedItemData(currentUserFactionEntry))) }">
-                      <img 
-                        :src="getUserAvatar(currentUserFactionEntry)" 
+                      <img
+                        :src="getUserAvatar(currentUserFactionEntry)"
                         class="avatar-img"
                         @error="handleAvatarError"
                         @load="handleAvatarLoad"
@@ -1837,98 +1837,98 @@
                           <span v-for="j in 5" :key="'f-fermier-mx-ch-'+j" class="matrix-char">{{ getRandomMatrixChar() }}</span>
                         </div>
                       </div>
-                      <img 
-                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'gentleman'" 
-                        :src="moustache" 
+                      <img
+                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'gentleman'"
+                        :src="moustache"
                         :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                         class="equipped-moustache-inside"
                       />
-                      <img 
-                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'clown'" 
-                        :src="clownnose" 
-                        alt="Nez de clown" 
-                        class="equipped-clown-nose" 
+                      <img
+                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'clown'"
+                        :src="clownnose"
+                        alt="Nez de clown"
+                        class="equipped-clown-nose"
                       />
-                      <img 
-                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'cash'" 
-                        :src="getUserEquippedItemData(currentUserFactionEntry).img" 
+                      <img
+                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'cash'"
+                        :src="getUserEquippedItemData(currentUserFactionEntry).img"
                         :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                         class="equipped-cash-inside"
                       />
-                      <img 
-                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'target'" 
-                        :src="getUserEquippedItemData(currentUserFactionEntry).img" 
+                      <img
+                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'target'"
+                        :src="getUserEquippedItemData(currentUserFactionEntry).img"
                         :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                         class="equipped-target-inside"
                       />
                       <!-- Advisory: à l'intérieur (Faction Fermier) -->
-                      <img 
-                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'advisory'" 
-                        :src="advisory" 
+                      <img
+                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'advisory'"
+                        :src="advisory"
                         :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                         class="equipped-advisory-inside"
                       />
                       <!-- Espace: étoiles à l'intérieur (Faction Fermier) -->
-                      <img 
-                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'espace'" 
-                        :src="spacestars" 
+                      <img
+                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'espace'"
+                        :src="spacestars"
                         :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                         class="equipped-spacestars-inside"
                       />
                       <!-- Espace: astéroïde à l'intérieur (Faction Fermier) -->
-                      <img 
-                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'espace'" 
-                        :src="asteroide" 
+                      <img
+                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'espace'"
+                        :src="asteroide"
                         :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                         class="equipped-asteroide-overlay"
                       />
                       <!-- DVD: à l'intérieur (Faction Fermier) -->
-                      <img 
-                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'dvd'" 
-                        :src="dvd" 
+                      <img
+                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'dvd'"
+                        :src="dvd"
                         :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                         class="equipped-dvd-inside"
                       />
                       <!-- Lunettes pixel: à l'intérieur (Faction Fermier) -->
-                      <img 
-                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'lunettes-pixel'" 
-                        :src="mlglunette" 
+                      <img
+                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'lunettes-pixel'"
+                        :src="mlglunette"
                         :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                         class="equipped-lunettes-pixel-inside"
                       />
                       <!-- Flash Camera: à l'intérieur (Faction Fermier) -->
-                      <img 
-                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'flash'" 
-                        :src="camera" 
+                      <img
+                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'flash'"
+                        :src="camera"
                         :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                         class="equipped-camera-overlay"
                       />
                       <!-- Item 2000 (Nokia): téléphone à l'intérieur (Faction Fermier) -->
-                      <img 
-                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'nokia'" 
-                        :src="nokia" 
+                      <img
+                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'nokia'"
+                        :src="nokia"
                         :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                         class="equipped-nokia-inside"
                       />
                       <!-- Item 2000 (Nokia): Clippy à l'intérieur (Faction Fermier) -->
-                      <img 
-                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'nokia'" 
-                        :src="clippy" 
+                      <img
+                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'nokia'"
+                        :src="clippy"
                         :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                         class="equipped-clippy-inside"
                       />
                       <!-- Item Jojo: à l'intérieur (Faction Bagnat) -->
-                      <img 
-                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'jojo'" 
-                        :src="jojo" 
+                      <img
+                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'jojo'"
+                        :src="jojo"
                         :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                         class="equipped-jojo-inside"
                         :key="'faction-jojo-'+getJojoVariantIndexForUser(currentUserFactionEntry)"
                       />
                       <!-- Item Jojo: texte à l'intérieur (Faction Bagnat) -->
-                      <img 
-                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'jojo' && getJojoVariantIndexForUser(currentUserFactionEntry) === 1" 
-                        :src="jojotext" 
+                      <img
+                        v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'jojo' && getJojoVariantIndexForUser(currentUserFactionEntry) === 1"
+                        :src="jojotext"
                         :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                         class="equipped-jojotext-inside"
                         :key="'faction-jojotext-'+getJojoVariantIndexForUser(currentUserFactionEntry)"
@@ -1936,25 +1936,25 @@
 
                     </div>
                     <!-- Item Miaou (chat uniquement) par-dessus l'avatar (positionné dans le conteneur) -->
-                    <img 
-                      v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'miaou'" 
-                      :src="chat" 
+                    <img
+                      v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'miaou'"
+                      :src="chat"
                       :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                       class="equipped-chat-overlay"
                     />
-                    
+
                     <!-- Item Miaou (pate uniquement) par-dessus l'avatar (positionné dans le conteneur) -->
-                    <img 
-                      v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'miaou'" 
-                      :src="pate" 
+                    <img
+                      v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'miaou'"
+                      :src="pate"
                       :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                       class="equipped-pate-overlay"
                     />
-                    
+
                     <!-- Item 2000 (Nokia): Daft Punk par-dessus l'avatar (positionné en dehors du conteneur) -->
-                    <img 
-                      v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'nokia'" 
-                      :src="daftpunk" 
+                    <img
+                      v-if="getUserEquippedItemData(currentUserFactionEntry) && getUserEquippedItemData(currentUserFactionEntry).displayType === 'nokia'"
+                      :src="daftpunk"
                       :alt="getUserEquippedItemData(currentUserFactionEntry).name"
                       class="equipped-daftpunk-overlay"
                     />
@@ -1983,19 +1983,19 @@
                     <span v-if="index < 3" class="medal">{{ index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉' }}</span>
                     <span v-else class="position">{{ index + 1 }}</span>
                   </div>
-                  
+
                   <!-- Avatar et infos utilisateur -->
                   <div class="user-info">
                     <img v-for="(a, ai) in getLeaderboardAssetsForTargetPlacement(user, getUserEquippedItemData(user), 'user-avatar-container', 'above')" :key="'dyn-container-above-faction-fermier-'+ai+'-'+dynamicVariantsState" :src="resolveAssetSrc(a.src)" :style="getDynLeaderboardContainerOverlayStyle(a)" class="dynamic-container-overlay" />
                     <div class="user-avatar-container" data-darkreader-ignore @click="openLeaderboardProfile(user)">
                       <!-- Absolute Cinema: bras droit dans le user-avatar-container (Faction Fermier - liste) -->
-                      <img 
-                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'absolute-cinema'" 
-                        :src="bras" 
+                      <img
+                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'absolute-cinema'"
+                        :src="bras"
                         :alt="getUserEquippedItemData(user).name"
                         class="equipped-absolute-cinema-overlay-right"
                       />
-                      
+
                       <template v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).isDynamic">
                         <img
                           v-for="(a, ai) in getLeaderboardAssetsForTargetPlacement(user, getUserEquippedItemData(user), 'user-avatar-container', 'below')"
@@ -2014,58 +2014,58 @@
                       </template>
 
                       <!-- Overlays principaux comme sur le leaderboard -->
-                      <img 
+                      <img
                         v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'discord'"
                         :src="[discordon, discordnepasderange, discordderange][coinsStore.discordVariantIndex || 0]"
                         alt="Discord"
                         class="equipped-discord"
                       />
-                      <img 
+                      <img
                         v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).name === 'Galaxie'"
                         :src="galaxie"
                         alt="Galaxie"
                         class="equipped-galaxie"
                       />
-                      <img 
+                      <img
                         v-if="getUserEquippedItemData(user) && (getUserEquippedItemData(user).name === 'Coeur' || getUserEquippedItemData(user).displayType === 'coeur')"
                         :src="coeur"
                         alt="Coeur"
                         class="equipped-coeur"
                       />
-                      <img 
+                      <img
                         v-if="getUserEquippedItemData(user) && (getUserEquippedItemData(user).name === 'Prestige' || getUserEquippedItemData(user).displayType === 'alpha')"
                         :src="alphaImg"
                         :alt="'Prestige'"
                         class="equipped-alpha"
                       />
-                      <img 
+                      <img
                         v-if="getUserEquippedItemData(user) && (getUserEquippedItemData(user).name === 'Planify' || getUserEquippedItemData(user).displayType === 'admin-planify')"
                         :src="adminPlanify"
                         :alt="'Planify'"
                         class="equipped-admin-planify"
                       />
                       <!-- AJOUT: Overlays manquants pour Faction Fermier -->
-                      <img 
+                      <img
                         v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'roi'"
                         :src="roi"
                         :alt="getUserEquippedItemData(user).name"
                         class="equipped-roi-overlay"
                       />
-                      <img 
+                      <img
                         v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'gentleman'"
                         :src="gentleman"
                         :alt="getUserEquippedItemData(user).name"
                         class="equipped-gentleman-overlay"
                       />
-                      <img 
+                      <img
                         v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'tomb-raider'"
                         :src="laracroft"
                         :alt="getUserEquippedItemData(user).name"
                         class="equipped-tomb-raider"
                       />
-                      <img 
-                        v-if="getUserEquippedItemData(user) && shouldRenderStaticOverlay(getUserEquippedItemData(user)) && getUserEquippedItemData(user).displayType !== 'matrix' && getUserEquippedItemData(user).displayType !== 'absolute-cinema' && getUserEquippedItemData(user).name !== 'Miaou'" 
-                        :src="getUserEquippedItemData(user).img" 
+                      <img
+                        v-if="getUserEquippedItemData(user) && shouldRenderStaticOverlay(getUserEquippedItemData(user)) && getUserEquippedItemData(user).displayType !== 'matrix' && getUserEquippedItemData(user).displayType !== 'absolute-cinema' && getUserEquippedItemData(user).name !== 'Miaou'"
+                        :src="getUserEquippedItemData(user).img"
                         :alt="getUserEquippedItemData(user).name"
                         :class="getEquippedItemClass(getUserEquippedItemData(user).name)"
                       />
@@ -2084,16 +2084,16 @@
                       />
 
                       <!-- Absolute Cinema: bras gauche (AJOUT) -->
-                      <img 
-                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'absolute-cinema'" 
-                        :src="bras" 
+                      <img
+                        v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'absolute-cinema'"
+                        :src="bras"
                         :alt="getUserEquippedItemData(user).name"
                         class="equipped-absolute-cinema-overlay"
                       />
 
                       <div class="user-avatar" :style="getAvatarBorderStyle(user)" :class="{ 'jojo-sepia': getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'jojo', 'no-border': getUserEquippedItemData(user) && (((getUserEquippedItemData(user).displayType === 'discord' || getUserEquippedItemData(user).displayType === 'matrix') && !showBorderForDynEquippedItem(getUserEquippedItemData(user))) || getUserEquippedItemData(user).name === 'Galaxie' || shouldRemoveLeaderboardBorder(getUserEquippedItemData(user))) }" @click="openLeaderboardProfile(user)">
-                        <img 
-                          :src="getUserAvatar(user)" 
+                        <img
+                          :src="getUserAvatar(user)"
                           class="avatar-img"
                           :style="getAvatarImageStyle(user)"
                           @error="handleAvatarError"
@@ -2106,108 +2106,108 @@
                           <img v-for="(a, ai) in getLeaderboardAssetsForTargetPlacement(user, getUserEquippedItemData(user), 'user-avatar', 'above')" :key="'dyn-lb-above-faction-fermier-'+ai+'-'+dynamicVariantsState" :src="resolveAssetSrc(a.src)" :style="getDynLeaderboardAssetStyle(a)" :class="getDynLeaderboardAssetClass(a)" />
 
                           <!-- Item Gentleman (moustache à l'intérieur) -->
-                          <img 
-                            v-if="getUserEquippedItemData(user).displayType === 'gentleman'" 
-                            :src="moustache" 
+                          <img
+                            v-if="getUserEquippedItemData(user).displayType === 'gentleman'"
+                            :src="moustache"
                             :alt="getUserEquippedItemData(user).name"
                             class="equipped-moustache-inside"
                           />
                           <!-- Item DVD -->
-                          <img 
-                        v-if="getUserEquippedItemData(user).displayType === 'dvd' || getUserEquippedItemData(user).name === 'DVD'" 
-                        :src="getUserEquippedItemData(user).img" 
+                          <img
+                        v-if="getUserEquippedItemData(user).displayType === 'dvd' || getUserEquippedItemData(user).name === 'DVD'"
+                        :src="getUserEquippedItemData(user).img"
                         :alt="getUserEquippedItemData(user).name"
                         class="equipped-dvd-inside"
                       />
                           <!-- Item Cash -->
-                          <img 
-                            v-if="getUserEquippedItemData(user).displayType === 'cash'" 
-                            :src="getUserEquippedItemData(user).img" 
+                          <img
+                            v-if="getUserEquippedItemData(user).displayType === 'cash'"
+                            :src="getUserEquippedItemData(user).img"
                             :alt="getUserEquippedItemData(user).name"
                             class="equipped-cash-inside"
                           />
                           <!-- Item Target -->
-                          <img 
-                            v-if="getUserEquippedItemData(user).displayType === 'target'" 
-                            :src="getUserEquippedItemData(user).img" 
+                          <img
+                            v-if="getUserEquippedItemData(user).displayType === 'target'"
+                            :src="getUserEquippedItemData(user).img"
                             :alt="getUserEquippedItemData(user).name"
                             class="equipped-target-inside"
                           />
                           <!-- AJOUT: Nez de clown centré sur l'avatar (Faction Fermier) -->
-                          <img 
-                            v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'clown'" 
-                            :src="clownnose" 
-                            alt="Nez de clown" 
-                            class="equipped-clown-nose" 
+                          <img
+                            v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'clown'"
+                            :src="clownnose"
+                            alt="Nez de clown"
+                            class="equipped-clown-nose"
                           />
                           <!-- Advisory: à l'intérieur (Faction Fermier) -->
-                          <img 
-                            v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'advisory'" 
-                            :src="advisory" 
+                          <img
+                            v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'advisory'"
+                            :src="advisory"
                             :alt="getUserEquippedItemData(user).name"
                             class="equipped-advisory-inside"
                           />
                           <!-- Espace: étoiles à l'intérieur (Faction Fermier) -->
-                          <img 
-                            v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'espace'" 
-                            :src="spacestars" 
+                          <img
+                            v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'espace'"
+                            :src="spacestars"
                             :alt="getUserEquippedItemData(user).name"
                             class="equipped-spacestars-inside"
                           />
                           <!-- Espace: astéroïde à l'intérieur (Faction Fermier) -->
-                          <img 
-                            v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'espace'" 
-                            :src="asteroide" 
+                          <img
+                            v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'espace'"
+                            :src="asteroide"
                             :alt="getUserEquippedItemData(user).name"
                             class="equipped-asteroide-overlay"
                           />
                           <!-- DVD: à l'intérieur (Faction Fermier) -->
-                          <img 
-                            v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'dvd'" 
-                            :src="dvd" 
+                          <img
+                            v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'dvd'"
+                            :src="dvd"
                             :alt="getUserEquippedItemData(user).name"
                             class="equipped-dvd-inside"
                           />
                           <!-- Lunettes pixel: à l'intérieur (Faction Fermier) -->
-                          <img 
-                            v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'lunettes-pixel'" 
-                            :src="mlglunette" 
+                          <img
+                            v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'lunettes-pixel'"
+                            :src="mlglunette"
                             :alt="getUserEquippedItemData(user).name"
                             class="equipped-lunettes-pixel-inside"
                           />
                           <!-- Flash Camera: à l'intérieur (Faction Fermier) -->
-                          <img 
-                            v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'flash'" 
-                            :src="camera" 
+                          <img
+                            v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'flash'"
+                            :src="camera"
                             :alt="getUserEquippedItemData(user).name"
                             class="equipped-camera-overlay"
                           />
                           <!-- Item 2000 (Nokia): téléphone à l'intérieur (Faction Fermier) -->
-                          <img 
-                            v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'nokia'" 
-                            :src="nokia" 
+                          <img
+                            v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'nokia'"
+                            :src="nokia"
                             :alt="getUserEquippedItemData(user).name"
                             class="equipped-nokia-inside"
                           />
                           <!-- Item 2000 (Nokia): Clippy à l'intérieur (Faction Fermier) -->
-                          <img 
-                            v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'nokia'" 
-                            :src="clippy" 
+                          <img
+                            v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'nokia'"
+                            :src="clippy"
                             :alt="getUserEquippedItemData(user).name"
                             class="equipped-clippy-inside"
                           />
                           <!-- Item Jojo: à l'intérieur (Faction Bagnat) -->
-                          <img 
-                            v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'jojo'" 
-                            :src="jojo" 
+                          <img
+                            v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'jojo'"
+                            :src="jojo"
                             :alt="getUserEquippedItemData(user).name"
                             class="equipped-jojo-inside"
                             :key="'faction-jojo-'+getJojoVariantIndexForUser(user)"
                           />
                           <!-- Item Jojo: texte à l'intérieur (Faction Bagnat) -->
-                          <img 
-                            v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'jojo' && getJojoVariantIndexForUser(user) === 1" 
-                            :src="jojotext" 
+                          <img
+                            v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'jojo' && getJojoVariantIndexForUser(user) === 1"
+                            :src="jojotext"
                             :alt="getUserEquippedItemData(user).name"
                             class="equipped-jojotext-inside"
                             :key="'faction-jojotext-'+getJojoVariantIndexForUser(user)"
@@ -2227,22 +2227,22 @@
                         </div>
                       </div>
                     </div>
-                    
 
-                    
+
+
                     <!-- Item 2000 (Nokia): Daft Punk par-dessus l'avatar (positionné en dehors du conteneur) -->
-                    <img 
-                      v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'nokia'" 
-                      :src="daftpunk" 
+                    <img
+                      v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'nokia'"
+                      :src="daftpunk"
                       :alt="getUserEquippedItemData(user).name"
                       class="equipped-daftpunk-overlay"
                     />
-                    
+
                     <div class="user-details">
                       <div class="username">{{ getUserFullName(user) }}</div>
                     </div>
                   </div>
-                  
+
                   <!-- Score -->
                   <div class="user-score">
                     <span class="score-value">
@@ -2277,7 +2277,7 @@
               <span v-if="index < 3" class="medal">{{ index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉' }}</span>
               <span v-else class="position">{{ index + 1 }}</span>
             </div>
-            
+
                         <!-- Avatar et infos utilisateur -->
             <div class="user-info">
 
@@ -2291,39 +2291,39 @@
                 </template>
 
                 <!-- Absolute Cinema: bras droit dans le user-avatar-container -->
-                <img 
-                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'absolute-cinema'" 
-                  :src="bras" 
+                <img
+                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'absolute-cinema'"
+                  :src="bras"
                   :alt="getUserEquippedItemData(user).name"
                   class="equipped-absolute-cinema-overlay-right"
                 />
 
                 <!-- Discord overlay en premier dans le container -->
-                 <img 
+                 <img
                   v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'discord'"
                   :src="[discordon, discordnepasderange, discordderange][coinsStore.discordVariantIndex || 0]"
                   alt="Discord"
                   class="equipped-discord"
                 />
-                <img 
+                <img
                   v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).name === 'Galaxie'"
                   :src="galaxie"
                   :alt="'Galaxie'"
                   class="equipped-galaxie"
                 />
-                <img 
+                <img
                   v-if="getUserEquippedItemData(user) && (getUserEquippedItemData(user).name === 'Coeur' || getUserEquippedItemData(user).displayType === 'coeur')"
                   :src="coeur"
                   :alt="'Coeur'"
                   class="equipped-coeur"
                 />
-                <img 
+                <img
                   v-if="getUserEquippedItemData(user) && (getUserEquippedItemData(user).name === 'Prestige' || getUserEquippedItemData(user).displayType === 'alpha')"
                   :src="alphaImg"
                   :alt="'Prestige'"
                   class="equipped-alpha"
                 />
-                <img 
+                <img
                   v-if="getUserEquippedItemData(user) && (getUserEquippedItemData(user).name === 'Planify' || getUserEquippedItemData(user).displayType === 'admin-planify')"
                   :src="adminPlanify"
                   :alt="'Planify'"
@@ -2332,9 +2332,9 @@
                 <!-- Alpha overlay rendu au niveau du container uniquement ci-dessus -->
                 <template v-if="getUserEquippedItemData(user)">
                     <!-- Item générique -->
-                    <img 
-                      v-if="getUserEquippedItemData(user).displayType === 'generic' && getUserEquippedItemData(user).name !== 'Jojo' && getUserEquippedItemData(user).name !== 'Galaxie' && getUserEquippedItemData(user).name !== 'Coeur' && getUserEquippedItemData(user).name !== 'Miaou' && !getUserEquippedItemData(user).isDynamic" 
-                      :src="getUserEquippedItemData(user).img" 
+                    <img
+                      v-if="getUserEquippedItemData(user).displayType === 'generic' && getUserEquippedItemData(user).name !== 'Jojo' && getUserEquippedItemData(user).name !== 'Galaxie' && getUserEquippedItemData(user).name !== 'Coeur' && getUserEquippedItemData(user).name !== 'Miaou' && !getUserEquippedItemData(user).isDynamic"
+                      :src="getUserEquippedItemData(user).img"
                       :alt="getUserEquippedItemData(user).name"
                       :class="getEquippedItemClass(getUserEquippedItemData(user).name)"
                     />
@@ -2351,14 +2351,14 @@
   }"
   @click="openLeaderboardProfile(user)">
 
-                  <img 
-                    :src="getUserAvatar(user)" 
+                  <img
+                    :src="getUserAvatar(user)"
                     class="avatar-img"
                     :style="getAvatarImageStyle(user)"
                     @error="handleAvatarError"
                     @load="handleAvatarLoad"
                   />
-                  
+
                   <!-- Items équipés selon leur type -->
                   <template v-if="getUserEquippedItemData(user)">
                     <!-- Items dynamiques placés derrière l'avatar (sous bordure) -->
@@ -2366,106 +2366,106 @@
                     <img v-for="(a, ai) in getLeaderboardAssetsForTargetPlacement(user, getUserEquippedItemData(user), 'user-avatar', 'inside')" :key="'dyn-lb-inside-'+ai+'-'+dynamicVariantsState" :src="resolveAssetSrc(a.src)" :style="getDynLeaderboardAssetStyle(a)" :class="getDynLeaderboardAssetClass(a)" />
                     <img v-for="(a, ai) in getLeaderboardAssetsForTargetPlacement(user, getUserEquippedItemData(user), 'user-avatar', 'above')" :key="'dyn-lb-above-'+ai+'-'+dynamicVariantsState" :src="resolveAssetSrc(a.src)" :style="getDynLeaderboardAssetStyle(a)" :class="getDynLeaderboardAssetClass(a)" />
                     <!-- Item Gentleman (moustache à l'intérieur) -->
-                    <img 
-                      v-if="getUserEquippedItemData(user).displayType === 'gentleman'" 
-                      :src="moustache" 
+                    <img
+                      v-if="getUserEquippedItemData(user).displayType === 'gentleman'"
+                      :src="moustache"
                       :alt="getUserEquippedItemData(user).name"
                       class="equipped-moustache-inside"
                     />
-                    
 
-                    
+
+
                     <!-- Item DVD -->
-                    <img 
-                      v-if="getUserEquippedItemData(user).displayType === 'dvd'" 
-                      :src="getUserEquippedItemData(user).img" 
+                    <img
+                      v-if="getUserEquippedItemData(user).displayType === 'dvd'"
+                      :src="getUserEquippedItemData(user).img"
                       :alt="getUserEquippedItemData(user).name"
                       class="equipped-dvd-inside"
                     />
-                    
+
                     <!-- Item Lunettes pixel -->
-                    <img 
-                      v-if="getUserEquippedItemData(user).displayType === 'lunettes-pixel'" 
-                      :src="getUserEquippedItemData(user).img" 
+                    <img
+                      v-if="getUserEquippedItemData(user).displayType === 'lunettes-pixel'"
+                      :src="getUserEquippedItemData(user).img"
                       :alt="getUserEquippedItemData(user).name"
                       class="equipped-lunettes-pixel-inside"
                     />
-                    
+
                     <!-- Item 2000 (Nokia) -->
-                    <img 
-                      v-if="getUserEquippedItemData(user).displayType === 'nokia'" 
-                      :src="nokia" 
+                    <img
+                      v-if="getUserEquippedItemData(user).displayType === 'nokia'"
+                      :src="nokia"
                       :alt="getUserEquippedItemData(user).name"
                       class="equipped-nokia-inside"
                     />
                     <!-- Item Jojo INSIDE avatar (comme Advisory) -->
-            <img 
-              v-if="getUserEquippedItemData(user).name === 'Jojo' || getUserEquippedItemData(user).displayType === 'jojo'" 
-                      :src="jojo" 
+            <img
+              v-if="getUserEquippedItemData(user).name === 'Jojo' || getUserEquippedItemData(user).displayType === 'jojo'"
+                      :src="jojo"
                       alt="Jojo"
                       class="equipped-jojo-inside"
                       :key="'lb-jojo-'+getJojoVariantIndexForUser(user)"
                     />
-                    <img 
-              v-if="(getUserEquippedItemData(user).name === 'Jojo' || getUserEquippedItemData(user).displayType === 'jojo') && getJojoVariantIndexForUser(user) === 1" 
-                      :src="jojotext" 
+                    <img
+              v-if="(getUserEquippedItemData(user).name === 'Jojo' || getUserEquippedItemData(user).displayType === 'jojo') && getJojoVariantIndexForUser(user) === 1"
+                      :src="jojotext"
                       alt="Jojo text"
                       class="equipped-jojotext-inside"
                       :key="'lb-jojotext-'+getJojoVariantIndexForUser(user)"
                     />
                     <!-- Item Discord rendu au niveau du container -->
-                    <img 
-                      v-if="getUserEquippedItemData(user).displayType === 'nokia'" 
-                      :src="clippy" 
+                    <img
+                      v-if="getUserEquippedItemData(user).displayType === 'nokia'"
+                      :src="clippy"
                       :alt="getUserEquippedItemData(user).name"
                       class="equipped-clippy-inside"
                     />
-                    
+
                     <!-- Items à l'intérieur de l'avatar -->
-                    <img 
-                      v-if="getUserEquippedItemData(user).displayType === 'cash'" 
-                      :src="getUserEquippedItemData(user).img" 
+                    <img
+                      v-if="getUserEquippedItemData(user).displayType === 'cash'"
+                      :src="getUserEquippedItemData(user).img"
                       :alt="getUserEquippedItemData(user).name"
                       class="equipped-cash-inside"
                     />
-                    <img 
-                      v-if="getUserEquippedItemData(user).displayType === 'target'" 
-                      :src="getUserEquippedItemData(user).img" 
+                    <img
+                      v-if="getUserEquippedItemData(user).displayType === 'target'"
+                      :src="getUserEquippedItemData(user).img"
                       :alt="getUserEquippedItemData(user).name"
                       class="equipped-target-inside"
                     />
-                    <img 
-                      v-if="getUserEquippedItemData(user).displayType === 'advisory'" 
-                      :src="advisory" 
+                    <img
+                      v-if="getUserEquippedItemData(user).displayType === 'advisory'"
+                      :src="advisory"
                       :alt="getUserEquippedItemData(user).name"
                       class="equipped-advisory-inside"
                     />
-                    <img 
-                      v-if="getUserEquippedItemData(user).displayType === 'espace'" 
-                      :src="spacestars" 
+                    <img
+                      v-if="getUserEquippedItemData(user).displayType === 'espace'"
+                      :src="spacestars"
                       :alt="getUserEquippedItemData(user).name"
                       class="equipped-spacestars-inside"
                     />
-                    <img 
-                      v-if="getUserEquippedItemData(user).displayType === 'espace'" 
-                      :src="asteroide" 
+                    <img
+                      v-if="getUserEquippedItemData(user).displayType === 'espace'"
+                      :src="asteroide"
                       :alt="getUserEquippedItemData(user).name"
                       class="equipped-asteroide-overlay"
                     />
-                    
-                <img 
+
+                <img
                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'discord'"
                  :src="discordVariants[coinsStore.discordVariantIndex]"
                  alt="Discord"
                  class="equipped-discord"
                />
-               <img 
+               <img
                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).name === 'Galaxie'"
                  :src="galaxie"
                  alt="Galaxie"
                  class="equipped-galaxie"
                />
-               <img 
+               <img
                  v-if="getUserEquippedItemData(user) && (getUserEquippedItemData(user).name === 'Coeur' || getUserEquippedItemData(user).displayType === 'coeur')"
                  :src="coeur"
                  alt="Coeur"
@@ -2479,44 +2479,44 @@
                         <span v-for="j in 5" :key="j" class="matrix-char">{{ getRandomMatrixChar() }}</span>
                 </div>
                 <!-- Discord overlay positionné au niveau du conteneur parent (user-avatar-container) -->
-                
-              </div>
-              
-              <!-- Items positionnés par-dessus l'avatar (comme dans la navbar) -->
-              
 
-              
-              
-              
-              
-              
-              
-              
+              </div>
+
+              <!-- Items positionnés par-dessus l'avatar (comme dans la navbar) -->
+
+
+
+
+
+
+
+
+
               <!-- Item Flash (flash + camera par-dessus) -->
-              <img 
-                      v-else-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'flash'" 
-                :src="flash" 
+              <img
+                      v-else-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'flash'"
+                :src="flash"
                 :alt="getUserEquippedItemData(user).name"
                 class="equipped-flash-overlay"
               />
-              <img 
-                v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'flash'" 
-                :src="camera" 
+              <img
+                v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'flash'"
+                :src="camera"
                 :alt="getUserEquippedItemData(user).name"
                 class="equipped-camera-overlay"
               />
 
-              
-              
-              
-              
-              
 
-              
+
+
+
+
+
+
               <!-- Nez de clown centré sur l'avatar -->
-              <img 
-                v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'clown'" 
-                :src="clownnose" 
+              <img
+                v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'clown'"
+                :src="clownnose"
                 alt="Nez de clown"
                 class="equipped-clown-nose"
               />
@@ -2539,127 +2539,127 @@
                 </div>
 
 
-                
+
                 <!-- Item Clown par-dessus l'avatar (positionné en dehors du conteneur) -->
-                <img 
-                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'clown'" 
-                  :src="clowncheveux" 
+                <img
+                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'clown'"
+                  :src="clowncheveux"
                   :alt="getUserEquippedItemData(user).name"
                   class="equipped-clown-overlay"
                 />
-                
+
                 <!-- Item Roi par-dessus l'avatar (positionné en dehors du conteneur) -->
-                <img 
-                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'roi'" 
-                  :src="roi" 
+                <img
+                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'roi'"
+                  :src="roi"
                   :alt="getUserEquippedItemData(user).name"
                   class="equipped-roi-overlay"
                 />
-                
+
                 <!-- Item Tomb Raider par-dessus l'avatar (positionné en dehors du conteneur) -->
-                <img 
-                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'tomb-raider'" 
-                  :src="laracroft" 
+                <img
+                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'tomb-raider'"
+                  :src="laracroft"
                   :alt="getUserEquippedItemData(user).name"
                   class="equipped-tomb-raider"
                 />
-                
+
                 <!-- Item Étoiles par-dessus l'avatar (positionné en dehors du conteneur) -->
-                <img 
-                  v-if="getUserEquippedItemData(user) && (getUserEquippedItemData(user).displayType === 'etoiles' || getUserEquippedItemData(user).name === 'Étoiles')" 
-                  :src="star" 
+                <img
+                  v-if="getUserEquippedItemData(user) && (getUserEquippedItemData(user).displayType === 'etoiles' || getUserEquippedItemData(user).name === 'Étoiles')"
+                  :src="star"
                   :alt="getUserEquippedItemData(user).name"
                   class="equipped-stars-overlay"
                 />
-                
+
                 <!-- Item Cadre royale par-dessus l'avatar (positionné en dehors du conteneur) -->
-                <img 
-                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'royal-frame'" 
-                  :src="getUserEquippedItemData(user).img" 
+                <img
+                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'royal-frame'"
+                  :src="getUserEquippedItemData(user).img"
                   :alt="getUserEquippedItemData(user).name"
                   class="equipped-royal-frame"
                 />
-                
+
                 <!-- Item Roses par-dessus l'avatar (positionné en dehors du conteneur) -->
-                <img 
-                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'rainbow'" 
-                  :src="getUserEquippedItemData(user).img" 
+                <img
+                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'rainbow'"
+                  :src="getUserEquippedItemData(user).img"
                   :alt="getUserEquippedItemData(user).name"
                   class="equipped-rainbow"
                 />
-                
+
                 <!-- Item Ange par-dessus l'avatar (positionné en dehors du conteneur) -->
-                <img 
-                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'angel'" 
-                  :src="getUserEquippedItemData(user).img" 
+                <img
+                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'angel'"
+                  :src="getUserEquippedItemData(user).img"
                   :alt="getUserEquippedItemData(user).name"
                   class="equipped-angel-wings"
                 />
 
                 <!-- Item Oreilles de chat par-dessus l'avatar (positionné en dehors du conteneur) -->
-                <img 
-                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'cat-ears'" 
-                  :src="getUserEquippedItemData(user).img" 
+                <img
+                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'cat-ears'"
+                  :src="getUserEquippedItemData(user).img"
                   :alt="getUserEquippedItemData(user).name"
                   class="equipped-cat-ears"
                 />
-                
+
                 <!-- Item Gentleman par-dessus l'avatar (positionné en dehors du conteneur) -->
-                <img 
-                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'gentleman'" 
-                  :src="gentleman" 
+                <img
+                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'gentleman'"
+                  :src="gentleman"
                   :alt="getUserEquippedItemData(user).name"
                   class="equipped-gentleman-overlay"
                 />
-                
+
                 <!-- Item Vinyle par-dessus l'avatar (positionné en dehors du conteneur) -->
-                <img 
-                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'vinyle'" 
-                  :src="getUserEquippedItemData(user).img" 
+                <img
+                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'vinyle'"
+                  :src="getUserEquippedItemData(user).img"
                   :alt="getUserEquippedItemData(user).name"
                   class="equipped-vinyle-overlay"
                 />
-                
+
                 <!-- Item Absolute Cinema par-dessus l'avatar (positionné en dehors du conteneur) -->
-                <img 
-                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'absolute-cinema'" 
-                  :src="bras" 
+                <img
+                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'absolute-cinema'"
+                  :src="bras"
                   :alt="getUserEquippedItemData(user).name"
                   class="equipped-absolute-cinema-overlay"
                 />
-                
 
-                
+
+
                 <!-- Item Miaou (chat uniquement) par-dessus l'avatar (positionné en dehors du conteneur) -->
-                <img 
-                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'miaou'" 
-                  :src="chat" 
+                <img
+                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'miaou'"
+                  :src="chat"
                   :alt="getUserEquippedItemData(user).name"
                   class="equipped-chat-overlay"
                 />
-                
+
                 <!-- Item Miaou (pate uniquement) par-dessus l'avatar (positionné en dehors du conteneur) -->
-                <img 
-                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'miaou'" 
-                  :src="pate" 
+                <img
+                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'miaou'"
+                  :src="pate"
                   :alt="getUserEquippedItemData(user).name"
                   class="equipped-pate-overlay"
                 />
-                
+
                 <!-- Item Daft Punk par-dessus l'avatar (positionné en dehors du conteneur) -->
-                <img 
-                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'nokia'" 
-                  :src="daftpunk" 
+                <img
+                  v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).displayType === 'nokia'"
+                  :src="daftpunk"
                   :alt="getUserEquippedItemData(user).name"
                   class="equipped-daftpunk-overlay"
                 />
               </div>
-              
+
               <div class="user-details">
                 <div class="username">{{ user.username }}</div>
               </div>
             </div>
-            
+
             <!-- Score -->
             <div class="user-score">
               <span v-if="leaderboardFilter === 'coins'" class="score-value">
@@ -2717,12 +2717,12 @@
                     }"
                   >
                     <!-- Dyn: BELOW (intérieur du carré) -->
-                     
+
                     <img
                       v-for="(a, ai) in getProfilePopupAssetsForTargetPlacement(getUserEquippedItemData(selectedUser), 'profile-avatar', 'below')"
                       :key="'profile-below-'+ai+'-'+dynamicVariantsState"
                       :src="resolveDynSrc(a.src)"
-                      :style="getDynProfilePopupAssetStyle(a)"
+                      :style="getDynProfilePopupAssetStyle(a, true)"
                     />
 
                     <!-- Avatar -->
@@ -2745,7 +2745,7 @@
                       v-for="(a, ai) in getProfilePopupAssetsForTargetPlacement(getUserEquippedItemData(selectedUser), 'profile-avatar', 'inside')"
                       :key="'profile-inside-'+ai+'-'+dynamicVariantsState"
                       :src="resolveDynSrc(a.src)"
-                      :style="getDynProfilePopupAssetStyle(a)"
+                      :style="getDynProfilePopupAssetStyle(a, true)"
                     />
                     <!-- Ajout: Animation Matrix à l’intérieur de l’avatar -->
                     <div
@@ -2762,71 +2762,71 @@
                       </div>
                     </div>
                     <!-- INSIDE statiques (ajouts) -->
-                    <img 
-                      v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'cash'" 
-                      :src="cash" 
+                    <img
+                      v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'cash'"
+                      :src="cash"
                       :alt="getUserEquippedItemData(selectedUser).name"
                       class="equipped-cash-inside"
                     />
-                    <img 
-                      v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'target'" 
-                      :src="target" 
+                    <img
+                      v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'target'"
+                      :src="target"
                       :alt="getUserEquippedItemData(selectedUser).name"
                       class="equipped-target-inside"
                     />
-                    <img 
-                      v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'advisory'" 
-                      :src="advisory" 
+                    <img
+                      v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'advisory'"
+                      :src="advisory"
                       :alt="getUserEquippedItemData(selectedUser).name"
                       class="equipped-advisory-inside"
                     />
-                    <img 
-                      v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'jojo'" 
-                      :src="jojo" 
+                    <img
+                      v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'jojo'"
+                      :src="jojo"
                       :alt="getUserEquippedItemData(selectedUser).name"
                       class="equipped-jojo-inside"
                       :key="'jojo-'+getJojoVariantIndexForUser(selectedUser)"
                     />
-                    <img 
-                      v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'jojo' && getJojoVariantIndexForUser(selectedUser) === 1" 
-                      :src="jojotext" 
+                    <img
+                      v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'jojo' && getJojoVariantIndexForUser(selectedUser) === 1"
+                      :src="jojotext"
                       :alt="getUserEquippedItemData(selectedUser).name"
                       class="equipped-jojotext-inside"
                       :key="'jojotext-'+getJojoVariantIndexForUser(selectedUser)"
                     />
-                    <img 
-                      v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'espace'" 
-                      :src="spacestars" 
+                    <img
+                      v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'espace'"
+                      :src="spacestars"
                       :alt="getUserEquippedItemData(selectedUser).name"
                       class="equipped-spacestars-inside"
                     />
-                    <img 
-                      v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'dvd'" 
-                      :src="dvd" 
+                    <img
+                      v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'dvd'"
+                      :src="dvd"
                       :alt="getUserEquippedItemData(selectedUser).name"
                       class="equipped-dvd-inside"
                     />
-                    <img 
-                      v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'lunettes-pixel'" 
-                      :src="mlglunette" 
+                    <img
+                      v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'lunettes-pixel'"
+                      :src="mlglunette"
                       :alt="getUserEquippedItemData(selectedUser).name"
                       class="equipped-lunettes-pixel-inside"
                     />
-                    <img 
-                      v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'nokia'" 
-                      :src="nokia" 
+                    <img
+                      v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'nokia'"
+                      :src="nokia"
                       :alt="getUserEquippedItemData(selectedUser).name"
                       class="equipped-nokia-inside"
                     />
-                    <img 
-                      v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'nokia'" 
-                      :src="clippy" 
+                    <img
+                      v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'nokia'"
+                      :src="clippy"
                       :alt="getUserEquippedItemData(selectedUser).name"
                       class="equipped-clippy-inside"
                     />
-                    <img 
-                      v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'gentleman'" 
-                      :src="moustache" 
+                    <img
+                      v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'gentleman'"
+                      :src="moustache"
                       :alt="getUserEquippedItemData(selectedUser).name"
                       class="equipped-moustache-inside"
                     />
@@ -2837,13 +2837,13 @@
                     v-for="(a, ai) in getProfilePopupAssetsForTargetPlacement(getUserEquippedItemData(selectedUser), 'profile-avatar-scaler', 'below')"
                     :key="'pp-scaler-below-'+ai+'-'+dynamicVariantsState"
                     :src="resolveDynSrc(a.src)"
-                    :style="getDynProfilePopupAssetStyle(a)"
+                    :style="getDynProfilePopupAssetStyle(a, true)"
                   />
                   <img
                     v-for="(a, ai) in getProfilePopupAssetsForTargetPlacement(getUserEquippedItemData(selectedUser), 'profile-avatar-scaler', 'inside')"
                     :key="'pp-scaler-inside-'+ai+'-'+dynamicVariantsState"
                     :src="resolveDynSrc(a.src)"
-                    :style="getDynProfilePopupAssetStyle(a)"
+                    :style="getDynProfilePopupAssetStyle(a, true)"
                   />
 
                   <!-- Items statiques ABOVE (au-dessus du carré) -->
@@ -2890,45 +2890,45 @@
                     class="equipped-absolute-cinema-overlay-right"
                   />
                   <!-- Ajout: Overlays statiques Tomb Raider + Ange -->
-                  <img 
+                  <img
                     v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'tomb-raider'"
                     :src="laracroft"
                     :alt="getUserEquippedItemData(selectedUser).name"
                     class="equipped-tomb-raider"
                   />
-                  <img 
+                  <img
                     v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'angel'"
                     :src="getUserEquippedItemData(selectedUser).img || angelwings"
                     :alt="getUserEquippedItemData(selectedUser).name"
                     class="equipped-angel-wings"
                   />
                   <!-- Ajout: Étoiles, Roi, Cadre royale, Roses -->
-                  <img 
+                  <img
                     v-if="getUserEquippedItemData(selectedUser) && (getUserEquippedItemData(selectedUser).displayType === 'etoiles' || getUserEquippedItemData(selectedUser).name === 'Étoiles')"
-                    :src="star" 
+                    :src="star"
                     :alt="getUserEquippedItemData(selectedUser).name"
                     class="equipped-stars"
                   />
-                  <img 
+                  <img
                     v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'roi'"
-                    :src="roi" 
+                    :src="roi"
                     :alt="getUserEquippedItemData(selectedUser).name"
                     class="equipped-roi-overlay"
                   />
-                  <img 
+                  <img
                     v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'royal-frame'"
-                    :src="getUserEquippedItemData(selectedUser).img" 
+                    :src="getUserEquippedItemData(selectedUser).img"
                     :alt="getUserEquippedItemData(selectedUser).name"
                     class="equipped-royal-frame"
                   />
-                  <img 
+                  <img
                     v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'rainbow'"
-                    :src="getUserEquippedItemData(selectedUser).img" 
+                    :src="getUserEquippedItemData(selectedUser).img"
                     :alt="getUserEquippedItemData(selectedUser).name"
                     class="equipped-rainbow"
                   />
                   <!-- Ajout: Oreilles de chat -->
-                  <img 
+                  <img
                     v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'cat-ears'"
                     :src="getUserEquippedItemData(selectedUser).img || oreilleschat"
                     :alt="getUserEquippedItemData(selectedUser).name"
@@ -2936,13 +2936,13 @@
                   />
 
                   <!-- Ajout: Clown (nez + cheveux) -->
-                  <img 
+                  <img
                     v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'clown'"
                     :src="clownnose"
                     alt="Nez de clown"
                     class="equipped-clown-nose"
                   />
-                  <img 
+                  <img
                     v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'clown'"
                     :src="clowncheveux"
                     :alt="getUserEquippedItemData(selectedUser).name"
@@ -2950,52 +2950,52 @@
                   />
 
                   <!-- AJOUT: Overlays manquants pour la pop-up via leaderboard -->
-                  <img 
+                  <img
                     v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'vinyle'"
                     :src="vinyle"
                     :alt="getUserEquippedItemData(selectedUser).name"
                     class="equipped-vinyle-overlay"
                   />
-                  <img 
+                  <img
                     v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'miaou'"
                     :src="chat"
                     :alt="getUserEquippedItemData(selectedUser).name"
                     class="equipped-chat-overlay"
                   />
                   <!-- AJOUT: Pate manquante (leaderboard – pop-up profil) -->
-                  <img 
+                  <img
                     v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'miaou'"
                     :src="pate"
                     :alt="getUserEquippedItemData(selectedUser).name"
                     class="equipped-pate-overlay"
                   />
                   <!-- AJOUT: chapeau Gentleman (overlay au-dessus du carré) -->
-                  <img 
+                  <img
                     v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'gentleman'"
                     :src="gentleman"
                     :alt="getUserEquippedItemData(selectedUser).name"
                     class="equipped-gentleman-overlay"
                   />
 
-                  <img 
+                  <img
                     v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'flash'"
                     :src="flash"
                     :alt="getUserEquippedItemData(selectedUser).name"
                     class="equipped-flash-overlay"
                   />
-                  <img 
+                  <img
                     v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'flash'"
                     :src="camera"
                     :alt="getUserEquippedItemData(selectedUser).name"
                     class="equipped-camera-overlay"
                   />
-                  <img 
+                  <img
                     v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'nokia'"
                     :src="daftpunk"
                     :alt="getUserEquippedItemData(selectedUser).name"
                     class="equipped-daftpunk-overlay"
                   />
-                  <img 
+                  <img
                     v-if="getUserEquippedItemData(selectedUser) && getUserEquippedItemData(selectedUser).displayType === 'espace'"
                     :src="asteroide"
                     :alt="getUserEquippedItemData(selectedUser).name"
@@ -3003,8 +3003,8 @@
                   />
 
                   <!-- Profile popup - generic overlay -->
-                  <img 
-                    v-if="getUserEquippedItemData(selectedUser) 
+                  <img
+                    v-if="getUserEquippedItemData(selectedUser)
                            && shouldRenderStaticOverlay(getUserEquippedItemData(selectedUser))
                            && getUserEquippedItemData(selectedUser).displayType !== 'matrix'
                            && getUserEquippedItemData(selectedUser).displayType !== 'absolute-cinema'
@@ -3013,8 +3013,8 @@
                            && getUserEquippedItemData(selectedUser).name !== 'Vinyle'
                            && getUserEquippedItemData(selectedUser).name !== 'Advisory'
                            && getUserEquippedItemData(selectedUser).name !== 'Flash'
-                           && getUserEquippedItemData(selectedUser).name !== 'Clown'" 
-                    :src="getUserEquippedItemData(selectedUser).img" 
+                           && getUserEquippedItemData(selectedUser).name !== 'Clown'"
+                    :src="getUserEquippedItemData(selectedUser).img"
                     :alt="getUserEquippedItemData(selectedUser).name"
                     :class="getEquippedItemClass(getUserEquippedItemData(selectedUser).name)"
                   />
@@ -3024,7 +3024,7 @@
                     v-for="(a, ai) in getProfilePopupAssetsForTargetPlacement(getUserEquippedItemData(selectedUser), 'profile-avatar-scaler', 'above')"
                     :key="'pp-scaler-above-'+ai+'-'+dynamicVariantsState"
                     :src="resolveDynSrc(a.src)"
-                    :style="getDynProfilePopupAssetStyle(a)"
+                    :style="getDynProfilePopupAssetStyle(a, true)"
                   />
                 </div>
               </div>
@@ -3111,7 +3111,7 @@
         <div v-else class="public-note-empty">Aucune note</div>
       </div>
                       <!-- Slider de volume pour la pop-up du leaderboard (déplacé sous le titre) -->
-               
+
       <!-- /Note publique -->
             </div>
           </div>
@@ -3488,7 +3488,7 @@ const playSound = (src) => {
 }
 
 // URL de base pour les avatars (comme dans la Navbar)
-const baseUrl = API_URL.endsWith('/api') 
+const baseUrl = API_URL.endsWith('/api')
   ? API_URL.slice(0, -4) // Supprime '/api' de la fin pour avoir l'URL du serveur
   : API_URL.replace('/api', '')
 
@@ -3648,7 +3648,7 @@ const adminAllOptions = computed(() => {
         meta: (it && typeof it.meta === 'object') ? it.meta : {}
       }))
     : []
-  
+
   const combined = [...stat, ...dyn, ...userServerLocalItems.value, ...local, ...weekly]
   const seen = new Set()
   return combined.map((it, idx) => {
@@ -3743,8 +3743,8 @@ function getApercuIconPos(item) {
     const hasVariantsOrPalette = hasDynamicVariants || hasOwnPalette
     // Si l’item a une palette (Jojo/Discord) ou des variants dynamiques, on place l’aperçu sous la palette
     return hasVariantsOrPalette ? 'top: 40px; left: 10px;' : 'top: 8px; left: 10px;'
-  } catch { 
-    return 'top: 8px; left: 10px;' 
+  } catch {
+    return 'top: 8px; left: 10px;'
   }
 }
 
@@ -3817,7 +3817,7 @@ async function loadDynamicItems() {
       // éviter les doublons d'id avec le catalogue statique
       const staticIds = new Set(shopItems.map(s => s.id))
       dynamicItems.value = normalized.filter(n => !staticIds.has(n.id))
-      
+
       // Nettoyer la map des computed properties pour les nouveaux items
       dynamicItemDisplays.clear()
     } else {
@@ -3838,10 +3838,10 @@ async function loadDynamicItems() {
 const collectionItems = computed(() => {
   // Déclencheur pour réactivité locale
   localItemsUpdateKey.value
-  
+
   // 1. Items serveur
   const serverItems = [...shopItems, ...dynamicItems.value]
-  
+
   // 2. Items locaux (Suggestions)
   let local = []
   try {
@@ -4605,7 +4605,7 @@ function saveSuggestion() {
         cosmeticPreviewStyle: { ...(set.cosmeticDesktop || set.collection) },
         cosmeticPreviewStyleMobile: { ...(set.cosmeticMobile || set.cosmeticDesktop || set.collection) },
         dailyStyle: { ...set.dailyShop },
-        meta: { 
+        meta: {
           ...baseMeta,
           leaderboardPlacement: lbPlacement,
           leaderboardTarget: lbPlacement === 'inside' ? 'user-avatar' : 'user-avatar-container',
@@ -4753,7 +4753,7 @@ function saveSuggestion() {
         const key = 'my-items-local-' + uid
         let arr = []
         try { arr = JSON.parse(localStorage.getItem(key) || '[]') } catch { arr = [] }
-        
+
         // Note: localItemId est déjà dans payload.meta grâce au bloc avant l'async
 
         // Déterminer/attribuer un identifiant local stable
@@ -4769,21 +4769,21 @@ function saveSuggestion() {
           if (name === 'Suggestion') return false
           return pname === name
         }) : null
-        
+
         const localId = existing && existing.meta && existing.meta.localItemId ? existing.meta.localItemId : (payload.meta && payload.meta.localItemId ? payload.meta.localItemId : ('local-' + Date.now() + '-' + Math.floor(Math.random()*1000)))
         if (!payload.meta || typeof payload.meta !== 'object') payload.meta = {}
         payload.meta.localItemId = localId
-        
+
         // Upsert dans le tableau local
         const idx = Array.isArray(arr) ? arr.findIndex(p => {
           const plocalId = p && p.meta && p.meta.localItemId
           // On ne remplace par nom que si ce n'est pas "Suggestion"
           return plocalId ? String(plocalId) === String(localId) : (String(payload.name || '') !== 'Suggestion' && String(p.name || '').trim() === String(payload.name || '').trim())
         }) : -1
-        
+
         if (idx >= 0) { arr.splice(idx, 1, payload) } else { arr.push(payload) }
         try { localStorage.setItem(key, JSON.stringify(arr)) } catch {}
-        
+
         // Forcer la mise à jour de la collection pour inclure l'item local
         localItemsUpdateKey.value++
         try { await secureApiCall('/users/my-items', { method: 'PUT', body: JSON.stringify({ item: payload }) }) } catch {}
@@ -4797,7 +4797,7 @@ function saveSuggestion() {
         } catch {}
 
         if (!isAdminOnly || !isAdminOnly.value) {
-            
+
         }
       } catch {}
     })()
@@ -4934,11 +4934,11 @@ const profilePopupLargeAvatarIsMobile = ref(false)
 function updateProfilePopupLargeAvatarIsMobile() {
   try {
     if (window && typeof window.matchMedia === 'function') {
-      profilePopupLargeAvatarIsMobile.value = window.matchMedia('(max-width: 480px)').matches
+      profilePopupLargeAvatarIsMobile.value = window.matchMedia('(max-width: 1218px)').matches
       return
     }
     if (window && typeof window.innerWidth === 'number') {
-      profilePopupLargeAvatarIsMobile.value = window.innerWidth <= 480
+      profilePopupLargeAvatarIsMobile.value = window.innerWidth <= 1218
       return
     }
   } catch {}
@@ -4975,12 +4975,12 @@ onMounted(() => {
   // Charger les favoris depuis le backend (fallback local si indisponible)
   try { if (authStore.isLoggedIn) coinsStore.loadFavorites && coinsStore.loadFavorites() } catch {}
   // Écouter les changements de variantes pour forcer le re-render des items hebdomadaires
-  try { 
-    window.addEventListener('dynamic-variant-changed', (event) => { 
+  try {
+    window.addEventListener('dynamic-variant-changed', (event) => {
       // Forcer le re-render de la boutique hebdo
       variantUpdateKey.value++
       syncCurrentUserDynamicVariants()
-    }) 
+    })
   } catch {}
   // Écouter les updates de note publique des utilisateurs (profil/leaderboard)
   try { window.addEventListener('user-public-note-changed', handleUserPublicNoteChanged) } catch {}
@@ -5074,6 +5074,14 @@ function getEffectiveProfilePopupTarget(item, asset) {
     const itemLevel = item && item.meta && item.meta.profilePopupTarget
     if (itemLevel) return String(itemLevel)
 
+    const ps = asset?.profilePopupStyle
+    const pt = typeof ps?.top === 'number' ? ps.top : 0
+    const pl = typeof ps?.left === 'number' ? ps.left : 0
+    const pw = typeof ps?.width === 'number' ? ps.width : 100
+    const pr = typeof ps?.rotate === 'number' ? ps.rotate : 0
+    const pNonDefault = !(pt === 0 && pl === 0 && pw === 100 && pr === 0)
+    if (pNonDefault) return 'profile-avatar-scaler'
+
     // Heuristique legacy: si largeAvatarStyle non-défaut et aucune cible explicite → scaler
     const mobile = isProfilePopupLargeAvatarMobile()
     const s = mobile ? (asset?.largeAvatarStyleMobile || asset?.largeAvatarStyle) : (asset?.largeAvatarStyle)
@@ -5114,7 +5122,7 @@ function getProfilePopupAssetsForTargetPlacement(item, target, placement) {
   } catch { return [] }
 }
 
-function getDynProfilePopupAssetStyle(asset) {
+function getDynProfilePopupAssetStyle(asset, preferProfilePopup = false) {
   const isDefault = (s) => {
     if (!s || typeof s !== 'object') return true
     const t = typeof s.top === 'number' ? s.top : 0
@@ -5123,7 +5131,7 @@ function getDynProfilePopupAssetStyle(asset) {
     const r = typeof s.rotate === 'number' ? s.rotate : 0
     return t === 0 && l === 0 && w === 100 && r === 0
   }
-  
+
   // Priorité à largeAvatarStyle si défini (non-défaut), sinon profilePopupStyle
   const forceDesktop = shouldForceLeaderboardProfilePopupDesktop()
   const mobile = !forceDesktop && isProfilePopupLargeAvatarMobile()
@@ -5131,10 +5139,10 @@ function getDynProfilePopupAssetStyle(asset) {
   const largeDesktop = asset?.largeAvatarStyle
   const largeStyle = mobile ? largeMobile : largeDesktop
   const largeIsSet = largeStyle && !isDefault(largeStyle)
-  const useLarge = mobile ? !!largeMobile : largeIsSet
-  
+  const useLarge = !preferProfilePopup && (mobile ? !!largeMobile : largeIsSet)
+
   const s = (asset && (useLarge ? largeStyle : asset.profilePopupStyle)) || asset?.leaderboardStyle || asset?.navbarStyle || asset?.style || {}
-  
+
   const style = { position: 'absolute', objectFit: s.objectFit || 'contain', zIndex: typeof s.zIndex === 'number' ? s.zIndex : undefined, pointerEvents: 'none' }
 
   // Positions initiales
@@ -5345,9 +5353,9 @@ function getDynLeaderboardContainerOverlayStyle(asset) {
   const s = mobile
     ? ((asset && asset.leaderboardStyleMobile) || asset?.leaderboardStyle || asset?.style || {})
     : ((asset && asset.leaderboardStyle) || asset?.leaderboardStyleMobile || asset?.style || {})
-  const style = { 
-    position: 'absolute', 
-    objectFit: s.objectFit || 'contain', 
+  const style = {
+    position: 'absolute',
+    objectFit: s.objectFit || 'contain',
     zIndex: 100,
     pointerEvents: 'none'
   }
@@ -5580,10 +5588,10 @@ function getDynVariantAssetsForLeaderboard(userOrItem, maybeItem) {
       const baseByIndex = baseAssets[idx]
       // Fallback sur index si src ne matche pas (pour les skins qui changent l'image)
       const b = baseBySrc || baseByIndex
-      
+
       const baseMeta = (b && b.meta) ? b.meta : {}
       const mergedMeta = (a && a.meta) ? { ...baseMeta, ...a.meta } : baseMeta
-      
+
       const merged = { ...a, meta: mergedMeta }
       if (b) {
         const isDef = (s) => {
@@ -5624,9 +5632,9 @@ function getDynVariantPreviewStyle(asset) {
   // Utiliser les styles de cosmeticPreviewStyle s'ils existent, sinon fallback sur popupStyleStyle ou collection
   const cosmeticStyle = mobile ? (asset.cosmeticPreviewStyleMobile || asset.cosmeticPreviewStyle) : asset.cosmeticPreviewStyle
   const s = cosmeticStyle || (asset && asset.popupStyleStyle) || (asset && asset.collectionStyle) || asset?.style || {}
-  const style = { 
-    position: 'absolute', 
-    objectFit: s.objectFit || 'contain', 
+  const style = {
+    position: 'absolute',
+    objectFit: s.objectFit || 'contain',
     zIndex: typeof s.zIndex === 'number' ? s.zIndex : 1,
     pointerEvents: 'none'
   }
@@ -5665,9 +5673,9 @@ function getDynVariantAssetStyle(asset) {
       ? ((asset && asset.collectionStyleMobile) || asset?.collectionStyle || asset?.style || {})
       : ((asset && asset.collectionStyle) || asset?.style || {})
     )
-  const style = { 
-    position: 'absolute', 
-    objectFit: s.objectFit || 'contain', 
+  const style = {
+    position: 'absolute',
+    objectFit: s.objectFit || 'contain',
     zIndex: typeof s.zIndex === 'number' ? s.zIndex : 1,
     pointerEvents: isWeekly ? 'none' : 'auto',
     cursor: isWeekly ? undefined : 'move'
@@ -6526,9 +6534,9 @@ watch(selectedUserMusicSrc, (src) => {
 async function openLeaderboardProfile(user) {
   try {
     // Pré-normaliser l’utilisateur initial (leaderboard)
-    const initial = user ? { 
-      ...user, 
-      publicNote: typeof user.publicNote === 'string' ? user.publicNote : '' 
+    const initial = user ? {
+      ...user,
+      publicNote: typeof user.publicNote === 'string' ? user.publicNote : ''
     } : null
 
     selectedUser.value = initial
@@ -7200,6 +7208,13 @@ const getUserEquippedItemData = (user) => {
     }
   }
   if (!item) {
+    try {
+      if (isCurrentUser(user) && coinsStore.equippedItem) {
+        item = coinsStore.equippedItem
+      }
+    } catch {}
+  }
+  if (!item) {
     console.log('⚠️ Item non trouvé pour equippedItemId:', user.equippedItemId, 'utilisateur:', user?.username)
     return null
   }
@@ -7537,7 +7552,7 @@ const getJojoVariantIndexForUser = (user) => {
      console.log('🔄 Chargement des items hebdomadaires...')
      const response = await secureApiCall('/coins/weekly-items')
      console.log('📦 Réponse API:', response)
-     
+
      if (response.success) {
        // Normaliser les images avec les assets locaux et forcer le prix Matrix
        const assetById = {
@@ -7594,13 +7609,13 @@ const getJojoVariantIndexForUser = (user) => {
           if (isDiscord) {
             return { ...it, img: fixedImg, displayType: 'discord', variants: [discordon, discordnepasderange, discordderange], variantIndex: coinsStore.discordVariantIndex || 0 }
           }
-          
+
           // Pour les items dynamiques, récupérer les variantes depuis les items chargés
           const dynamicItem = dynamicInfoById.value.get(it?.id) || dynamicInfoByName.value.get(it?.name)
           if (dynamicItem && dynamicItem.variants && Array.isArray(dynamicItem.variants) && dynamicItem.variants.length > 0) {
-            return { 
-              ...it, 
-              img: fixedImg, 
+            return {
+              ...it,
+              img: fixedImg,
               isDynamic: true,
               // IMPORTANT: fournir legacyId pour que la lecture/écriture des variantes tombe sur la même clé
               legacyId: (typeof dynamicItem.legacyId !== 'undefined') ? dynamicItem.legacyId : dynamicItem.id,
@@ -7609,7 +7624,7 @@ const getJojoVariantIndexForUser = (user) => {
               backgrounds: dynamicItem.backgrounds
             }
           }
-          
+
           return { ...it, img: fixedImg }
         })
         weeklyItems.value = [...patched].sort((a, b) => { const aid = Number((a.legacyId ?? a.id)); const bid = Number((b.legacyId ?? b.id)); if (Number.isFinite(aid) && Number.isFinite(bid)) return aid - bid; return String(a.name || '').localeCompare(String(b.name || '')); }).sort((a, b) => Number((a.legacyId ?? a.id)) - Number((b.legacyId ?? b.id)))
@@ -7630,7 +7645,7 @@ const getJojoVariantIndexForUser = (user) => {
    if (weeklyTimer) {
      clearInterval(weeklyTimer)
    }
-   
+
    weeklyTimer = setInterval(() => {
   const targetMs = Number(nextResetAt.value) || 0
   if (!targetMs) return
@@ -7693,7 +7708,7 @@ function stopWeeklyAutoCycle() {
 // Fonctions pour le leaderboard
 const sortedLeaderboardUsers = computed(() => {
    if (!leaderboardUsers.value || !leaderboardUsers.value.length) return []
-   
+
    return [...leaderboardUsers.value].sort((a, b) => {
      if (leaderboardFilter.value === 'coins') {
        const av = Number(a?.leaderboardCoins ?? a?.coins ?? 0)
@@ -8136,7 +8151,7 @@ const joinFaction = async (factionName) => {
      const result = await coinsStore.purchaseItem(item)
      if (!result || !result.success) {
        console.error('Erreur lors de l\'achat:', result?.message)
-      } else { 
+      } else {
         playSound(achatSound)
         // Recharger le leaderboard pour afficher le score historique (non décrémenté)
         await loadLeaderboardUsers()
@@ -8154,7 +8169,7 @@ const joinFaction = async (factionName) => {
          method: 'POST',
          body: JSON.stringify({ itemId: item.id })
        })
-       
+
        if (response.success) {
          coinsStore.unequipItem()
          emit('equip-item', null)
@@ -8172,7 +8187,7 @@ const joinFaction = async (factionName) => {
          method: 'POST',
          body: JSON.stringify({ itemId: item.id })
        })
-       
+
        if (response.success) {
          coinsStore.equipItem(item.id)
          emit('equip-item', item)
@@ -8634,7 +8649,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: flex-start;
 }
-  
+
   .tab-btn {
   padding: 12px 20px;
   border: none;
@@ -8668,7 +8683,7 @@ onUnmounted(() => {
     outline: none !important;
   }
 
-  
+
 
 .weekly-reset-notification {
   position: absolute;
@@ -8707,7 +8722,7 @@ onUnmounted(() => {
 }
 
 
-  
+
   .timer-value {
     font-size: 20px;
     font-variant-numeric: tabular-nums;
@@ -8994,12 +9009,12 @@ onUnmounted(() => {
   .preview-card.preview-avatar:not(.roi-preview) .profile-avatar-stage { border: none; border-radius: 30px; width: 351px !important; height: 250px !important; box-sizing: border-box; }
   .preview-card.preview-avatar:not(.roi-preview) .profile-avatar-scaler { width: 351px !important; height: 250px !important; display:flex; align-items:center; justify-content:center; border: 5px solid #5bc682; border-radius: 30px; box-sizing: border-box; margin: 0 auto; position: relative; }
   .preview-card.preview-avatar .profile-avatar { width: 150px !important; height: 150px !important; border-width: 5px !important; }
-  .preview-card.preview-avatar.avatar-mobile-card .profile-avatar-wrap.profile-popup { display:flex; align-items:center; justify-content:center; width: 224px !important; height: 110px !important; margin: 0 auto; border: 5px solid #5bc682; border-radius: 30px !important; box-sizing: border-box; overflow: visible; scrollbar-width: none; -ms-overflow-style: none; }
+  .preview-card.preview-avatar.avatar-mobile-card .profile-avatar-wrap.profile-popup { display:flex; align-items:center; justify-content:center; width: 224px !important; height: 200px !important; margin: 0 auto; border: 5px solid #5bc682; border-radius: 30px !important; box-sizing: border-box; overflow: visible; scrollbar-width: none; -ms-overflow-style: none; }
   .preview-card.preview-avatar.avatar-mobile-card .profile-avatar-stage,
   .preview-card.preview-avatar.avatar-mobile-card .profile-avatar-scaler { width: 100px !important; height: 110px !important; border-radius: 24px !important; margin: 0 auto !important; overflow: visible; scrollbar-width: none; -ms-overflow-style: none; }
   .preview-card.preview-avatar.avatar-mobile-card .profile-avatar-scaler { border: none !important; display:flex !important; align-items:center; justify-content:center; box-sizing: border-box; overflow: visible; scrollbar-width: none; -ms-overflow-style: none; }
   .preview-card.preview-avatar.avatar-mobile-card .profile-avatar { width: 100px !important; height: 100px !important; border-width: 5px !important; border-radius: 24px !important; }
-  .preview-card.preview-avatar.avatar-mobile-card .avatar-img { width: 100px !important; height: 100px !important; } 
+  .preview-card.preview-avatar.avatar-mobile-card .avatar-img { width: 100px !important; height: 100px !important; }
   .preview-card.preview-avatar.avatar-mobile-card .profile-avatar-wrap.profile-popup::-webkit-scrollbar,
   .preview-card.preview-avatar.avatar-mobile-card .profile-avatar-stage::-webkit-scrollbar,
   .preview-card.preview-avatar.avatar-mobile-card .profile-avatar-scaler::-webkit-scrollbar { width: 0; height: 0; display: none; }
@@ -9250,7 +9265,7 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
 }
 
   /* Tailles personnalisées pour chaque item dans le leaderboard */
-  
+
   /* Clown - Plus petit */
   .leaderboard-container .equipped-clown {
     pointer-events: none !important;
@@ -9896,7 +9911,7 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
     padding: 0 !important;
     justify-items: center;
   }
-  
+
   .weekly-shop-container .shop-item {
     width: auto !important;
     max-width: none !important;
@@ -9928,7 +9943,7 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
   }
 
 
-  .timer-value { 
+  .timer-value {
     font-size: 25px !important;
     display: inline-block;
     min-width: 7ch;
@@ -9971,35 +9986,35 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
       grid-template-columns: repeat(2, minmax(200px, 0fr)) !important;
     }
   }
-  
+
   .shop-item {
     width: 100% !important;
     max-width: 180px !important;
     margin: 0 auto !important;
     text-align: center !important;
   }
-  
+
   .item-img-wrapper {
     width: 80px !important;
     height: 80px !important;
     margin: 0 auto 15px !important;
   }
-  
+
   .item-img-container {
     width: 100% !important;
     height: 100% !important;
   }
-  
+
   .item-name {
     font-size: 14px !important;
     margin-bottom: 10px !important;
   }
-  
+
   .item-price {
     font-size: 13px !important;
     margin-bottom: 10px !important;
   }
-  
+
   .buy-btn,
   .equip-btn {
     padding: 8px 16px !important;
@@ -10014,12 +10029,12 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
     max-width: 120px !important;
     margin: 0 auto !important;
   }
-  
+
   .coin-icon {
     width: 22px !important;
     height: 22px !important;
   }
-  
+
   .shop-tabs {
     display: flex !important;
     flex-direction: column !important;
@@ -10032,7 +10047,7 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
     border-bottom: none !important;
     padding-bottom: 0 !important;
   }
-  
+
   .tab-btn {
     width: 100% !important;
     max-width: 250px !important;
@@ -10040,14 +10055,14 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
     font-size: 14px !important;
     margin: 0 auto !important;
   }
-  
+
   .shop-title {
     text-align: center !important;
     color: #00c97b !important;
     font-size: 1.7rem !important;
     margin-top: 25px;
   }
-  
+
   .timer-info {
     display: flex !important;
     justify-content: center !important;
@@ -10055,7 +10070,7 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
     gap: 0px !important;
     flex-direction: row !important;
   }
-  
+
   .clown-hair-shop {
     max-width: 100% !important;
     max-height: 90% !important;
@@ -10064,7 +10079,7 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
     top: 5px !important;
     left: 10px !important;
   }
-  
+
   .clown-nose-shop {
     max-width: 100% !important;
     max-height: 45% !important;
@@ -10073,7 +10088,7 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
     top: 30px !important;
     left: 24px !important;
   }
-  
+
   .absolute-cinema-img-shop-right {
     max-width: 100% !important;
     max-height: 70% !important;
@@ -10083,7 +10098,7 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
     left: 45px !important;
     transform: scaleX(-1) !important;
   }
-  
+
   .nokia-img-shop {
     max-width: 100% !important;
     max-height: 50% !important;
@@ -10093,7 +10108,7 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
     left: 30% !important;
     width: 40% !important;
   }
-  
+
   .clippy-img-shop {
     max-width: 100% !important;
     max-height: 35% !important;
@@ -10103,7 +10118,7 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
     left: 66% !important;
     width: 29% !important;
   }
-  
+
   .daftpunk-img-shop {
     max-width: 60% !important;
     max-height: 80% !important;
@@ -10112,7 +10127,7 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
     top: 23% !important;
     left: 50% !important;
   }
-  
+
   .spacestars-img-shop {
     max-width: 90% !important;
     max-height: 100% !important;
@@ -10135,7 +10150,7 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
   .shop-grid .collection-item .clippy-img-shop { left: 50% !important; top: 60% !important; width: 29% !important; transform: none !important; position: absolute !important; height: auto !important; object-fit: contain !important; }
   .shop-grid .collection-item .nokia-img-shop { left: 13% !important;  top: 50% !important; width: 40% !important; transform: none !important; position: absolute !important; height: auto !important; object-fit: contain !important; }
   .shop-grid .collection-item .jojo-img-shop.jojo-swipe.jojo-sepia-anim {  top: 43px !important; left: 76px !important; }
-  
+
   /* Correction du leaderboard container pour mobile */
   .leaderboard-container {
     width: 100% !important;
@@ -10148,7 +10163,7 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
     flex-direction: column !important;
     background: none !important;
   }
-  
+
   .leaderboard-filters {
     display: flex !important;
     gap: 10px !important;
@@ -10157,7 +10172,7 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
     flex-direction: column !important;
     align-items: center !important;
   }
-  
+
   .leaderboard-item {
     width: 100%;
     max-width: 100%;
@@ -11257,7 +11272,7 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
 }
 
 .gentleman-img-shop {
-  max-width: 55%; 
+  max-width: 55%;
   max-height: 44%;
     object-fit: contain;
   position: absolute;
@@ -12209,6 +12224,12 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
     .variants-ui { flex-direction: column; }
   }
 
+@media (max-width: 1218px) {
+
+      .preview-card.preview-item .item-img-wrapper.large { width: 250px !important; height: 250px !important; }
+
+      }
+
   @media (max-width: 1262px) {
     .color-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -12268,7 +12289,6 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
     .preview-card.preview-leaderboard .equipped-tomb-raider { left: -78px !important; }
     .preview-card.preview-avatar .profile-avatar-scaler .equipped-tomb-raider { left: 34px !important; }
     .preview-card.preview-item img.item-img[alt="Ange"] { position: absolute !important; top: 15% !important; width: 85% !important; left: 8% }
-    .preview-card.preview-item .item-img-wrapper.large { width: 250px !important; height: 250px !important; }
     .preview-card.preview-item .jojo-text-preview { top: 3px !important; left: 13px !important; width: 61% !important; }
     .preview-card.preview-item.cosmetic-mobile-card .jojo-text-preview { top: 10px; }
 
@@ -12479,15 +12499,15 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
 .profile-avatar-stage .equipped-galaxie-overlay,
 .profile-avatar-stage .equipped-coeur-overlay,
 .profile-avatar-stage .equipped-alpha-overlay,
-.profile-avatar-stage .equipped-admin-planify-overlay { 
-  position: absolute !important; 
+.profile-avatar-stage .equipped-admin-planify-overlay {
+  position: absolute !important;
   top: 19px !important;
     left: -2px !important;
     width: 102% !important;
     height: 80% !important;
-  object-fit: contain !important; 
-  pointer-events: none !important; 
-  z-index: 6 !important; 
+  object-fit: contain !important;
+  pointer-events: none !important;
+  z-index: 6 !important;
 }
 
 /* --- Overrides pop-up Profil (même rendu que Navbar.vue) --- */
@@ -13023,7 +13043,7 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
   .month-timer {
     width: 100%;
     margin-bottom: 0;
-  }  
+  }
 
 
   .month-timer .countdown-text,
@@ -13117,7 +13137,7 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
     min-height: 120px;
   }
 
-  
+
 }
 
 @media (min-width: 1025px) and (max-width: 1218px) {
@@ -13275,7 +13295,7 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
         align-items: center;
         justify-content: center;
   }
-  
+
   .faction-col {
         padding: 0px 0px 0px !important;
         width: 100% !important;
@@ -13305,7 +13325,7 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
   .faction-leaderboard-list {
     width: 100%;
   }
-  
+
   .faction-title {
     font-size: 1.1rem;
     padding: 8px;
@@ -13868,8 +13888,8 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
     font-weight: 600;
     text-align: center;
   }
-  .weekly-section .shop-item.weekly-item.small-card .jojo-text-preview.jojotext-fade[data-v-dfad078d] { 
-    left: 31px !important; 
+  .weekly-section .shop-item.weekly-item.small-card .jojo-text-preview.jojotext-fade[data-v-dfad078d] {
+    left: 31px !important;
   }
 }
 /* Thème sombre: label en blanc */
@@ -13922,7 +13942,7 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
     width: 100% !important;
     justify-content: center !important;
   }
-  
+
   /* Hide Desktop Toggle on Mobile */
   .toggle-header { display: none !important; }
 

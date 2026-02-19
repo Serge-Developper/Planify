@@ -126,12 +126,18 @@
         <button :class="{active: activeCanvas==='boutique-quotidienne'}" @click="activeCanvas='boutique-quotidienne'">Boutique quotidienne</button>
         <button :class="{active: activeCanvas==='apercu-large-avatar'}" @click="activeCanvas='apercu-large-avatar'">Aperçu Large/Avatar</button>
       </div>
-      <div class="device-tabs" v-if="activeCanvas==='collection' || activeCanvas==='apercu-large-avatar' || activeCanvas==='apercu-cosmetique'">
+      <div class="device-tabs" v-if="activeCanvas==='collection' || activeCanvas==='apercu-large-avatar' || activeCanvas==='apercu-cosmetique' || activeCanvas==='boutique-quotidienne'">
         <button :class="{active: activeDevice==='desktop'}" @click="activeDevice='desktop'">Desktop</button>
         <button :class="{active: activeDevice==='mobile'}" @click="activeDevice='mobile'">Mobile</button>
       </div>
-      <div class="canvas" :class="{ round: activeCanvas==='collection' }" :style="canvasStyle">
+      <div class="canvas" ref="canvasRef" :class="{ round: activeCanvas==='collection' }" :style="canvasStyle">
         <div class="bg-fill" :style="bgStyle"></div>
+        <div class="canvas-overlays">
+          <div v-for="(box, bi) in overlayBoxes" :key="'ov-'+bi" class="overlay-box" :class="box.kind" :style="box.style">
+            <span v-if="box.label" class="overlay-label">{{ box.label }}</span>
+          </div>
+          <div v-for="(zone, zi) in dropZones" :key="'dz-'+zi" class="drop-zone" :style="zone.style">{{ zone.label }}</div>
+        </div>
         <div v-if="activeCanvas==='apercu-large-avatar'" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:0;">
           <div style="position:relative;width:150px;height:150px;border-radius:24px;overflow:hidden;border:3px solid #000;background:#fff;">
             <img :src="getUserAvatar(auth.user)" alt="Avatar" style="width:100%;height:100%;object-fit:cover;" />
@@ -152,7 +158,6 @@
           @mousedown="startDrag($event, asset, idx)"
           @click.stop="selectAsset(idx)"
         />
-        <div class="guides"></div>
       </div>
       <div class="tools">
         <input ref="importJsonInput" type="file" accept="application/json" @change="handleImportJson" style="display:none" />
@@ -165,6 +170,9 @@
         <button class="btn outline" @click="testAddToWeekly">Tester en boutique hebdo</button>
         <button class="btn danger" @click="removeFromWeekly">Retirer de la boutique hebdo</button>
         <button class="btn ghost" @click="clearForm">Nouveau</button>
+        <label class="toggle">
+          <input type="checkbox" v-model="showOverflow" /> Afficher hors conteneur
+        </label>
       </div>
       <div class="meta-section" v-if="isEditing && editingVariantIndex === -1">
         <h3>Crédits Créateur(s)</h3>
@@ -209,7 +217,7 @@
           </div>
         </div>
         <div v-else class="variants-empty">Aucun style. Ajoute un style pour proposer des variantes comme Discord/Jojo.</div>
-        
+
         <!-- Options de variante (quand on édite une variante) -->
         <div v-if="editingVariantIndex >= 0 && form.variants && form.variants[editingVariantIndex]" class="variant-options">
           <h5>Options du style "{{ form.variants[editingVariantIndex].name }}"</h5>
@@ -262,10 +270,25 @@
             </template>
           </div>
         </div>
-        
+
         <div class="variants-hint">Contexte d'édition actuel: <b>{{ editingVariantIndex===-1 ? 'Base' : ('Style: '+(((form.variants || [])[editingVariantIndex] && (form.variants || [])[editingVariantIndex].name) || ('#'+(editingVariantIndex+1)))) }}</b></div>
       </div>
-      
+
+      <div v-if="activeAssets().length" class="layers-panel">
+        <h4>Calques</h4>
+        <ul class="layers-list">
+          <li v-for="layer in layerItems" :key="'layer-'+layer.idx" :class="{ active: selectedIndex === layer.idx }">
+            <button class="btn tiny" @click="selectAsset(layer.idx)">Sélectionner</button>
+            <span class="layer-name">{{ layer.label }}</span>
+            <span class="layer-z">z: {{ layer.z }}</span>
+            <div class="layer-actions">
+              <button class="btn tiny" @click="bumpLayer(layer.idx, 1)">Monter</button>
+              <button class="btn tiny" @click="bumpLayer(layer.idx, -1)">Descendre</button>
+            </div>
+          </li>
+        </ul>
+      </div>
+
       <div v-if="selectedIndex !== null" class="inspector">
         <h4>Propriétés</h4>
         <div class="grid">
@@ -319,19 +342,45 @@
           <button class="btn tiny" @click="nudge(1, 0)">→</button>
           <button class="btn tiny" @click="nudge(0, 1)">↓</button>
         </div>
+        <div class="row align-row">
+          <button class="btn tiny" @click="alignSelected('left')">Gauche</button>
+          <button class="btn tiny" @click="alignSelected('center-x')">Centre</button>
+          <button class="btn tiny" @click="alignSelected('right')">Droite</button>
+          <button class="btn tiny" @click="alignSelected('top')">Haut</button>
+          <button class="btn tiny" @click="alignSelected('middle')">Milieu</button>
+          <button class="btn tiny" @click="alignSelected('bottom')">Bas</button>
+        </div>
+        <div class="row presets-row">
+          <button class="btn tiny" @click="applyPreset('top-left')">Haut gauche</button>
+          <button class="btn tiny" @click="applyPreset('top-right')">Haut droite</button>
+          <button class="btn tiny" @click="applyPreset('center')">Centre</button>
+          <button class="btn tiny" @click="applyPreset('bottom-left')">Bas gauche</button>
+          <button class="btn tiny" @click="applyPreset('bottom-right')">Bas droite</button>
+        </div>
         <!-- Contrôle de position pour le leaderboard -->
         <div v-if="activeCanvas==='leaderboard' && selectedIndex !== null" class="layer-controls">
           <span>Cible :</span>
           <button class="btn tiny" :class="{ active: getActiveAssetLeaderboardTarget() === 'user-avatar-container' }" @click="setLeaderboardTarget('user-avatar-container')">Dans le conteneur</button>
           <button class="btn tiny" :class="{ active: getActiveAssetLeaderboardTarget() === 'user-avatar' }" @click="setLeaderboardTarget('user-avatar')">(Ancien) Dans l'avatar</button>
         </div>
-        <!-- Cible pour la Navbar -->
+        <div v-if="activeCanvas==='leaderboard' && selectedIndex !== null" class="layer-controls">
+          <span>Placement :</span>
+          <button class="btn tiny" :class="{ active: getActiveAssetLeaderboardPlacement() === 'below' }" @click="setLeaderboardPlacement('below')">Below</button>
+          <button class="btn tiny" :class="{ active: getActiveAssetLeaderboardPlacement() === 'inside' }" @click="setLeaderboardPlacement('inside')">Inside</button>
+          <button class="btn tiny" :class="{ active: getActiveAssetLeaderboardPlacement() === 'above' }" @click="setLeaderboardPlacement('above')">Above</button>
+        </div>
         <div v-if="activeCanvas==='navbar' && selectedIndex !== null" class="layer-controls">
           <span>Cible :</span>
           <button class="btn tiny" :class="{ active: getActiveAssetNavbarTarget() === 'user-account-wrapper' }" @click="setNavbarTarget('user-account-wrapper')">Dans le conteneur</button>
           <button class="btn tiny" :class="{ active: getActiveAssetNavbarTarget() === 'avatar-image-container' }" @click="setNavbarTarget('avatar-image-container')">(Ancien) Dans l'avatar</button>
         </div>
-        
+        <div v-if="activeCanvas==='navbar' && selectedIndex !== null" class="layer-controls">
+          <span>Placement :</span>
+          <button class="btn tiny" :class="{ active: getActiveAssetNavbarPlacement() === 'below' }" @click="setNavbarPlacement('below')">Below</button>
+          <button class="btn tiny" :class="{ active: getActiveAssetNavbarPlacement() === 'inside' }" @click="setNavbarPlacement('inside')">Inside</button>
+          <button class="btn tiny" :class="{ active: getActiveAssetNavbarPlacement() === 'above' }" @click="setNavbarPlacement('above')">Above</button>
+        </div>
+
         <!-- Cible pour Profil Pop-up (Legacy) uniquement -->
         <div v-if="activeCanvas==='profile-popup' && selectedIndex !== null" class="layer-controls">
           <span>Cible :</span>
@@ -345,7 +394,7 @@
           <button class="btn tiny" :class="{ active: getActiveAssetProfilePopupPlacement() === 'above' }" @click="setProfilePopupPlacement('above')">Above</button>
         </div>
         <!-- Aperçu Profil: cible implicite 'profile-avatar-scaler' (340x200), image 150x150. -->
-        
+
         <div v-if="activeCanvas==='apercu-large-avatar' && selectedIndex !== null" class="layer-controls">
           <span>Cible :</span>
           <button class="btn tiny" :class="{ active: getActiveAssetProfilePopupTarget() === 'profile-avatar-scaler' }" @click="setProfilePopupTarget('profile-avatar-scaler')">Dans le conteneur</button>
@@ -422,7 +471,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { secureApiCall, API_URL } from '@/api'
 import { useAuthStore } from '@/stores/auth'
 import accountIcon from '@/assets/accounttt.svg'
@@ -458,6 +507,10 @@ const replaceFileInput = ref(null)
 const activeCanvas = ref('collection') // collection | leaderboard | avatar | navbar
 const activeDevice = ref('desktop') // desktop | mobile
 const selectedIndex = ref(null)
+const canvasRef = ref(null)
+const showOverflow = ref(false)
+const canvasSize = ref({ width: 0, height: 0 })
+const autosaveTimer = ref(null)
 // Mémorise le dernier choix explicite de cible pour le leaderboard
 const lastLeaderboardTarget = ref(null) // 'user-avatar-container' | 'user-avatar' | null
 const DEFAULT_STYLE = { top: 0, left: 0, width: 100, height: null, rotate: 0, objectFit: 'contain', zIndex: 1, margin: 0, padding: 0, background: '', boxShadow: '', borderWidth: 0, borderStyle: 'none', borderColor: '', borderRadius: 0, centered: false }
@@ -647,7 +700,7 @@ const canvasStyle = computed(() => {
   let height = size
   let borderRadius = '12px'
   let border = '3px solid #e0e0e0'
-  
+
   if (activeCanvas.value === 'collection') {
     size = (activeDevice.value === 'mobile' ? 80 : 90)
     width = size
@@ -670,8 +723,8 @@ const canvasStyle = computed(() => {
     width = 120.5
     height = 64
   } else if (activeCanvas.value === 'profile-popup') {
-    width = 100
-    height = 100
+    width = 340
+    height = 250
     border = '5px solid #e0e0e0'
     borderRadius = '12px'
   } else if (activeCanvas.value === 'apercu-profil') {
@@ -686,26 +739,37 @@ const canvasStyle = computed(() => {
     borderRadius = '30px'
   } else if (activeCanvas.value === 'apercu-cosmetique') {
     width = (activeDevice.value === 'mobile' ? 250 : 350)
-    height = (activeDevice.value === 'mobile' ? 180 : 145)
+    height = (activeDevice.value === 'mobile' ? 250 : 145)
     border = '5px solid #5bc682'
     borderRadius = '30px'
   } else if (activeCanvas.value === 'boutique-quotidienne') {
-    width = 235
+    width = (activeDevice.value === 'mobile' ? 190 : 235)
     height = 140
     border = '5px solid #5bc682'
     borderRadius = '30px'
   }
-  
+
   return {
     position: 'relative',
     width: width + 'px',
     height: height + 'px',
     background: 'transparent',
-    overflow: 'hidden',
+    overflow: showOverflow.value ? 'visible' : 'hidden',
     border: border,
     borderRadius: borderRadius
   }
 })
+
+function updateCanvasSize() {
+  const el = canvasRef.value
+  if (!el) return
+  const rect = el.getBoundingClientRect()
+  canvasSize.value = { width: rect.width, height: rect.height }
+}
+
+function scheduleCanvasSizeUpdate() {
+  requestAnimationFrame(() => updateCanvasSize())
+}
 
 const bgStyle = computed(() => {
   const ctx = (activeCanvas.value === 'collection' || activeCanvas.value === 'leaderboard' || activeCanvas.value === 'avatar' || activeCanvas.value === 'navbar' || activeCanvas.value === 'popup-style' || activeCanvas.value === 'profile-popup')
@@ -721,6 +785,43 @@ const bgStyle = computed(() => {
     position: 'absolute', inset: 0, pointerEvents: 'none',
     background: chosen || 'transparent'
   }
+})
+
+const overlayBoxes = computed(() => {
+  const { width, height } = canvasSize.value
+  if (!width || !height) return []
+  const labelMap = {
+    collection: 'Collection',
+    leaderboard: 'Leaderboard',
+    navbar: 'Navbar',
+    'popup-style': 'Popup',
+    'profile-popup': 'Profil pop-up',
+    'apercu-profil': 'Aperçu profil',
+    'apercu-large-avatar': 'Aperçu avatar',
+    'apercu-cosmetique': 'Aperçu cosmétique',
+    'boutique-quotidienne': 'Boutique quotidienne'
+  }
+  return [{
+    label: labelMap[activeCanvas.value] || 'Canvas',
+    kind: 'container',
+    style: { left: '0px', top: '0px', width: width + 'px', height: height + 'px' }
+  }]
+})
+
+const dropZones = computed(() => {
+  const { width, height } = canvasSize.value
+  if (!width || !height) return []
+  if (!['leaderboard', 'navbar', 'profile-popup', 'apercu-profil', 'apercu-large-avatar'].includes(activeCanvas.value)) return []
+  const h = Math.round(height / 3)
+  return [
+    { label: 'Above', style: { left: '0px', top: '0px', width: width + 'px', height: h + 'px' } },
+    { label: 'Inside', style: { left: '0px', top: h + 'px', width: width + 'px', height: h + 'px' } },
+    { label: 'Below', style: { left: '0px', top: (2 * h) + 'px', width: width + 'px', height: (height - 2 * h) + 'px' } }
+  ]
+})
+
+watch([activeCanvas, activeDevice], () => {
+  scheduleCanvasSizeUpdate()
 })
 
 // Modèle texte pour l'input background selon base/variante
@@ -851,7 +952,7 @@ function getActiveStyleKey() {
 function ensureStyle(asset) {
   const key = getActiveStyleKey()
   if (!asset) return DEFAULT_STYLE
-  
+
   const createDefault = () => ({ top: 0, left: 0, width: 100, height: null, rotate: 0, objectFit: 'contain', zIndex: 1, margin: 0, padding: 0, background: '', boxShadow: '', borderWidth: 0, borderStyle: 'none', borderColor: '', borderRadius: 0, centered: false })
   const clone = (src) => src ? JSON.parse(JSON.stringify(src)) : createDefault()
 
@@ -1121,15 +1222,16 @@ function stopDrag() {
   window.removeEventListener('mousemove', onDrag)
   window.removeEventListener('mouseup', stopDrag)
   dragState = null
+  queueAutosave()
 }
 
 // Fonction pour synchroniser les modifications avec les assets de la variante
 function syncVariantAssets() {
   if (editingVariantIndex.value === -1) return
-  
+
   const variant = (form.value.variants || [])[editingVariantIndex.value]
   if (!variant || !Array.isArray(variant.assets)) return
-  
+
   // Synchroniser les assets de la variante avec les modifications actuelles
   variant.assets = variant.assets.map(asset => {
     if (!asset) return asset
@@ -1158,9 +1260,9 @@ function addVariant() {
   const baseBgs = form.value.backgrounds
     ? JSON.parse(JSON.stringify(form.value.backgrounds))
     : { collection: null, leaderboard: null, avatar: null, navbar: null, 'popup-style': null, 'profile-popup': null }
-  const newVariant = { 
-    name: `Variante ${currentVariants.length + 1}`, 
-    assets: baseAssets, 
+  const newVariant = {
+    name: `Variante ${currentVariants.length + 1}`,
+    assets: baseAssets,
     backgrounds: baseBgs,
     textOnly: false,
     textContent: ''
@@ -1202,12 +1304,12 @@ const currentStyle = computed({
     const assets = activeAssets()
     const asset = Array.isArray(assets) ? assets[selectedIndex.value] : null
     if (!asset) return
-    
+
     const key = getActiveStyleKey()
     if (!asset[key]) {
       asset[key] = { top: 0, left: 0, width: 100, rotate: 0, objectFit: 'contain', zIndex: 1 }
     }
-    
+
     // Mettre à jour les propriétés du style
     Object.assign(asset[key], newValue)
   }
@@ -1218,17 +1320,116 @@ function nudge(dx, dy) {
   const assets = activeAssets()
   const asset = Array.isArray(assets) ? assets[selectedIndex.value] : null
   if (!asset) return
-  
+
   const key = getActiveStyleKey()
   if (!asset[key]) {
     asset[key] = { top: 0, left: 0, width: 100, rotate: 0, objectFit: 'contain', zIndex: 1 }
   }
-  
+
   asset[key].left += dx
   asset[key].top += dy
+  queueAutosave()
 }
 
+function alignSelected(mode) {
+  if (selectedIndex.value === null) return
+  const assets = activeAssets()
+  const asset = Array.isArray(assets) ? assets[selectedIndex.value] : null
+  if (!asset) return
+  const s = ensureStyle(asset)
+  const { width, height } = canvasSize.value
+  if (!width || !height) return
+  const w = typeof s.width === 'number' ? s.width : 100
+  const h = typeof s.height === 'number' ? s.height : w
+  if (mode === 'left') s.left = 0
+  if (mode === 'center-x') s.left = Math.round((width - w) / 2)
+  if (mode === 'right') s.left = Math.round(width - w)
+  if (mode === 'top') s.top = 0
+  if (mode === 'middle') s.top = Math.round((height - h) / 2)
+  if (mode === 'bottom') s.top = Math.round(height - h)
+  queueAutosave()
+}
 
+function applyPreset(preset) {
+  if (selectedIndex.value === null) return
+  const assets = activeAssets()
+  const asset = Array.isArray(assets) ? assets[selectedIndex.value] : null
+  if (!asset) return
+  const s = ensureStyle(asset)
+  const { width, height } = canvasSize.value
+  if (!width || !height) return
+  const w = typeof s.width === 'number' ? s.width : 100
+  const h = typeof s.height === 'number' ? s.height : w
+  if (preset === 'top-left') { s.left = 0; s.top = 0 }
+  if (preset === 'top-right') { s.left = Math.round(width - w); s.top = 0 }
+  if (preset === 'center') { s.left = Math.round((width - w) / 2); s.top = Math.round((height - h) / 2) }
+  if (preset === 'bottom-left') { s.left = 0; s.top = Math.round(height - h) }
+  if (preset === 'bottom-right') { s.left = Math.round(width - w); s.top = Math.round(height - h) }
+  queueAutosave()
+}
+
+function getAssetLabel(asset, idx) {
+  try {
+    const src = asset?.src || ''
+    const name = src.split('/').pop()
+    return name || `Calque ${idx + 1}`
+  } catch {
+    return `Calque ${idx + 1}`
+  }
+}
+
+const layerItems = computed(() => {
+  const assets = activeAssets()
+  return assets.map((asset, idx) => {
+    const s = ensureStyle(asset)
+    return {
+      idx,
+      z: typeof s.zIndex === 'number' ? s.zIndex : 1,
+      label: getAssetLabel(asset, idx)
+    }
+  }).sort((a, b) => a.z - b.z)
+})
+
+function bumpLayer(idx, delta) {
+  const assets = activeAssets()
+  const asset = Array.isArray(assets) ? assets[idx] : null
+  if (!asset) return
+  const s = ensureStyle(asset)
+  const base = typeof s.zIndex === 'number' ? s.zIndex : 1
+  s.zIndex = base + delta
+  queueAutosave()
+}
+
+function queueAutosave() {
+  if (!isEditing.value || !editingId.value) return
+  if (autosaveTimer.value) clearTimeout(autosaveTimer.value)
+  autosaveTimer.value = setTimeout(() => {
+    autosaveTimer.value = null
+    updateItem({ silent: true, hydrate: false })
+  }, 700)
+}
+
+function getActiveAssetLeaderboardPlacement() {
+  try {
+    if (selectedIndex.value === null) return 'below'
+    const assets = activeAssets()
+    const asset = Array.isArray(assets) ? assets[selectedIndex.value] : null
+    if (!asset) return 'below'
+    const p = asset.meta && asset.meta.leaderboardPlacement
+    return (p === 'above' || p === 'inside' || p === 'below') ? p : 'below'
+  } catch { return 'below' }
+}
+
+function getActiveAssetNavbarPlacement() {
+  try {
+    if (selectedIndex.value === null) return 'below'
+    const assets = activeAssets()
+    const asset = Array.isArray(assets) ? assets[selectedIndex.value] : null
+    if (!asset) return 'below'
+    const p = asset.meta && asset.meta.navbarPlacement
+    return (p === 'above' || p === 'inside' || p === 'below') ? p : 'below'
+  } catch { return 'below' }
+}
 
 function setLeaderboardPlacement(placement) {
   if (selectedIndex.value === null) return
@@ -1238,6 +1439,7 @@ function setLeaderboardPlacement(placement) {
   if (!asset.meta) asset.meta = {}
   if (placement !== 'above' && placement !== 'inside') placement = 'below'
   asset.meta.leaderboardPlacement = placement
+  queueAutosave()
 }
 
 function setNavbarPlacement(placement) {
@@ -1248,6 +1450,7 @@ function setNavbarPlacement(placement) {
   if (!asset.meta) asset.meta = {}
   if (placement !== 'above' && placement !== 'inside') placement = 'below'
   asset.meta.navbarPlacement = placement
+  queueAutosave()
 }
 
 function getActiveAssetNavbarTarget() {
@@ -1298,6 +1501,7 @@ function setNavbarTarget(target) {
       }
     }
   } catch {}
+  queueAutosave()
 }
 
 function getActiveAssetLeaderboardTarget() {
@@ -1326,6 +1530,9 @@ function setLeaderboardTarget(target) {
         if (!a) continue
         a.meta = a.meta || {}
         a.meta.leaderboardTarget = t
+        if (a.meta.leaderboardPlacement !== 'above' && a.meta.leaderboardPlacement !== 'inside' && a.meta.leaderboardPlacement !== 'below') {
+          a.meta.leaderboardPlacement = 'below'
+        }
       }
     }
   } catch {}
@@ -1338,10 +1545,14 @@ function setLeaderboardTarget(target) {
           if (!a) continue
           a.meta = a.meta || {}
           a.meta.leaderboardTarget = t
+          if (a.meta.leaderboardPlacement !== 'above' && a.meta.leaderboardPlacement !== 'inside' && a.meta.leaderboardPlacement !== 'below') {
+            a.meta.leaderboardPlacement = 'below'
+          }
         }
       }
     }
   } catch {}
+  queueAutosave()
 }
 
 function getActiveAssetProfilePopupTarget() {
@@ -1391,6 +1602,7 @@ function setProfilePopupTarget(target) {
       }
     }
   } catch {}
+  queueAutosave()
 }
 
 function getActiveAssetProfilePopupPlacement() {
@@ -1412,6 +1624,7 @@ function setProfilePopupPlacement(placement) {
   if (!asset.meta) asset.meta = {}
   if (placement !== 'above' && placement !== 'inside') placement = 'below'
   asset.meta.profilePopupPlacement = placement
+  queueAutosave()
 }
 
 function centerSelectedAssetInApercu() {
@@ -1429,6 +1642,7 @@ function centerSelectedAssetInApercu() {
   s.left = Math.round((351 - w) / 2)
   s.top = Math.round((250 - hh) / 2)
   s.centered = false
+  queueAutosave()
 }
 
 function centerSelectedAssetInCosmetique() {
@@ -1448,6 +1662,7 @@ function centerSelectedAssetInCosmetique() {
   s.left = Math.round((canvasW - w) / 2)
   s.top = Math.round((canvasH - hh) / 2)
   s.centered = false
+  queueAutosave()
 }
 
 function centerSelectedAssetInDaily() {
@@ -1462,9 +1677,12 @@ function centerSelectedAssetInDaily() {
   const w = typeof s.width === 'number' ? s.width : 100
   const h = typeof s.height === 'number' ? s.height : null
   const hh = (h !== null ? h : w)
-  s.left = Math.round((235 - w) / 2)
-  s.top = Math.round((140 - hh) / 2)
+  const canvasW = (activeDevice.value === 'mobile' ? 190 : 235)
+  const canvasH = 140
+  s.left = Math.round((canvasW - w) / 2)
+  s.top = Math.round((canvasH - hh) / 2)
   s.centered = false
+  queueAutosave()
 }
 
 function centerSelectedAssetInCollection() {
@@ -1483,6 +1701,7 @@ function centerSelectedAssetInCollection() {
   s.left = Math.round((size - w) / 2)
   s.top = Math.round((size - hh) / 2)
   s.centered = false
+  queueAutosave()
 }
 
 function centerSelectedAssetInLeaderboard() {
@@ -1501,6 +1720,7 @@ function centerSelectedAssetInLeaderboard() {
   s.left = Math.round((size - w) / 2)
   s.top = Math.round((size - hh) / 2)
   s.centered = false
+  queueAutosave()
 }
 
 function centerSelectedAssetInNavbar() {
@@ -1519,6 +1739,7 @@ function centerSelectedAssetInNavbar() {
   s.left = Math.round((size - w) / 2)
   s.top = Math.round((size - hh) / 2)
   s.centered = false
+  queueAutosave()
 }
 
 function centerSelectedAssetInPopupStyle() {
@@ -1536,6 +1757,7 @@ function centerSelectedAssetInPopupStyle() {
   s.left = Math.round((120.5 - w) / 2)
   s.top = Math.round((64 - hh) / 2)
   s.centered = false
+  queueAutosave()
 }
 
 function normalizeCenteredPositionsInPayload(payload) {
@@ -1888,6 +2110,12 @@ onMounted(async () => {
   await loadExisting()
   await loadBorderColors()
   await loadAllUsersForAdmin()
+  scheduleCanvasSizeUpdate()
+  window.addEventListener('resize', scheduleCanvasSizeUpdate)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', scheduleCanvasSizeUpdate)
 })
 
 async function loadExisting() {
@@ -1974,8 +2202,10 @@ function editItem(it) {
     })
 }
 
-async function updateItem() {
+async function updateItem(options = {}) {
   if (!isEditing.value || !editingId.value) return
+  const silent = !!options.silent
+  const hydrate = options.hydrate !== false
   // Synchroniser les modifications avec les assets de la variante avant la sauvegarde
   syncVariantAssets()
   const payload = sanitizeItem(form.value)
@@ -2000,7 +2230,7 @@ async function updateItem() {
     body: JSON.stringify(payload)
   })
   if (res && res.success) {
-    alert('Item mis à jour !')
+    if (!silent) alert('Item mis à jour !')
     try {
       if (res.item && res.item._id) {
         const idx = existingItems.value.findIndex(x => x._id === res.item._id)
@@ -2008,12 +2238,14 @@ async function updateItem() {
       }
     } catch {}
     try {
-      if (res.item) form.value = sanitizeItem(res.item)
+      if (hydrate && res.item) form.value = sanitizeItem(res.item)
     } catch {}
     try { window.dispatchEvent(new CustomEvent('items-changed')) } catch {}
   } else {
-    const msg = (res && res.message) ? res.message : 'Erreur mise à jour'
-    alert(msg)
+    if (!silent) {
+      const msg = (res && res.message) ? res.message : 'Erreur mise à jour'
+      alert(msg)
+    }
   }
 }
 
@@ -2050,11 +2282,11 @@ async function removeFromWeekly() {
       alert('Veuillez définir un ID (legacy) pour l\'item avant de le retirer.')
       return
     }
-    
+
     if (!confirm(`Retirer l'item "${payload.name}" (ID: ${payload.legacyId}) de la boutique hebdomadaire ?`)) {
       return
     }
-    
+
     const res = await secureApiCall(`/coins/weekly-items/test-remove`, {
       method: 'POST',
       body: JSON.stringify({ legacyId: payload.legacyId })
@@ -2096,8 +2328,21 @@ function clearForm() {
 .device-tabs button { padding: 4px 10px; border-radius: 8px; border: 1px solid #d1d5db; background: #f9fafb; color: #000; }
 .device-tabs button.active { border-color: #3b82f6; background: #eff6ff; }
 .canvas { position: relative; background: #fff; border: 1px dashed #e5e7eb; border-radius: 12px; }
+.canvas-overlays { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+.overlay-box { position: absolute; border: 1px dashed #9ca3af; border-radius: 8px; background: rgba(59, 130, 246, 0.04); }
+.overlay-label { position: absolute; top: -16px; left: 0; font-size: 11px; color: #6b7280; background: #fff; padding: 0 4px; }
+.drop-zone { position: absolute; border: 1px dashed #d1d5db; background: rgba(0, 0, 0, 0.04); color: #6b7280; font-size: 10px; display: flex; align-items: center; justify-content: center; text-transform: uppercase; letter-spacing: .04em; }
 .draggable { user-select: none; }
 .draggable.selected { outline: 1px dashed #06c; }
+.layers-panel { margin-top: 12px; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px; }
+.layers-list { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-direction: column; gap: 6px; }
+.layers-list li { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid #e5e7eb; border-radius: 8px; }
+.layers-list li.active { border-color: #3b82f6; background: #eff6ff; }
+.layer-name { flex: 1; font-size: 12px; color: #111; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; }
+.layer-z { font-size: 12px; color: #6b7280; }
+.layer-actions { display: flex; gap: 6px; }
+.toggle { display: flex; gap: 6px; align-items: center; font-size: 12px; }
+.align-row, .presets-row { display: flex; gap: 6px; flex-wrap: wrap; }
 .tools { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
 .btn { border: 1px solid #d1d5db; border-radius: 8px; background: #f9fafb; color: #111; padding: 6px 10px; cursor: pointer; transition: all .15s ease; }
 .btn:hover { background: #f3f4f6; }
