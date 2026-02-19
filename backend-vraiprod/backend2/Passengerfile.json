@@ -1,0 +1,7 @@
+{
+  "app_type": "node",
+  "startup_file": "app.js",
+  "environment": "production",
+  "port": 3000,
+  "user": "planifymmi.fr_i6rixcl8kke"
+}

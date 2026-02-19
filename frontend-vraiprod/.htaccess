@@ -1,0 +1,29 @@
+# Cache et compression pour planifymmi.fr
+# Ne jamais mettre en cache l'HTML
+<FilesMatch "\.(html)$">
+  Header set Cache-Control "no-store, must-revalidate"
+</FilesMatch>
+
+# Content Security Policy pour autoriser eval() - Frontend
+<IfModule mod_headers.c>
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https: blob:; connect-src 'self' https://api.planifymmi.fr https://fonts.googleapis.com https://fonts.gstatic.com https://www.youtube.com; font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; media-src 'self' data: blob: https://api.planifymmi.fr https://*.googlevideo.com https://www.youtube.com"
+</IfModule>
+
+# Cache long (1 an) pour assets fingerprintés par Vite
+<IfModule mod_headers.c>
+  <FilesMatch "\.(css|js|png|jpg|jpeg|webp|gif|svg|ico|woff2|ttf)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+</IfModule>
+
+# Compression (fallback si pas Brotli/Nginx)
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml
+</IfModule>
+
+# Routing SPA (Vue.js)
+RewriteBase /
+RewriteRule ^index.html$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.html [L]
