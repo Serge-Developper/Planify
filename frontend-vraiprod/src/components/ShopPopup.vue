@@ -4696,14 +4696,17 @@ function saveSuggestion() {
         try {
           const params = []
           const legacyId = Number(payload.legacyId)
-          if (Number.isFinite(legacyId)) params.push(`legacyId=${legacyId}`)
           const locId = payload.meta && payload.meta.localItemId
-          if (locId) params.push(`localItemId=${encodeURIComponent(String(locId))}`)
           const name = String(payload.name || '').trim()
-          if (name && name !== 'Suggestion') params.push(`name=${encodeURIComponent(name)}`)
-          if (params.length) {
-            const res = await secureApiCall(`/items/suggest/resolve?${params.join('&')}`)
-            if (res && res.success && res.item && res.item._id) editingServerId = String(res.item._id)
+          const hasResolvableKey = (Number.isFinite(legacyId) && legacyId > 0) || !!locId || (name && name !== 'Suggestion')
+          if (hasResolvableKey) {
+            if (Number.isFinite(legacyId) && legacyId > 0) params.push(`legacyId=${legacyId}`)
+            if (locId) params.push(`localItemId=${encodeURIComponent(String(locId))}`)
+            if (name && name !== 'Suggestion') params.push(`name=${encodeURIComponent(name)}`)
+            if (params.length) {
+              const res = await secureApiCall(`/items/suggest/resolve?${params.join('&')}`)
+              if (res && res.success && res.item && res.item._id) editingServerId = String(res.item._id)
+            }
           }
         } catch {}
       }
@@ -4786,9 +4789,13 @@ function saveSuggestion() {
 
         // Forcer la mise à jour de la collection pour inclure l'item local
         localItemsUpdateKey.value++
-        try { await secureApiCall('/users/my-items', { method: 'PUT', body: JSON.stringify({ item: payload }) }) } catch {}
+        if (authStore.isLoggedIn) {
+          try { await secureApiCall('/users/my-items', { method: 'PUT', body: JSON.stringify({ item: payload }) }) } catch {}
+        }
         try { window.dispatchEvent(new CustomEvent('my-items-changed')) } catch {}
-        try { await secureApiCall('/users/suggest-editor-state', { method: 'PUT', body: JSON.stringify({ variants: suggestVariants.value, activeIndex: activeVariantIndex.value }) }) } catch {}
+        if (authStore.isLoggedIn) {
+          try { await secureApiCall('/users/suggest-editor-state', { method: 'PUT', body: JSON.stringify({ variants: suggestVariants.value, activeIndex: activeVariantIndex.value }) }) } catch {}
+        }
         try {
           const u2 = authStore.user
           const uid2 = String((u2 && (u2.id || u2._id)) || 'anon')
@@ -9171,7 +9178,7 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
   .fenetre-collection .border-toggle-btn .close-img { width: 34px !important; height: 34px !important; }
   .fenetre-collection .border-toggle-btn.active .close-img { transform: scale(1.18); filter: grayscale(0) brightness(1.1); }
   .fenetre-collection .actions-row { display:flex; flex-direction: row; align-items:center; justify-content:center; gap: 10px; width: 100%; }
-  .fenetre-collection .preview-card.preview-avatar .avatar-img { border: none !important; overflow: visible !important; }
+  .fenetre-collection .preview-card.preview-avatar .avatar-img { border: none !important; }
   .fenetre-collection .preview-card.preview-avatar .profile-avatar-stage { border: none !important; border-radius: 30px !important; }
   .fenetre-collection .preview-card.preview-avatar .profile-avatar-stage.no-border { border: none !important; }
   .fenetre-collection .preview-card.preview-avatar .profile-avatar.no-border { border: none !important; background: transparent !important; }
@@ -10180,14 +10187,15 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
   /* Correction du leaderboard container pour mobile */
   .leaderboard-container {
     width: 100% !important;
-    max-width: 250px !important;
+    max-width: 100% !important;
     margin: 0 auto !important;
-    padding: 0 15px !important;
+    padding: 0 6px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     flex-direction: column !important;
     background: none !important;
+    box-sizing: border-box !important;
   }
 
   .leaderboard-filters {
@@ -10197,6 +10205,9 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
     justify-content: center !important;
     flex-direction: column !important;
     align-items: center !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .leaderboard-item {
@@ -10207,7 +10218,7 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
     align-items: center;
     background: #fff;
     height: 150px;
-    padding: 15px;
+    padding: 12px 14px;
     border-radius: 12px;
     box-shadow: 0 2px 8px #0000001a;
     transition: transform .2s;
@@ -10215,11 +10226,26 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
     box-sizing: border-box;
   }
 
+  .leaderboard-position {
+    min-width: 32px;
+    font-size: 16px;
+  }
+
+  .user-info {
+    gap: 12px;
+  }
+
+  .user-score {
+    white-space: nowrap;
+  }
+
  .leaderboard-list {
-  width: 160%;
-  max-width: 150%;
-  margin: 0px -23px 0px -23px;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0;
   overflow-x: hidden !important;
+  box-sizing: border-box;
 }
 
 
@@ -14068,24 +14094,27 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
   }
 
   .leaderboard-list {
-    width: 270px !important;
-    max-width: 280px !important;
+    width: min(100%, 320px) !important;
+    max-width: 320px !important;
     padding-top: 5px;
+    padding-right: 10px;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
+    box-sizing: border-box !important;
   }
   .faction-leaderboard-list {
     padding: 0px !important;
   }
   .leaderboard-list.faction-leaderboard-list {
-    width: 275px !important;
+    width: min(100%, 320px) !important;
+    max-width: 320px !important;
   }
 
   .leaderboard-list .leaderboard-item,
   .faction-leaderboard-list .leaderboard-item {
-    width: 270px !important;
-    max-width: 259px !important;
+    width: 100% !important;
+    max-width: 100% !important;
     height: 120px !important;
     min-height: 120px !important;
     margin: 0 auto 10px auto !important;
