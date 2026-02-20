@@ -950,7 +950,7 @@ function getActiveStyleKey() {
   if (activeCanvas.value === 'apercu-profil') return 'profilePopupStyle'
   if (activeCanvas.value === 'apercu-large-avatar') return 'largeAvatarStyle' + suffix
   if (activeCanvas.value === 'apercu-cosmetique') return 'cosmeticPreviewStyle' + suffix
-  if (activeCanvas.value === 'boutique-quotidienne') return 'dailyStyle'
+  if (activeCanvas.value === 'boutique-quotidienne') return 'dailyStyle' + suffix
   return 'navbarStyle' + suffix
 }
 
@@ -970,6 +970,7 @@ function ensureStyle(asset) {
   if (!asset.profilePopupStyleMobile) asset.profilePopupStyleMobile = createDefault()
   if (!asset.profilePopupStylePc) asset.profilePopupStylePc = createDefault()
   if (!asset.dailyStyle) asset.dailyStyle = createDefault()
+  if (!asset.dailyStyleMobile) asset.dailyStyleMobile = createDefault()
   if (!asset.largeAvatarStyle) asset.largeAvatarStyle = createDefault()
   if (!asset.cosmeticPreviewStyle) asset.cosmeticPreviewStyle = createDefault()
 
@@ -979,6 +980,7 @@ function ensureStyle(asset) {
   if (!asset.navbarStyleMobile) asset.navbarStyleMobile = clone(asset.navbarStyle)
   if (!asset.largeAvatarStyleMobile) asset.largeAvatarStyleMobile = clone(asset.largeAvatarStyle)
   if (!asset.cosmeticPreviewStyleMobile) asset.cosmeticPreviewStyleMobile = clone(asset.cosmeticPreviewStyle)
+  if (!asset.dailyStyleMobile) asset.dailyStyleMobile = clone(asset.dailyStyle)
   if (!asset.avatarStyleMobile) asset.avatarStyleMobile = clone(asset.avatarStyle)
   if (!asset.profilePopupStyleMobile) asset.profilePopupStyleMobile = clone(asset.profilePopupStyle)
   if (!asset.profilePopupStylePc) asset.profilePopupStylePc = clone(asset.profilePopupStyle)
@@ -1055,7 +1057,7 @@ function sanitizeStyle(s) {
 }
 
 function sanitizeAsset(a) {
-  if (!a) return { src: '', style: sanitizeStyle(null), collectionStyle: sanitizeStyle(null), collectionStyleMobile: sanitizeStyle(null), leaderboardStyle: sanitizeStyle(null), leaderboardStyleMobile: sanitizeStyle(null), avatarStyle: sanitizeStyle(null), avatarStyleMobile: sanitizeStyle(null), navbarStyle: sanitizeStyle(null), navbarStyleMobile: sanitizeStyle(null), popupStyleStyle: sanitizeStyle(null), profilePopupStyle: sanitizeStyle(null), profilePopupStyleMobile: sanitizeStyle(null), profilePopupStylePc: sanitizeStyle(null), dailyStyle: sanitizeStyle(null), cosmeticPreviewStyle: sanitizeStyle(null), cosmeticPreviewStyleMobile: sanitizeStyle(null), largeAvatarStyle: sanitizeStyle(null), largeAvatarStyleMobile: sanitizeStyle(null) }
+  if (!a) return { src: '', style: sanitizeStyle(null), collectionStyle: sanitizeStyle(null), collectionStyleMobile: sanitizeStyle(null), leaderboardStyle: sanitizeStyle(null), leaderboardStyleMobile: sanitizeStyle(null), avatarStyle: sanitizeStyle(null), avatarStyleMobile: sanitizeStyle(null), navbarStyle: sanitizeStyle(null), navbarStyleMobile: sanitizeStyle(null), popupStyleStyle: sanitizeStyle(null), profilePopupStyle: sanitizeStyle(null), profilePopupStyleMobile: sanitizeStyle(null), profilePopupStylePc: sanitizeStyle(null), dailyStyle: sanitizeStyle(null), dailyStyleMobile: sanitizeStyle(null), cosmeticPreviewStyle: sanitizeStyle(null), cosmeticPreviewStyleMobile: sanitizeStyle(null), largeAvatarStyle: sanitizeStyle(null), largeAvatarStyleMobile: sanitizeStyle(null) }
   return {
     src: a.src || '',
     style: sanitizeStyle(a.style),
@@ -1072,6 +1074,7 @@ function sanitizeAsset(a) {
     profilePopupStyleMobile: sanitizeStyle(a.profilePopupStyleMobile),
     profilePopupStylePc: sanitizeStyle(a.profilePopupStylePc),
     dailyStyle: sanitizeStyle(a.dailyStyle),
+    dailyStyleMobile: sanitizeStyle(a.dailyStyleMobile),
     cosmeticPreviewStyle: sanitizeStyle(a.cosmeticPreviewStyle),
     cosmeticPreviewStyleMobile: sanitizeStyle(a.cosmeticPreviewStyleMobile),
     largeAvatarStyle: sanitizeStyle(a.largeAvatarStyle),
@@ -1177,6 +1180,7 @@ function sanitizeItem(it) {
           if (!asset.profilePopupStyleMobile) asset.profilePopupStyleMobile = { top: 0, left: 0, width: 100, rotate: 0, objectFit: 'contain', zIndex: 1 }
           if (!asset.profilePopupStylePc) asset.profilePopupStylePc = { top: 0, left: 0, width: 100, rotate: 0, objectFit: 'contain', zIndex: 1 }
           if (!asset.dailyStyle) asset.dailyStyle = { top: 0, left: 0, width: 100, rotate: 0, objectFit: 'contain', zIndex: 1 }
+          if (!asset.dailyStyleMobile) asset.dailyStyleMobile = { top: 0, left: 0, width: 100, rotate: 0, objectFit: 'contain', zIndex: 1 }
           if (!asset.cosmeticPreviewStyle) asset.cosmeticPreviewStyle = { top: 0, left: 0, width: 100, rotate: 0, objectFit: 'contain', zIndex: 1 }
           if (!asset.cosmeticPreviewStyleMobile) asset.cosmeticPreviewStyleMobile = { top: 0, left: 0, width: 100, rotate: 0, objectFit: 'contain', zIndex: 1 }
           if (!asset.largeAvatarStyle) asset.largeAvatarStyle = { top: 0, left: 0, width: 100, rotate: 0, objectFit: 'contain', zIndex: 1 }
@@ -1829,6 +1833,15 @@ function normalizeCenteredPositionsInPayload(payload) {
         const hh = (h !== null ? h : w)
         s.left = Math.round(120.5 / 2 - w / 2)
         s.top = Math.round(64 / 2 - hh / 2)
+        s.centered = false
+      }
+      if (a.dailyStyleMobile && a.dailyStyleMobile.centered) {
+        const s = a.dailyStyleMobile
+        const w = typeof s.width === 'number' ? s.width : 100
+        const h = typeof s.height === 'number' ? s.height : null
+        const hh = (h !== null ? h : w)
+        s.left = Math.round(190 / 2 - w / 2)
+        s.top = Math.round(140 / 2 - hh / 2)
         s.centered = false
       }
       if (a.dailyStyle && a.dailyStyle.centered) {

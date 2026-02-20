@@ -39,6 +39,7 @@ const assetSchema = new mongoose.Schema({
   cosmeticPreviewStyle: { type: styleSchema, default: null },
   cosmeticPreviewStyleMobile: { type: styleSchema, default: null },
   dailyStyle: { type: styleSchema, default: null },
+  dailyStyleMobile: { type: styleSchema, default: null },
   meta: { type: Object, default: {} }
 }, { _id: false });
 

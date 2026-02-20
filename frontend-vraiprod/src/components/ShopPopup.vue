@@ -5012,11 +5012,27 @@ onUnmounted(() => {
 })
 
 async function loadUserServerLocalItems(){ try{ const res=await secureApiCall('/users/my-items'); const arr=(res&&res.items)?res.items:(Array.isArray(res)?res:[]); userServerLocalItems.value=Array.isArray(arr)?arr.map((p,idx)=>({ id:(typeof p.legacyId!=='undefined')?p.legacyId:((typeof p.id!=='undefined')?p.id:(100000+idx)), name:p.name||'Suggestion', price:Number(p.price)||0, isDynamic:true, isLocal:true, assets:Array.isArray(p.assets)?p.assets:[], backgrounds:p.backgrounds||{}, variants:Array.isArray(p.variants)?p.variants:[], meta:p.meta||{} })):[]; try{ const u=authStore.user; const uid=String((u&&(u.id||u._id))||'anon'); const key='my-items-local-'+uid; const raw=localStorage.getItem(key); const localArr=raw?JSON.parse(raw):[]; const serverIds=new Set(arr.map(p=>String((p&&p.meta&&p.meta.serverItemId)||'')).filter(Boolean)); const cleaned=Array.isArray(localArr)?localArr.filter(p=>{ const sid=p&&p.meta&&p.meta.serverItemId?String(p.meta.serverItemId):''; if (sid) return serverIds.has(sid); return true; }):[]; localStorage.setItem(key, JSON.stringify(cleaned)); try { const rAnon = localStorage.getItem('my-items-local-anon'); const anonArr = rAnon ? JSON.parse(rAnon) : []; if (Array.isArray(anonArr) && anonArr.length) { const merged = Array.isArray(cleaned) ? [...cleaned, ...anonArr] : anonArr; localStorage.setItem(key, JSON.stringify(merged)); localStorage.removeItem('my-items-local-anon'); } } catch {} }catch{} }catch{ userServerLocalItems.value=[] } }
+function isDailyShopMobile() {
+  try {
+    if (window && typeof window.matchMedia === 'function') {
+      return window.matchMedia('(max-width: 768px)').matches
+    }
+    if (window && typeof window.innerWidth === 'number') {
+      return window.innerWidth <= 768
+    }
+  } catch {}
+  return false
+}
+
 function getDynAssetStyle(asset) {
   const mobile = !!isMobile.value
   const isWeekly = (activeTab && activeTab.value === 'weekly')
+  const dailyMobile = isWeekly ? isDailyShopMobile() : mobile
   const s = isWeekly
-    ? ((asset && asset.dailyStyle) || asset?.style || {})
+    ? (dailyMobile
+      ? ((asset && (asset.dailyStyleMobile || asset.dailyStyle)) || asset?.style || {})
+      : ((asset && asset.dailyStyle) || asset?.style || {})
+    )
     : (mobile
       ? ((asset && asset.collectionStyleMobile) || asset?.collectionStyle || asset?.style || {})
       : ((asset && asset.collectionStyle) || asset?.style || {})
@@ -5597,7 +5613,7 @@ function getDynVariantAssetsForLeaderboard(userOrItem, maybeItem) {
           const r = typeof s.rotate === 'number' ? s.rotate : 0
           return t === 0 && l === 0 && w === 100 && r === 0
         }
-        const styleKeys = ['largeAvatarStyle', 'largeAvatarStyleMobile', 'profilePopupStyle', 'leaderboardStyle', 'navbarStyle', 'style', 'collectionStyle', 'collectionStyleMobile', 'leaderboardStyleMobile', 'avatarStyle', 'avatarStyleMobile', 'navbarStyleMobile', 'popupStyleStyle', 'cosmeticPreviewStyle', 'cosmeticPreviewStyleMobile', 'dailyStyle']
+        const styleKeys = ['largeAvatarStyle', 'largeAvatarStyleMobile', 'profilePopupStyle', 'leaderboardStyle', 'navbarStyle', 'style', 'collectionStyle', 'collectionStyleMobile', 'leaderboardStyleMobile', 'avatarStyle', 'avatarStyleMobile', 'navbarStyleMobile', 'popupStyleStyle', 'cosmeticPreviewStyle', 'cosmeticPreviewStyleMobile', 'dailyStyle', 'dailyStyleMobile']
         styleKeys.forEach(key => {
           const hasMerged = merged[key] !== undefined
           const mergedDefault = hasMerged ? isDef(merged[key]) : true
@@ -5662,8 +5678,12 @@ function getDynVariantAssetStyle(asset) {
   }
   const mobile = !!isMobile.value
   const isWeekly = (activeTab && activeTab.value === 'weekly')
+  const dailyMobile = isWeekly ? isDailyShopMobile() : mobile
   const s = isWeekly
-    ? ((asset && asset.dailyStyle) || asset?.style || {})
+    ? (dailyMobile
+      ? ((asset && (asset.dailyStyleMobile || asset.dailyStyle)) || asset?.style || {})
+      : ((asset && asset.dailyStyle) || asset?.style || {})
+    )
     : (mobile
       ? ((asset && asset.collectionStyleMobile) || asset?.collectionStyle || asset?.style || {})
       : ((asset && asset.collectionStyle) || asset?.style || {})

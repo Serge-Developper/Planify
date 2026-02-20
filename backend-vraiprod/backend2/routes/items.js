@@ -315,6 +315,8 @@ router.post('/', verifyToken, requireRole(['admin']), async (req, res) => {
       largeAvatarStyleMobile: a.largeAvatarStyleMobile || null,
       cosmeticPreviewStyle: a.cosmeticPreviewStyle || null,
       cosmeticPreviewStyleMobile: a.cosmeticPreviewStyleMobile || null,
+      dailyStyle: a.dailyStyle || null,
+      dailyStyleMobile: a.dailyStyleMobile || null,
       meta: a.meta || {}
     }));
 
@@ -344,6 +346,8 @@ router.post('/', verifyToken, requireRole(['admin']), async (req, res) => {
           largeAvatarStyleMobile: a && a.largeAvatarStyleMobile || null,
           cosmeticPreviewStyle: a && a.cosmeticPreviewStyle || null,
           cosmeticPreviewStyleMobile: a && a.cosmeticPreviewStyleMobile || null,
+          dailyStyle: a && a.dailyStyle || null,
+          dailyStyleMobile: a && a.dailyStyleMobile || null,
           meta: a && typeof a.meta === 'object' ? a.meta : {}
         })),
         backgrounds: {
@@ -474,6 +478,7 @@ router.put('/:id', verifyToken, requireRole(['admin']), async (req, res) => {
         profilePopupStyleMobile: (a && a.profilePopupStyleMobile) || null,
         profilePopupStylePc: (a && a.profilePopupStylePc) || null,
         dailyStyle: (a && a.dailyStyle) || null,
+        dailyStyleMobile: (a && a.dailyStyleMobile) || null,
         largeAvatarStyle: (a && a.largeAvatarStyle) || null,
         largeAvatarStyleMobile: (a && a.largeAvatarStyleMobile) || null,
         cosmeticPreviewStyle: (a && a.cosmeticPreviewStyle) || null,
@@ -507,6 +512,7 @@ router.put('/:id', verifyToken, requireRole(['admin']), async (req, res) => {
             profilePopupStyleMobile: (a && a.profilePopupStyleMobile) || null,
             profilePopupStylePc: (a && a.profilePopupStylePc) || null,
             dailyStyle: (a && a.dailyStyle) || null,
+            dailyStyleMobile: (a && a.dailyStyleMobile) || null,
             largeAvatarStyle: (a && a.largeAvatarStyle) || null,
             largeAvatarStyleMobile: (a && a.largeAvatarStyleMobile) || null,
             cosmeticPreviewStyle: (a && a.cosmeticPreviewStyle) || null,
