@@ -5809,10 +5809,10 @@ body, html {
 }
 
 .equipped-stars {
-    top: -2px !important;
-    left: 0px !important;
-    width: 108% !important;
-    height: 107% !important;
+    top: -2px;
+    left: 0px;
+    width: 108% ;
+    height: 107%;
     position: absolute !important;
     z-index: 2 !important;
     pointer-events: none !important;
@@ -6222,24 +6222,24 @@ top: 2px;
 
 .equipped-absolute-cinema-overlay {
   position: absolute;
-  top: -10px;
-  left: -17px;
-  width: 30%;
-  height: 100%;
+  top: -29px;
+  left: 53px;
+  width: 12%;
+  height: 59%;
   object-fit: cover;
   pointer-events: none;
-  z-index: 15;
+  z-index: 15 !important;
 }
 
 .equipped-absolute-cinema-overlay-right {
   position: absolute;
-  top: -10px;
-  left: 57px;
-  width: 30%;
-  height: 100%;
+top: 29px;
+    left: 246px;
+    width: 12%;
+    height: 63%;
   object-fit: cover;
   pointer-events: none;
-  z-index: 15;
+  z-index: 15 !important;
   transform: scaleX(-1);
 }
 

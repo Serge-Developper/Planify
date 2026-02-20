@@ -706,6 +706,8 @@ router.put('/suggest/:id', verifyToken, async (req, res) => {
     if (typeof update.infoOnly === 'boolean') doc.infoOnly = update.infoOnly;
     if (typeof update.infoDescription === 'string' || update.infoDescription === null) doc.infoDescription = update.infoDescription;
 
+    doc.availableInDailyShop = true;
+    doc.active = true;
     if (isAdmin && typeof update.availableInDailyShop === 'boolean') doc.availableInDailyShop = update.availableInDailyShop;
     if (isAdmin && typeof update.active === 'boolean') doc.active = update.active;
 

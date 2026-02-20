@@ -1222,7 +1222,7 @@
       </div>
     </div>
     <!-- Popup de confirmation de suppression -->
-    <div v-if="showDeletePopup" class="popup-overlay" @click="cancelDelete">
+    <div v-if="showDeletePopup" class="popup-overlay popup-overlay--top" @click="cancelDelete">
       <div class="popup-content popup-delete-confirm" @click.stop>
         <h3>Confirmation de suppression</h3>
         <p>Êtes-vous sûr de vouloir supprimer cette tâche ?</p>
@@ -4704,6 +4704,7 @@ onUnmounted(() => {
 
 function isNewTask(event) {
   if (!event || !event._id) return false;
+  if (event.isProposal) return false;
   if (event.type !== 'devoir' && event.type !== 'exam') return false;
   const seen = localStorage.getItem('seenTask_' + event._id);
   return !seen;
@@ -6281,6 +6282,9 @@ button,
   justify-content: center;
   z-index: 3000;
   font-family: 'Cobe Heavy', Inter, sans-serif !important;
+}
+.popup-overlay--top {
+  z-index: 4000;
 }
 .popup-content-ajout-tache {
   background: #fff;

@@ -233,7 +233,7 @@
                 <button class="close-btn-small center-btn" @click="centerSuggest('collectionPreview')" @mouseover="hoverCenterCollectionPreview = true" @mouseleave="hoverCenterCollectionPreview = false"><img :src="hoverCenterCollectionPreview ? centerHoverImg : centerImg" alt="Centrer" class="close-img" /></button>
               </div>
             </div>
-            <div class="preview-card preview-item" :class="{ 'cosmetic-mobile-card': suggestCosmeticDevice === 'mobile' }" :key="'slide-cosmetic'">
+            <div class="preview-card preview-item preview-cosmetic-card" :class="{ 'cosmetic-mobile-card': suggestCosmeticDevice === 'mobile' }" :key="'slide-cosmetic'">
               <div class="preview-title">Aperçu Cosmétique</div>
               <div class="item-img-wrapper large" :class="{ 'mobile-mode': suggestCosmeticDevice === 'mobile' }">
                 <div class="item-img-container">
@@ -3063,11 +3063,11 @@
                     <button type="button" class="btn btn-icon play-btn" @click="togglePopupPlay" :title="isPopupPlaying ? 'Pause' : 'Lire'">
                       <img :src="isPopupPlaying ? pauseBtnImg : playBtnImg" :key="isPopupPlaying ? 'pause' : 'play'" class="play-btn-img" />
                     </button>
-                    <div class="volume-controls" @mouseenter="isVolumeHovered = true" @mouseleave="isVolumeHovered = false">
-                      <button type="button" class="btn btn-icon volume-btn" @click="togglePopupMute" :title="isPopupMuted ? 'Son coupé' : 'Son actif'">
+                    <div class="volume-controls" ref="volumeControlsRef" @mouseenter="handleVolumeMouseEnter" @mouseleave="handleVolumeMouseLeave">
+                      <button type="button" class="btn btn-icon volume-btn" @click="handleVolumeButtonClick" :title="isPopupMuted ? 'Son coupé' : 'Son actif'">
                         <img :src="popupCurrentVolumeIcon" :key="popupCurrentVolumeIcon" :class="['volume-btn-img', { 'is-mute': isPopupMuted || popupMusicVolume === 0 }]" alt="Volume" />
                       </button>
-                      <div class="volume-slider-container" :class="{ visible: isVolumeHovered, horizontal: isMobile }">
+                      <div class="volume-slider-container" :class="{ visible: isVolumeSliderVisible, horizontal: isMobile }" @click.stop>
                         <div :class="isMobile ? 'volume-seek-bar-horizontal' : 'volume-seek-bar-vertical'" @mousedown="startPopupVolumeDrag" @touchstart="startPopupVolumeDrag">
                           <div class="seek-track-vertical"></div>
                           <div class="seek-fill-vertical" :style="isMobile ? { width: popupMusicVolume + '%' } : { height: popupMusicVolume + '%' }"></div>
@@ -5017,6 +5017,8 @@ onMounted(() => {
   // Écouter les updates de note publique des utilisateurs (profil/leaderboard)
   try { window.addEventListener('user-public-note-changed', handleUserPublicNoteChanged) } catch {}
   try { window.addEventListener('message', handlePopupYouTubeMessage) } catch {}
+  try { document.addEventListener('mousedown', onGlobalPointerDown) } catch {}
+  try { document.addEventListener('touchstart', onGlobalPointerDown) } catch {}
 })
 // Charger toutes les données de la boutique à l'ouverture de la popup
 watch(() => props.show, (v) => {
@@ -5041,6 +5043,8 @@ onUnmounted(() => {
   try { window.removeEventListener('dynamic-variant-changed', () => {}) } catch {}
   try { window.removeEventListener('user-public-note-changed', handleUserPublicNoteChanged) } catch {}
   try { window.removeEventListener('message', handlePopupYouTubeMessage) } catch {}
+  try { document.removeEventListener('mousedown', onGlobalPointerDown) } catch {}
+  try { document.removeEventListener('touchstart', onGlobalPointerDown) } catch {}
 })
 
 async function loadUserServerLocalItems(){ try{ const res=await secureApiCall('/users/my-items'); const arr=(res&&res.items)?res.items:(Array.isArray(res)?res:[]); userServerLocalItems.value=Array.isArray(arr)?arr.map((p,idx)=>({ id:(typeof p.legacyId!=='undefined')?p.legacyId:((typeof p.id!=='undefined')?p.id:(100000+idx)), name:p.name||'Suggestion', price:Number(p.price)||0, isDynamic:true, isLocal:true, assets:Array.isArray(p.assets)?p.assets:[], backgrounds:p.backgrounds||{}, variants:Array.isArray(p.variants)?p.variants:[], meta:p.meta||{} })):[]; try{ const u=authStore.user; const uid=String((u&&(u.id||u._id))||'anon'); const key='my-items-local-'+uid; const raw=localStorage.getItem(key); const localArr=raw?JSON.parse(raw):[]; const serverIds=new Set(arr.map(p=>String((p&&p.meta&&p.meta.serverItemId)||'')).filter(Boolean)); const cleaned=Array.isArray(localArr)?localArr.filter(p=>{ const sid=p&&p.meta&&p.meta.serverItemId?String(p.meta.serverItemId):''; if (sid) return serverIds.has(sid); return true; }):[]; localStorage.setItem(key, JSON.stringify(cleaned)); try { const rAnon = localStorage.getItem('my-items-local-anon'); const anonArr = rAnon ? JSON.parse(rAnon) : []; if (Array.isArray(anonArr) && anonArr.length) { const merged = Array.isArray(cleaned) ? [...cleaned, ...anonArr] : anonArr; localStorage.setItem(key, JSON.stringify(merged)); localStorage.removeItem('my-items-local-anon'); } } catch {} }catch{} }catch{ userServerLocalItems.value=[] } }
@@ -6225,6 +6229,38 @@ function subscribePopupYouTubePlayer() {
 
 const isVolumeHovered = ref(false)
 const isPopupMuted = ref(false)
+const isVolumeOpen = ref(false)
+const volumeControlsRef = ref(null)
+const isVolumeSliderVisible = computed(() => isMobile.value ? isVolumeOpen.value : isVolumeHovered.value)
+
+function handleVolumeMouseEnter() {
+  if (!isMobile.value) isVolumeHovered.value = true
+}
+function handleVolumeMouseLeave() {
+  if (!isMobile.value) isVolumeHovered.value = false
+}
+function handleVolumeButtonClick() {
+  if (!isMobile.value) {
+    togglePopupMute()
+    return
+  }
+  if (isVolumeOpen.value) {
+    if (!isPopupMuted.value || popupMusicVolume.value > 0) togglePopupMute()
+    isVolumeOpen.value = false
+    return
+  }
+  if (isPopupMuted.value) togglePopupMute()
+  isVolumeOpen.value = true
+}
+
+function onGlobalPointerDown(event) {
+  try {
+    if (!isMobile.value || !isVolumeOpen.value) return
+    const el = volumeControlsRef.value
+    if (el && event && event.target && el.contains(event.target)) return
+    isVolumeOpen.value = false
+  } catch {}
+}
 
 const popupMusicVolume = ref(Math.max(0, Math.min(100, Number(localStorage.getItem('musicVolume') ?? 60))))
 
@@ -6309,21 +6345,32 @@ function startPopupVolumeDrag(e) {
   if (e.cancelable && (e.type === 'mousedown' || e.type === 'touchstart')) e.preventDefault()
   const container = e.currentTarget
   if (!container) return
-  const update = (clientY) => {
+  const isHorizontal = !!isMobile.value
+  const update = (clientX, clientY) => {
     const rect = container.getBoundingClientRect()
+    if (isHorizontal) {
+      const width = rect.width
+      if (width <= 0) return
+      const offsetX = clientX - rect.left
+      const pct = Math.max(0, Math.min(1, offsetX / width)) * 100
+      popupMusicVolume.value = Math.round(pct)
+      return
+    }
     const bottomY = rect.top + rect.height
     const offsetY = bottomY - clientY
     const height = rect.height
     if (height <= 0) return
-    let pct = Math.max(0, Math.min(1, offsetY / height)) * 100
+    const pct = Math.max(0, Math.min(1, offsetY / height)) * 100
     popupMusicVolume.value = Math.round(pct)
   }
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX
   const clientY = e.touches ? e.touches[0].clientY : e.clientY
-  update(clientY)
+  update(clientX, clientY)
   const onMove = (moveEvent) => {
     if (!moveEvent.touches && moveEvent.buttons === 0) { onUp(); return }
+    const x = moveEvent.touches ? moveEvent.touches[0].clientX : moveEvent.clientX
     const y = moveEvent.touches ? moveEvent.touches[0].clientY : moveEvent.clientY
-    update(y)
+    update(x, y)
   }
   const onUp = () => {
     document.removeEventListener('mousemove', onMove)
@@ -8995,9 +9042,6 @@ onUnmounted(() => {
       max-width: var(--weekly-item-img-width) !important;
     }
     .weekly-shop-container .item-actions .buy-btn { border-radius: 12px !important; }
-    .weekly-shop-container .preview-card.preview-item .jojo-text-preview,
-    .weekly-shop-container .weekly-item .jojo-text-preview,
-    .weekly-shop-container .jojo-text-preview { top: -7px !important; }
     .preview-card.preview-leaderboard .equipped-angel-wings { top: -46px; left: -30px; }
     .weekly-shop-container .moustache-img-shop { top: 65px !important; left: 50px !important; }
     .weekly-shop-container .gentleman-img-shop { top: 20px !important; left: 37px !important; }
@@ -9048,17 +9092,18 @@ onUnmounted(() => {
   .preview-card.preview-avatar.avatar-mobile-card .profile-avatar-scaler { border: none !important; display:flex !important; align-items:center; justify-content:center; box-sizing: border-box; overflow: visible; scrollbar-width: none; -ms-overflow-style: none; }
   .preview-card.preview-avatar.avatar-mobile-card .profile-avatar { width: 100px !important; height: 100px !important; border-width: 5px !important; border-radius: 24px !important; }
   .preview-card.preview-avatar.avatar-mobile-card .avatar-img { width: 100px !important; height: 100px !important; }
+  .preview-card.preview-avatar.avatar-mobile-card .profile-avatar-scaler .equipped-asteroide-overlay { top: 77%; left: 38%; width: 30%; height: 53%; }
   .preview-card.preview-avatar.avatar-mobile-card .profile-avatar-wrap.profile-popup::-webkit-scrollbar,
   .preview-card.preview-avatar.avatar-mobile-card .profile-avatar-stage::-webkit-scrollbar,
   .preview-card.preview-avatar.avatar-mobile-card .profile-avatar-scaler::-webkit-scrollbar { width: 0; height: 0; display: none; }
   .preview-card.preview-avatar.roi-preview .profile-avatar-stage { height: 400px !important; }
   .preview-card.preview-avatar.roi-preview .profile-avatar-scaler { width: 345px !important; height: 400px !important; border: 5px solid #5bc682 !important; border-radius: 30px !important; }
-  .preview-card.preview-avatar.roi-preview .equipped-roi-overlay { top: 30px; left: 85px; width: 55%; height: 27%; z-index: 15; }
+  .preview-card.preview-avatar.roi-preview .equipped-roi-overlay { top: -14px; left: 97px; width: 48%; height: 40%; z-index: 15; }
   .preview-card.preview-avatar.gentleman-preview .profile-avatar-stage { height: 400px !important; }
   .preview-card.preview-avatar.gentleman-preview .profile-avatar-scaler { width: 345px !important; height: 400px !important; }
   .preview-card.preview-avatar.vinyle-preview .profile-avatar-stage { height: 400px !important; }
   .preview-card.preview-avatar.vinyle-preview .profile-avatar-scaler { width: 345px !important; height: 400px !important; }
-  .preview-card.preview-avatar.vinyle-preview .equipped-vinyle-overlay { left: 50%; top: 52%; width: 115%; height: 115%; transform: translate(-50%, -72%) scale(1.08); }
+  .preview-card.preview-avatar.vinyle-preview .equipped-vinyle-overlay { left: 50%; top: 30%; width: 42%; height: 30%; z-index: 3; transform: translate(-50%, -72%) scale(1.08); }
   .preview-card.preview-avatar.nokia-preview .profile-avatar-stage { height: 400px !important; }
   .preview-card.preview-avatar.nokia-preview .profile-avatar-scaler { width: 345px !important; height: 400px !important; }
   .preview-card.preview-avatar .matrix-char { font-size: 16px; line-height: 16px; }
@@ -9066,22 +9111,22 @@ onUnmounted(() => {
   .preview-card.preview-avatar .profile-avatar-scaler .equipped-tomb-raider { position: absolute; top: 0px; left: 50px; width: 71%; height: 45%; z-index: 2; }
 .preview-card.preview-avatar .profile-avatar-scaler:has(.equipped-angel-wings) { height: 400px; }
 .preview-card.preview-avatar .profile-avatar-wrap:has(.equipped-tomb-raider) { height: 400px; }
-preview-card.preview-avatar .profile-avatar-stage:has(.equipped-tomb-raider) { height: 400px; }
-preview-card.preview-avatar .profile-avatar-scaler:has(.equipped-tomb-raider) { height: 400px; }
+.preview-card.preview-avatar .profile-avatar-stage:has(.equipped-tomb-raider) { height: 400px; }
+.preview-card.preview-avatar .profile-avatar-scaler:has(.equipped-tomb-raider) { height: 400px; }
   .preview-card.preview-leaderboard .equipped-roi-overlay { width: 22%; }
 
-preview-card.preview-avatar .profile-avatar-scaler .equipped-cat-ears { position: absolute !important; left: 49% !important; top: 52% !important; width: 55% !important; height: 75% !important; object-fit: contain !important; transform: translate(-50%, -72%) scale(1.25) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 16 !important; }
-preview-card.preview-avatar .profile-avatar-scaler .equipped-clown-overlay { position: absolute !important; left: 50% !important; top: 72% !important; width: 60% !important; height: 72% !important; object-fit: contain !important; transform: translate(-50%, -85%) scale(1.18) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 16 !important; }
-preview-card.preview-avatar .profile-avatar-scaler .equipped-vinyle-overlay { position: absolute; left: 50%; top: 36%; width: 30%; height: 48%; object-fit: contain; transform: translate(-50%, -72%) scale(1.05); transform-origin: center bottom; pointer-events: none; z-index: 16; }
+.preview-card.preview-avatar .profile-avatar-scaler .equipped-cat-ears { position: absolute !important; left: 49% !important; top: 52% !important; width: 55% !important; height: 75% !important; object-fit: contain !important; transform: translate(-50%, -72%) scale(1.25) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 16 !important; }
+.preview-card.preview-avatar .profile-avatar-scaler .equipped-clown-overlay { position: absolute !important; left: 50% !important; top: 72% !important; width: 60% !important; height: 72% !important; object-fit: contain !important; transform: translate(-50%, -85%) scale(1.18) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 16 !important; }
+.preview-card.preview-avatar .profile-avatar-scaler .equipped-vinyle-overlay { position: absolute; left: 50%; top: 36%; width: 30%; height: 48%; object-fit: contain; transform: translate(-50%, -72%) scale(1.05); transform-origin: center bottom; pointer-events: none; z-index: 16; }
   .preview-card.preview-avatar .profile-avatar-scaler .equipped-stars { position: absolute; left: 51%; top: 66%; width: 75%; height: 69%; object-fit: contain; transform: translate(-50%, -72%) scale(1.02); transform-origin: center bottom; pointer-events: none; z-index: 16; }
   .preview-card.preview-avatar .profile-avatar-scaler .equipped-rainbow { position: absolute; left: 50%; top: 76%; width: 48%; height: 53%; object-fit: contain; transform: translate(-50%, -85%) scale(1.3); transform-origin: center bottom; pointer-events: none; z-index: 16; }
   .preview-card.preview-avatar .profile-avatar-scaler .equipped-royal-frame { position: absolute; left: 50%; top: 82%; width: 77%; height: 89%; object-fit: contain; transform: translate(-50%, -85%) scale(1.02); transform-origin: center bottom; pointer-events: none; z-index: 16; }
   .preview-card.preview-avatar .profile-avatar-scaler .equipped-gentleman-overlay { position: absolute; left: 50%; top: 35%; width: 53%; height: 26%; object-fit: contain; transform: translate(-50%, -72%) scale(1.02); transform-origin: center bottom; pointer-events: none; z-index: 16; }
-preview-card.preview-avatar .profile-avatar-scaler .equipped-asteroide-overlay { position: absolute; left: 38%; top: 75%; width: 25%; height: 30%; object-fit: contain; transform: translate(-50%, -72%) scale(1.0); transform-origin: center bottom; pointer-events: none; z-index: 16; }
-preview-card.preview-avatar .profile-avatar-scaler .equipped-absolute-cinema-overlay { position: absolute; left: 4.5%; top: 5%; width: 34%; height: 70%; object-fit: contain; z-index: 16; }
-preview-card.preview-avatar .profile-avatar-scaler .equipped-absolute-cinema-overlay-right { position: absolute; left: 61.5%; top: 5%; width: 34%; height: 70%; object-fit: contain; z-index: 16; }
-preview-card.preview-avatar .profile-avatar-scaler .equipped-pate-overlay { position: absolute; left: 20%; top: 78%; width: 35%; height: 35%; object-fit: contain; pointer-events: none; z-index: 16; }
-preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { left: 26%; z-index: 15; }
+.preview-card.preview-avatar .profile-avatar-scaler .equipped-asteroide-overlay { position: absolute; top: 75%; left: 41%; width: 21%; height: 44%; object-fit: contain; transform: translate(-50%, -72%) scale(1.0); transform-origin: center bottom; pointer-events: none; z-index: 3 !important; }
+.preview-card.preview-avatar .profile-avatar-scaler .equipped-absolute-cinema-overlay { position: absolute; left: 3.5%; top: 5%; width: 34%; height: 70%; object-fit: contain; z-index: 16; }
+.preview-card.preview-avatar .profile-avatar-scaler .equipped-absolute-cinema-overlay-right { position: absolute; left: 62.5%; top: 5%; width: 34%; height: 70%; object-fit: contain; z-index: 16; }
+.preview-card.preview-avatar .profile-avatar-scaler .equipped-pate-overlay { position: absolute; left: 20%; top: 78%; width: 35%; height: 35%; object-fit: contain; pointer-events: none; z-index: 16; }
+.preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { left: 26%; z-index: 15; }
 .preview-card.preview-avatar .profile-avatar .equipped-clown-nose { position: absolute !important; left: 50% !important; top: 52% !important; width: 60% !important; height: auto !important; object-fit: contain !important; transform: translate(-50%, -40%) !important; pointer-events: none !important; z-index: 16 !important; }
 .preview-card.preview-avatar .profile-avatar .equipped-moustache-inside { position: absolute !important; left: 50% !important; top: 63% !important; width: 70% !important; transform: translate(-50%, -50%) !important; object-fit: contain !important; z-index: 16 !important; }
 .preview-card.preview-avatar .profile-avatar .equipped-spacestars-inside { position: absolute !important; left: 50% !important; top: 50% !important; width: 100% !important; height: 100% !important; transform: translate(-50%, -50%) !important; object-fit: contain !important; z-index: 14 !important; }
@@ -9093,7 +9138,7 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
 .preview-card.preview-avatar .profile-avatar-scaler .equipped-nokia-inside { position: absolute !important; left: 34% !important; top: 60% !important; width: 26% !important; height: 23% !important; object-fit: contain !important; z-index: 16 !important; }
 .preview-card.preview-avatar .profile-avatar-scaler .equipped-daftpunk-overlay { position: absolute; left: 29%; top: 12%; width: 40%; height: 22%; object-fit: contain; z-index: 16; }
 .preview-card.preview-avatar .profile-avatar-scaler .equipped-clippy-inside { position: absolute; left: 53%; top: 54%; width: 19%; height: 14%; object-fit: contain; z-index: 16; }
-.preview-card.preview-avatar .profile-avatar-scaler .equipped-discord-overlay { position: absolute; left: 19%; top: 16%; width: 55%; height: 74%; object-fit: contain; z-index: 16; }
+.preview-card.preview-avatar .profile-avatar-scaler .equipped-discord-overlay { position: absolute; left: 19% !important; top: 16% !important; width: 55% !important; height: 74% !important; object-fit: contain; z-index: 16; }
 .preview-card.preview-avatar .equipped-jojo-inside { position: absolute; bottom: -2px; left: 150px; width: 95%; height: 40%; object-fit: contain; pointer-events: none; z-index: 6; animation: jojo-swipe 4.7s ease-in-out infinite; will-change: transform; }
 .preview-card.preview-avatar .equipped-jojotext-inside { position: absolute; width: 84%; left: 7%; height: 74%; top: -4%; }
   .preview-card.preview-item .item-img-wrapper {
@@ -9128,6 +9173,7 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
 .preview-card.preview-item .item-img-container.jojo-bg-anim { border-radius: 24px !important; }
 .preview-card.preview-item .jojo-img-shop { left: 290px !important; width: 55% !important; top: 65% !important; }
 .preview-card.preview-item .jojo-text-preview { left: 115px !important; width: 29% !important; }
+.preview-card.preview-item.preview-cosmetic-card .jojo-text-preview.jojotext-fade { top: -2px !important; left: 118px !important; width: 30% !important; }
   .preview-card.preview-item .stars-item-shop { height: 85% !important; width: 100% !important; top: 5px !important; left: 0 !important; display: flex !important; align-items: center !important; justify-content: center !important; }
   .preview-card.preview-item .stars-img-shop { max-width: 85% !important; max-height: 85% !important; display: block !important; margin: 0 auto !important; }
   .preview-card.preview-item .vinyle-item-shop { width: 100% !important; height: 85% !important; top: 2%; display: flex !important; align-items: center !important; justify-content: center !important; }
@@ -9906,6 +9952,18 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
 
 /* Tailles PC pour les items */
 
+@media (min-width: 320px) and (max-width: 1218px) {
+
+  .preview-card.preview-avatar .profile-avatar-scaler .equipped-asteroide-overlay {
+    top: 75%;
+    left: 37%;
+    width: 30%;
+    height: 44%;
+  }
+
+}
+
+
 
 /* Media query pour les écrans de 320px à 768px - Collection centrée en colonne */
 @media (min-width: 320px) and (max-width: 1218px) {
@@ -10251,8 +10309,8 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
 
 .jojo-text-preview {
     position: absolute !important;
-    top: 0px !important;
-    left: 13px !important;
+    top: 8px !important;
+    left: 42px !important;
     width: 62% !important;
     height: auto !important;
     object-fit: contain !important;
@@ -11057,17 +11115,17 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
 .preview-card.preview-leaderboard .equipped-chat-overlay { position: absolute !important; top: -34% !important; left: 1% !important; width: 25% !important; height: 100% !important; object-fit: contain !important; pointer-events: none !important; z-index: 3 !important; }
 .preview-card.preview-leaderboard .equipped-camera-overlay { position: absolute !important; top: 55% !important; left: 0% !important; width: 10% !important; height: 70% !important; object-fit: contain !important; z-index: 3 !important; }
 .preview-card.preview-leaderboard .equipped-flash-overlay { position: absolute !important; top: 3% !important; left: -16% !important; width: 50% !important; height: 100% !important; z-index: 3 !important; }
-.preview-card.preview-leaderboard .user-avatar-container .equipped-cat-ears { position: absolute !important; left: 56% !important; top: 115% !important; width: 120% !important; height: 120% !important; object-fit: contain !important; transform: translate(-50%, -60%) scale(1.50) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 3 !important; }
+.preview-card.preview-leaderboard .user-avatar-container .equipped-cat-ears { position: absolute !important; left: 48% !important; top: 114% !important; width: 99% !important; height: 120% !important; object-fit: contain !important; transform: translate(-50%, -60%) scale(1.50) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 3 !important; }
 .preview-card.preview-leaderboard .equipped-cat-ears { position: absolute !important; inset: 0 !important; top: -48px !important; width: 100% !important; height: 100% !important; margin: auto !important; object-fit: contain !important; transform: scale(1.15) !important; transform-origin: center top !important; pointer-events: none !important; z-index: 3 !important; }
   .preview-card.preview-leaderboard .equipped-stars-overlay { position: absolute !important; inset: 0 !important; top: -9px !important; left: 0px !important; width: 94% !important; height: 90% !important; margin: auto !important; object-fit: contain !important; transform: scale(1.22) !important; transform-origin: center top !important; pointer-events: none !important; z-index: 3 !important; }
   .preview-card.preview-leaderboard .user-avatar-container .equipped-royal-frame-overlay { position: absolute !important; left: 49% !important; top: 75% !important; width: 148% !important; height: 147% !important; object-fit: contain !important; transform: translate(-50%, -62%) scale(1.08) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 3 !important; }
-.preview-card.preview-leaderboard .user-avatar-container .equipped-vinyle-overlay { position: absolute !important; left: 50% !important; top: -2% !important; width: 120% !important; height: 120% !important; object-fit: contain !important; transform: translate(-50%, -62%) scale(1.05) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 3 !important; }
+.preview-card.preview-leaderboard .user-avatar-container .equipped-vinyle-overlay { position: absolute !important; left: 50% !important; top: -2% !important; width: 103% !important; height: 86% !important; object-fit: contain !important; transform: translate(-50%, -62%) scale(1.05) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 3 !important; }
 .preview-card.preview-leaderboard .user-avatar-container .equipped-dvd-inside, .preview-card.preview-leaderboard .user-avatar .equipped-dvd-inside { position: absolute !important; top: 30%; left: 30%; width: 60% !important; height: 60% !important; object-fit: contain !important; transform: translate(-50%, -50%) !important; pointer-events: none !important; z-index: 3 !important; animation: dvdBounceShop 4s linear infinite !important; will-change: top, left; backface-visibility: hidden; }
 .preview-card.preview-leaderboard .user-avatar-container .equipped-nokia-inside { position: absolute !important; left: 14% !important; top: 91% !important; width: 75% !important; height: 140% !important; object-fit: contain !important; transform: translate(-50%, -62%) !important; pointer-events: none !important; z-index: 2 !important; }
 .preview-card.preview-leaderboard .user-avatar-container .equipped-clippy-inside { position: absolute !important; left: 74% !important; top: 81% !important; width: 60% !important; height: auto !important; object-fit: contain !important; transform: translate(-50%, -62%) !important; pointer-events: none !important; z-index: 3 !important; }
 .preview-card.preview-leaderboard .user-avatar-container .equipped-daftpunk-overlay { position: absolute !important; left: 50% !important; top: -20% !important; width: 80% !important; height: auto !important; object-fit: contain !important; transform: translate(-50%, -50%) !important; pointer-events: none !important; z-index: 4 !important; }
 .preview-card.preview-leaderboard .user-avatar-container .equipped-discord-overlay { position: absolute !important; top: -1px !important; left: -20px !important; width: 26% !important; height: 120% !important; object-fit: contain !important; pointer-events: none !important; z-index: 4 !important; }
-.preview-card.preview-leaderboard .equipped-discord-overlay { position: absolute !important; top: -5px !important; left: -10px !important; width: 34% !important; height: 132% !important; object-fit: contain !important; pointer-events: none !important; z-index: 4 !important; }
+.preview-card.preview-leaderboard .equipped-discord-overlay { position: absolute !important; top: -3px !important; left: -27px !important; width: 35% !important; height: 120% !important; object-fit: contain !important; pointer-events: none !important; z-index: 4 !important; }
 .preview-card.preview-leaderboard .equipped-tomb-raider { position: absolute !important; top: -36px !important; left: -135px !important; width: 116% !important; height: 116% !important; object-fit: contain !important; pointer-events: none !important; z-index: 2 !important; }
 /* Clown (preview leaderboard): hair above avatar, nose centered inside */
 .preview-card.preview-leaderboard .user-avatar-container .equipped-clown-overlay { position: absolute !important; left: 48% !important; top: 48px !important; width: 51% !important; height: 70% !important; object-fit: contain !important; transform: translate(-50%, -60%) scale(2.6) !important; transform-origin: center bottom !important; pointer-events: none !important; z-index: 3 !important; }
@@ -11670,10 +11728,10 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
 /* Styles pour les items équipés dans le leaderboard */
 .equipped-cat-ears {
   position: absolute !important;
-    top: -33px !important;
-    left: -10px !important;
-    width: 153% !important;
-    height: 153% !important;
+    top: -55px !important;
+    left: -25px !important;
+    width: 113% !important;
+    height: 98% !important;
     z-index: 3 !important;
 }
 
@@ -11960,8 +12018,8 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
 
 .equipped-asteroide-overlay {
   position: absolute;
-  top: 30%;
-  left: 6%;
+  top: 20%;
+  left: 11%;
   width: 60%;
   height: 100%;
   object-fit: contain;
@@ -11972,7 +12030,7 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
 .equipped-angel-wings {
   position: absolute;
   top: -43px;
-  left: -23px;
+  left: -30px;
   width: 220%;
   height: 148%;
   object-fit: contain;
@@ -12000,9 +12058,9 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
 
 .equipped-roi-overlay, .equipped-roi-overlay-mobile {
   position: absolute;
-  top: -36px;
-  left: -2px !important;
-  width: 30% !important;
+  top: -41px;
+  left: -2px;
+  width: 30%;
   height: 100%;
   transform: translate(-10%);
   pointer-events: none;
@@ -12279,8 +12337,16 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
 @media (max-width: 1218px) {
 
       .preview-card.preview-item .item-img-wrapper.large { width: 250px !important; height: 250px !important; }
-
+    .preview-card.preview-avatar .profile-avatar-scaler .equipped-cat-ears { position: absolute !important;
+        left: -3% !important;
+        top: -22% !important;
+        width: 103% !important;
+        height: 96% !important; }
       }
+
+
+
+
 
   @media (max-width: 1262px) {
     .color-grid {
@@ -12291,13 +12357,6 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
     .profile-avatar-stage { width: 250px !important; }
     .profile-avatar-stage { width: 250px !important; }
     .profile-popup .profile-avatar-stage { width: 250px !important; }
-    .preview-card.preview-avatar .profile-avatar-scaler .equipped-cat-ears {
-      position: absolute !important;
-      left: 49% !important;
-      top: 53% !important;
-      width: 84% !important;
-      height: 80% !important;
-    }
     .preview-card.preview-avatar .profile-avatar-scaler .equipped-royal-frame {
       left: 50% !important;
       top: 79% !important;
@@ -12314,7 +12373,6 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
     .preview-card.preview-avatar.roi-preview .equipped-roi-overlay { top: 3px !important; left: 48px !important; width: 70% !important; height: 35% !important; }
     .preview-card.preview-avatar .profile-avatar-scaler .equipped-rainbow { left: 50% !important; top: 80% !important; width: 66% !important; height: 61% !important; }
     .preview-card.preview-leaderboard .equipped-gentleman-overlay { width: 33% !important; }
-    .preview-card.preview-avatar .profile-avatar-scaler .equipped-vinyle-overlay { width: 50% !important; height: 48% !important; }
     .preview-card.preview-avatar.vinyle-preview .profile-avatar-scaler { width: 250px !important; }
     .preview-card.preview-avatar .profile-avatar-scaler .equipped-absolute-cinema-overlay { left: -5.5% !important; top: 20% !important; width: 34% !important; height: 45% !important; }
     .preview-card.preview-avatar .profile-avatar-scaler .equipped-absolute-cinema-overlay-right { left: 70.5% !important; top: 20% !important; width: 34% !important; height: 45% !important; }
@@ -12322,6 +12380,7 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
     .preview-card.preview-avatar .profile-avatar-scaler .equipped-camera-overlay { top: 51% !important; left: 20% !important; width: 35% !important; height: 40% !important; }
     .preview-card.preview-leaderboard .equipped-flash-overlay { top: 3% !important; left: -9% !important; width: 50% !important; height: 100% !important; }
     .preview-card.preview-leaderboard .equipped-camera-overlay { top: 36% !important; left: -1% !important; width: 17% !important; height: 90% !important; object-fit: contain !important; }
+    .preview-card.preview-leaderboard .equipped-discord-overlay { left: -9px !important; }
     .preview-card.preview-item .daftpunk-img-shop { width: 45% !important; }
     .preview-card.preview-item .nokia-img-shop { width: 30% !important; left: 35% !important; top: 60% !important; }
     .preview-card.preview-item .clippy-img-shop { width: 25% !important; left: 61% !important; top: 60% !important; }
@@ -12335,23 +12394,18 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
     .preview-card.preview-leaderboard .equipped-chat-overlay { top: -35% !important; left: 5% !important; width: 35% !important; }
     .preview-card.preview-avatar .profile-avatar-scaler .equipped-chat-overlay { top: 1% !important; left: 26% !important; width: 86% !important; }
     .preview-card.preview-avatar .profile-avatar-scaler .equipped-pate-inside { top: 56% !important; left: 23% !important; width: 25% !important; height: 20% !important; }
-    .preview-card.preview-avatar .profile-avatar-scaler .equipped-daftpunk-overlay { left: 22% !important; top: 11% !important; width: 55% !important; }
+    .preview-card.preview-avatar .profile-avatar-scaler .equipped-daftpunk-overlay { left: 29% !important; top: 11% !important; width: 55% !important; }
     .preview-card.preview-avatar .profile-avatar-scaler .equipped-nokia-inside { left: 28% !important; top: 60% !important; width: 40% !important; height: 23% !important; }
     .preview-card.preview-avatar .profile-avatar-scaler .equipped-clippy-inside { left: 54% !important; top: 48% !important; width: 27% !important; height: 25% !important; }
     .preview-card.preview-leaderboard .equipped-tomb-raider { left: -78px !important; }
     .preview-card.preview-avatar .profile-avatar-scaler .equipped-tomb-raider { left: 34px !important; }
     .preview-card.preview-item img.item-img[alt="Ange"] { position: absolute !important; top: 15% !important; width: 85% !important; left: 8% }
-    .preview-card.preview-item .jojo-text-preview { top: 3px !important; left: 13px !important; width: 61% !important; }
     .preview-card.preview-item.cosmetic-mobile-card .jojo-text-preview { top: 10px; }
 
 @media (max-width: 1300px) {
-  .preview-card.preview-item .jojo-text-preview { top: 10px !important; }
 }
 @media (max-width: 768px) {
   .preview-card.preview-item.cosmetic-mobile-card .jojo-text-preview { top: 10px !important; }
-  .weekly-shop-container .preview-card.preview-item .jojo-text-preview,
-  .weekly-shop-container .weekly-item .jojo-text-preview,
-  .weekly-shop-container .jojo-text-preview { top: -10px !important; }
 }
     .weekly-section .shop-item.weekly-item.small-card .discord-item-shop .discord-img-shop { top: 15px !important; left: 30px !important; }
     .preview-card.preview-avatar .profile-avatar-scaler .equipped-angel-wings { top: -66px !important; left: -1px !important; }
@@ -12538,7 +12592,7 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
 .weekly-section .shop-item.weekly-item.small-card .miaou-item-shop .pate-img-shop { position: absolute !important; max-width: 100% !important; max-height: 35% !important; object-fit: contain !important; top: 80px !important; left: 24% !important; }
 .profile-avatar { position: relative; width: 110px; height: 110px; border-radius: 24px !important; overflow: hidden; border: 5px solid #000; background: #fff; }
 .profile-avatar.no-border { border: none !important; background: transparent !important; }
-.profile-avatar .avatar-img { width: 100% !important; height: 100% !important; object-fit: cover !important; }
+.profile-avatar .avatar-img { display: block !important; width: 100% !important; height: 100% !important; object-fit: cover !important; border-radius: 0 !important; }
 .equipped-item-name { text-align: center; font-size: 14px; color: #333; margin-top: 6px; }
 
 /* Overlays statiques au-dessus du carré avatar dans la pop-up */
@@ -12617,6 +12671,7 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
   height: 100% !important;
   object-fit: cover !important;
   object-position: center !important;
+  border-radius: 0 !important;
 }
 
 .profile-popup .profile-content-scaler,
@@ -12855,12 +12910,13 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
 .profile-popup .seek-fill-vertical { width: 4px; background: #3ddc84; border-radius: 2px; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); pointer-events: none; }
 .profile-popup .seek-thumb-vertical { width: 16px; height: 16px; background: #ff0000; border-radius: 50%; position: absolute; left: 50%; transform: translate(-50%, 50%); pointer-events: none; box-shadow: 0 1px 3px rgba(0,0,0,0.3); transition: transform 0.1s; }
 .profile-popup .volume-seek-bar-vertical:hover .seek-thumb-vertical { transform: translate(-50%, 50%) scale(1.2); }
-.profile-popup .volume-slider-container.horizontal { width: 160px; height: 0; padding: 0; }
-.profile-popup .volume-slider-container.horizontal.visible { height: 32px; padding: 6px 10px; }
+.profile-popup .volume-slider-container.horizontal { width: 200px; height: 0; padding: 0; }
+.profile-popup .volume-slider-container.horizontal.visible { height: 38px; padding: 8px 12px; }
+.profile-popup .volume-seek-bar-horizontal { height: 26px; }
 .profile-popup .volume-seek-bar-horizontal .seek-track-vertical { width: 100%; height: 4px; }
 .profile-popup .volume-seek-bar-horizontal .seek-fill-vertical { height: 4px; width: 0; left: 0; top: 50%; bottom: auto; transform: translateY(-50%); }
-.profile-popup .volume-seek-bar-horizontal .seek-thumb-vertical { top: 50%; bottom: auto; left: 0; transform: translate(-50%, -50%); }
-.profile-popup .volume-seek-bar-horizontal:hover .seek-thumb-vertical { transform: translate(-50%, -50%) scale(1.2); }
+.profile-popup .volume-seek-bar-horizontal .seek-thumb-vertical { top: 50%; bottom: auto; left: 0; width: 20px; height: 20px; transform: translate(-50%, -50%); }
+.profile-popup .volume-seek-bar-horizontal:hover .seek-thumb-vertical { transform: translate(-50%, -50%) scale(1.15); }
 /* Assure que le slider de volume vertical passe au-dessus de la Note publique */
 .profile-popup .volume-seek-bar-vertical {
   position: relative;

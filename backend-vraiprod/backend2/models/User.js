@@ -61,6 +61,7 @@ const userSchema = new mongoose.Schema({
   },
   equippedItemId: { type: Number, default: null, required: false }, // ID de l'item actuellement équipé
   selectedBorderColor: { type: String, default: null },
+  favorites: { type: [Number], default: [] },
   faction: { type: String, enum: ['Bagnat','Fermier'], default: null },
   factionCoins: { type: Number, default: 0 },
 

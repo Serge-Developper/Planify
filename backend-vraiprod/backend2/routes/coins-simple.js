@@ -1183,7 +1183,32 @@ router.get('/weekly-items/history', verifyToken, requireRole(['admin']), async (
 });
 
 router.get('/favorites', verifyToken, async (req, res) => {
-  res.json({ success: true, favorites: [], message: 'Fonctionnalité favorites désactivée.' });
+  try {
+    const userId = safeUserId(req);
+    if (!userId) return res.status(401).json({ success: false, favorites: [] });
+    const user = await User.findById(userId).lean();
+    if (!user) return res.status(404).json({ success: false, favorites: [] });
+    const favorites = Array.isArray(user.favorites) ? user.favorites.map(Number).filter(Number.isFinite) : [];
+    res.json({ success: true, favorites });
+  } catch (error) {
+    res.status(500).json({ success: false, favorites: [], message: 'Erreur chargement favoris' });
+  }
+});
+
+router.put('/favorites', verifyToken, async (req, res) => {
+  try {
+    const userId = safeUserId(req);
+    if (!userId) return res.status(401).json({ success: false, favorites: [] });
+    const input = (req.body && Array.isArray(req.body.favorites)) ? req.body.favorites : [];
+    const favorites = input.map((n) => Number(n)).filter((n) => Number.isFinite(n));
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ success: false, favorites: [] });
+    user.favorites = favorites;
+    await user.save();
+    res.json({ success: true, favorites });
+  } catch (error) {
+    res.status(500).json({ success: false, favorites: [], message: 'Erreur sauvegarde favoris' });
+  }
 });
 
 module.exports = router;
