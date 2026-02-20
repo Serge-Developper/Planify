@@ -2722,7 +2722,7 @@
                       v-for="(a, ai) in getProfilePopupAssetsForTargetPlacement(getUserEquippedItemData(selectedUser), 'profile-avatar', 'below')"
                       :key="'profile-below-'+ai+'-'+dynamicVariantsState"
                       :src="resolveDynSrc(a.src)"
-                      :style="getDynProfilePopupAssetStyle(a, true)"
+                      :style="getDynProfilePopupAssetStyle(a, false)"
                     />
 
                     <!-- Avatar -->
@@ -2745,7 +2745,7 @@
                       v-for="(a, ai) in getProfilePopupAssetsForTargetPlacement(getUserEquippedItemData(selectedUser), 'profile-avatar', 'inside')"
                       :key="'profile-inside-'+ai+'-'+dynamicVariantsState"
                       :src="resolveDynSrc(a.src)"
-                      :style="getDynProfilePopupAssetStyle(a, true)"
+                      :style="getDynProfilePopupAssetStyle(a, false)"
                     />
                     <!-- Ajout: Animation Matrix à l’intérieur de l’avatar -->
                     <div
@@ -5192,21 +5192,16 @@ function getLargeAvatarHeight(item) {
 function getProfilePopupStageInlineStyle(user) {
   try {
     const item = getUserEquippedItemData(user)
-    const forceDesktop = shouldForceLeaderboardProfilePopupDesktop()
-    const w = (!forceDesktop && isMobile.value) ? 250 : 351
     const h = getLargeAvatarHeight(item)
-    const widthImportant = (forceDesktop && isMobile.value) ? '' : ' !important'
-    return `width: ${w}px${widthImportant}; height: ${h}px !important; margin: 0 auto`
+    return `height: ${h}px !important; margin: 0 auto`
   } catch { return '' }
 }
 
 function getProfilePopupScalerInlineStyle(user) {
   try {
     const item = getUserEquippedItemData(user)
-    const forceDesktop = shouldForceLeaderboardProfilePopupDesktop()
-    const w = (!forceDesktop && isMobile.value) ? 250 : 351
     const h = getLargeAvatarHeight(item)
-    return `width: ${w}px !important; height: ${h}px !important`
+    return `height: ${h}px !important`
   } catch { return '' }
 }
 
@@ -7465,7 +7460,17 @@ const getProfilePopupAvatarBorderStyle = (user) => {
     if (equipped && shouldRemoveProfilePopupBorder(equipped)) {
       return { border: 'none', background: 'transparent' }
     }
-    return getAvatarBorderStyle(user)
+    const raw = user && user.selectedBorderColor ? String(user.selectedBorderColor) : ''
+    const baseId = raw.split('|')[0] || ''
+    const selected = coinsStore.borderColors.find(c => c.id === baseId)
+    if (!selected) return {}
+    if (selected.gradient) {
+      return { border: '5px solid transparent', background: `linear-gradient(white, white) padding-box, ${selected.gradient} border-box` }
+    }
+    if (selected.color) {
+      return { border: `5px solid ${selected.color}` }
+    }
+    return {}
   } catch {
     return { border: 'none', background: 'transparent' }
   }

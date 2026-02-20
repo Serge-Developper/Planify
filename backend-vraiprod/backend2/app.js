@@ -103,6 +103,13 @@ const maintenanceAllowIps = new Set(
     .map(s => s.trim())
     .filter(Boolean)
 );
+const prodIpLockEnabled = ['1', 'true', 'yes', 'on'].includes(String(process.env.PROD_IP_LOCK || '').toLowerCase());
+const prodAllowIps = new Set(
+  String(process.env.PROD_ALLOW_IPS || '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean)
+);
 
 function normalizeIp(ip) {
   if (!ip) return '';
@@ -124,6 +131,12 @@ function isAllowedMaintenanceIp(req) {
   return maintenanceAllowIps.has(ip);
 }
 
+function isAllowedProdIp(req) {
+  if (!prodAllowIps.size) return false;
+  const ip = getClientIp(req);
+  return prodAllowIps.has(ip);
+}
+
 function hasValidToken(req) {
   const authHeader = req.headers['authorization'] || '';
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
@@ -135,6 +148,14 @@ function hasValidToken(req) {
   } catch {
     return false;
   }
+}
+
+if (process.env.NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    if (!prodIpLockEnabled) return next();
+    if (isAllowedProdIp(req)) return next();
+    return res.status(403).send('');
+  });
 }
 
 // Middleware CORS (unifié dev+prod)

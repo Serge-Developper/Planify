@@ -126,8 +126,9 @@
         <button :class="{active: activeCanvas==='boutique-quotidienne'}" @click="activeCanvas='boutique-quotidienne'">Boutique quotidienne</button>
         <button :class="{active: activeCanvas==='apercu-large-avatar'}" @click="activeCanvas='apercu-large-avatar'">Aperçu Large/Avatar</button>
       </div>
-      <div class="device-tabs" v-if="activeCanvas==='collection' || activeCanvas==='apercu-large-avatar' || activeCanvas==='apercu-cosmetique' || activeCanvas==='boutique-quotidienne'">
+      <div class="device-tabs" v-if="activeCanvas==='collection' || activeCanvas==='leaderboard' || activeCanvas==='profile-popup' || activeCanvas==='apercu-large-avatar' || activeCanvas==='apercu-cosmetique' || activeCanvas==='boutique-quotidienne'">
         <button :class="{active: activeDevice==='desktop'}" @click="activeDevice='desktop'">Desktop</button>
+        <button v-if="activeCanvas==='profile-popup'" :class="{active: activeDevice==='pc'}" @click="activeDevice='pc'">PC (481-768)</button>
         <button :class="{active: activeDevice==='mobile'}" @click="activeDevice='mobile'">Mobile</button>
       </div>
       <div class="canvas" ref="canvasRef" :class="{ round: activeCanvas==='collection' }" :style="canvasStyle">
@@ -505,7 +506,7 @@ const importJsonInput = ref(null)
 const importJsonCreateAddInput = ref(null)
 const replaceFileInput = ref(null)
 const activeCanvas = ref('collection') // collection | leaderboard | avatar | navbar
-const activeDevice = ref('desktop') // desktop | mobile
+const activeDevice = ref('desktop') // desktop | pc | mobile
 const selectedIndex = ref(null)
 const canvasRef = ref(null)
 const showOverflow = ref(false)
@@ -723,7 +724,7 @@ const canvasStyle = computed(() => {
     width = 120.5
     height = 64
   } else if (activeCanvas.value === 'profile-popup') {
-    width = 340
+    width = (activeDevice.value === 'mobile') ? 250 : (activeDevice.value === 'pc' ? 300 : 340)
     height = 250
     border = '5px solid #e0e0e0'
     borderRadius = '12px'
@@ -937,11 +938,15 @@ function hexToRgb(hex) {
 }
 
 function getActiveStyleKey() {
-  const suffix = (activeDevice.value === 'mobile') ? 'Mobile' : ''
+  const isMobile = activeDevice.value === 'mobile'
+  const suffix = isMobile ? 'Mobile' : ''
   if (activeCanvas.value === 'collection') return 'collectionStyle' + suffix
   if (activeCanvas.value === 'leaderboard') return 'leaderboardStyle' + suffix
   if (activeCanvas.value === 'popup-style') return 'popupStyleStyle'
-  if (activeCanvas.value === 'profile-popup') return 'profilePopupStyle'
+  if (activeCanvas.value === 'profile-popup') {
+    if (activeDevice.value === 'pc') return 'profilePopupStylePc'
+    return 'profilePopupStyle' + suffix
+  }
   if (activeCanvas.value === 'apercu-profil') return 'profilePopupStyle'
   if (activeCanvas.value === 'apercu-large-avatar') return 'largeAvatarStyle' + suffix
   if (activeCanvas.value === 'apercu-cosmetique') return 'cosmeticPreviewStyle' + suffix
@@ -962,6 +967,8 @@ function ensureStyle(asset) {
   if (!asset.navbarStyle) asset.navbarStyle = createDefault()
   if (!asset.popupStyleStyle) asset.popupStyleStyle = createDefault()
   if (!asset.profilePopupStyle) asset.profilePopupStyle = createDefault()
+  if (!asset.profilePopupStyleMobile) asset.profilePopupStyleMobile = createDefault()
+  if (!asset.profilePopupStylePc) asset.profilePopupStylePc = createDefault()
   if (!asset.dailyStyle) asset.dailyStyle = createDefault()
   if (!asset.largeAvatarStyle) asset.largeAvatarStyle = createDefault()
   if (!asset.cosmeticPreviewStyle) asset.cosmeticPreviewStyle = createDefault()
@@ -973,6 +980,8 @@ function ensureStyle(asset) {
   if (!asset.largeAvatarStyleMobile) asset.largeAvatarStyleMobile = clone(asset.largeAvatarStyle)
   if (!asset.cosmeticPreviewStyleMobile) asset.cosmeticPreviewStyleMobile = clone(asset.cosmeticPreviewStyle)
   if (!asset.avatarStyleMobile) asset.avatarStyleMobile = clone(asset.avatarStyle)
+  if (!asset.profilePopupStyleMobile) asset.profilePopupStyleMobile = clone(asset.profilePopupStyle)
+  if (!asset.profilePopupStylePc) asset.profilePopupStylePc = clone(asset.profilePopupStyle)
 
   if (!asset[key]) asset[key] = createDefault()
 
@@ -1046,7 +1055,7 @@ function sanitizeStyle(s) {
 }
 
 function sanitizeAsset(a) {
-  if (!a) return { src: '', style: sanitizeStyle(null), collectionStyle: sanitizeStyle(null), collectionStyleMobile: sanitizeStyle(null), leaderboardStyle: sanitizeStyle(null), leaderboardStyleMobile: sanitizeStyle(null), avatarStyle: sanitizeStyle(null), avatarStyleMobile: sanitizeStyle(null), navbarStyle: sanitizeStyle(null), navbarStyleMobile: sanitizeStyle(null), popupStyleStyle: sanitizeStyle(null), profilePopupStyle: sanitizeStyle(null), dailyStyle: sanitizeStyle(null), cosmeticPreviewStyle: sanitizeStyle(null), cosmeticPreviewStyleMobile: sanitizeStyle(null), largeAvatarStyle: sanitizeStyle(null), largeAvatarStyleMobile: sanitizeStyle(null) }
+  if (!a) return { src: '', style: sanitizeStyle(null), collectionStyle: sanitizeStyle(null), collectionStyleMobile: sanitizeStyle(null), leaderboardStyle: sanitizeStyle(null), leaderboardStyleMobile: sanitizeStyle(null), avatarStyle: sanitizeStyle(null), avatarStyleMobile: sanitizeStyle(null), navbarStyle: sanitizeStyle(null), navbarStyleMobile: sanitizeStyle(null), popupStyleStyle: sanitizeStyle(null), profilePopupStyle: sanitizeStyle(null), profilePopupStyleMobile: sanitizeStyle(null), profilePopupStylePc: sanitizeStyle(null), dailyStyle: sanitizeStyle(null), cosmeticPreviewStyle: sanitizeStyle(null), cosmeticPreviewStyleMobile: sanitizeStyle(null), largeAvatarStyle: sanitizeStyle(null), largeAvatarStyleMobile: sanitizeStyle(null) }
   return {
     src: a.src || '',
     style: sanitizeStyle(a.style),
@@ -1060,6 +1069,8 @@ function sanitizeAsset(a) {
     navbarStyleMobile: sanitizeStyle(a.navbarStyleMobile),
     popupStyleStyle: sanitizeStyle(a.popupStyleStyle),
     profilePopupStyle: sanitizeStyle(a.profilePopupStyle),
+    profilePopupStyleMobile: sanitizeStyle(a.profilePopupStyleMobile),
+    profilePopupStylePc: sanitizeStyle(a.profilePopupStylePc),
     dailyStyle: sanitizeStyle(a.dailyStyle),
     cosmeticPreviewStyle: sanitizeStyle(a.cosmeticPreviewStyle),
     cosmeticPreviewStyleMobile: sanitizeStyle(a.cosmeticPreviewStyleMobile),
@@ -1163,6 +1174,8 @@ function sanitizeItem(it) {
           if (!asset.navbarStyleMobile) asset.navbarStyleMobile = { top: 0, left: 0, width: 100, rotate: 0, objectFit: 'contain', zIndex: 1 }
           if (!asset.popupStyleStyle) asset.popupStyleStyle = { top: 0, left: 0, width: 100, rotate: 0, objectFit: 'contain', zIndex: 1 }
           if (!asset.profilePopupStyle) asset.profilePopupStyle = { top: 0, left: 0, width: 100, rotate: 0, objectFit: 'contain', zIndex: 1 }
+          if (!asset.profilePopupStyleMobile) asset.profilePopupStyleMobile = { top: 0, left: 0, width: 100, rotate: 0, objectFit: 'contain', zIndex: 1 }
+          if (!asset.profilePopupStylePc) asset.profilePopupStylePc = { top: 0, left: 0, width: 100, rotate: 0, objectFit: 'contain', zIndex: 1 }
           if (!asset.dailyStyle) asset.dailyStyle = { top: 0, left: 0, width: 100, rotate: 0, objectFit: 'contain', zIndex: 1 }
           if (!asset.cosmeticPreviewStyle) asset.cosmeticPreviewStyle = { top: 0, left: 0, width: 100, rotate: 0, objectFit: 'contain', zIndex: 1 }
           if (!asset.cosmeticPreviewStyleMobile) asset.cosmeticPreviewStyleMobile = { top: 0, left: 0, width: 100, rotate: 0, objectFit: 'contain', zIndex: 1 }

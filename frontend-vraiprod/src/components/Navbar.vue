@@ -1410,8 +1410,16 @@ watch(showMobileMenu, (v) => {
 })
 const isMobile = ref(false)
 const profilePopupLargeAvatarIsMobile = ref(false)
+const profilePopupNavbarIsMobile = ref(false)
+const profilePopupNavbarIsPc = ref(false)
 function isProfilePopupLargeAvatarMobile() {
   return !!profilePopupLargeAvatarIsMobile.value
+}
+function isProfilePopupNavbarMobile() {
+  return !!profilePopupNavbarIsMobile.value
+}
+function isProfilePopupNavbarPc() {
+  return !!profilePopupNavbarIsPc.value
 }
 const showLoginPopup = ref(false)
 const showUserDropdown = ref(false)
@@ -2140,10 +2148,11 @@ function getEffectiveProfilePopupTarget(item, asset) {
     if (explicit) return String(explicit)
     const itemLevel = item && item.meta && item.meta.profilePopupTarget
     if (itemLevel) return String(itemLevel)
-    const mobile = isProfilePopupLargeAvatarMobile()
-    const ps = mobile
-      ? (asset?.profilePopupStyleMobile || asset?.profilePopupStyle)
-      : (asset?.profilePopupStyle || asset?.profilePopupStyleMobile)
+    const popupMobile = isProfilePopupNavbarMobile()
+    const popupPc = !popupMobile && isProfilePopupNavbarPc()
+    const ps = popupMobile
+      ? (asset?.profilePopupStyleMobile || asset?.profilePopupStylePc || asset?.profilePopupStyle)
+      : (popupPc ? (asset?.profilePopupStylePc || asset?.profilePopupStyle || asset?.profilePopupStyleMobile) : (asset?.profilePopupStyle || asset?.profilePopupStylePc || asset?.profilePopupStyleMobile))
     const pt = typeof ps?.top === 'number' ? ps.top : 0
     const pl = typeof ps?.left === 'number' ? ps.left : 0
     const pw = typeof ps?.width === 'number' ? ps.width : 100
@@ -2374,10 +2383,11 @@ function getDynNavbarOverlayStyle(asset) {
 
 // Style spécifique pour la popup Profil: reproduit exactement l'aperçu Large/Avatar
 function getDynProfilePopupAssetStyle(asset) {
-  const mobile = isProfilePopupLargeAvatarMobile()
-  const s = mobile
-    ? (asset?.profilePopupStyleMobile || asset?.profilePopupStyle || asset?.largeAvatarStyleMobile || asset?.largeAvatarStyle || asset?.navbarStyleMobile || asset?.navbarStyle || asset?.style || {})
-    : (asset?.profilePopupStyle || asset?.profilePopupStyleMobile || asset?.largeAvatarStyle || asset?.navbarStyle || asset?.style || {})
+  const popupMobile = isProfilePopupNavbarMobile()
+  const popupPc = !popupMobile && isProfilePopupNavbarPc()
+  const s = popupMobile
+    ? (asset?.profilePopupStyleMobile || asset?.profilePopupStylePc || asset?.profilePopupStyle || asset?.largeAvatarStyleMobile || asset?.largeAvatarStyle || asset?.navbarStyleMobile || asset?.navbarStyle || asset?.style || {})
+    : (popupPc ? (asset?.profilePopupStylePc || asset?.profilePopupStyle || asset?.profilePopupStyleMobile || asset?.largeAvatarStyle || asset?.navbarStyle || asset?.style || {}) : (asset?.profilePopupStyle || asset?.profilePopupStylePc || asset?.profilePopupStyleMobile || asset?.largeAvatarStyle || asset?.navbarStyle || asset?.style || {}))
   const placement = asset?.meta?.profilePopupPlacement ?? asset?.meta?.navbarPlacement
   const style = { position: 'absolute', objectFit: s.objectFit || 'contain', pointerEvents: 'none' }
   if (typeof s.top === 'number') style.top = s.top + 'px'
@@ -4212,6 +4222,8 @@ function goShop() {
 function handleResize() {
   isMobile.value = window.innerWidth <= 1024;
   profilePopupLargeAvatarIsMobile.value = window.innerWidth <= 480;
+  profilePopupNavbarIsMobile.value = window.innerWidth <= 480;
+  profilePopupNavbarIsPc.value = window.innerWidth >= 481 && window.innerWidth <= 768;
   if (!isMobile.value) {
     showMobileMenu.value = false;
     showNotificationBtn.value = false;

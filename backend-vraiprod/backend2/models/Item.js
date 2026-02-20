@@ -32,6 +32,8 @@ const assetSchema = new mongoose.Schema({
   navbarStyleMobile: { type: styleSchema, default: null },
   popupStyleStyle: { type: styleSchema, default: null },
   profilePopupStyle: { type: styleSchema, default: null },
+  profilePopupStyleMobile: { type: styleSchema, default: null },
+  profilePopupStylePc: { type: styleSchema, default: null },
   largeAvatarStyle: { type: styleSchema, default: null },
   largeAvatarStyleMobile: { type: styleSchema, default: null },
   cosmeticPreviewStyle: { type: styleSchema, default: null },
