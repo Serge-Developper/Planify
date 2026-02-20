@@ -1226,7 +1226,7 @@
       <div class="popup-content popup-delete-confirm" @click.stop>
         <h3>Confirmation de suppression</h3>
         <p>Êtes-vous sûr de vouloir supprimer cette tâche ?</p>
-        
+
         <div style="display: flex; gap: 12px; justify-content: center; margin-top: 24px;">
           <button @click="cancelDelete" class="btn-cancel-delete">Non</button>
           <button @click="deleteTaskConfirmed" class="btn-confirm-delete">Oui</button>
@@ -1408,7 +1408,7 @@
             <select v-model="selectionFontFamilyEdit" @change="applySelectionFontFamily('edit')" class="matiere-select">
               <option v-for="f in availableFonts" :key="f.value" :value="f.value">{{ f.label }}</option>
             </select>
-            
+
           </div>
           <div v-if="showEmojiEdit" class="emoji-picker">
             <button v-for="e in emojis" :key="'edit_'+e" type="button" class="emoji-btn" @click="insertEmoji('edit', e)">{{ e }}</button>
@@ -2196,7 +2196,7 @@ const toDoEvents = computed(() => {
   return filtered;
 });
 
-const archives = computed(() => 
+const archives = computed(() =>
   props.events
     .filter(e => e.archived && (!selectedMatiere.value || e.matiere === selectedMatiere.value))
     .filter(e => matchesProfFilters(e))
@@ -3275,10 +3275,10 @@ function closePopup() {
 function getGroupeImage(event) {
   const groupes = event.groupes || [event.groupe];
   const userGroupe = user.value?.groupe;
-  
+
   // Si Promo est coché, on affiche Promo
   if (groupes.includes('Promo')) return groupePromo;
-  
+
   // Si l'utilisateur a un groupe spécifique et que ce groupe est dans la liste
   if (userGroupe && groupes.includes(userGroupe)) {
     // Retourner l'image correspondant au groupe de l'utilisateur
@@ -3293,10 +3293,10 @@ function getGroupeImage(event) {
       default: break;
     }
   }
-  
+
   // Si A et B sont cochés (et rien d'autre), on affiche Promo
   if (groupes.includes('A') && groupes.includes('B') && groupes.length === 2) return groupePromo;
-  
+
   // Fallback : afficher l'image du premier groupe de la liste
   if (groupes.length > 0) {
     const firstGroupe = groupes[0];
@@ -3311,7 +3311,7 @@ function getGroupeImage(event) {
       default: return null;
     }
   }
-  
+
   return null;
 }
 
@@ -4686,8 +4686,21 @@ onMounted(async () => {
       refreshProposalsCountBadge()
     ]);
   }
+  startProposalsPoll();
 });
-watch(() => user.value && user.value.token, (tok) => { if (tok) { fetchMyProposals(); fetchMyAcceptedProposals(); refreshProposalsCountBadge(); } });
+watch(() => user.value && user.value.token, (tok) => {
+  if (tok) {
+    fetchMyProposals();
+    fetchMyAcceptedProposals();
+    refreshProposalsCountBadge();
+    startProposalsPoll();
+  } else {
+    stopProposalsPoll();
+  }
+});
+onUnmounted(() => {
+  stopProposalsPoll();
+});
 
 function isNewTask(event) {
   if (!event || !event._id) return false;
@@ -4927,6 +4940,7 @@ const showProposalsPopup = ref(false);
 const proposalsLoading = ref(false);
 const proposalsList = ref([]);
 const proposalsCountBadge = ref(0);
+const proposalsPollHandle = ref(null);
 const showBlockedPanel = ref(false);
 const proposalsAvailableCount = computed(() => (Array.isArray(proposalsList.value) ? proposalsList.value.length : 0));
 const proposalsHeaderTitle = computed(() => showBlockedPanel.value ? 'Personnes bloquées' : 'Propositions en attente');
@@ -4935,7 +4949,19 @@ const blockedLoading = ref(false);
 const blockedError = ref('');
 const proposalsError = ref('');
 const proposalLoading = ref(false);
-async function refreshProposalsCountBadge() {
+function startProposalsPoll() {
+  if (proposalsPollHandle.value) return;
+  proposalsPollHandle.value = setInterval(() => {
+    if (user.value?.token) refreshProposalsCountBadge(true);
+  }, 20000);
+}
+function stopProposalsPoll() {
+  if (!proposalsPollHandle.value) return;
+  clearInterval(proposalsPollHandle.value);
+  proposalsPollHandle.value = null;
+}
+
+async function refreshProposalsCountBadge(force = false) {
   try {
     const role = user.value?.role;
     const token = user.value?.token;
@@ -4948,7 +4974,7 @@ async function refreshProposalsCountBadge() {
       const val = Number(obj?.count || 0);
       if (val >= 0) proposalsCountBadge.value = val;
       const stale = Date.now() - ts > 300000;
-      if (!stale) return;
+      if (!force && !stale) return;
     } catch {}
     if (!token) {
       proposalsCountBadge.value = Math.max(0, Number(proposalsCountBadge.value || 0));
@@ -5122,7 +5148,7 @@ async function validateProposal(p) {
     }
   } catch (e) { alert('Validation échouée'); }
 }
-async function rejectProposal(p) { try { if (!p || !p._id) return; const reason = window.prompt('Raison du rejet ?') || ''; const token = user.value.token; await axios.post(`${API_URL}/events/proposals/${p._id}/reject`, { reason }, { headers: { Authorization: `Bearer ${token}` } }); proposalsList.value = proposalsList.value.filter(x => x._id !== p._id); } catch (e) { alert('Rejet échoué'); } }
+async function rejectProposal(p) { try { if (!p || !p._id) return; const token = user.value.token; await axios.post(`${API_URL}/events/proposals/${p._id}/reject`, {}, { headers: { Authorization: `Bearer ${token}` } }); proposalsList.value = proposalsList.value.filter(x => x._id !== p._id); } catch (e) { alert('Rejet échoué'); } }
 async function deleteProposal(p) { try { if (!p || !p._id) return; const token = user.value.token; await axios.delete(`${API_URL}/events/proposals/${p._id}`, { headers: { Authorization: `Bearer ${token}` } }); proposalsList.value = proposalsList.value.filter(x => x._id !== p._id); } catch (e) { alert('Suppression échouée'); } }
 async function blockProposer(p) {
   try {
@@ -7383,21 +7409,21 @@ button,
         max-height: 85vh !important;
         overflow-y: auto !important;
   }
-  
+
   .popup-content-ajout-tache h3 {
     font-size: 1.4em !important;
     margin-bottom: 15px !important;
     margin-top: 15px !important;
     padding-top: 0 !important;
   }
-  
+
   .popup-content-ajout-tache input,
   .popup-content-ajout-tache select,
   .popup-content-ajout-tache textarea {
     font-size: 1em !important;
     padding: 12px 10px 8px 10px !important;
   }
-  
+
   .input-floating input[type="date"],
   .input-floating input[type="time"],
   .input-floating select {
@@ -7406,15 +7432,15 @@ button,
     min-height: 40px !important;
     background-image: none !important;
   }
-  
 
-  
+
+
   .input-floating label {
     font-size: 0.9em !important;
     left: 10px !important;
     top: 10px !important;
   }
-  
+
   .input-floating input:focus + label,
   .input-floating input:not(:placeholder-shown):not([value=""]) + label,
   .input-floating select:focus + label,
@@ -7424,17 +7450,17 @@ button,
     left: 8px !important;
     font-size: 0.8em !important;
   }
-  
+
   .groupes-checkboxes {
     max-width: 300px;
     margin: 0 auto;
     flex-wrap: wrap !important;
   }
-  
+
   .groupes-checkboxes label {
     font-size: 0.9em !important;
   }
-  
+
   .btn-valider-ajout {
     font-size: 1.1em !important;
     padding: 12px 20px !important;
@@ -7448,7 +7474,7 @@ button,
     align-items: stretch;
     gap: 8px !important;
   }
-  
+
   .close-btn-ajout {
     top: 10px !important;
     right: 10px !important;
@@ -7456,7 +7482,7 @@ button,
     height: 35px !important;
     font-size: 1.4em !important;
   }
-  
+
 
 }
 
@@ -7480,19 +7506,19 @@ button,
     margin: 5px !important;
     padding: 15px 10px !important;
   }
-  
+
   .popup-content-ajout-tache h3 {
     font-size: 1.2em !important;
     margin-bottom: 12px !important;
   }
-  
+
   .popup-content-ajout-tache input,
   .popup-content-ajout-tache select,
   .popup-content-ajout-tache textarea {
     font-size: 0.9em !important;
     padding: 10px 8px 6px 8px !important;
   }
-  
+
   .input-floating input[type="date"],
   .input-floating input[type="time"],
   .input-floating select {
@@ -7500,13 +7526,13 @@ button,
     font-size: 0.9em !important;
     min-height: 36px !important;
   }
-  
+
   .input-floating label {
     font-size: 0.8em !important;
     left: 8px !important;
     top: 8px !important;
   }
-  
+
   .input-floating input:focus + label,
   .input-floating input:not(:placeholder-shown):not([value=""]) + label,
   .input-floating select:focus + label,
@@ -7516,13 +7542,13 @@ button,
     left: 6px !important;
     font-size: 0.7em !important;
   }
-  
+
   .btn-valider-ajout {
     font-size: 1em !important;
     padding: 10px 16px !important;
     margin-top: 12px !important;
   }
-  
+
   .close-btn-ajout {
     top: 8px !important;
     right: 8px !important;

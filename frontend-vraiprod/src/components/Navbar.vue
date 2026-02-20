@@ -862,7 +862,7 @@
     </div>
 
     <div v-if="showProfilePopup" class="profile-popup-overlay" @click.self="closeProfilePopup">
-      <div class="profile-popup">
+      <div class="profile-popup" :class="{ 'role-delegue': user?.role === 'delegue' }">
         <div class="profile-popup-header">
           <h2 class="profile-title">Votre Profil</h2>
           <button class="close-btn" @click="closeProfilePopup" @mouseover="hoverCloseProfile = true" @mouseleave="hoverCloseProfile = false">
@@ -5295,6 +5295,8 @@ body, html {
   }
   .profile-role-with-group .profile-role { order: 1; }
   .profile-role-with-group .profile-outlets-row { order: 2; display: inline-flex; gap: 25px; justify-content: center; }
+  .profile-popup.role-delegue .profile-role-with-group { gap: 22px; }
+  .profile-popup.role-delegue .profile-role-with-group .profile-outlets-row { gap: 18px; }
   .profile-popup .profile-avatar-stage { width: 100% !important; max-width: 320px !important; margin-left: auto; margin-right: auto; }
   .profile-divider { display: none; }
   .profile-section-title { font-size: 18px !important; }
@@ -5357,6 +5359,8 @@ body, html {
 .profile-role-with-group { position: relative; display: inline-flex; align-items: center; gap: 15px; }
 .profile-role-with-group .profile-outlets-row { display: inline-flex; align-items: center; gap: 10px; }
 .profile-role-with-group .profile-role { position: relative; z-index: 2; }
+.profile-popup.role-delegue .profile-role-with-group { gap: 22px; }
+.profile-popup.role-delegue .profile-role-with-group .profile-outlets-row { gap: 18px; }
 .profile-group-outlet { position: relative; margin-left: 0; border: 4px solid #3ddc84; border-radius: 18px; width: 81px; height: 68px; display:flex; align-items:center; justify-content:center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow:hidden; }
 .profile-group-outlet .group-logo { width: 39px; height: 30px; object-fit: contain; display:block; }
 .profile-group-outlet .group-text { font-size: 18px; font-weight: 700; color: #000; }
@@ -5533,7 +5537,17 @@ body, html {
 }
 .profile-time { font-size: 12px; white-space: nowrap; min-width: 35px; text-align: right; }
 /* .profile-progress::-moz-range-progress { height: 4px; border-radius: 2px; background: #3ddc84; } */
-@media (max-width: 768px) { .profile-music-row { grid-template-columns: 1fr; } }
+@media (max-width: 768px) {
+  .profile-music-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .profile-music-row .profile-music-left { display: contents; }
+  .profile-music-row .profile-music-player { order: 1; width: 100%; }
+  .profile-music-row .profile-left-controls { order: 2; width: 100%; justify-content: center; }
+}
 .profile-group-badge .group-logo { width: 36px; height: 36px; object-fit: contain; }
 .profile-left-stack .logout-btn { align-self: stretch; margin-top: auto; }
 .profile-textarea { width: 100%; min-height: 84px; border: 4px solid #3ddc84; border-radius: 18px; padding: 10px; font-size: 14px; color: #000; }

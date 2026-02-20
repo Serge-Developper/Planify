@@ -28,11 +28,11 @@ const EventProposalSchema = new mongoose.Schema({
   checkedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   acceptedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   archivedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  rejectedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   proposedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   status: { type: String, enum: ['pending', 'validated', 'rejected'], default: 'pending' },
   reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   reviewedAt: { type: Date, default: null },
-  rejectionReason: { type: String, default: '' },
   createdAt: { type: Date, default: Date.now }
 });
 

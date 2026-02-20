@@ -220,6 +220,24 @@ function canAccessProposal(user, prop) {
   return true;
 }
 
+function hasRejected(user, prop) {
+  try {
+    const uid = String(user?.id || user?._id || '');
+    if (!uid) return false;
+    const list = Array.isArray(prop?.rejectedBy) ? prop.rejectedBy.map(String) : [];
+    return list.includes(uid);
+  } catch { return false; }
+}
+
+function isProposalAuthor(user, prop) {
+  try {
+    const uid = String(user?.id || user?._id || '');
+    if (!uid) return false;
+    const pid = String(prop?.proposedBy?._id || prop?.proposedBy || '');
+    return !!pid && uid === pid;
+  } catch { return false; }
+}
+
 const uploadsDir = path.join(__dirname, '..', 'uploads', 'events');
 try { fs.mkdirSync(uploadsDir, { recursive: true }); } catch {}
 
@@ -297,7 +315,7 @@ router.get('/proposals', verifyToken, requireRole(['delegue','prof','admin']), a
     const list = await EventProposal.find({ status: 'pending' })
       .sort({ createdAt: -1 })
       .populate('proposedBy', 'username groupe year proposalBlocked');
-    const visible = list.filter(p => !(p?.proposedBy?.proposalBlocked));
+    const visible = list.filter(p => !(p?.proposedBy?.proposalBlocked) && !hasRejected(req.user, p));
     res.json({ success: true, proposals: visible });
   } catch (e) {
     res.status(500).json({ success: false, message: 'Erreur liste propositions', error: String(e) });
@@ -306,7 +324,7 @@ router.get('/proposals', verifyToken, requireRole(['delegue','prof','admin']), a
 
 router.get('/proposals/count', verifyToken, requireRole(['delegue','prof','admin']), async (req, res) => {
   try {
-    const count = await EventProposal.countDocuments({ status: 'pending' });
+    const count = await EventProposal.countDocuments({ status: 'pending', rejectedBy: { $ne: req.user.id } });
     res.json({ success: true, count });
   } catch (e) {
     res.status(500).json({ success: false, message: 'Erreur compteur propositions', error: String(e) });
@@ -318,7 +336,7 @@ router.get('/proposals/feed', verifyToken, async (req, res) => {
     const all = await EventProposal.find({ status: 'pending' })
       .sort({ createdAt: -1 })
       .populate('proposedBy', 'username groupe year proposalBlocked');
-    const filtered = all.filter(p => canAccessProposal(req.user, p));
+    const filtered = all.filter(p => canAccessProposal(req.user, p) && !hasRejected(req.user, p));
     res.json({ success: true, proposals: filtered });
   } catch (e) {
     res.status(500).json({ success: false, message: 'Erreur feed propositions', error: String(e) });
@@ -329,7 +347,7 @@ router.get('/proposals/feed/count', verifyToken, async (req, res) => {
   try {
     const all = await EventProposal.find({ status: 'pending' })
       .populate('proposedBy', 'proposalBlocked');
-    const filtered = all.filter(p => canAccessProposal(req.user, p) && !(p?.proposedBy?.proposalBlocked));
+    const filtered = all.filter(p => canAccessProposal(req.user, p) && !(p?.proposedBy?.proposalBlocked) && !hasRejected(req.user, p) && !isProposalAuthor(req.user, p));
     res.json({ success: true, count: filtered.length });
   } catch (e) {
     res.status(500).json({ success: false, message: 'Erreur compteur feed', error: String(e) });
@@ -435,14 +453,18 @@ router.post('/proposals/:id/validate', verifyToken, requireRole(['delegue','prof
   }
 });
 
-router.post('/proposals/:id/reject', verifyToken, requireRole(['delegue', 'prof', 'admin']), async (req, res) => {
+router.post('/proposals/:id/reject', verifyToken, async (req, res) => {
   try {
     const prop = await EventProposal.findById(req.params.id);
     if (!prop || prop.status !== 'pending') return res.status(404).json({ success: false, message: 'Proposition introuvable' });
-    prop.status = 'rejected';
-    prop.reviewedBy = req.user.id;
-    prop.reviewedAt = new Date();
-    prop.rejectionReason = String(req.body?.reason || '');
+    if (!canAccessProposal(req.user, prop)) return res.status(403).json({ success: false, message: 'Proposition non accessible' });
+    const uid = String(req.user.id || req.user._id || '');
+    if (!uid) return res.status(403).json({ success: false, message: 'Proposition non accessible' });
+    prop.rejectedBy = Array.isArray(prop.rejectedBy) ? prop.rejectedBy : [];
+    if (!prop.rejectedBy.map(String).includes(uid)) prop.rejectedBy.push(uid);
+    if (Array.isArray(prop.acceptedBy)) prop.acceptedBy = prop.acceptedBy.filter(id => String(id) !== uid);
+    if (Array.isArray(prop.checkedBy)) prop.checkedBy = prop.checkedBy.filter(id => String(id) !== uid);
+    if (Array.isArray(prop.archivedBy)) prop.archivedBy = prop.archivedBy.filter(id => String(id) !== uid);
     await prop.save();
     res.json({ success: true });
   } catch (e) {

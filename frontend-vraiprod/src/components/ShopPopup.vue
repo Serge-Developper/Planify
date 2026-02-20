@@ -2682,7 +2682,7 @@
       <!-- Popup profil depuis le leaderboard -->
       <transition name="fade">
         <div v-if="showUserProfile" class="profile-popup-overlay" data-darkreader-ignore @click.self="closeLeaderboardProfile">
-          <div class="profile-popup leaderboard-profile-popup" data-darkreader-ignore>
+          <div class="profile-popup leaderboard-profile-popup" :class="{ 'role-delegue': selectedUser?.role === 'delegue' }" data-darkreader-ignore>
             <button class="close-btn" @click="closeLeaderboardProfile" @mouseover="hoverCloseProfile = true" @mouseleave="hoverCloseProfile = false">
               <img :src="hoverCloseProfile ? closeHoverImg : closeImg" alt="Fermer" class="close-img" />
             </button>
@@ -12474,7 +12474,7 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
 }
 .public-note-title {
   margin: 0 0 6px 0;
-  font-size: 16px;
+  font-size: 25px;
   text-align: left;
   color: #111;
 }
@@ -12493,7 +12493,7 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
   padding: 10px 12px;
   border: 1px solid #eee;
   box-shadow: 0 1px 0 rgba(0,0,0,0.03) inset;
-  font-size: 14px;
+  font-size: 18px;
   line-height: 1.4;
   max-width: 100%;
   box-sizing: border-box;
@@ -14396,6 +14396,8 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
 .profile-role-with-group { position: relative; display: inline-flex; align-items: center; gap: 15px; }
 .profile-role-with-group .profile-outlets-row { display: inline-flex; align-items: center; gap: 10px; }
 .profile-role-with-group .profile-role { position: relative; z-index: 2; }
+.profile-popup.role-delegue .profile-role-with-group { gap: 22px; }
+.profile-popup.role-delegue .profile-role-with-group .profile-outlets-row { gap: 18px; }
 .profile-group-outlet { position: relative; margin-left: 0; border: 4px solid #3ddc84; border-radius: 18px; width: 81px; height: 68px; display:flex; align-items:center; justify-content:center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow:hidden; }
 .profile-group-outlet .group-logo { width: 39px; height: 30px; object-fit: contain; display:block; }
 .profile-group-outlet .group-text { font-size: 18px; font-weight: 700; color: #000; }
@@ -14450,6 +14452,8 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
   .profile-popup.leaderboard-profile-popup .profile-role-with-group { position: relative; display: inline-flex; align-items: center; gap: 15px; justify-content: center; flex-direction: column; }
   .profile-popup.leaderboard-profile-popup .profile-role-with-group .profile-role { order: 1; }
   .profile-popup.leaderboard-profile-popup .profile-role-with-group .profile-outlets-row { order: 2; display: inline-flex; gap: 15px; justify-content: center; }
+  .profile-popup.leaderboard-profile-popup.role-delegue .profile-role-with-group { gap: 22px; }
+  .profile-popup.leaderboard-profile-popup.role-delegue .profile-role-with-group .profile-outlets-row { gap: 18px; }
   .profile-popup.leaderboard-profile-popup .profile-avatar-stage { width: 100% !important; max-width: 320px !important; margin-left: auto; margin-right: auto; }
   .profile-popup.leaderboard-profile-popup .profile-divider { display: none; }
   .profile-popup.leaderboard-profile-popup .profile-section-title { font-size: 18px !important; }
