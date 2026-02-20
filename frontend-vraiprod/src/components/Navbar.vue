@@ -1433,7 +1433,7 @@ const pushUpdateState = ref('idle')
 function togglePushSettings(){ showPushSettings.value=!showPushSettings.value; if(showPushSettings.value){ loadPushSettings() } else { pushUpdateState.value='idle' } }
 watch(pushPrefs,()=>{ if(pushUpdateState.value==='ok') pushUpdateState.value='idle' },{deep:true})
 async function loadPushSettings(){ try{ const res=await secureApiCall('/users/me/push-preferences',{method:'GET'}); const p=res && res.pushPreferences ? res.pushPreferences : {}; pushEnabled.value=!!p.enabled; pushPrefs.value={ wheel: !!p.wheel, homework: !!p.homework, exam: !!p.exam, shop: !!p.shop }; }catch{ try{ const p=(user.value && user.value.pushPreferences) || {}; pushEnabled.value=!!p.enabled; pushPrefs.value={ wheel: !!p.wheel, homework: !!p.homework, exam: !!p.exam, shop: !!p.shop }; }catch{} } }
-async function applyPushSettings(){ try{ pushUpdateState.value='working'; let canEnable=true; if(typeof Notification!=='undefined'){ if(Notification.permission!=='granted'){ const perm=await Notification.requestPermission(); if(perm!=='granted') canEnable=false } } else { canEnable=false } if(canEnable && !pushEnabled.value){ const subOk=await subscribeToPushNotifications(); if(!subOk) canEnable=false } const enabled=!!canEnable; pushEnabled.value=enabled; await secureApiCall('/users/me/push-preferences',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled:enabled,wheel:!!pushPrefs.value.wheel,homework:!!pushPrefs.value.homework,exam:!!pushPrefs.value.exam,shop:!!pushPrefs.value.shop})}); pushUpdateState.value='ok'; }catch{ pushUpdateState.value='idle' } }
+async function applyPushSettings(){ try{ pushUpdateState.value='working'; let canEnable=true; if(typeof Notification!=='undefined'){ if(Notification.permission!=='granted'){ const perm=await Notification.requestPermission(); if(perm!=='granted') canEnable=false } } else { canEnable=false } if(canEnable){ const subOk=await subscribeToPushNotifications(); if(!subOk) canEnable=false } const enabled=!!canEnable; pushEnabled.value=enabled; await secureApiCall('/users/me/push-preferences',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled:enabled,wheel:!!pushPrefs.value.wheel,homework:!!pushPrefs.value.homework,exam:!!pushPrefs.value.exam,shop:!!pushPrefs.value.shop})}); pushUpdateState.value='ok'; }catch{ pushUpdateState.value='idle' } }
 
 const showNotificationBtn = ref(false)
 
@@ -1506,15 +1506,7 @@ const musicTitle = ref('')
 
 // Déclarer 'user' avant toute utilisation (watch immediate)
 const user = computed(() => {
-  const currentUser = auth.user;
-  console.log('👤 Utilisateur actuel:', {
-    id: currentUser?.id,
-    _id: currentUser?._id,
-    username: currentUser?.username,
-    avatar: currentUser?.avatar,
-    hasToken: !!currentUser?.token
-  });
-  return currentUser;
+  return auth.user;
 })
 const groupLogoSrc = computed(() => {
   try {

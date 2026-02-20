@@ -17,34 +17,29 @@ export function urlBase64ToUint8Array(base64String: string) {
 
 export async function subscribeToPushNotifications() {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-    console.warn('Push messaging is not supported');
     return false;
   }
 
   try {
     const registration = await navigator.serviceWorker.ready;
-    
-    // 1. Get Public Key from Backend
-    // Note: routes are mounted under /users in backend
+
     const res: any = await secureApiCall('/users/push/public-key');
     if (!res || res.enabled === false) {
-      console.info('Push notifications disabled');
       return false;
     }
     if (!res.publicKey) {
-      console.warn('No VAPID public key set');
       return false;
     }
 
-    const convertedVapidKey = urlBase64ToUint8Array(res.publicKey);
+    let subscription = await registration.pushManager.getSubscription();
+    if (!subscription) {
+      const convertedVapidKey = urlBase64ToUint8Array(res.publicKey);
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: convertedVapidKey
+      });
+    }
 
-    // 2. Subscribe
-    const subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: convertedVapidKey
-    });
-
-    // 3. Send Subscription to Backend
     const subRes: any = await secureApiCall('/users/push/subscribe', {
       method: 'POST',
       body: JSON.stringify({ subscription })

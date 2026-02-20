@@ -30,7 +30,7 @@ const uploadsRoot = path.resolve(__dirname, '..', 'uploads');
 const eventsUploadDir = path.join(uploadsRoot, 'events');
 ensureDir(eventsUploadDir);
 
-// Multer config: pièces jointes d’événements
+// Multer config: pièces jointes d'événements
 const storageEvents = multer.diskStorage({
   destination: (req, file, cb) => cb(null, eventsUploadDir),
   filename: (req, file, cb) => {
@@ -62,29 +62,14 @@ const uploadEvents = multer({
   }
 });
 
-// Lister les pièces jointes d’un événement
-router.get('/:id/attachments', verifyToken, async (req, res) => {
-  try {
-    const event = await Event.findById(req.params.id).select('attachments');
-    if (!event) return res.status(404).json({ message: 'Événement non trouvé' });
-    return res.json(event.attachments || []);
-  } catch (e) {
-    console.error('GET attachments error:', e);
-    return res.status(500).json({ message: 'Erreur serveur lors de la récupération des pièces jointes' });
-  }
-});
-
 // Sanitation minimale côté serveur pour descriptions HTML
 function sanitizeHtml(input) {
   try {
     if (!input) return '';
     let html = String(input);
-    // Supprimer balises potentiellement dangereuses
     html = html.replace(/<\s*(script|iframe|object|embed|link|meta)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, '');
     html = html.replace(/<\s*(script|iframe|object|embed|link|meta)[^>]*\/>/gi, '');
-    // Supprimer les handlers inline (onClick, onError, etc.)
     html = html.replace(/\s+on[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '');
-    // Neutraliser les href/src="javascript:..."
     html = html.replace(/(href|src)\s*=\s*(['"])\s*javascript:[^'"]*\2/gi, '$1="#"');
     return html;
   } catch {
@@ -106,6 +91,17 @@ function normalizeYear(year) {
 function normalizeGroupe(groupe) {
   if (!groupe) return '';
   return groupe.replace(/\s+/g, '').toUpperCase();
+}
+
+function escapeRegex(input) {
+  return String(input || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function buildGroupRegex(groupe) {
+  const normalized = normalizeGroupe(groupe);
+  if (!normalized) return null;
+  const chars = normalized.split('').map(ch => escapeRegex(ch));
+  return new RegExp(`^${chars.join('\\s*')}$`, 'i');
 }
 
 function buildPossibleYears(year) {
@@ -135,13 +131,24 @@ async function sendEventPush(event) {
     const normalizedGroups = groups.map(normalizeGroupe).filter(Boolean);
     const hasPromo = normalizedGroups.includes('PROMO');
     const groupList = Array.from(new Set(groups.filter(Boolean)));
+    const regexMap = new Map();
+    for (const g of groupList) {
+      const r = buildGroupRegex(g);
+      if (r) regexMap.set(r.source, r);
+    }
+    const groupRegexes = Array.from(regexMap.values());
     const query = {
       'pushPreferences.enabled': true,
       [`pushPreferences.${prefKey}`]: true,
       year: { $in: possibleYears },
       pushSubscriptions: { $elemMatch: { endpoint: { $exists: true, $ne: '' } } }
     };
-    if (!hasPromo && groupList.length) query.groupe = { $in: groupList };
+    if (!hasPromo && groupList.length) {
+      query.$or = [
+        { groupe: { $in: groupList } },
+        ...groupRegexes.map(r => ({ groupe: r }))
+      ];
+    }
     if (event.specialite) query.specialite = String(event.specialite);
     const users = await User.find(query).select({ pushSubscriptions: 1 });
     if (!users || !users.length) return;
@@ -177,7 +184,75 @@ async function sendEventPush(event) {
   } catch {}
 }
 
-// AJOUT: Helpers pour gérer l'expiration des examens
+async function sendEventUpdatePush(event) {
+  try {
+    if (!webpush || !VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) return;
+    if (!event) return;
+    const prefKey = event.type === 'exam' ? 'exam' : 'homework';
+    const possibleYears = buildPossibleYears(event.year);
+    if (!possibleYears.length) return;
+    const groups = [];
+    if (event.groupe) groups.push(String(event.groupe));
+    if (Array.isArray(event.groupes)) {
+      for (const g of event.groupes) {
+        if (g) groups.push(String(g));
+      }
+    }
+    const normalizedGroups = groups.map(normalizeGroupe).filter(Boolean);
+    const hasPromo = normalizedGroups.includes('PROMO');
+    const groupList = Array.from(new Set(groups.filter(Boolean)));
+    const regexMap = new Map();
+    for (const g of groupList) {
+      const r = buildGroupRegex(g);
+      if (r) regexMap.set(r.source, r);
+    }
+    const groupRegexes = Array.from(regexMap.values());
+    const query = {
+      'pushPreferences.enabled': true,
+      [`pushPreferences.${prefKey}`]: true,
+      year: { $in: possibleYears },
+      pushSubscriptions: { $elemMatch: { endpoint: { $exists: true, $ne: '' } } }
+    };
+    if (!hasPromo && groupList.length) {
+      query.$or = [
+        { groupe: { $in: groupList } },
+        ...groupRegexes.map(r => ({ groupe: r }))
+      ];
+    }
+    if (event.specialite) query.specialite = String(event.specialite);
+    const users = await User.find(query).select({ pushSubscriptions: 1 });
+    if (!users || !users.length) return;
+    const title = '✏️ Modification de la tâche';
+    const taskTitle = String(event.titre || '').trim();
+    const body = taskTitle ? `Modification : ${taskTitle}` : 'Modification de la tâche';
+    const payload = JSON.stringify({
+      title,
+      body,
+      icon: '/planifyFichier_134x.webp?v=2',
+      badge: '/planifyFichier_134x.webp?v=2',
+      data: { url: '/devoirs' }
+    });
+    for (const user of users) {
+      const subs = Array.isArray(user.pushSubscriptions) ? user.pushSubscriptions : [];
+      if (!subs.length) continue;
+      const invalid = new Set();
+      for (const sub of subs) {
+        try {
+          await webpush.sendNotification(sub, payload);
+        } catch (e) {
+          const code = e && e.statusCode;
+          if (code === 404 || code === 410) invalid.add(String(sub.endpoint || ''));
+        }
+      }
+      if (invalid.size) {
+        user.pushSubscriptions = subs.filter(s => !invalid.has(String(s.endpoint || '')));
+        await user.save();
+      }
+    }
+  } catch {}
+}
+
+// Helpers pour gérer l'expiration des examens
 function parseTargetDate(ev) {
   const [h, m] = (ev.heure || '').split(':');
   const target = new Date(ev.date);
@@ -200,22 +275,31 @@ async function cleanupExpiredExams() {
   }
 }
 
+// Lister les pièces jointes d'un événement
+router.get('/:id/attachments', verifyToken, async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.id).select('attachments');
+    if (!event) return res.status(404).json({ message: 'Événement non trouvé' });
+    return res.json(event.attachments || []);
+  } catch (e) {
+    console.error('GET attachments error:', e);
+    return res.status(500).json({ message: 'Erreur serveur lors de la récupération des pièces jointes' });
+  }
+});
+
 // Récupérer tous les événements avec filtrage
 router.get('/', verifyToken, async (req, res) => {
   try {
-    // AJOUT: supprimer automatiquement les examens expirés avant de renvoyer la liste
     await cleanupExpiredExams();
 
     const { id: userId, role, year, groupe, specialite } = req.user;
     console.log(`=== RÉCUPÉRATION ÉVÉNEMENTS ===`);
     console.log(`Utilisateur: ${req.user.username}, Rôle: ${role}, Année: ${year}, Groupe: ${groupe}`);
-    // fs.appendFileSync('debug.log', `User: ${req.user.username}, Role: ${role}, Year: ${year}, Groupe: ${groupe}\n`);
     const normalizedYear = normalizeYear(year);
     const normalizedGroupe = (groupe || '').toUpperCase();
 
     let query = {};
     if (role !== 'admin' && role !== 'prof') {
-      // Logique pour les étudiants et délégués (pas les profs ni les admins)
       const possibleYears = [normalizedYear];
       if (normalizedYear === '1') possibleYears.push('BUT1', 'BUT 1', 1);
       if (normalizedYear === '2') possibleYears.push('BUT2', 'BUT 2', 2);
@@ -231,17 +315,14 @@ router.get('/', verifyToken, async (req, res) => {
               { groupes: { $in: [groupe, 'Promo'] } }
             ]
           },
-          // Filtrage par spécialité: si l'utilisateur a une spécialité, accepter événements sans spécialité ou même spécialité
           ...(specialite ? [{ $or: [ { specialite: { $in: [null, ''] } }, { specialite } ] }] : [])
         ]
       };
     }
 
-    // Filtrage matière via règles statiques (si l'événement correspond à une matière statique connue)
     try {
       const rules = await StaticSubjectRule.find({}).lean();
       const rulesByName = new Map(rules.map(r => [String(r.subjectName).toLowerCase(), r]));
-      // Charger aussi les matières dynamiques pour appliquer leurs règles (années / groupes / spécialités)
       const subjects = await Subject.find({}).lean();
       const dynByName = new Map(subjects.map(s => [String(s.name).toLowerCase(), s]));
 
@@ -258,17 +339,13 @@ router.get('/', verifyToken, async (req, res) => {
         const dyn = dynByName.get(matiereKey);
         const rule = rulesByName.get(matiereKey);
 
-        // Helper pour évaluer une règle (statique ou dynamique)
         function passesRule(r) {
           if (!r) return true;
-          // Années
           const years = Array.isArray(r.yearsAllowed) ? r.yearsAllowed : [];
           if (years.length && !years.includes(year)) return false;
-          // Groupes
           const allowedGroups = Array.isArray(r.groupsAllowed) ? r.groupsAllowed : [];
           const gNorm = (groupe || '').toString();
           if (allowedGroups.length && !(allowedGroups.includes('Promo') || allowedGroups.includes(gNorm))) return false;
-          // Spécialités
           const specs = Array.isArray(r.specialitesAllowed) ? r.specialitesAllowed : [];
           if (specs.length) {
             if (!specialite) return false;
@@ -277,8 +354,7 @@ router.get('/', verifyToken, async (req, res) => {
           return true;
         }
 
-        // Appliquer la règle dynamique si elle existe, sinon la statique; si les deux existent, exiger les deux
-        if (role === 'admin' || role === 'prof') return true; // prof/admin voient tout
+        if (role === 'admin' || role === 'prof') return true;
         const dynOk = passesRule(dyn);
         const statOk = passesRule(rule);
         return dynOk && statOk;
@@ -292,14 +368,10 @@ router.get('/', verifyToken, async (req, res) => {
     } catch (e) {
       // En cas d'erreur règles, fallback au comportement précédent
     }
-    // Pour les profs et admins : pas de filtre (voient tous les événements)
+
     if (role === 'prof' || role === 'admin') {
       console.log(`${role === 'prof' ? 'Professeur' : 'Admin'} - Affichage de tous les événements`);
-      // fs.appendFileSync('debug.log', `${role === 'prof' ? 'Professeur' : 'Admin'} - Affichage de tous les événements\n`);
     }
-    // fs.appendFileSync('debug.log', 'Query utilisée: ' + JSON.stringify(query) + '\n');
-    // Exclure les événements "supprimés" individuellement par cet utilisateur
-    // Si on arrive ici, on renvoie sans filtre statique (sécurité)
     const events = await Event.find({
       ...(role === 'admin' || role === 'prof' ? {} : query),
       $or: [
@@ -333,18 +405,16 @@ router.get('/all', verifyToken, requireRole(['admin', 'prof']), async (req, res)
 // Ajouter un événement
 router.post('/', verifyToken, requireRole(['admin', 'prof', 'delegue']), async (req, res) => {
   const payload = { ...req.body };
-  // Nettoyage des champs facultatifs
   if (payload.specialite === undefined) payload.specialite = '';
   if (typeof payload.description === 'string') {
     payload.description = sanitizeHtml(payload.description);
   }
 
-  // Assurer la présence de `groupe` (champ requis du schéma) à partir de `groupes`
   if (!payload.groupe) {
     if (Array.isArray(payload.groupes) && payload.groupes.length > 0) {
       payload.groupe = payload.groupes.includes('Promo') ? 'Promo' : payload.groupes[0];
     } else {
-      payload.groupe = 'Promo'; // valeur par défaut sûre
+      payload.groupe = 'Promo';
     }
   }
 
@@ -418,19 +488,43 @@ router.delete('/:id/hard', verifyToken, requireRole(['admin']), async (req, res)
 // Modifier un événement
 router.put('/:id', verifyToken, requireRole(['admin', 'prof']), async (req, res) => {
   const payload = { ...req.body };
-  // Ne pas écraser la spécialité si non envoyée
   if (Object.prototype.hasOwnProperty.call(payload, 'specialite')) {
     payload.specialite = String(payload.specialite || '');
   }
   if (Object.prototype.hasOwnProperty.call(payload, 'description') && typeof payload.description === 'string') {
     payload.description = sanitizeHtml(payload.description);
   }
+
+  const before = await Event.findById(req.params.id).lean();
   const event = await Event.findByIdAndUpdate(
     req.params.id,
     { $set: payload },
     { new: true }
   );
+
   res.json(event);
+
+  try {
+    const b = before || {};
+    const a = event || {};
+    const norm = (v) => (v == null ? '' : String(v));
+    const normArr = (arr) => Array.from(new Set((Array.isArray(arr) ? arr : []).map(String))).sort();
+    const changed = (
+      norm(b.titre) !== norm(a.titre) ||
+      norm(b.matiere) !== norm(a.matiere) ||
+      norm(b.date) !== norm(a.date) ||
+      norm(b.heure) !== norm(a.heure) ||
+      norm(b.description) !== norm(a.description) ||
+      norm(b.type) !== norm(a.type) ||
+      norm(b.groupe) !== norm(a.groupe) ||
+      JSON.stringify(normArr(b.groupes)) !== JSON.stringify(normArr(a.groupes)) ||
+      norm(b.year) !== norm(a.year) ||
+      norm(b.specialite) !== norm(a.specialite)
+    );
+    if (changed) {
+      setImmediate(() => { sendEventUpdatePush(a).catch(() => {}); });
+    }
+  } catch {}
 });
 
 // Archiver un événement
@@ -448,68 +542,63 @@ router.post('/:id/unarchive', verifyToken, async (req, res) => {
 // Valider (cocher) un événement
 router.post('/:id/check', verifyToken, async (req, res) => {
   try {
-    // Récupérer l'événement pour vérifier s'il est en retard
     const event = await Event.findById(req.params.id);
     if (!event) {
       return res.status(404).json({ success: false, message: 'Événement non trouvé' });
     }
 
-    // AJOUT: interdiction de valider les examens
     if (event.type === 'exam') {
       return res.status(403).json({ success: false, message: 'Les examens ne peuvent pas être validés.' });
     }
 
-    // Vérifier si la tâche est en retard
     const [h, m] = (event.heure || '').split(':');
     const target = new Date(event.date);
     target.setHours(Number(h), Number(m || 0), 0, 0);
     const now = new Date();
     const isLate = now > target;
 
-    // Mise à jour atomique — n'ajouter que si l'utilisateur n'est pas déjà
     const updateRes = await Event.updateOne(
       { _id: req.params.id, checkedBy: { $ne: req.user.id } },
       { $addToSet: { checkedBy: req.user.id } }
     );
 
-    // Incrémenter uniquement si on vient d'ajouter l'utilisateur et que la tâche n'est PAS en retard
     if (updateRes.modifiedCount > 0 && !isLate) {
       const User = require('../models/User');
-      const u = await User.findById(req.user.id)
+      const u = await User.findById(req.user.id);
       if (u) {
-        u.completedTasks = (u.completedTasks || 0) + 1
-        let isOfficial = false
+        u.completedTasks = (u.completedTasks || 0) + 1;
+        let isOfficial = false;
         try {
           if (event && event.createdBy) {
-            const creator = await User.findById(event.createdBy)
-            isOfficial = !!creator && String(creator.role || '') === 'delegue'
+            const creator = await User.findById(event.createdBy);
+            isOfficial = !!creator && String(creator.role || '') === 'delegue';
           }
         } catch {}
         if (isOfficial) {
-          u.repeatable = u.repeatable || {}
+          u.repeatable = u.repeatable || {};
           function incAndAward(key, threshold, amount) {
-            u.repeatable[key] = Math.max(0, Number(u.repeatable[key] || 0)) + 1
+            u.repeatable[key] = Math.max(0, Number(u.repeatable[key] || 0)) + 1;
             if (u.repeatable[key] >= threshold) {
-              u.repeatable[key] -= threshold
-              u.coins = (u.coins || 0) + amount
-              u.achievements = u.achievements || {}; u.achievements.repeatCompleted = Math.max(0, Number(u.achievements.repeatCompleted||0)) + 1
+              u.repeatable[key] -= threshold;
+              u.coins = (u.coins || 0) + amount;
+              u.achievements = u.achievements || {};
+              u.achievements.repeatCompleted = Math.max(0, Number(u.achievements.repeatCompleted || 0)) + 1;
             }
           }
-          incAndAward('tasks10', 10, 50)
-          incAndAward('tasks25', 25, 120)
-          incAndAward('tasks50', 50, 300)
+          incAndAward('tasks10', 10, 50);
+          incAndAward('tasks25', 25, 120);
+          incAndAward('tasks50', 50, 300);
         }
-        // Succès: tâches validées (global)
         function award(id) {
-          u.achievementsCompleted = Array.isArray(u.achievementsCompleted) ? u.achievementsCompleted : []
-          if (!u.achievementsCompleted.includes(id)) u.achievementsCompleted.push(id)
+          u.achievementsCompleted = Array.isArray(u.achievementsCompleted) ? u.achievementsCompleted : [];
+          if (!u.achievementsCompleted.includes(id)) u.achievementsCompleted.push(id);
         }
-        const t = Math.max(0, Number(u.completedTasks||0))
-        if (t === 10) award('tasks-validate-10')
-        if (t === 50) award('tasks-validate-50')
-        if (t === 100) award('tasks-validate-100')
-        if (t === 250) award('tasks-validate-250')
-        await u.save()
+        const t = Math.max(0, Number(u.completedTasks || 0));
+        if (t === 10) award('tasks-validate-10');
+        if (t === 50) award('tasks-validate-50');
+        if (t === 100) award('tasks-validate-100');
+        if (t === 250) award('tasks-validate-250');
+        await u.save();
       }
     }
 
@@ -523,31 +612,26 @@ router.post('/:id/check', verifyToken, async (req, res) => {
 // Dévalider (décocher) un événement
 router.post('/:id/uncheck', verifyToken, async (req, res) => {
   try {
-    // Récupérer l'événement pour vérifier s'il était en retard
     const event = await Event.findById(req.params.id);
     if (!event) {
       return res.status(404).json({ success: false, message: 'Événement non trouvé' });
     }
 
-    // Cohérence: interdiction aussi pour les examens
     if (event.type === 'exam') {
       return res.status(403).json({ success: false, message: 'Les examens ne peuvent pas être (dé)validés.' });
     }
 
-    // Vérifier si la tâche était en retard au moment de la validation
     const [h, m] = (event.heure || '').split(':');
     const target = new Date(event.date);
     target.setHours(Number(h), Number(m || 0), 0, 0);
     const now = new Date();
     const isLate = now > target;
 
-    // AJOUT: mise à jour atomique — ne retire que si l'utilisateur est bien présent
     const updateRes = await Event.updateOne(
       { _id: req.params.id, checkedBy: req.user.id },
       { $pull: { checkedBy: req.user.id } }
     );
 
-    // Décrémenter uniquement si on vient effectivement de retirer l'utilisateur et que ce n'était pas en retard
     if (updateRes.modifiedCount > 0 && !isLate) {
       const User = require('../models/User');
       await User.findByIdAndUpdate(req.user.id, { $inc: { completedTasks: -1 } });
@@ -560,7 +644,6 @@ router.post('/:id/uncheck', verifyToken, async (req, res) => {
   }
 });
 
-module.exports = router;
 // Uploader des PDF/DOCX pour un événement
 router.post('/:id/attachments', verifyToken, requireRole(['admin', 'prof', 'delegue']), uploadEvents.array('files', 10), async (req, res) => {
   try {
@@ -587,11 +670,11 @@ router.post('/:id/attachments', verifyToken, requireRole(['admin', 'prof', 'dele
     return res.json({ success: true, attachments });
   } catch (e) {
     console.error('POST attachments error:', e);
-    return res.status(500).json({ message: 'Erreur serveur lors de l’upload des pièces jointes' });
+    return res.status(500).json({ message: "Erreur serveur lors de l'upload des pièces jointes" });
   }
 });
 
-// Supprimer une pièce jointe d’un événement
+// Supprimer une pièce jointe d'un événement
 router.delete('/:id/attachments/:filename', verifyToken, requireRole(['admin', 'prof', 'delegue']), async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
@@ -602,17 +685,14 @@ router.delete('/:id/attachments/:filename', verifyToken, requireRole(['admin', '
     const att = prev.find(a => a.filename === filename);
     if (!att) return res.status(404).json({ message: 'Pièce jointe non trouvée' });
 
-    // Retirer du tableau
     event.attachments = prev.filter(a => a.filename !== filename);
 
-    // Ajuster archLink si nécessaire
     if (event.archLink && (event.archLink.endsWith(`/${filename}`) || event.archLink === att.url)) {
       event.archLink = (event.attachments[0]?.url) || '';
     }
 
     await event.save();
 
-    // Supprimer le fichier sur disque (silencieux)
     try {
       const filePath = path.join(eventsUploadDir, filename);
       const resolved = path.resolve(filePath);
@@ -642,12 +722,10 @@ router.get('/:id/attachments/:filename/download', async (req, res) => {
 
     const filePath = path.join(eventsUploadDir, filename);
     const resolved = path.resolve(filePath);
-    // Sécurité: s'assurer qu'on reste dans /uploads/events
     if (!resolved.startsWith(path.resolve(eventsUploadDir))) {
       return res.status(400).json({ message: 'Chemin invalide' });
     }
 
-    // Envoi du fichier avec nom d'origine
     return res.download(resolved, att?.originalname || filename);
   } catch (e) {
     console.error('DOWNLOAD attachment error:', e);
@@ -675,7 +753,6 @@ const uploadSubmissions = multer({
   storage: storageSubmissions,
   limits: { fileSize: 25 * 1024 * 1024, files: 10 },
   fileFilter: (req, file, cb) => {
-    // Autoriser PDF/DOC/DOCX + archives ZIP/RAR
     const ext = path.extname(file.originalname).toLowerCase();
     const okExt = ['.pdf', '.doc', '.docx', '.zip', '.rar'].includes(ext);
     const okMime = [
@@ -686,7 +763,6 @@ const uploadSubmissions = multer({
       'application/x-zip-compressed',
       'application/x-rar-compressed',
       'application/x-rar',
-      // certains navigateurs envoient application/octet-stream pour .rar/.zip
       'application/octet-stream',
     ].includes(file.mimetype);
     cb(null, okExt || okMime);
@@ -697,8 +773,7 @@ const uploadSubmissions = multer({
 router.post('/:id/submissions', verifyToken, uploadSubmissions.array('files', 10), async (req, res) => {
   try {
     const eventId = req.params.id;
-    const userId = req.user.id; // pris depuis verifyToken
-    const Event = require('../models/Event');
+    const userId = req.user.id;
     const ev = await Event.findById(eventId);
     if (!ev) return res.status(404).json({ error: 'Event not found' });
     if (!ev.submissionEnabled) return res.status(400).json({ error: 'Submissions disabled' });
@@ -718,10 +793,9 @@ router.post('/:id/submissions', verifyToken, uploadSubmissions.array('files', 10
     } else {
       const prevSubmittedAt = ev.submissions[existingIndex]?.submittedAt || now;
       const already = Array.isArray(ev.submissions[existingIndex].files) ? ev.submissions[existingIndex].files : [];
-      // Figer l'heure d'origine sur les anciens fichiers (si manquante)
       already.forEach(f => { if (!f.createdAt) f.createdAt = prevSubmittedAt; });
       ev.submissions[existingIndex].files = [...already, ...files];
-      ev.submissions[existingIndex].submittedAt = now; // met à jour le “Dernier dépôt”
+      ev.submissions[existingIndex].submittedAt = now;
     }
 
     await ev.save();
@@ -735,10 +809,6 @@ router.post('/:id/submissions', verifyToken, uploadSubmissions.array('files', 10
 // Lister soumissions (prof/admin)
 router.get('/:id/submissions', verifyToken, requireRole(['prof', 'admin']), async (req, res) => {
   try {
-    const Event = require('../models/Event');
-    const User = require('../models/User');
-    const mongoose = require('mongoose');
-
     const ev = await Event.findById(req.params.id).lean();
     if (!ev) return res.status(404).json({ error: 'Event not found' });
 
@@ -753,10 +823,8 @@ router.get('/:id/submissions', verifyToken, requireRole(['prof', 'admin']), asyn
     const users = await User.find({ _id: { $in: ids } }, { username: 1, name: 1 }).lean();
     const validIds = new Set(users.map(u => String(u._id)));
 
-    // Supprimer les soumissions dont l'utilisateur n'existe plus (orphelines)
     const orphanSubs = submissions.filter(s => !validIds.has(String(s.user)));
     if (orphanSubs.length > 0) {
-      // Supprimer les fichiers du disque
       orphanSubs.forEach(s => {
         (s.files || []).forEach(f => {
           try {
@@ -765,7 +833,6 @@ router.get('/:id/submissions', verifyToken, requireRole(['prof', 'admin']), asyn
           } catch {}
         });
       });
-      // Nettoyer l'événement en base
       const evDoc = await Event.findById(req.params.id);
       if (evDoc) {
         evDoc.submissions = (evDoc.submissions || []).filter(s => validIds.has(String(s.user)));
@@ -773,7 +840,6 @@ router.get('/:id/submissions', verifyToken, requireRole(['prof', 'admin']), asyn
       }
     }
 
-    // Créer la réponse sans soumissions orphelines
     const usersMap = {};
     users.forEach(u => { usersMap[String(u._id)] = u.name || u.username || '—'; });
 
@@ -805,18 +871,15 @@ router.get('/:id/submissions/zip', verifyToken, requireRole(['prof', 'admin']), 
     if (!ev) return res.status(404).json({ error: 'Event not found' });
 
     const archive = archiver('zip', { zlib: { level: 9 } });
-    // Retirer extension existante du titre et le normaliser
     const rawTitle = String(ev.titre || ev.matiere || `event_${ev._id}`);
     const noExtTitle = rawTitle.replace(/\.[a-z0-9]{1,8}$/i, '');
     const safeTitle = noExtTitle.replace(/[^a-zA-Z0-9._-]+/g, '_').replace(/^_+|_+$/g, '');
     const dlName = `${safeTitle || `event_${ev._id}`}.zip`;
-    
+
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Content-Disposition', `attachment; filename="${dlName}"; filename*=UTF-8''${encodeURIComponent(dlName)}`);
 
-    // Résoudre le nom des élèves pour les dossiers
-    const User = require('../models/User');
     const ids = [...new Set((ev.submissions || []).map(s => s.user).filter(Boolean))];
     const users = await User.find({ _id: { $in: ids } }, { username: 1, name: 1 }).lean();
     const nameById = new Map(users.map(u => [
@@ -892,42 +955,7 @@ router.post('/:id/comments', verifyToken, async (req, res) => {
     return res.json({ success: true });
   } catch (e) {
     console.error('POST comment error:', e);
-    return res.status(500).json({ message: 'Erreur serveur lors de l’ajout du commentaire' });
-  }
-});
-
-// Commentaires: liste
-router.get('/:id/comments', verifyToken, async (req, res) => {
-  try {
-    const event = await Event.findById(req.params.id).populate('comments.user', 'username');
-    if (!event) return res.status(404).json({ message: 'Événement non trouvé' });
-    const list = (event.comments || []).map(c => ({
-      _id: c._id,
-      text: c.text,
-      createdAt: c.createdAt,
-      userId: c.user?._id || c.user,
-      username: c.user?.username || null
-    }));
-    return res.json({ comments: list });
-  } catch (e) {
-    console.error('GET comments error:', e);
-    return res.status(500).json({ message: 'Erreur serveur lors de la récupération des commentaires' });
-  }
-});
-
-// Commentaires: ajouter
-router.post('/:id/comments', verifyToken, async (req, res) => {
-  try {
-    const event = await Event.findById(req.params.id);
-    if (!event) return res.status(404).json({ message: 'Événement non trouvé' });
-    const text = String(req.body.text || '').trim();
-    if (!text) return res.status(400).json({ message: 'Message vide' });
-    event.comments = [...(event.comments || []), { user: req.user.id, text, createdAt: new Date() }];
-    await event.save();
-    return res.json({ success: true });
-  } catch (e) {
-    console.error('POST comment error:', e);
-    return res.status(500).json({ message: 'Erreur serveur lors de l’ajout du commentaire' });
+    return res.status(500).json({ message: "Erreur serveur lors de l'ajout du commentaire" });
   }
 });
 
@@ -957,7 +985,6 @@ router.delete('/:id/my-submission/:filename', verifyToken, async (req, res) => {
     const fileIdx = files.findIndex(f => f.filename === filename);
     if (fileIdx === -1) return res.status(404).json({ message: 'Fichier non trouvé' });
 
-    // Suppression physique
     const filePath = path.join(submissionsUploadDir, filename);
     try {
       const resolved = path.resolve(filePath);
@@ -968,7 +995,6 @@ router.delete('/:id/my-submission/:filename', verifyToken, async (req, res) => {
       console.warn('unlink submission file failed:', e?.message || e);
     }
 
-    // Retirer des métadonnées
     files.splice(fileIdx, 1);
     if (!files.length) {
       ev.submissions.splice(idx, 1);
@@ -983,7 +1009,7 @@ router.delete('/:id/my-submission/:filename', verifyToken, async (req, res) => {
   }
 });
 
-// Téléchargement individuel d’un fichier de soumission (propriétaire ou prof/admin)
+// Téléchargement individuel d'un fichier de soumission (propriétaire ou prof/admin)
 router.get('/:id/submissions/:filename/download', verifyToken, async (req, res) => {
   try {
     const ev = await Event.findById(req.params.id);
@@ -1009,3 +1035,5 @@ router.get('/:id/submissions/:filename/download', verifyToken, async (req, res) 
     return res.status(500).json({ message: 'Erreur serveur' });
   }
 });
+
+module.exports = router;

@@ -21,6 +21,12 @@ const Event = require('../models/Event');
 const EventProposal = require('../models/EventProposal');
 const User = require('../models/User');
 
+let webpush;
+try { webpush = require('web-push'); } catch {}
+const VAPID_PUBLIC_KEY = process.env.PUBLIC_KEY || process.env.VAPID_PUBLIC_KEY || '';
+const VAPID_PRIVATE_KEY = process.env.PRIVATE_KEY || process.env.VAPID_PRIVATE_KEY || '';
+try { if (webpush && VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) { webpush.setVapidDetails('mailto:admin@planifymmi.fr', VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY); } } catch {}
+
 const proposalsPerDayLimit = 5;
 const pendingPerUserLimit = 3;
 
@@ -40,6 +46,149 @@ function possibleYearsFromUserYear(userYear) {
   if (normalizedYear === '2') possibleYears.push('BUT2', 'BUT 2', 2);
   if (normalizedYear === '3') possibleYears.push('BUT3', 'BUT 3', 3);
   return possibleYears;
+}
+
+function normalizeGroupe(groupe) {
+  if (!groupe) return '';
+  return String(groupe).replace(/\s+/g, '').toUpperCase();
+}
+
+function buildPossibleYears(year) {
+  const normalized = normalizeYear(String(year || ''));
+  const list = [];
+  if (normalized) list.push(normalized);
+  if (normalized === '1') list.push('BUT1', 'BUT 1', 1);
+  if (normalized === '2') list.push('BUT2', 'BUT 2', 2);
+  if (normalized === '3') list.push('BUT3', 'BUT 3', 3);
+  return Array.from(new Set(list));
+}
+
+async function sendEventPush(event) {
+  try {
+    if (!webpush || !VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) return 0;
+    if (!event) return 0;
+    const prefKey = event.type === 'exam' ? 'exam' : 'homework';
+    const possibleYears = buildPossibleYears(event.year);
+    if (!possibleYears.length) return 0;
+    const groups = [];
+    if (event.groupe) groups.push(String(event.groupe));
+    if (Array.isArray(event.groupes)) {
+      for (const g of event.groupes) {
+        if (g) groups.push(String(g));
+      }
+    }
+    const normalizedGroups = groups.map(normalizeGroupe).filter(Boolean);
+    const hasPromo = normalizedGroups.includes('PROMO');
+    const groupList = Array.from(new Set(groups.filter(Boolean)));
+    const query = {
+      'pushPreferences.enabled': true,
+      [`pushPreferences.${prefKey}`]: true,
+      year: { $in: possibleYears },
+      pushSubscriptions: { $elemMatch: { endpoint: { $exists: true, $ne: '' } } }
+    };
+    if (!hasPromo && groupList.length) query.groupe = { $in: groupList };
+    if (event.specialite) query.specialite = String(event.specialite);
+    const users = await User.find(query).select({ pushSubscriptions: 1 });
+    if (!users || !users.length) return 0;
+    const title = event.type === 'exam' ? '📝 Nouvel examen' : '📘 Nouveau devoir';
+    const parts = [];
+    if (event.matiere) parts.push(String(event.matiere));
+    if (event.titre) parts.push(String(event.titre));
+    const body = parts.join(' • ') || 'Nouvel événement';
+    const payload = JSON.stringify({
+      title,
+      body,
+      icon: '/planifyFichier_134x.webp?v=2',
+      badge: '/planifyFichier_134x.webp?v=2',
+      data: { url: '/devoirs' }
+    });
+    let sent = 0;
+    for (const user of users) {
+      const subs = Array.isArray(user.pushSubscriptions) ? user.pushSubscriptions : [];
+      if (!subs.length) continue;
+      const invalid = new Set();
+      for (const sub of subs) {
+        try {
+          await webpush.sendNotification(sub, payload);
+          sent++;
+        } catch (e) {
+          const code = e && e.statusCode;
+          if (code === 404 || code === 410) invalid.add(String(sub.endpoint || ''));
+        }
+      }
+      if (invalid.size) {
+        user.pushSubscriptions = subs.filter(s => !invalid.has(String(s.endpoint || '')));
+        await user.save();
+      }
+    }
+    return sent;
+  } catch {
+    return 0;
+  }
+}
+
+async function sendProposalPush(proposal) {
+  try {
+    if (!webpush || !VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) return 0;
+    if (!proposal) return 0;
+    const prefKey = proposal.type === 'exam' ? 'exam' : 'homework';
+    const possibleYears = buildPossibleYears(proposal.year);
+    if (!possibleYears.length) return 0;
+    const groups = [];
+    if (proposal.groupe) groups.push(String(proposal.groupe));
+    if (Array.isArray(proposal.groupes)) {
+      for (const g of proposal.groupes) {
+        if (g) groups.push(String(g));
+      }
+    }
+    const normalizedGroups = groups.map(normalizeGroupe).filter(Boolean);
+    const hasPromo = normalizedGroups.includes('PROMO');
+    const groupList = Array.from(new Set(groups.filter(Boolean)));
+    const query = {
+      'pushPreferences.enabled': true,
+      [`pushPreferences.${prefKey}`]: true,
+      year: { $in: possibleYears },
+      pushSubscriptions: { $elemMatch: { endpoint: { $exists: true, $ne: '' } } }
+    };
+    if (!hasPromo && groupList.length) query.groupe = { $in: groupList };
+    if (proposal.specialite) query.specialite = String(proposal.specialite);
+    const users = await User.find(query).select({ pushSubscriptions: 1 });
+    if (!users || !users.length) return 0;
+    const title = proposal.type === 'exam' ? '📝 Proposition d’examen' : '📥 Proposition de devoir';
+    const parts = [];
+    if (proposal.matiere) parts.push(String(proposal.matiere));
+    if (proposal.titre) parts.push(String(proposal.titre));
+    const body = parts.join(' • ') || 'Nouvelle proposition';
+    const payload = JSON.stringify({
+      title,
+      body,
+      icon: '/planifyFichier_134x.webp?v=2',
+      badge: '/planifyFichier_134x.webp?v=2',
+      data: { url: '/devoirs' }
+    });
+    let sent = 0;
+    for (const user of users) {
+      const subs = Array.isArray(user.pushSubscriptions) ? user.pushSubscriptions : [];
+      if (!subs.length) continue;
+      const invalid = new Set();
+      for (const sub of subs) {
+        try {
+          await webpush.sendNotification(sub, payload);
+          sent++;
+        } catch (e) {
+          const code = e && e.statusCode;
+          if (code === 404 || code === 410) invalid.add(String(sub.endpoint || ''));
+        }
+      }
+      if (invalid.size) {
+        user.pushSubscriptions = subs.filter(s => !invalid.has(String(s.endpoint || '')));
+        await user.save();
+      }
+    }
+    return sent;
+  } catch {
+    return 0;
+  }
 }
 
 function canAccessProposal(user, prop) {
@@ -136,6 +285,7 @@ router.post('/proposals', verifyToken, async (req, res) => {
         await u.save()
       }
     } catch {}
+    try { setImmediate(() => { sendProposalPush(doc).catch(() => {}); }); } catch {}
     res.json({ success: true, proposal: doc });
   } catch (e) {
     res.status(500).json({ success: false, message: 'Erreur création proposition', error: String(e) });
@@ -226,6 +376,8 @@ router.post('/proposals/:id/validate', verifyToken, requireRole(['delegue','prof
     prop.reviewedAt = new Date();
     await prop.save();
 
+    try { setImmediate(() => { sendEventPush(ev).catch(() => {}); }); } catch {}
+
     try {
       if (ev && ev.type !== 'exam') {
         const [h, m] = (ev.heure || '').split(':');
@@ -282,7 +434,6 @@ router.post('/proposals/:id/validate', verifyToken, requireRole(['delegue','prof
     res.status(500).json({ success: false, message: 'Erreur validation proposition', error: String(e) });
   }
 });
-/* bloc de validation supprimé — propositions désactivées */
 
 router.post('/proposals/:id/reject', verifyToken, requireRole(['delegue', 'prof', 'admin']), async (req, res) => {
   try {
