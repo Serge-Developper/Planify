@@ -6217,7 +6217,7 @@ top: 2px;
 .equipped-absolute-cinema-overlay {
   position: absolute;
   top: -10px;
-  left: -16px;
+  left: -17px;
   width: 30%;
   height: 100%;
   object-fit: cover;
@@ -6611,15 +6611,10 @@ top: 2px;
   position: relative;
   width: 100%;
   height: 100%;
+  line-height: 0;
 }
-.account-btn.has-equipped-item .avatar-image-container-mobile .avatar-img {
-  border-radius: 12px;
-}
-.account-btn.galaxie-equipped .avatar-image-container-mobile .avatar-img,
-.account-btn.coeur-equipped .avatar-image-container-mobile .avatar-img,
-.account-btn.alpha-equipped .avatar-image-container-mobile .avatar-img,
-.account-btn.planify-equipped .avatar-image-container-mobile .avatar-img {
-  border-radius: 12px;
+.avatar-image-container-mobile .avatar-img {
+  display: block;
 }
 .avatar-image-container-mobile.jojo-sepia .avatar-img { animation: jojo-sepia-cycle 4.7s steps(1, end) infinite; }
 

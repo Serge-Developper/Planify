@@ -4931,6 +4931,8 @@ function resolveAssetSrc(path) {
 
 const isMobile = ref(false)
 const profilePopupLargeAvatarIsMobile = ref(false)
+const profilePopupLeaderboardIsMobile = ref(false)
+const profilePopupLeaderboardIsPc = ref(false)
 function updateProfilePopupLargeAvatarIsMobile() {
   try {
     if (window && typeof window.matchMedia === 'function') {
@@ -4944,6 +4946,22 @@ function updateProfilePopupLargeAvatarIsMobile() {
   } catch {}
   profilePopupLargeAvatarIsMobile.value = false
 }
+function updateProfilePopupLeaderboardBreakpoints() {
+  try {
+    if (window && typeof window.matchMedia === 'function') {
+      profilePopupLeaderboardIsMobile.value = window.matchMedia('(max-width: 480px)').matches
+      profilePopupLeaderboardIsPc.value = window.matchMedia('(min-width: 481px) and (max-width: 768px)').matches
+      return
+    }
+    if (window && typeof window.innerWidth === 'number') {
+      profilePopupLeaderboardIsMobile.value = window.innerWidth <= 480
+      profilePopupLeaderboardIsPc.value = window.innerWidth >= 481 && window.innerWidth <= 768
+      return
+    }
+  } catch {}
+  profilePopupLeaderboardIsMobile.value = false
+  profilePopupLeaderboardIsPc.value = false
+}
 function updateIsMobile() {
   try {
     if (window && typeof window.matchMedia === 'function') {
@@ -4955,10 +4973,17 @@ function updateIsMobile() {
     isMobile.value = false
   }
   updateProfilePopupLargeAvatarIsMobile()
+  updateProfilePopupLeaderboardBreakpoints()
 }
 
 function isProfilePopupLargeAvatarMobile() {
   return !!profilePopupLargeAvatarIsMobile.value
+}
+function isProfilePopupLeaderboardMobile() {
+  return !!profilePopupLeaderboardIsMobile.value
+}
+function isProfilePopupLeaderboardPc() {
+  return !!profilePopupLeaderboardIsPc.value
 }
 function shouldForceLeaderboardProfilePopupDesktop() {
   return !!showUserProfile.value
@@ -5084,36 +5109,29 @@ function getDynLeaderboardAssetClass(asset) {
 // AJOUT: Helpers Profil Pop-up (onglet leaderboard)
 function getEffectiveProfilePopupTarget(item, asset) {
   try {
-    // Priorité: cible explicite (asset > item)
     const explicit = asset && asset.meta && asset.meta.profilePopupTarget
     if (explicit) return String(explicit)
     const itemLevel = item && item.meta && item.meta.profilePopupTarget
     if (itemLevel) return String(itemLevel)
-
-    const ps = asset?.profilePopupStyle
+    const popupMobile = isProfilePopupLeaderboardMobile()
+    const popupPc = !popupMobile && isProfilePopupLeaderboardPc()
+    const ps = popupMobile
+      ? (asset?.profilePopupStyleMobile || asset?.profilePopupStylePc || asset?.profilePopupStyle)
+      : (popupPc ? (asset?.profilePopupStylePc || asset?.profilePopupStyle || asset?.profilePopupStyleMobile) : (asset?.profilePopupStyle || asset?.profilePopupStylePc || asset?.profilePopupStyleMobile))
     const pt = typeof ps?.top === 'number' ? ps.top : 0
     const pl = typeof ps?.left === 'number' ? ps.left : 0
     const pw = typeof ps?.width === 'number' ? ps.width : 100
     const pr = typeof ps?.rotate === 'number' ? ps.rotate : 0
     const pNonDefault = !(pt === 0 && pl === 0 && pw === 100 && pr === 0)
     if (pNonDefault) return 'profile-avatar-scaler'
-
-    // Heuristique legacy: si largeAvatarStyle non-défaut et aucune cible explicite → scaler
-    const mobile = isProfilePopupLargeAvatarMobile()
-    const s = mobile ? (asset?.largeAvatarStyleMobile || asset?.largeAvatarStyle) : (asset?.largeAvatarStyle)
-    const t = typeof s?.top === 'number' ? s.top : 0
-    const l = typeof s?.left === 'number' ? s.left : 0
-    const w = typeof s?.width === 'number' ? s.width : 100
-    const r = typeof s?.rotate === 'number' ? s.rotate : 0
-    const nonDefault = !(t === 0 && l === 0 && w === 100 && r === 0)
-    if (nonDefault) return 'profile-avatar-scaler'
-
-    // Fallbacks compat
     const nb = (asset && asset.meta && asset.meta.navbarTarget) || (item && item.meta && item.meta.navbarTarget)
     if (nb === 'avatar-image-container') return 'profile-avatar'
     if (nb === 'user-account-wrapper' || nb === 'account-btn') return 'profile-avatar-scaler'
     const legacy = asset && asset.meta && asset.meta.container
     if (legacy === 'user-avatar-container') return 'profile-avatar-scaler'
+    const lb = (asset && asset.meta && asset.meta.leaderboardTarget) || (item && item.meta && item.meta.leaderboardTarget)
+    if (lb === 'leaderboard-avatar') return 'profile-avatar'
+    if (lb === 'leaderboard-avatar-scaler' || lb === 'leaderboard-card') return 'profile-avatar-scaler'
   } catch {}
   return 'profile-avatar'
 }
@@ -5139,42 +5157,25 @@ function getProfilePopupAssetsForTargetPlacement(item, target, placement) {
 }
 
 function getDynProfilePopupAssetStyle(asset, preferProfilePopup = false) {
-  const isDefault = (s) => {
-    if (!s || typeof s !== 'object') return true
-    const t = typeof s.top === 'number' ? s.top : 0
-    const l = typeof s.left === 'number' ? s.left : 0
-    const w = typeof s.width === 'number' ? s.width : 100
-    const r = typeof s.rotate === 'number' ? s.rotate : 0
-    return t === 0 && l === 0 && w === 100 && r === 0
-  }
-
-  // Priorité à largeAvatarStyle si défini (non-défaut), sinon profilePopupStyle
-  const forceDesktop = shouldForceLeaderboardProfilePopupDesktop()
-  const mobile = !forceDesktop && isProfilePopupLargeAvatarMobile()
-  const largeMobile = asset?.largeAvatarStyleMobile
-  const largeDesktop = asset?.largeAvatarStyle
-  const largeStyle = mobile ? largeMobile : largeDesktop
-  const largeIsSet = largeStyle && !isDefault(largeStyle)
-  const useLarge = !preferProfilePopup && (mobile ? !!largeMobile : largeIsSet)
-
-  const s = (asset && (useLarge ? largeStyle : asset.profilePopupStyle)) || asset?.leaderboardStyle || asset?.navbarStyle || asset?.style || {}
-
-  const style = { position: 'absolute', objectFit: s.objectFit || 'contain', zIndex: typeof s.zIndex === 'number' ? s.zIndex : undefined, pointerEvents: 'none' }
-
-  // Positions initiales
-  let top = typeof s.top === 'number' ? s.top : undefined
-  let left = typeof s.left === 'number' ? s.left : undefined
-
-  if (useLarge && asset && asset.meta && asset.meta.profilePopupTarget === 'profile-avatar') { }
-
-  if (typeof top === 'number') style.top = top + 'px'
-  if (typeof left === 'number') style.left = left + 'px'
+  const popupMobile = isProfilePopupLeaderboardMobile()
+  const popupPc = !popupMobile && isProfilePopupLeaderboardPc()
+  const largeMobile = preferProfilePopup ? null : (asset?.largeAvatarStyleMobile || asset?.largeAvatarStyle)
+  const largeDesktop = preferProfilePopup ? null : asset?.largeAvatarStyle
+  const s = popupMobile
+    ? (asset?.profilePopupStyleMobile || asset?.profilePopupStylePc || asset?.profilePopupStyle || largeMobile || asset?.navbarStyleMobile || asset?.navbarStyle || asset?.style || {})
+    : (popupPc ? (asset?.profilePopupStylePc || asset?.profilePopupStyle || asset?.profilePopupStyleMobile || largeDesktop || asset?.navbarStyle || asset?.style || {}) : (asset?.profilePopupStyle || asset?.profilePopupStylePc || asset?.profilePopupStyleMobile || largeDesktop || asset?.navbarStyle || asset?.style || {}))
+  const placement = asset?.meta?.profilePopupPlacement ?? asset?.meta?.navbarPlacement
+  const style = { position: 'absolute', objectFit: s.objectFit || 'contain', pointerEvents: 'none' }
+  if (typeof s.top === 'number') style.top = s.top + 'px'
+  if (typeof s.left === 'number') style.left = s.left + 'px'
   if (typeof s.width === 'number') style.width = s.width + 'px'
   if (typeof s.height === 'number') style.height = s.height + 'px'
   if (typeof s.rotate === 'number') style.transform = `rotate(${s.rotate}deg)`
-  {
-    const placement = asset && asset.meta && (asset.meta.profilePopupPlacement ?? asset.meta.navbarPlacement)
-    style.zIndex = Math.max(Number(style.zIndex || 0), placement === 'above' ? 18 : 1)
+  if (placement === 'above') {
+    const baseZ = (typeof s.zIndex === 'number') ? s.zIndex : 0
+    style.zIndex = Math.max(baseZ, 100)
+  } else {
+    style.zIndex = (typeof s.zIndex === 'number') ? s.zIndex : 1
   }
   return style
 }
@@ -5209,7 +5210,7 @@ function getProfilePopupStageInlineStyle(user) {
   try {
     const item = getUserEquippedItemData(user)
     const h = getLargeAvatarHeight(item)
-    return `height: ${h}px !important; margin: 0 auto`
+    return `height: ${h}px; margin: 0 auto`
   } catch { return '' }
 }
 
@@ -5217,7 +5218,7 @@ function getProfilePopupScalerInlineStyle(user) {
   try {
     const item = getUserEquippedItemData(user)
     const h = getLargeAvatarHeight(item)
-    return `height: ${h}px !important`
+    return `height: ${h}px`
   } catch { return '' }
 }
 
@@ -14393,7 +14394,7 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
   position: relative;
   text-align: center;
   font-family: 'Cobe Heavy', Inter, sans-serif;
-  --profile-avatar-size: 140px;
+  --profile-avatar-size: 150px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -14402,20 +14403,20 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: auto;
 }
-.profile-popup .profile-avatar-stage { width: 340px !important; height: 200px !important; box-sizing: border-box; border-radius: 24px; border: none !important; display: flex !important; align-items: center; justify-content: center; }
-.profile-popup .profile-avatar-scaler { position: static !important; width: auto !important; height: auto !important; transform: none !important; transform-origin: initial !important; }
-.profile-popup .profile-avatar { width: 150px !important; height: 150px !important; border-width: 5px !important; border-style: solid !important; box-sizing: border-box; overflow: hidden !important; border-radius: 30px !important; position: relative !important; z-index: 2 !important; line-height: 0; }
+.profile-popup .profile-avatar-stage { width: min(100%, 340px) !important; height: auto; box-sizing: border-box; border-radius: 12px; border: none !important; display: flex !important; align-items: center; justify-content: center; margin-left: auto; margin-right: auto; }
+.profile-popup .profile-avatar-scaler { position: relative !important; width: 100% !important; height: 100% !important; display: flex !important; align-items: center; justify-content: center; transform: none !important; transform-origin: initial !important; }
+.profile-popup .profile-avatar { width: 150px !important; height: 150px !important; border-width: 5px !important; border-style: solid !important; box-sizing: border-box; line-height: 0; overflow: hidden !important; border-radius: 24px !important; position: relative !important; z-index: 2 !important; }
 .profile-popup .profile-avatar.no-border { border: none !important; border-style: none !important; border-width: 0 !important; background: transparent !important; box-shadow: none !important; }
 .profile-popup .profile-avatar .avatar-img { width: 100% !important; height: 100% !important; display: block !important; object-fit: cover !important; object-position: center !important; }
 @media (max-width: 768px) {
   .profile-popup.leaderboard-profile-popup { padding: 28px 32px 32px 32px;         max-width: 100%;
-        width: min(350px, 100%);
+        width: min(900px, calc(100vw - 48px));
         border-radius: 12px;
         display: flex;
         align-items: center; }
   .profile-popup.leaderboard-profile-popup .profile-card-grid { display: flex; align-items: center; justify-content: center; flex-direction: column; }
   .profile-popup.leaderboard-profile-popup .profile-left,
-  .profile-popup.leaderboard-profile-popup .profile-right { width: 100%; max-width: 83%; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+  .profile-popup.leaderboard-profile-popup .profile-right { width: 100%; max-width: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; }
   .profile-popup.leaderboard-profile-popup .profile-left-stack { width: 100%; }
   .profile-popup.leaderboard-profile-popup .profile-role-with-group { position: relative; display: inline-flex; align-items: center; gap: 15px; justify-content: center; flex-direction: column; }
   .profile-popup.leaderboard-profile-popup .profile-role-with-group .profile-role { order: 1; }
@@ -14426,6 +14427,12 @@ preview-card.preview-avatar .profile-avatar-scaler .equipped-flash-overlay { lef
   .profile-popup .equipped-galaxie-overlay { top: 0px !important; left: -14px !important; width: 108% !important; height: 103% !important; }
   .profile-popup .equipped-coeur-overlay { top: -24px !important; left: -20px; width: 139%; height: 122%; }
   .profile-popup .equipped-admin-planify-overlay { height: 102%; left: -1px; }
+}
+@media (max-width: 480px) {
+  .profile-popup.leaderboard-profile-popup { max-width: 100%; width: min(350px, 100%); border-radius: 12px; --profile-avatar-size: 100px; }
+  .profile-popup.leaderboard-profile-popup .profile-avatar-stage { height: 110px !important; }
+  .profile-popup.leaderboard-profile-popup .profile-avatar-scaler { width: 100px !important; height: 110px !important; }
+  .profile-popup.leaderboard-profile-popup .profile-avatar { height: 100px !important; }
 }
 .profile-popup .equipped-roi-overlay { top: -51%; left: 15%; width: 86%; height: 75%; }
 .profile-popup .equipped-cat-ears { top: -76px; left: -59px; width: 133%; height: 117%; }
