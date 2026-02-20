@@ -116,19 +116,19 @@ export const useCoinsStore = defineStore('coins', {
       const color = state.borderColors.find(c => c.id === colorId);
       return color ? color.unlocked : false;
     },
-    
+
     isItemEquipped: (state) => (itemId: number) => {
       return state.equippedItemId === itemId;
     },
-    
+
     isFavorite: (state) => (itemId: number) => {
       try { return Array.isArray(state.favorites) ? state.favorites.includes(Number(itemId)) : false } catch { return false }
     },
-    
+
     equippedItem: (state) => {
       const equippedItem = state.purchasedItems.find(item => item.itemId === state.equippedItemId);
       if (!equippedItem) return null;
-      
+
       // Mapper avec les données du shop pour avoir accès à l'image
       const shopItems = [
         { id: 0, name: 'Bordure classique', img: '' }, // Pas d'image pour la bordure classique
@@ -159,9 +159,9 @@ export const useCoinsStore = defineStore('coins', {
         { id: 27, name: 'Alpha', img: alphaImg },
         { id: 28, name: 'Admin Planify', img: adminPlanify }
       ];
-      
+
       const shopItem = shopItems.find(shopItem => shopItem.id === equippedItem.itemId);
-      
+
       return {
         ...equippedItem,
         img: shopItem?.img || '',
@@ -253,7 +253,7 @@ export const useCoinsStore = defineStore('coins', {
       try {
         this.loading = true;
         const response = await secureApiCall('/coins/spin-status');
-        
+
         if (response.success) {
           this.canSpinToday = response.canSpin;
           this.lastSpinDate = response.lastSpinDate ? new Date(response.lastSpinDate) : null;
@@ -327,7 +327,7 @@ export const useCoinsStore = defineStore('coins', {
 
         if (response.success) {
           this.balance = response.newCoins;
-          
+
           if (item.type === 'border-color' || item.type === 'border-gradient') {
             const colorId = this.getBorderColorIdFromItem(item);
             if (colorId) {
@@ -339,7 +339,7 @@ export const useCoinsStore = defineStore('coins', {
           } else {
             this.purchasedItems.push(response.purchasedItem);
           }
-          
+
           return { success: true, message: response.message };
         } else {
           const auth = useAuthStore();
@@ -378,11 +378,13 @@ export const useCoinsStore = defineStore('coins', {
 
     // Fonction pour obtenir l'ID de couleur de bordure à partir d'un item
     getBorderColorIdFromItem(item: { id: number; name: string; type?: string }) {
+      const direct = item && (item as any).colorId ? String((item as any).colorId) : null
+      if (direct) return direct
       if (!item || !Number.isFinite(Number(item.id))) return null;
       // Mapper les IDs d'items vers les IDs de couleurs (que l'item provienne d'un achat ou d'un don admin)
         const colorMapping: { [key: number]: string } = {
           100: 'red',
-          101: 'blue', 
+          101: 'blue',
           102: 'green',
           103: 'yellow',
           104: 'purple',
@@ -492,10 +494,10 @@ export const useCoinsStore = defineStore('coins', {
     async equipItem(itemId: number) {
       try {
         this.loading = true;
-        
+
         console.log('🔧 Tentative d\'équipement/déséquipement pour itemId:', itemId);
         console.log('🔧 Item actuellement équipé:', this.equippedItemId);
-        
+
         // Si l'item est déjà équipé, le déséquiper
         if (this.equippedItemId === itemId) {
           console.log('🔧 Déséquipement de l\'item:', itemId);
@@ -512,9 +514,9 @@ export const useCoinsStore = defineStore('coins', {
             });
             this.equippedItemId = null;
             this.leaderboardNeedsRefresh = true;
-            
+
             console.log('🔧 État local mis à jour - equippedItemId:', this.equippedItemId);
-            
+
             return { success: true, message: response.message, action: 'unequipped' };
           } else {
             return { success: false, message: response.message };
@@ -536,9 +538,9 @@ export const useCoinsStore = defineStore('coins', {
             });
             this.equippedItemId = itemId;
             this.leaderboardNeedsRefresh = true;
-            
+
             console.log('🔧 État local mis à jour - equippedItemId:', this.equippedItemId);
-            
+
             return { success: true, message: response.message, action: 'equipped' };
           } else {
             return { success: false, message: response.message };
@@ -591,8 +593,8 @@ export const useCoinsStore = defineStore('coins', {
           this.balance = response.newCoins;
           // Recharger le statut depuis le serveur pour avoir les bonnes informations
           await this.loadSpinStatus();
-          return { 
-            success: true, 
+          return {
+            success: true,
             coinsWon: response.coinsWon,
             message: response.message,
             rewardName: response.rewardName
@@ -621,8 +623,8 @@ export const useCoinsStore = defineStore('coins', {
         if (response.success) {
           // Ne pas mettre à jour le solde immédiatement, seulement le statut
           await this.loadSpinStatus();
-          return { 
-            success: true, 
+          return {
+            success: true,
             coinsWon: response.coinsWon,
             message: response.message,
             rewardName: response.rewardName
@@ -827,9 +829,9 @@ async initialize() {
     getNewItemsWithMessages(): PurchasedItem[] {
       const now = new Date();
       const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000); // 5 minutes
-      
-      return this.purchasedItems.filter(item => 
-        item.adminMessage && 
+
+      return this.purchasedItems.filter(item =>
+        item.adminMessage &&
         new Date(item.purchaseDate) > fiveMinutesAgo
       );
     },
@@ -844,7 +846,7 @@ async initialize() {
     },
 
 
-    
+
     // Définir la variante Discord utilisée dans l'UI
     async setDiscordVariantIndex(index: number) {
       if (typeof index === 'number' && index >= 0 && index <= 2) {

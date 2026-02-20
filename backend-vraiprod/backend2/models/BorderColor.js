@@ -10,6 +10,8 @@ const borderColorSchema = new mongoose.Schema({
   legacyId: { type: Number, default: null },
   price: { type: Number, default: 0 },
   availableInDailyShop: { type: Boolean, default: false },
+  createdById: { type: String, default: null },
+  createdByName: { type: String, default: null },
   createdAt: { type: Date, default: Date.now }
 });
 

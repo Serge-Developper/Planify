@@ -4,6 +4,7 @@ const router = express.Router();
 const User = require('../models/User');
 const { verifyToken, requireRole } = require('../middlewares/auth');
 const Faction = require('../models/Faction');
+const BorderColor = require('../models/BorderColor');
 const { randomInt } = require('crypto');
 const spinLocks = new Map(); // Verrou par utilisateur pour éviter les spins concurrents
 
@@ -966,6 +967,42 @@ router.get('/weekly-items', verifyToken, async (req, res) => {
       { id: 230, name: 'Bordure Ambre Nuit', price: 40, type: 'border-gradient', borderStyle: '3px solid transparent', img: 'g230' },
       { id: 231, name: 'Bordure Émeraude Nuit', price: 40, type: 'border-gradient', borderStyle: '3px solid transparent', img: 'g231' },
     ];
+
+    let dynamicBorderColors = []
+    try {
+      dynamicBorderColors = await BorderColor.find({ availableInDailyShop: true }).lean()
+    } catch {}
+
+    if (dynamicBorderColors && dynamicBorderColors.length) {
+      const usedIds = new Set(borderColorItems.map(c => Number(c.id)))
+      const usedColorIds = new Set(borderColorItems.map(c => String(c.colorId || '')))
+      for (const c of dynamicBorderColors) {
+        const colorId = String(c.id || '').trim()
+        if (!colorId || usedColorIds.has(colorId)) continue
+        if (!c.color && !c.gradient) continue
+        let legacy = Number(c.legacyId)
+        if (!Number.isFinite(legacy)) {
+          let hash = 0
+          for (let i = 0; i < colorId.length; i++) {
+            hash = ((hash << 5) - hash) + colorId.charCodeAt(i)
+            hash |= 0
+          }
+          legacy = Math.abs(hash % 900000) + 100000
+        }
+        while (usedIds.has(Number(legacy))) legacy += 1
+        usedIds.add(Number(legacy))
+        usedColorIds.add(colorId)
+        borderColorItems.push({
+          id: Number(legacy),
+          name: `Bordure ${c.name || colorId}`,
+          price: Number.isFinite(Number(c.price)) ? Number(c.price) : 40,
+          type: c.gradient ? 'border-gradient' : 'border-color',
+          borderStyle: c.gradient ? '3px solid transparent' : `3px solid ${c.color || '#000000'}`,
+          img: colorId,
+          colorId
+        })
+      }
+    }
     
     // Sélectionner 3 couleurs de bordures aléatoires avec la MÊME logique que les items
     // et empêcher la répétition immédiate J vs J-1

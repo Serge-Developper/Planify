@@ -1209,6 +1209,7 @@
           <label style="display:block;margin:4px 0;"><input type="checkbox" v-model="pushPrefs.exam" /> Examens</label>
           <label style="display:block;margin:4px 0;"><input type="checkbox" v-model="pushPrefs.wheel" /> Roue de la fortune</label>
           <label style="display:block;margin:4px 0;"><input type="checkbox" v-model="pushPrefs.shop" /> Boutique (nouveaux items)</label>
+          <label style="display:block;margin:4px 0;"><input type="checkbox" v-model="pushPrefs.borderColor" /> Couleur de bordure</label>
           <button class="odoo-login-btn push-update-btn" @click="applyPushSettings" :disabled="pushUpdateState==='working'" :class="pushUpdateState">
             <span v-if="pushUpdateState==='working'" class="btn-spinner" aria-hidden="true"></span>
             <span v-if="pushUpdateState==='working'">Mise à jour…</span>
@@ -1428,12 +1429,12 @@ const showRedeemPopup = ref(false)
 const showForgotPasswordProfile = ref(false)
 const showPushSettings = ref(false)
 const pushEnabled = ref(false)
-const pushPrefs = ref({ wheel: false, homework: false, exam: false, shop: false })
+const pushPrefs = ref({ wheel: false, homework: false, exam: false, shop: false, borderColor: false })
 const pushUpdateState = ref('idle')
 function togglePushSettings(){ showPushSettings.value=!showPushSettings.value; if(showPushSettings.value){ loadPushSettings() } else { pushUpdateState.value='idle' } }
 watch(pushPrefs,()=>{ if(pushUpdateState.value==='ok') pushUpdateState.value='idle' },{deep:true})
-async function loadPushSettings(){ try{ const res=await secureApiCall('/users/me/push-preferences',{method:'GET'}); const p=res && res.pushPreferences ? res.pushPreferences : {}; pushEnabled.value=!!p.enabled; pushPrefs.value={ wheel: !!p.wheel, homework: !!p.homework, exam: !!p.exam, shop: !!p.shop }; }catch{ try{ const p=(user.value && user.value.pushPreferences) || {}; pushEnabled.value=!!p.enabled; pushPrefs.value={ wheel: !!p.wheel, homework: !!p.homework, exam: !!p.exam, shop: !!p.shop }; }catch{} } }
-async function applyPushSettings(){ try{ pushUpdateState.value='working'; let canEnable=true; if(typeof Notification!=='undefined'){ if(Notification.permission!=='granted'){ const perm=await Notification.requestPermission(); if(perm!=='granted') canEnable=false } } else { canEnable=false } if(canEnable){ const subOk=await subscribeToPushNotifications(); if(!subOk) canEnable=false } const enabled=!!canEnable; pushEnabled.value=enabled; await secureApiCall('/users/me/push-preferences',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled:enabled,wheel:!!pushPrefs.value.wheel,homework:!!pushPrefs.value.homework,exam:!!pushPrefs.value.exam,shop:!!pushPrefs.value.shop})}); pushUpdateState.value='ok'; }catch{ pushUpdateState.value='idle' } }
+async function loadPushSettings(){ try{ const res=await secureApiCall('/users/me/push-preferences',{method:'GET'}); const p=res && res.pushPreferences ? res.pushPreferences : {}; pushEnabled.value=!!p.enabled; pushPrefs.value={ wheel: !!p.wheel, homework: !!p.homework, exam: !!p.exam, shop: !!p.shop, borderColor: !!p.borderColor }; }catch{ try{ const p=(user.value && user.value.pushPreferences) || {}; pushEnabled.value=!!p.enabled; pushPrefs.value={ wheel: !!p.wheel, homework: !!p.homework, exam: !!p.exam, shop: !!p.shop, borderColor: !!p.borderColor }; }catch{} } }
+async function applyPushSettings(){ try{ pushUpdateState.value='working'; let canEnable=true; if(typeof Notification!=='undefined'){ if(Notification.permission!=='granted'){ const perm=await Notification.requestPermission(); if(perm!=='granted') canEnable=false } } else { canEnable=false } if(canEnable){ const subOk=await subscribeToPushNotifications(); if(!subOk) canEnable=false } const enabled=!!canEnable; pushEnabled.value=enabled; await secureApiCall('/users/me/push-preferences',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled:enabled,wheel:!!pushPrefs.value.wheel,homework:!!pushPrefs.value.homework,exam:!!pushPrefs.value.exam,shop:!!pushPrefs.value.shop,borderColor:!!pushPrefs.value.borderColor})}); pushUpdateState.value='ok'; }catch{ pushUpdateState.value='idle' } }
 
 const showNotificationBtn = ref(false)
 

@@ -113,7 +113,7 @@
                   <span class="btn-icon">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 3v6h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   </span>
-                  <span>Choisir un fichier</span>
+                  <span>WEBP/GIF</span>
                 </label>
                 <input type="text" v-model="suggestUrl" placeholder="Importer via URL" class="url-input suggest-url-input" />
                 <button class="suggest-import-btn" type="button" @click="onSuggestUrl">
@@ -3243,9 +3243,13 @@
             <div class="color-picker-modal" data-darkreader-ignore>
               <div class="color-picker-header">
                 <span class="color-picker-title">Choisir une couleur</span>
-                <button class="close-btn-small" @click="() => { hoverCloseColor = false; closeColorPicker() }" @mouseover="hoverCloseColor = true" @mouseleave="hoverCloseColor = false">
-                  <img :src="hoverCloseColor ? closeHoverImg : closeImg" alt="Fermer" class="close-img" />
-                </button>
+                <div class="color-picker-header-actions">
+                  <button class="suggest-color-btn color-suggest-add-btn" type="button" @click="openColorSuggest">Suggérer une couleur</button>
+                  <button class="my-colors-btn color-suggest-save-btn" type="button" @click="openMyColors">Mes couleurs</button>
+                  <button class="close-btn-small" @click="() => { hoverCloseColor = false; closeColorPicker() }" @mouseover="hoverCloseColor = true" @mouseleave="hoverCloseColor = false">
+                    <img :src="hoverCloseColor ? closeHoverImg : closeImg" alt="Fermer" class="close-img" />
+                  </button>
+                </div>
               </div>
 
               <!-- Barre de progression + textes -->
@@ -3280,6 +3284,123 @@
                   <span class="color-name">{{ c.name }}</span>
                   <span v-if="c.id === coinsStore.selectedBorderColor" class="checkmark">✓</span>
                   <span v-if="!c.unlocked" class="lockmark">🔒</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </transition>
+      </teleport>
+
+      <teleport to="body">
+        <transition name="fade">
+          <div v-if="isColorSuggestOpen" class="color-picker-overlay" @click.self="closeColorSuggest">
+            <div class="color-picker-modal color-suggest-modal" data-darkreader-ignore>
+              <div class="color-picker-header">
+                <span class="color-picker-title">Suggérer une couleur</span>
+                <button class="close-btn-small" @click="() => { hoverCloseSuggestColor = false; closeColorSuggest() }" @mouseover="hoverCloseSuggestColor = true" @mouseleave="hoverCloseSuggestColor = false">
+                  <img :src="hoverCloseSuggestColor ? closeHoverImg : closeImg" alt="Fermer" class="close-img" />
+                </button>
+              </div>
+              <div class="color-suggest-body">
+                <div class="color-suggest-preview">
+                  <div class="preview-title">Aperçu Large/Avatar</div>
+                  <div class="profile-avatar-wrap">
+                    <div class="profile-avatar-stage" :style="colorSuggestStageStyle">
+                      <div class="profile-avatar-scaler" :style="colorSuggestScalerStyle">
+                        <div class="profile-avatar" :style="colorSuggestBorderStyle">
+                          <div class="avatar-img">
+                            <img class="avatar-img" :src="getUserAvatar(authStore.user)" :alt="authStore.user?.username || 'avatar'" :style="getAvatarImageStyle(authStore.user)" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="color-suggest-preview-chip" :style="colorSuggestChipStyle"></div>
+                </div>
+                <div class="color-suggest-controls">
+                  <div class="color-suggest-row">
+                    <label class="color-suggest-pill">
+                      Nom
+                      <input v-model="colorSuggestName" type="text" maxlength="40" placeholder="Nom de la couleur" />
+                    </label>
+                    <label class="color-suggest-pill">
+                      Prix
+                      <input v-model.number="colorSuggestPrice" type="number" min="40" max="75" />
+                    </label>
+                  </div>
+                  <div class="color-suggest-row">
+                    <label class="color-suggest-pill">
+                      Angle
+                      <input v-model.number="colorSuggestAngle" type="range" min="0" max="360" />
+                    </label>
+                    <label class="color-suggest-pill">
+                      Valeur
+                      <input v-model.number="colorSuggestAngle" type="number" min="0" max="360" />
+                    </label>
+                  </div>
+                  <div class="color-suggest-stops">
+                    <div class="color-stop-row" v-for="(stop, si) in colorSuggestStops" :key="'cs-stop-'+si">
+                      <input v-model="stop.color" type="color" />
+                      <div class="color-stop-opacity">
+                        <input v-model.number="stop.opacity" type="range" min="0" max="100" />
+                        <span class="color-stop-value">{{ stop.opacity }}%</span>
+                      </div>
+                      <button class="color-stop-remove" type="button" @click="removeColorStop(si)" :disabled="colorSuggestStops.length <= 1">✕</button>
+                    </div>
+                    <div class="color-suggest-actions">
+                      <button class="suggest-add-btn color-suggest-danger color-suggest-add-btn" type="button" @click="addColorStop">Ajouter une couleur</button>
+                      <button class="suggest-save-btn color-suggest-danger color-suggest-save-btn" type="button" :disabled="!canSaveColorSuggest" @click="saveColorSuggestion">Créer la couleur</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </transition>
+      </teleport>
+
+      <teleport to="body">
+        <transition name="fade">
+          <div v-if="isMyColorsOpen" class="color-picker-overlay" @click.self="closeMyColors">
+            <div class="color-picker-modal my-colors-modal" data-darkreader-ignore>
+              <div class="color-picker-header">
+                <span class="color-picker-title">Mes couleurs</span>
+                <button class="close-btn-small" @click="() => { hoverCloseMyColors = false; closeMyColors() }" @mouseover="hoverCloseMyColors = true" @mouseleave="hoverCloseMyColors = false">
+                  <img :src="hoverCloseMyColors ? closeHoverImg : closeImg" alt="Fermer" class="close-img" />
+                </button>
+              </div>
+              <div class="my-colors-body">
+                <div v-if="myColorsLoading" class="my-colors-empty">Chargement...</div>
+                <div v-else-if="myColorsError" class="my-colors-empty">{{ myColorsError }}</div>
+                <div v-else-if="!myColors.length" class="my-colors-empty">Aucune couleur créée.</div>
+                <div v-else class="my-colors-grid">
+                  <div v-for="c in myColors" :key="'my-color-'+c.id" class="my-color-card">
+                    <div class="my-color-preview" :style="getMyColorPreviewStyle(c)"></div>
+                    <div class="my-color-fields">
+                      <label>
+                        Nom
+                        <input v-model="c.editName" type="text" maxlength="40" />
+                      </label>
+                      <label>
+                        Prix
+                        <input v-model.number="c.editPrice" type="number" min="40" max="75" />
+                      </label>
+                      <label>
+                        Couleur
+                        <div class="my-color-swatches">
+                          <span v-for="(sw, si) in getMyColorUsedSwatches(c)" :key="'my-color-sw-'+c.id+'-'+si" class="my-color-swatch" :style="{ background: sw }"></span>
+                        </div>
+                      </label>
+                      <label>
+                        Dégradé
+                        <input v-model="c.editGradient" type="text" placeholder="linear-gradient(...)" />
+                      </label>
+                    </div>
+                    <div class="my-color-actions">
+                      <button class="my-color-edit-btn" type="button" :disabled="c.saving" @click="editMyColor(c)">Modifier</button>
+                      <button class="my-color-delete-btn" type="button" :disabled="c.deleting" @click="deleteMyColor(c)">Supprimer</button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -4954,18 +5075,6 @@ function updateProfilePopupLargeAvatarIsMobile() {
   profilePopupLargeAvatarIsMobile.value = false
 }
 function updateProfilePopupLeaderboardBreakpoints() {
-  try {
-    if (window && typeof window.matchMedia === 'function') {
-      profilePopupLeaderboardIsMobile.value = window.matchMedia('(max-width: 480px)').matches
-      profilePopupLeaderboardIsPc.value = window.matchMedia('(min-width: 481px) and (max-width: 768px)').matches
-      return
-    }
-    if (window && typeof window.innerWidth === 'number') {
-      profilePopupLeaderboardIsMobile.value = window.innerWidth <= 480
-      profilePopupLeaderboardIsPc.value = window.innerWidth >= 481 && window.innerWidth <= 768
-      return
-    }
-  } catch {}
   profilePopupLeaderboardIsMobile.value = false
   profilePopupLeaderboardIsPc.value = false
 }
@@ -5979,6 +6088,409 @@ const getColorSwatchStyle = (c) => {
   else if (c && c.color) style.background = c.color
   else style.background = '#000'
   return style
+}
+
+const isColorSuggestOpen = ref(false)
+const hoverCloseSuggestColor = ref(false)
+const editingColorId = ref(null)
+const colorSuggestName = ref('')
+const colorSuggestPrice = ref(40)
+const colorSuggestAngle = ref(135)
+const colorSuggestStops = ref([
+  { color: '#00FF80', opacity: 100 },
+  { color: '#00FFFF', opacity: 100 }
+])
+
+const resetColorSuggest = () => {
+  editingColorId.value = null
+  colorSuggestName.value = ''
+  colorSuggestPrice.value = 40
+  colorSuggestAngle.value = 135
+  colorSuggestStops.value = [
+    { color: '#00FF80', opacity: 100 },
+    { color: '#00FFFF', opacity: 100 }
+  ]
+}
+
+const openColorSuggest = () => {
+  resetColorSuggest()
+  isColorSuggestOpen.value = true
+  lockBodyScroll()
+}
+
+const closeColorSuggest = () => {
+  isColorSuggestOpen.value = false
+  unlockBodyScroll()
+}
+
+watch(isColorSuggestOpen, (v) => { if (v === true) hoverCloseSuggestColor.value = false })
+
+const normalizeHex = (hex) => {
+  const raw = String(hex || '').trim()
+  if (!raw) return '#000000'
+  return raw.startsWith('#') ? raw : `#${raw}`
+}
+
+const clampNumber = (value, min, max) => {
+  const num = Number(value)
+  if (!Number.isFinite(num)) return min
+  return Math.min(max, Math.max(min, num))
+}
+
+const toHex = (value) => {
+  const n = clampNumber(value, 0, 255)
+  return Math.round(n).toString(16).padStart(2, '0')
+}
+
+const rgbToHex = (r, g, b) => `#${toHex(r)}${toHex(g)}${toHex(b)}`
+
+const splitGradientParts = (value) => {
+  const parts = []
+  let current = ''
+  let depth = 0
+  for (let i = 0; i < value.length; i++) {
+    const ch = value[i]
+    if (ch === '(') depth += 1
+    if (ch === ')') depth = Math.max(0, depth - 1)
+    if (ch === ',' && depth === 0) {
+      parts.push(current.trim())
+      current = ''
+    } else {
+      current += ch
+    }
+  }
+  if (current.trim()) parts.push(current.trim())
+  return parts
+}
+
+const parseRgbStop = (raw) => {
+  const match = raw.match(/rgba?\(([^)]+)\)/i)
+  if (!match) return null
+  const nums = match[1].split(',').map(s => s.trim())
+  if (nums.length < 3) return null
+  const toChannel = (v) => v.endsWith('%') ? (parseFloat(v) * 2.55) : parseFloat(v)
+  const r = toChannel(nums[0])
+  const g = toChannel(nums[1])
+  const b = toChannel(nums[2])
+  const alpha = nums.length >= 4 ? parseFloat(nums[3]) : 1
+  return {
+    color: rgbToHex(r, g, b),
+    opacity: clampNumber((Number.isFinite(alpha) ? alpha : 1) * 100, 0, 100)
+  }
+}
+
+const parseHexStop = (raw) => {
+  const match = raw.match(/#([0-9a-fA-F]{3,8})/)
+  if (!match) return null
+  let hex = match[1]
+  if (hex.length === 3) hex = hex.split('').map(c => c + c).join('')
+  if (hex.length === 8) {
+    const base = hex.slice(0, 6)
+    const alpha = parseInt(hex.slice(6), 16)
+    const opacity = clampNumber(Math.round((alpha / 255) * 100), 0, 100)
+    return { color: `#${base}`, opacity }
+  }
+  if (hex.length === 6) return { color: `#${hex}`, opacity: 100 }
+  return null
+}
+
+const parseGradientStops = (gradient) => {
+  const raw = String(gradient || '').trim()
+  const match = raw.match(/linear-gradient\((.*)\)/i)
+  if (!match) return null
+  const parts = splitGradientParts(match[1])
+  let angle = 135
+  if (parts.length && /deg/.test(parts[0])) {
+    const parsed = parseFloat(parts[0])
+    if (Number.isFinite(parsed)) angle = parsed
+    parts.shift()
+  }
+  const stops = []
+  parts.forEach((part) => {
+    const rgb = parseRgbStop(part)
+    if (rgb) { stops.push(rgb); return }
+    const hex = parseHexStop(part)
+    if (hex) { stops.push(hex); return }
+  })
+  return { angle, stops }
+}
+
+const hexToRgb = (hex) => {
+  const base = normalizeHex(hex).replace('#', '')
+  const full = base.length === 3 ? base.split('').map(c => c + c).join('') : base
+  if (full.length !== 6) return null
+  const num = parseInt(full, 16)
+  if (!Number.isFinite(num)) return null
+  return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 }
+}
+
+const toRgba = (hex, opacityPercent) => {
+  const rgb = hexToRgb(hex)
+  const alpha = Math.max(0, Math.min(100, Number(opacityPercent))) / 100
+  if (!rgb) return `rgba(0, 0, 0, ${alpha})`
+  return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`
+}
+
+const normalizeStopsForSave = (stops) => {
+  const list = Array.isArray(stops) ? stops : []
+  const normalized = list.map(s => ({
+    color: normalizeHex(s && s.color),
+    opacity: clampNumber(s && s.opacity, 0, 100)
+  })).filter(s => !!s.color)
+  if (!normalized.length) return [{ color: '#000000', opacity: 100 }]
+  return normalized
+}
+
+const buildGradientFromStops = (stops, angle) => {
+  if (!stops || stops.length <= 1) return null
+  const a = clampNumber(angle, 0, 360)
+  const parts = stops.map(s => toRgba(s.color, s.opacity))
+  return `linear-gradient(${a}deg, ${parts.join(', ')})`
+}
+
+const colorSuggestHasGradient = computed(() => colorSuggestStops.value.length > 1)
+
+const colorSuggestGradient = computed(() => {
+  const stops = colorSuggestStops.value.filter(s => s && s.color)
+  if (stops.length <= 1) return ''
+  const angle = Number(colorSuggestAngle.value) || 0
+  const parts = stops.map(s => toRgba(s.color, s.opacity))
+  return `linear-gradient(${angle}deg, ${parts.join(', ')})`
+})
+
+const colorSuggestSolid = computed(() => {
+  const stop = colorSuggestStops.value.find(s => s && s.color) || { color: '#000000', opacity: 100 }
+  return toRgba(stop.color, stop.opacity)
+})
+
+const colorSuggestBorderStyle = computed(() => {
+  if (colorSuggestHasGradient.value && colorSuggestGradient.value) {
+    return {
+      border: '3px solid transparent',
+      borderRadius: '50%',
+      background: `linear-gradient(#ffffff, #ffffff) padding-box, ${colorSuggestGradient.value} border-box`
+    }
+  }
+  return { border: `3px solid ${colorSuggestSolid.value}`, borderRadius: '50%' }
+})
+
+const colorSuggestChipStyle = computed(() => {
+  if (colorSuggestHasGradient.value && colorSuggestGradient.value) return { background: colorSuggestGradient.value }
+  return { background: colorSuggestSolid.value }
+})
+
+const colorSuggestStageStyle = computed(() => {
+  const size = isMobile.value ? 250 : 351
+  return { width: `${size}px`, height: `${size}px` }
+})
+
+const colorSuggestScalerStyle = computed(() => {
+  const size = isMobile.value ? 250 : 351
+  return { width: `${size}px`, height: `${size}px` }
+})
+
+const addColorStop = () => {
+  colorSuggestStops.value.push({ color: '#ffffff', opacity: 100 })
+}
+
+const removeColorStop = (index) => {
+  if (colorSuggestStops.value.length <= 1) return
+  colorSuggestStops.value.splice(index, 1)
+}
+
+const canSaveColorSuggest = computed(() => {
+  const name = colorSuggestName.value.trim()
+  const stop = colorSuggestStops.value.find(s => s && s.color)
+  const price = Number(colorSuggestPrice.value)
+  const priceOk = Number.isFinite(price) && price >= 40 && price <= 75
+  return !!name && !!stop && priceOk
+})
+
+const saveColorSuggestion = async () => {
+  if (!canSaveColorSuggest.value) return
+  const name = colorSuggestName.value.trim()
+  const price = clampNumber(colorSuggestPrice.value, 40, 75)
+  const stops = normalizeStopsForSave(colorSuggestStops.value)
+  const gradient = buildGradientFromStops(stops, colorSuggestAngle.value)
+  const color = toRgba(stops[0].color, stops[0].opacity)
+  const payload = { name, price, color, gradient, availableInDailyShop: true }
+  const isEdit = !!editingColorId.value
+  try {
+    const res = await secureApiCall(isEdit ? '/border-colors/mine' : '/border-colors/suggest', {
+      method: isEdit ? 'PUT' : 'POST',
+      body: JSON.stringify(isEdit ? { ...payload, id: editingColorId.value } : payload)
+    })
+    if (res && res.success && res.color) {
+      const created = res.color
+      const existing = coinsStore.borderColors.find(c => c.id === created.id)
+      if (existing) {
+        existing.name = created.name || existing.name
+        existing.color = created.color || existing.color
+        existing.gradient = created.gradient || existing.gradient
+      } else {
+        coinsStore.borderColors.push({
+          id: created.id,
+          name: created.name || created.id,
+          color: created.color || '#000000',
+          gradient: created.gradient || undefined,
+          unlocked: false
+        })
+      }
+      const my = myColors.value.find(c => c.id === created.id)
+      if (my) {
+        my.name = created.name
+        my.color = created.color
+        my.gradient = created.gradient
+        my.price = created.price
+        my.editName = created.name || ''
+        my.editColor = created.color || '#000000'
+        my.editGradient = created.gradient || ''
+        my.editPrice = clampNumber(created.price, 40, 75)
+      }
+      editingColorId.value = null
+      closeColorSuggest()
+    }
+  } catch {}
+}
+
+const isMyColorsOpen = ref(false)
+const hoverCloseMyColors = ref(false)
+const myColorsLoading = ref(false)
+const myColorsError = ref('')
+const myColors = ref([])
+
+const openMyColors = async () => {
+  isMyColorsOpen.value = true
+  lockBodyScroll()
+  await fetchMyColors()
+}
+
+const closeMyColors = () => {
+  isMyColorsOpen.value = false
+  unlockBodyScroll()
+}
+
+watch(isMyColorsOpen, (v) => { if (v === true) hoverCloseMyColors.value = false })
+
+const fetchMyColors = async () => {
+  myColorsLoading.value = true
+  myColorsError.value = ''
+  try {
+    const res = await secureApiCall('/border-colors/mine')
+    const list = (res && res.success && Array.isArray(res.colors)) ? res.colors : []
+    myColors.value = list.map(c => ({
+      ...c,
+      editName: c.name || '',
+      editPrice: Number.isFinite(Number(c.price)) ? Number(c.price) : 0,
+      editColor: c.color || '#000000',
+      editGradient: c.gradient || '',
+      saving: false,
+      deleting: false
+    }))
+  } catch (e) {
+    myColorsError.value = 'Impossible de charger vos couleurs.'
+  } finally {
+    myColorsLoading.value = false
+  }
+}
+
+const getMyColorPreviewStyle = (c) => {
+  if (c && c.editGradient) return { background: c.editGradient }
+  if (c && c.editColor) return { background: c.editColor }
+  return { background: '#000' }
+}
+
+const getMyColorUsedSwatches = (c) => {
+  const gradient = c && (c.editGradient || c.gradient)
+  const info = parseGradientStops(gradient)
+  const fromGradient = info && Array.isArray(info.stops)
+    ? info.stops.map(s => normalizeHex(s && s.color))
+    : []
+  if (fromGradient.length) return fromGradient
+  const base = normalizeHex(c && (c.editColor || c.color || '#000000'))
+  return [base]
+}
+
+const editMyColor = (c) => {
+  if (!c || !c.id) return
+  editingColorId.value = c.id
+  const name = String(c.editName || c.name || '').trim()
+  colorSuggestName.value = name
+  colorSuggestPrice.value = clampNumber(c.editPrice || c.price || 40, 40, 75)
+  let nextStops = null
+  let nextAngle = 135
+  const gradientInfo = parseGradientStops(c.editGradient || c.gradient)
+  if (gradientInfo && Array.isArray(gradientInfo.stops) && gradientInfo.stops.length) {
+    nextStops = gradientInfo.stops.map(s => ({
+      color: normalizeHex(s.color),
+      opacity: clampNumber(s.opacity, 0, 100)
+    }))
+    nextAngle = clampNumber(gradientInfo.angle || 135, 0, 360)
+  }
+  if (!nextStops || !nextStops.length) {
+    const baseColor = normalizeHex(c.editColor || c.color || '#000000')
+    nextStops = [{ color: baseColor, opacity: 100 }]
+  }
+  colorSuggestStops.value = nextStops
+  colorSuggestAngle.value = nextAngle
+  closeMyColors()
+  isColorSuggestOpen.value = true
+  lockBodyScroll()
+}
+
+const saveMyColor = async (c) => {
+  if (!c || !c.id) return
+  c.saving = true
+  try {
+    const res = await secureApiCall('/border-colors/mine', {
+      method: 'PUT',
+      body: JSON.stringify({
+        id: c.id,
+        name: String(c.editName || '').trim(),
+        price: Number(c.editPrice) || 0,
+        color: c.editColor || null,
+        gradient: c.editGradient ? String(c.editGradient).trim() : null,
+        availableInDailyShop: !!c.editAvailable
+      })
+    })
+    if (res && res.success && res.color) {
+      const updated = res.color
+      c.name = updated.name
+      c.color = updated.color
+      c.gradient = updated.gradient
+      c.price = updated.price
+      c.availableInDailyShop = !!updated.availableInDailyShop
+      const target = coinsStore.borderColors.find(b => b.id === c.id)
+      if (target) {
+        target.name = updated.name || target.name
+        target.color = updated.color || target.color
+        target.gradient = updated.gradient || target.gradient
+      }
+    }
+  } catch {} finally {
+    c.saving = false
+  }
+}
+
+const deleteMyColor = async (c) => {
+  if (!c || !c.id) return
+  c.deleting = true
+  try {
+    const res = await secureApiCall('/border-colors/mine', {
+      method: 'DELETE',
+      body: JSON.stringify({ id: c.id })
+    })
+    if (res && res.success) {
+      myColors.value = myColors.value.filter(x => x.id !== c.id)
+      const idx = coinsStore.borderColors.findIndex(b => b.id === c.id)
+      if (idx >= 0) coinsStore.borderColors.splice(idx, 1)
+      if (coinsStore.selectedBorderColor === c.id) {
+        coinsStore.selectBorderColor('default')
+      }
+    }
+  } catch {} finally {
+    c.deleting = false
+  }
 }
 
 // Compteurs et pourcentage (X / Y + % collectés)
@@ -12295,6 +12807,378 @@ onUnmounted(() => {
     font-size: 23px;
   }
 
+  .color-picker-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .suggest-color-btn,
+  .my-colors-btn {
+    cursor: pointer;
+    border: none;
+    border-radius: 18px;
+    color: #fff;
+    font-size: 1em;
+    padding: 12px 32px;
+    font-family: 'Cobe Heavy', Inter, sans-serif;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  .suggest-color-btn:hover,
+  .my-colors-btn:hover {
+    filter: brightness(1.05);
+  }
+
+  .my-colors-modal {
+    width: min(590px, 96vw);
+  }
+
+  .my-colors-modal .close-btn-small {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+  }
+
+  .my-colors-body {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .my-colors-empty {
+    font-size: 14px;
+    font-weight: 600;
+    color: #6b7280;
+    text-align: center;
+    padding: 24px 0;
+  }
+
+  .my-colors-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px;
+  }
+
+  .my-color-card {
+    background: #f8f9fa;
+    border-radius: 14px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .my-color-preview {
+    height: 18px;
+    border-radius: 999px;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+  }
+
+  .my-color-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .my-color-fields label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #111827;
+  }
+
+  .my-color-fields input[type="text"],
+  .my-color-fields input[type="number"] {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    font-size: 13px;
+  }
+
+  .my-color-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .my-color-swatch {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+  }
+
+  .my-color-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .my-color-edit-btn,
+  .my-color-delete-btn {
+    flex: 1;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-family: 'Cobe Heavy', Inter, sans-serif;
+    cursor: pointer;
+  }
+
+  .my-color-edit-btn {
+    background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+    color: #fff;
+    box-shadow: 0 2px 8px #60a5fa33;
+  }
+
+  .my-color-edit-btn:hover {
+    background: linear-gradient(90deg, #60a5fa 0%, #1d4ed8 100%);
+    box-shadow: 0 4px 16px #1d4ed855;
+  }
+
+  .my-color-delete-btn {
+    background: linear-gradient(90deg, #ef4444 0%, #b91c1c 100%);
+    color: #fff;
+    box-shadow: 0 2px 8px #ef444433;
+  }
+
+  .my-color-delete-btn:hover {
+    background: linear-gradient(90deg, #f87171 0%, #b91c1c 100%);
+    box-shadow: 0 4px 16px #b91c1c55;
+  }
+
+  .my-color-edit-btn:disabled,
+  .my-color-delete-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .color-suggest-modal {
+    width: min(900px, 96vw);
+  }
+
+  .color-suggest-body {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .color-suggest-preview {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .color-suggest-preview .preview-title {
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .color-suggest-preview-chip {
+    width: 100%;
+    height: 16px;
+    border-radius: 999px;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+  }
+
+  .color-suggest-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .color-suggest-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .color-suggest-pill {
+    flex: 1;
+    min-width: 160px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #111827;
+    background: #f3f4f6;
+    padding: 10px;
+    border-radius: 10px;
+  }
+
+  .color-suggest-pill input {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    font-size: 13px;
+  }
+
+  .color-suggest-stops {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .color-stop-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #f8f9fa;
+    padding: 8px 10px;
+    border-radius: 12px;
+  }
+
+  .color-stop-row input[type="color"] {
+    width: 40px;
+    height: 36px;
+    border: none;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  .color-stop-opacity {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .color-stop-opacity input[type="range"] {
+    flex: 1;
+  }
+
+  .color-stop-value {
+    font-size: 12px;
+    min-width: 42px;
+    text-align: right;
+  }
+
+  .color-stop-remove {
+    background: #111827;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    width: 34px;
+    height: 34px;
+    cursor: pointer;
+  }
+
+  .color-stop-remove:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .color-suggest-actions {
+    display: flex;
+    justify-content: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .color-suggest-modal .close-btn-small {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+  }
+
+  .suggest-add-btn {
+    align-self: flex-start;
+    background: #e5e7eb;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+
+  .suggest-add-btn:hover {
+    background: #d1d5db;
+  }
+
+  .color-suggest-danger {
+    cursor: pointer;
+    border: none;
+    border-radius: 18px;
+    background: linear-gradient(90deg, #ef4444 0%, #b91c1c 100%);
+    color: #fff;
+    font-size: 1.2em;
+    padding: 12px 32px;
+    margin: 0;
+    box-shadow: 0 2px 8px #ef444433;
+    font-family: 'Cobe Heavy', Inter, sans-serif;
+    transition: background 0.3s ease, background-position 0.35s cubic-bezier(.25,.8,.25,1), color 0.2s ease, box-shadow 0.2s ease;
+    background-size: 200% 200%;
+    background-position: 0% 50%;
+  }
+
+  .color-suggest-danger:hover {
+    background: linear-gradient(90deg, #f87171 0%, #b91c1c 100%);
+    background-position: 100% 50%;
+    color: #fff;
+    box-shadow: 0 4px 16px #b91c1c55;
+    border: none;
+  }
+
+  .color-suggest-add-btn {
+    background: #0547ff;
+    box-shadow: 0 2px 8px #0547ff33;
+  }
+
+  .color-suggest-save-btn {
+    background: #0ab142;
+    box-shadow: 0 2px 8px #0ab14233;
+  }
+
+  .color-suggest-add-btn:hover,
+  .color-suggest-save-btn:hover {
+    filter: brightness(1.05);
+  }
+
+  @media (max-width: 900px) {
+    .color-suggest-body {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .color-picker-header {
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .color-picker-title {
+      text-align: center;
+      margin-top: 30px !important;
+    }
+
+    .color-picker-header-actions {
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      gap: 8px;
+    }
+
+    .color-picker-header-actions .close-btn-small {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+    }
+  }
+
   .close-btn-small {
     background: transparent !important;
     border: none !important;
@@ -14516,12 +15400,6 @@ onUnmounted(() => {
   .profile-popup .equipped-galaxie-overlay { top: 0px !important; left: -14px !important; width: 108% !important; height: 103% !important; }
   .profile-popup .equipped-coeur-overlay { top: -24px !important; left: -20px; width: 139%; height: 122%; }
   .profile-popup .equipped-admin-planify-overlay { height: 102%; left: -1px; }
-}
-@media (max-width: 480px) {
-  .profile-popup.leaderboard-profile-popup { max-width: 100%; width: min(350px, 100%); border-radius: 12px; --profile-avatar-size: 100px; }
-  .profile-popup.leaderboard-profile-popup .profile-avatar-stage { height: 110px !important; }
-  .profile-popup.leaderboard-profile-popup .profile-avatar-scaler { width: 100px !important; height: 110px !important; }
-  .profile-popup.leaderboard-profile-popup .profile-avatar { height: 100px !important; }
 }
 .profile-popup .equipped-roi-overlay { top: -51%; left: 15%; width: 86%; height: 75%; }
 .profile-popup .equipped-cat-ears { top: -76px; left: -59px; width: 133%; height: 117%; }

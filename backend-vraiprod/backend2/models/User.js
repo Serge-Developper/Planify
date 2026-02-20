@@ -82,7 +82,8 @@ const userSchema = new mongoose.Schema({
     wheel: { type: Boolean, default: false },
     homework: { type: Boolean, default: false },
     exam: { type: Boolean, default: false },
-    shop: { type: Boolean, default: false }
+    shop: { type: Boolean, default: false },
+    borderColor: { type: Boolean, default: false }
   },
 
   pushSubscriptions: [{
