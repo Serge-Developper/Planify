@@ -10309,8 +10309,8 @@ onUnmounted(() => {
 
 .jojo-text-preview {
     position: absolute !important;
-    top: 8px !important;
-    left: 42px !important;
+    top: 3px !important;
+    left: 14px !important;
     width: 62% !important;
     height: auto !important;
     object-fit: contain !important;
@@ -12723,23 +12723,23 @@ onUnmounted(() => {
 
 @media (min-width: 320px) and (max-width: 768px) {
   .leaderboard-profile-popup .equipped-roi-overlay { top: -17% !important; left: 19% !important; width: 71% !important; height: 62% !important; }
-  .leaderboard-profile-popup .equipped-cat-ears { top: -80px !important; left: 11px !important; width: 89% !important; height: 117% !important; }
+  .leaderboard-profile-popup .equipped-cat-ears { top: -53px !important; left: 6px !important; width: 94% !important; height: 95% !important; }
   .leaderboard-profile-popup .equipped-angel-wings { top: -12% !important; left: 0% !important; width: 100% !important; height: 75% !important; z-index: 0 !important; }
   .leaderboard-profile-popup .equipped-tomb-raider { top: 12px !important; left: 8% !important; width: 83% !important; height: 43% !important; }
-  .leaderboard-profile-popup .equipped-stars { top: 10% !important; left: 18% !important; width: 64% !important; height: 80% !important; }
+  .leaderboard-profile-popup .equipped-stars { top: 10% !important; left: 23% !important; width: 54% !important; height: 80% !important; }
   .leaderboard-profile-popup .equipped-royal-frame { top: 6% !important; left: -3% !important; width: 132% !important; height: 88% !important; }
   .leaderboard-profile-popup .equipped-rainbow { top: 16% !important; left: 12% !important; width: 94% !important; height: 67% !important; }
-  .leaderboard-profile-popup .equipped-gentleman-overlay { top: -1px !important; left: 65px !important; width: 65% !important; height: 55% !important; }
-  .leaderboard-profile-popup .equipped-vinyle-overlay { top: 22px !important; left: 70px !important; width: 62% !important; height: 37% !important; }
+  .leaderboard-profile-popup .equipped-gentleman-overlay { top: 0px !important; left: 78px !important; width: 65% !important; height: 55% !important; }
+  .leaderboard-profile-popup .equipped-vinyle-overlay { top: -3px !important; left: 60px !important; width: 81% !important; height: 46% !important; }
   .leaderboard-profile-popup .equipped-advisory-inside { width: 75% !important; top: 34% !important; left: 40% !important; }
-  .leaderboard-profile-popup .equipped-asteroide-overlay { top: 104px !important; left: 75px !important; width: 25% !important; height: 50% !important; }
-  .leaderboard-profile-popup .equipped-absolute-cinema-overlay { top: 14% !important; left: -37% !important; width: 100% !important; height: 60% !important; }
-  .leaderboard-profile-popup .equipped-absolute-cinema-overlay-right { top: 14% !important; left: 37% !important; width: 100% !important; height: 60% !important; }
-  .leaderboard-profile-popup .equipped-camera-overlay { top: 49% !important; left: 24% !important; width: 26% !important; height: 39% !important; }
-  .leaderboard-profile-popup .equipped-flash-overlay { top: 12% !important; left: 32% !important; width: 41% !important; height: 59% !important; }
-  .leaderboard-profile-popup .equipped-chat-overlay { top: -18% !important; left: 30% !important; width: 70% !important; height: 90% !important; }
-  .leaderboard-profile-popup .equipped-pate-overlay { top: 55% !important; left: 26% !important; width: 18% !important; height: 25% !important; }
-  .leaderboard-profile-popup .equipped-daftpunk-overlay { top: 2% !important; left: 27% !important; width: 45% !important; height: 44% !important; }
+  .leaderboard-profile-popup .equipped-asteroide-overlay { top: 100px !important; left: 97px !important; width: 25% !important; height: 50% !important; }
+  .leaderboard-profile-popup .equipped-absolute-cinema-overlay { top: 14% !important; left: -30.5% !important; width: 100% !important; height: 60% !important; }
+  .leaderboard-profile-popup .equipped-absolute-cinema-overlay-right { top: 14% !important; left: 30.5% !important; width: 100% !important; height: 60% !important; }
+  .leaderboard-profile-popup .equipped-camera-overlay { top: 49% !important; left: 26% !important; width: 26% !important; height: 39% !important; }
+  .leaderboard-profile-popup .equipped-flash-overlay { top: 17% !important; left: 32% !important; width: 41% !important; height: 59% !important; }
+  .leaderboard-profile-popup .equipped-chat-overlay { top: -16% !important; left: 30% !important; width: 70% !important; height: 90% !important; }
+  .leaderboard-profile-popup .equipped-pate-overlay { top: 52% !important; left: 29% !important; width: 18% !important; height: 25% !important; }
+  .leaderboard-profile-popup .equipped-daftpunk-overlay { top: 3% !important; left: 30% !important; width: 38% !important; height: 41% !important; }
   .leaderboard-profile-popup .equipped-clippy-inside { top: 51% !important; left: 56% !important; width: 49% !important; height: 50% !important; }
   .leaderboard-profile-popup .equipped-discord-overlay { top: 44px !important; left: 31px !important; width: 72% !important; height: 72% !important; }
   .leaderboard-profile-popup .equipped-jojo-inside { bottom: -2px !important; left: 145px !important; width: 90% !important; height: 40% !important; }
@@ -12747,14 +12747,14 @@ onUnmounted(() => {
   .leaderboard-profile-popup .equipped-alpha-overlay { top: 42px !important; left: 55px !important; width: 59% !important; height: 65% !important; }
   .leaderboard-profile-popup .equipped-admin-planify-overlay { height: 63% !important; left: -1px !important; top: 18% !important; }
   .profile-popup.leaderboard-profile-popup .equipped-lunettes-pixel-inside { top: 50% !important; left: 50% !important; height: 108% !important; width: 107% !important; }
-  .profile-popup.leaderboard-profile-popup .equipped-clown-overlay { top: 42% !important; left: 50% !important; transform: translate(-50%, -50%) !important; width: 81% !important; height: 91% !important; }
+  .profile-popup.leaderboard-profile-popup .equipped-clown-overlay { top: 40% !important; left: 50% !important; transform: translate(-50%, -50%) !important; width: 68% !important; height: 91% !important; }
   .leaderboard-container .equipped-clown-nose {
     position: absolute !important;
     top: 54% !important;
     left: 48% !important;
     transform: translate(-50%, -50%) !important;
     width: 87% !important;
-    height: 40% !important;
+    height: 60% !important;
     object-fit: contain !important;
     pointer-events: none !important;
     z-index: 16 !important;
