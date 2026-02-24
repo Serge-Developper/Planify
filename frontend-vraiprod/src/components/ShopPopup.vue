@@ -14994,7 +14994,8 @@ onUnmounted(() => {
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
-    width: 277px !important;
+    width: min(100%, 320px) !important;
+    max-width: 320px !important;
     grid-template-columns: none !important;
     gap: 20px !important;
     position: relative !important;
@@ -15023,11 +15024,19 @@ onUnmounted(() => {
     justify-content: center !important;
   }
 
+  .faction-col.selected {
+    order: 0 !important;
+  }
+
+  .faction-col.unselected {
+    order: 1 !important;
+  }
+
   /* Centering cards and lists */
   .faction-total-card,
   .faction-total-card.selected {
-    width: 277px !important;
-    max-width: 275px !important;
+    width: min(100%, 320px) !important;
+    max-width: 320px !important;
     margin: 0 auto !important;
     position: relative !important;
     z-index: 2 !important;
@@ -15044,7 +15053,8 @@ onUnmounted(() => {
     box-sizing: border-box !important;
   }
   .faction-leaderboard-list {
-    padding: 0px !important;
+    padding-top: 5px !important;
+    padding-right: 10px !important;
   }
   .leaderboard-list.faction-leaderboard-list {
     width: min(100%, 320px) !important;
