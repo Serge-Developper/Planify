@@ -4,7 +4,7 @@
       <button class="close-btn" @click="$emit('close')">✕</button>
       <h1 class="shop-title">Boutique Planify</h1>
       <div class="coins-balance">
-        <img src="@/assets/img/planicoins.webp" alt="Coin" class="coin-icon" />
+        <img src="@/assets/PiècesPlanify.png" alt="Coin" class="coin-icon" />
         <span>{{ userCoins }} Planify Coins</span>
       </div>
       <div class="shop-grid">
@@ -14,7 +14,7 @@
           </div>
           <div class="item-name">{{ item.name }}</div>
           <div class="item-price">
-            <img src="@/assets/img/planicoins.webp" alt="Coin" class="coin-icon" />
+            <img src="@/assets/PiècesPlanify.png" alt="Coin" class="coin-icon" />
             {{ item.price }}
           </div>
           <button class="buy-btn" :disabled="userCoins < item.price || boughtItemId === item.id" @click="buyItem(item)">
@@ -33,7 +33,7 @@
 
 <script setup>
 import { ref, defineProps, defineEmits } from 'vue'
-import pieceP from '@/assets/img/planicoins.webp'
+import pieceP from '@/assets/PiècesPlanify.png'
 import catEars from '@/assets/accounttt.svg' // Utilisé comme placeholder
 
 const props = defineProps({
@@ -263,7 +263,7 @@ function buyItem(item) {
   .close-btn {
     right: 6px;
     top: 6px;
-    
+
   }
 }
-</style> 
+</style>

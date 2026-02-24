@@ -12,7 +12,7 @@
               </div>
             </div>
             <div class="coins-wallet">
-              <img src="@/assets/img/planicoins.webp" alt="Coin" class="coin-icon" />
+              <img src="@/assets/PiècesPlanify.png" alt="Coin" class="coin-icon" />
               <span class="coins-value">{{ formatCoins(userCoins) }}</span>
             </div>
           </div>
@@ -600,7 +600,7 @@
               </button>
             </template>
             <template v-else>
-              <img src="@/assets/img/planicoins.webp" alt="Coin" class="coin-icon" />
+              <img src="@/assets/PiècesPlanify.png" alt="Coin" class="coin-icon" />
               {{ getItemPrice(item) }}
             </template>
           </div>
@@ -750,7 +750,7 @@
               </div>
 
               <div class="item-name">{{ purchasePreviewItem?.name }}</div>
-              <div class="item-price"><img src="@/assets/img/planicoins.webp" alt="Coin" class="coin-icon" /> {{ getItemPrice(purchasePreviewItem) }}</div>
+              <div class="item-price"><img src="@/assets/PiècesPlanify.png" alt="Coin" class="coin-icon" /> {{ getItemPrice(purchasePreviewItem) }}</div>
               <div class="item-actions"><button class="buy-btn" :disabled="!isAdminOnly && (userCoins < getItemPrice(purchasePreviewItem))" @click="buyItem(purchasePreviewItem)">Acheter</button></div>
             </div>
             <div class="preview-card preview-leaderboard">
@@ -1055,7 +1055,7 @@
                 </select>
                 <button type="button" class="admin-reset-btn" @click.stop="onAdminReset(idx)" style="background:#5bc682;color:#fff;border:3px solid #000;border-radius:12px;padding:6px 10px;font-weight:800;">Reset</button>
               </div>
-              <button v-if="!coinsStore.hasItem(item.id)" class="buy-btn price-hover" @click="openPurchasePreview(item)"><span class="btn-label">{{ item.name }}</span><span class="btn-price"><img src="@/assets/img/planicoins.webp" alt="Coin" class="coin-icon coin-small" /> {{ getItemPrice(item) }}</span></button>
+              <button v-if="!coinsStore.hasItem(item.id)" class="buy-btn price-hover" @click="openPurchasePreview(item)"><span class="btn-label">{{ item.name }}</span><span class="btn-price"><img src="@/assets/PiècesPlanify.png" alt="Coin" class="coin-icon coin-small" /> {{ getItemPrice(item) }}</span></button>
               <button v-else class="owned-btn" disabled>Possédé</button>
               <button v-if="item.infoOnly || item.infoDescription || hasInfo(item)" class="info-btn" type="button" @click.stop="openInfoItem(item)">Plus d'infos</button>
             </div>
@@ -1080,7 +1080,7 @@
               </div>
 
               <div class="item-actions">
-                <button v-if="!coinsStore.hasItem(item.id)" class="buy-btn price-hover" @click="openPurchasePreview(item)"><span class="btn-label">{{ item.name }}</span><span class="btn-price"><img src="@/assets/img/planicoins.webp" alt="Coin" class="coin-icon coin-small" /> {{ getItemPrice(item) }}</span></button>
+                <button v-if="!coinsStore.hasItem(item.id)" class="buy-btn price-hover" @click="openPurchasePreview(item)"><span class="btn-label">{{ item.name }}</span><span class="btn-price"><img src="@/assets/PiècesPlanify.png" alt="Coin" class="coin-icon coin-small" /> {{ getItemPrice(item) }}</span></button>
                 <button v-else class="owned-btn" disabled>Possédé</button>
               </div>
             </div>
@@ -1096,7 +1096,7 @@
             :class="{ active: leaderboardFilter === 'coins' }"
             @click="leaderboardFilter = 'coins'"
           >
-            <img src="@/assets/img/planicoins.webp" alt="Coin" class="coin-icon" />
+            <img src="@/assets/PiècesPlanify.png" alt="Coin" class="coin-icon" />
           </button>
           <button
             class="filter-btn"
@@ -1411,7 +1411,7 @@
                 </div>
                 <div class="user-score">
                   <span class="score-value">
-                    {{ formatCoins(currentUserFactionEntry.factionCoins || 0) }} <img src="@/assets/img/planicoins.webp" alt="Coin" class="coin-icon-small" />
+                    {{ formatCoins(currentUserFactionEntry.factionCoins || 0) }} <img src="@/assets/PiècesPlanify.png" alt="Coin" class="coin-icon-small" />
                   </span>
                 </div>
 
@@ -1687,7 +1687,7 @@
                   <!-- Score -->
                   <div class="user-score">
                     <span class="score-value">
-                      {{ formatCoins(user.factionCoins || 0) }} <img src="@/assets/img/planicoins.webp" alt="Coin" class="coin-icon-small" />
+                      {{ formatCoins(user.factionCoins || 0) }} <img src="@/assets/PiècesPlanify.png" alt="Coin" class="coin-icon-small" />
                     </span>
                   </div>
                 </div>
@@ -1966,7 +1966,7 @@
                 </div>
                 <div class="user-score">
                   <span class="score-value">
-                    {{ formatCoins(currentUserFactionEntry.factionCoins || 0) }} <img src="@/assets/img/planicoins.webp" alt="Coin" class="coin-icon-small" />
+                    {{ formatCoins(currentUserFactionEntry.factionCoins || 0) }} <img src="@/assets/PiècesPlanify.png" alt="Coin" class="coin-icon-small" />
                   </span>
                 </div>
               </div>
@@ -2246,7 +2246,7 @@
                   <!-- Score -->
                   <div class="user-score">
                     <span class="score-value">
-                      {{ formatCoins(user.factionCoins || 0) }} <img src="@/assets/img/planicoins.webp" alt="Coin" class="coin-icon-small" />
+                      {{ formatCoins(user.factionCoins || 0) }} <img src="@/assets/PiècesPlanify.png" alt="Coin" class="coin-icon-small" />
                     </span>
                   </div>
                 </div>
@@ -2259,7 +2259,7 @@
         <div v-if="!isMobile || leaderboardFilter !== 'factions'" class="personal-section" style="order: 1;">
           <div class="toggle-header">
             <button class="toggle-btn" :class="{ active: leaderboardFilter === 'coins' }" @click="leaderboardFilter = 'coins'">
-              <img src="@/assets/img/planicoins.webp" alt="Coin" class="coin-icon" />
+              <img src="@/assets/PiècesPlanify.png" alt="Coin" class="coin-icon" />
             </button>
             <button class="toggle-btn" :class="{ active: leaderboardFilter === 'tasks' }" @click="leaderboardFilter = 'tasks'">
               <img src="@/assets/img/bouton_valider_cocher.png" alt="Tâches" class="coin-icon" />
@@ -2663,7 +2663,7 @@
             <!-- Score -->
             <div class="user-score">
               <span v-if="leaderboardFilter === 'coins'" class="score-value">
-                {{ formatCoins(user.coins) }} <img src="@/assets/img/planicoins.webp" alt="Coin" class="coin-icon-small" />
+                {{ formatCoins(user.coins) }} <img src="@/assets/PiècesPlanify.png" alt="Coin" class="coin-icon-small" />
               </span>
               <span v-else-if="leaderboardFilter === 'tasks'" class="score-value">
                 {{ user.completedTasks || 0 }} <img src="@/assets/img/bouton_valider_cocher.png" alt="Tâches" class="coin-icon-small" />
@@ -3049,7 +3049,7 @@
                   </div>
                 </div>
               </div>
-              <div class="profile-pill profile-coins">{{ formatCoins((selectedUser?.leaderboardCoins ?? selectedUser?.coins ?? 0)) }} <img src="@/assets/img/planicoins.webp" alt="Coin" class="coin-icon" /></div>
+              <div class="profile-pill profile-coins">{{ formatCoins((selectedUser?.leaderboardCoins ?? selectedUser?.coins ?? 0)) }} <img src="@/assets/PiècesPlanify.png" alt="Coin" class="coin-icon" /></div>
             </div>
             </div>
             <div class="profile-divider" aria-hidden="true"></div>
@@ -9173,7 +9173,7 @@ onUnmounted(() => {
     gap: 12px !important;
   }
 }
-.coins-wallet { background: #ffd84a; border: 2px solid #5bc682; border-radius: 16px; padding: 20px 14px; display: inline-flex; align-items: center; gap: 8px; color: #111; box-shadow: 0 4px 10px rgba(0,0,0,0.12); }
+.coins-wallet { border: 2px solid #5bc682; border-radius: 16px; padding: 20px 14px; display: inline-flex; align-items: center; gap: 8px; color: #111; box-shadow: 0 4px 10px rgba(0,0,0,0.12); }
 .coins-wallet .coin-icon { width: 22px; height: 22px; }
 .coins-wallet .coins-value { font-size: 20px; line-height: 1; }
 .header-right { display: flex;    align-items: center; gap: 8px;  justify-content: flex-end; }
@@ -11724,6 +11724,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 3px;
 }
 
 .coin-icon-small {

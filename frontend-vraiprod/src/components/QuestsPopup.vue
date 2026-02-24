@@ -47,9 +47,9 @@
 
               <div class="quest-details">
                 <div class="reward">
-                  <img src="@/assets/img/planicoins.webp" alt="Coins" class="coin-icon" />
-                  <span>{{ q.reward }}</span>
-                </div>
+                <img src="@/assets/PiècesPlanify.png" alt="Coins" class="coin-icon" />
+                <span>{{ q.reward }}</span>
+              </div>
                 <div class="duration" aria-live="polite">Temps restant: {{ nextDailyResetStr }}</div>
               </div>
 
@@ -100,7 +100,7 @@
               <div class="quest-name">{{ rq.title }}</div>
               <div class="quest-details">
                 <div class="reward">
-                  <img src="@/assets/img/planicoins.webp" alt="Coins" class="coin-icon" />
+                  <img src="@/assets/PiècesPlanify.png" alt="Coins" class="coin-icon" />
                   <span>{{ rq.reward }}</span>
                 </div>
               </div>
@@ -150,7 +150,7 @@
             <img :src="planifyCoin" alt="Planify Coins" class="bonus-coin-large" />
             <div class="coin-base"></div>
           </div>
-          <div class="bonus-amount"><span class="amount-text">+{{ bonusAwardAmount }}</span><img src="@/assets/img/planicoins.webp" alt="Coin" class="amount-coin" /></div>
+          <div class="bonus-amount"><span class="amount-text">+{{ bonusAwardAmount }}</span><img src="@/assets/PiècesPlanify.png" alt="Coin" class="amount-coin" /></div>
         </div>
         <div class="bonus-actions">
           <button class="ok-cta" @click="showBonusPopup=false">OK</button>
@@ -171,8 +171,8 @@
         <div class="confirm-title">Bonus des quêtes journalières</div>
         <div class="confirm-msg">
           <ul class="bonus-info-list">
-            <li>Complétez les 3 quêtes journalières pour obtenir un bonus de <img src="@/assets/img/planicoins.webp" alt="Coins" class="coin-icon" /> 50</li>
-            <li>Si le bonus est désactivé (re-roll ou expiration), il est réduit à <img src="@/assets/img/planicoins.webp" alt="Coins" class="coin-icon" /> 25</li>
+            <li>Complétez les 3 quêtes journalières pour obtenir un bonus de <img src="@/assets/PiècesPlanify.png" alt="Coins" class="coin-icon" /> 50</li>
+            <li>Si le bonus est désactivé (re-roll ou expiration), il est réduit à <img src="@/assets/PiècesPlanify.png" alt="Coins" class="coin-icon" /> 25</li>
             <li>Le re-roll est possible uniquement sur une quête active (non complétée).</li>
           </ul>
         </div>
@@ -190,7 +190,7 @@
           <div class="toast-title">Quête terminée</div>
           <div class="toast-sub">{{ t.title }}</div>
           <div class="toast-reward">
-            <img src="@/assets/img/planicoins.webp" alt="Coins" class="coin-icon" />
+            <img src="@/assets/PiècesPlanify.png" alt="Coins" class="coin-icon" />
             <span>+{{ t.reward }} Planify Coins</span>
           </div>
         </div>

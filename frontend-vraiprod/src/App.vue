@@ -257,7 +257,7 @@ onUnmounted(() => {
     <Navbar />
     <RouterView />
     <Footer />
-    
+
     <!-- Popup de notification d'item reçu -->
     <ItemReceivedPopup
       :show="showItemReceivedPopup"
@@ -278,7 +278,7 @@ onUnmounted(() => {
             <span>{{ t.desc }}</span>
           </div>
           <div v-else-if="t.reward" class="toast-reward">
-            <img src="@/assets/img/planicoins.webp" alt="Coins" class="coin-icon" />
+            <img src="@/assets/PiècesPlanify.png" alt="Coins" class="coin-icon" />
             <span>+{{ t.reward }} Planify Coins</span>
           </div>
         </div>

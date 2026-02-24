@@ -33,7 +33,7 @@
           <div v-if="isLoggedIn" class="user-account-wrapper" style="position:relative;">
             <!-- Compteur de coins à droite du bouton account -->
             <div class="coins-counter" :class="{ 'with-timer': !coinsStore.canSpinToday }">
-                <span class="coins-display">{{ formattedBalance }} <img src="@/assets/son/../img/planicoins.webp" alt="Coin" class="coin-icon" /></span>
+                <span class="coins-display">{{ formattedBalance }} <img src="@/assets/PiècesPlanify.png" alt="Coin" class="coin-icon" /></span>
                 <span class="coins-separator" aria-hidden="true"></span>
                 <button class="fortune-wheel-btn" @click="openFortuneWheel" :disabled="!coinsStore.canSpinToday" title="Roue de la fortune">
                   <span class="fortune-wheel-icon-wrap" :class="{ 'fortune-available': coinsStore.canSpinToday }">
@@ -425,7 +425,7 @@
             <div v-else class="user-account-wrapper" style="position:relative;">
               <!-- Compteur de coins dans le menu mobile -->
               <div class="coins-counter" :class="{ 'with-timer': !coinsStore.canSpinToday }">
-                <span class="coins-display">{{ formattedBalance }} <img src="@/assets/img/planicoins.webp" alt="Coin" class="coin-icon" /></span>
+                <span class="coins-display">{{ formattedBalance }} <img src="@/assets/PiècesPlanify.png" alt="Coin" class="coin-icon" /></span>
                 <span class="coins-separator" aria-hidden="true"></span>
                 <button class="fortune-wheel-btn" @click="openFortuneWheel" :disabled="!coinsStore.canSpinToday" title="Roue de la fortune">
                     <span class="fortune-wheel-icon-wrap" :class="{ 'fortune-available': coinsStore.canSpinToday }">
@@ -851,7 +851,7 @@
           <p>
             Vos PlanifyCoins actuels :
             <span class="coins-value">{{ formattedWheelBalance }}</span>
-            <img src="@/assets/img/planicoins.webp" alt="Coin" class="coin-icon" />
+            <img src="@/assets/PiècesPlanify.png" alt="Coin" class="coin-icon" />
           </p>
           <p class="spin-info">
             <span v-if="coinsStore.canSpinToday" class="spin-available">Tous les weekends la roue est x1.5 !</span>
@@ -1059,7 +1059,7 @@
                   </div>
                 </div>
               </div>
-              <div class="profile-pill profile-coins">{{ formattedBalance }} <img src="@/assets/img/planicoins.webp" alt="Coin" class="coin-icon" /></div>
+              <div class="profile-pill profile-coins">{{ formattedBalance }} <img src="@/assets/PiècesPlanify.png" alt="Coin" class="coin-icon" /></div>
               <button class="logout-btn profile-logout-left" @click="logout">Déconnexion</button>
             </div>
           </div>
