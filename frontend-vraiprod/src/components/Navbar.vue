@@ -1216,6 +1216,63 @@
             <span v-else-if="pushUpdateState==='ok'">Notifications mises à jour ✓</span>
             <span v-else>{{ pushEnabled ? 'Mettre à jour' : 'Activer' }}</span>
           </button>
+          <div class="push-tuto-block">
+            <div class="push-tuto-title">Installer Planify sur mobile</div>
+            <div class="push-tuto-buttons">
+              <button class="push-tuto-btn android" type="button" @click="showAndroidPushTuto = true">
+                <svg class="push-tuto-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="M16.36 6.5 18.16 4.7a.75.75 0 1 0-1.06-1.06L15.1 5.64A7.86 7.86 0 0 0 12 5c-1.12 0-2.19.24-3.16.68L6.9 3.64A.75.75 0 1 0 5.84 4.7l1.8 1.8A7.03 7.03 0 0 0 5 12v7a1 1 0 0 0 1 1h1v2a1 1 0 1 0 2 0v-2h6v2a1 1 0 1 0 2 0v-2h1a1 1 0 0 0 1-1v-7a7.03 7.03 0 0 0-2.64-5.5ZM9 10.25a.75.75 0 1 1 0 1.5.75.75 0 0 1 0-1.5Zm6 0a.75.75 0 1 1 0 1.5.75.75 0 0 1 0-1.5Z" fill="currentColor"/>
+                </svg>
+                <span>Android</span>
+              </button>
+              <button class="push-tuto-btn ios" type="button" @click="showIosPushTuto = true">
+                <svg class="push-tuto-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="M15.46 2.18c-.94.66-1.57 1.7-1.4 2.78 1.03.08 2.1-.56 2.7-1.36.62-.83.98-1.9.83-2.96-.99-.06-2.03.52-2.13 1.54Zm4.58 14.2c-.44 1.01-.66 1.46-1.2 2.33-.76 1.2-1.83 2.71-3.2 2.73-1.22.02-1.55-.82-3.19-.82-1.66 0-2.02.8-3.2.84-1.36.03-2.41-1.31-3.18-2.51-1.86-2.88-2.05-6.3-.9-8.1.78-1.23 2.01-1.95 3.22-1.95 1.26 0 2.05.83 3.2.83 1.11 0 1.78-.83 3.19-.83 1.07 0 2.21.61 2.98 1.62-2.63 1.43-2.21 5.2.48 5.86Z" fill="currentColor"/>
+                </svg>
+                <span>iOS</span>
+              </button>
+            </div>
+            <div class="push-tuto-warning">🔔 Si aucune demande de notification n’apparaît après “Activer”, réinstalle Planify via “Ajouter à l’écran d’accueil”.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="showAndroidPushTuto" class="push-tuto-overlay" @click.self="showAndroidPushTuto = false">
+      <div class="push-tuto-modal" role="dialog" aria-modal="true">
+        <button class="close-btn" @click="showAndroidPushTuto = false" @mouseover="hoverCloseAndroidPush = true" @mouseleave="hoverCloseAndroidPush = false">
+          <img :src="hoverCloseAndroidPush ? closeHoverImg : closeImg" alt="Fermer" class="close-img" />
+        </button>
+        <h3 class="push-tuto-title-modal android">Installation sur Android</h3>
+        <div class="push-tuto-body">
+          <ol class="push-tuto-steps">
+            <li>Ouvrez <strong>Planify</strong> dans <strong>Chrome</strong>.</li>
+            <li>Appuyez sur les <strong>trois points</strong> en haut à droite.</li>
+            <li>Cliquez sur <strong>"Ajouter à l’écran d’accueil"</strong>.</li>
+            <li>Validez l'ajout.</li>
+            <li>Ouvrez Planify depuis la nouvelle icône sur votre écran d'accueil.</li>
+          </ol>
+          <p class="push-tuto-conclusion">✅ Une fois ouvert comme application, les notifications fonctionneront correctement.</p>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="showIosPushTuto" class="push-tuto-overlay" @click.self="showIosPushTuto = false">
+      <div class="push-tuto-modal" role="dialog" aria-modal="true">
+        <button class="close-btn" @click="showIosPushTuto = false" @mouseover="hoverCloseIosPush = true" @mouseleave="hoverCloseIosPush = false">
+          <img :src="hoverCloseIosPush ? closeHoverImg : closeImg" alt="Fermer" class="close-img" />
+        </button>
+        <h3 class="push-tuto-title-modal ios">Installation sur iOS</h3>
+        <div class="push-tuto-body">
+          <div class="push-tuto-ios-warning">⚠️ <strong>Safari</strong> est obligatoire pour cette manipulation.</div>
+          <ol class="push-tuto-steps">
+            <li>Ouvrez <strong>Planify</strong> dans <strong>Safari</strong>.</li>
+            <li>Appuyez sur l’icône <strong>Partager</strong> (carré avec flèche vers le haut).</li>
+            <li>Faites défiler et cliquez sur <strong>"Ajouter à l’écran d’accueil"</strong>.</li>
+            <li>Validez en cliquant sur "Ajouter".</li>
+            <li>Ouvrez Planify depuis la nouvelle icône sur votre écran d'accueil.</li>
+          </ol>
+          <p class="push-tuto-conclusion">✅ Sur iOS, les notifications <strong>ne fonctionnent QUE</strong> si le site est installé ainsi.</p>
         </div>
       </div>
     </div>
@@ -1428,10 +1485,14 @@ const showProfilePopup = ref(false)
 const showRedeemPopup = ref(false)
 const showForgotPasswordProfile = ref(false)
 const showPushSettings = ref(false)
+const showAndroidPushTuto = ref(false)
+const showIosPushTuto = ref(false)
+const hoverCloseAndroidPush = ref(false)
+const hoverCloseIosPush = ref(false)
 const pushEnabled = ref(false)
 const pushPrefs = ref({ wheel: false, homework: false, exam: false, shop: false, borderColor: false })
 const pushUpdateState = ref('idle')
-function togglePushSettings(){ showPushSettings.value=!showPushSettings.value; if(showPushSettings.value){ loadPushSettings() } else { pushUpdateState.value='idle' } }
+function togglePushSettings(){ showPushSettings.value=!showPushSettings.value; if(showPushSettings.value){ loadPushSettings() } else { pushUpdateState.value='idle'; showAndroidPushTuto.value=false; showIosPushTuto.value=false; hoverCloseAndroidPush.value=false; hoverCloseIosPush.value=false } }
 watch(pushPrefs,()=>{ if(pushUpdateState.value==='ok') pushUpdateState.value='idle' },{deep:true})
 async function loadPushSettings(){ try{ const res=await secureApiCall('/users/me/push-preferences',{method:'GET'}); const p=res && res.pushPreferences ? res.pushPreferences : {}; pushEnabled.value=!!p.enabled; pushPrefs.value={ wheel: !!p.wheel, homework: !!p.homework, exam: !!p.exam, shop: !!p.shop, borderColor: !!p.borderColor }; }catch{ try{ const p=(user.value && user.value.pushPreferences) || {}; pushEnabled.value=!!p.enabled; pushPrefs.value={ wheel: !!p.wheel, homework: !!p.homework, exam: !!p.exam, shop: !!p.shop, borderColor: !!p.borderColor }; }catch{} } }
 async function applyPushSettings(){ try{ pushUpdateState.value='working'; let canEnable=true; if(typeof Notification!=='undefined'){ if(Notification.permission!=='granted'){ const perm=await Notification.requestPermission(); if(perm!=='granted') canEnable=false } } else { canEnable=false } if(canEnable){ const subOk=await subscribeToPushNotifications(); if(!subOk) canEnable=false } const enabled=!!canEnable; pushEnabled.value=enabled; await secureApiCall('/users/me/push-preferences',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled:enabled,wheel:!!pushPrefs.value.wheel,homework:!!pushPrefs.value.homework,exam:!!pushPrefs.value.exam,shop:!!pushPrefs.value.shop,borderColor:!!pushPrefs.value.borderColor})}); pushUpdateState.value='ok'; }catch{ pushUpdateState.value='idle' } }
@@ -4178,6 +4239,12 @@ watch(showShopPopup, (v) => {
 watch(showPushSettings, (v) => {
   hoverClosePush.value = false
 })
+watch(showAndroidPushTuto, (v) => {
+  if (!v) hoverCloseAndroidPush.value = false
+})
+watch(showIosPushTuto, (v) => {
+  if (!v) hoverCloseIosPush.value = false
+})
 watch(showUploadChoice, (v) => {
   hoverClosePush.value = false
 })
@@ -5239,6 +5306,27 @@ body, html {
 .choice-card { display:flex; flex-direction:column; align-items:center; gap:8px; padding:14px 16px; border:1px solid var(--border); border-radius:12px; background: var(--card-bg); color: var(--text); cursor:pointer; transition: transform .18s ease, filter .2s ease; }
 .choice-card:hover { transform: translateY(-1px); filter: brightness(1.05); }
 .push-settings .odoo-login-btn { margin-top: 8px; }
+.push-tuto-block { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+.push-tuto-title { font-weight: 600; }
+.push-tuto-buttons { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.push-tuto-btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); cursor: pointer; font-weight: 600; transition: transform .18s ease, filter .2s ease; }
+.push-tuto-btn.android { background: #3ddc84; color: #ffffff; border-color: #2fbf72; }
+.push-tuto-btn.ios { background: #000000; color: #ffffff; border-color: #111111; }
+.push-tuto-btn:hover { transform: translateY(-1px); filter: brightness(1.05); }
+.push-tuto-icon { width: 18px; height: 18px; display: block; }
+.push-tuto-warning { font-size: 0.9em; color: #856404; background: #fff3cd; border: 1px solid #ffeeba; padding: 10px 12px; border-radius: 10px; }
+[data-theme="dark"] .push-tuto-warning { background: #2a2a2a; border-color: #444444; color: #ffd700; }
+.push-tuto-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; z-index: 10001; padding: 16px; }
+.push-tuto-modal { background: #ffffff; color: var(--text); border: 1px solid var(--border); border-radius: 18px; width: 520px; max-width: 92vw; max-height: 90vh; padding: 24px; position: relative; display: flex; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.35); }
+[data-theme="dark"] .push-tuto-modal { background: #0f1620; border-color: #1f2a37; }
+.push-tuto-modal .close-btn { position: absolute; top: 12px; right: 12px; background: transparent; border: none; width: 40px; height: 40px; padding: 0; cursor: pointer; }
+.push-tuto-body { overflow-y: auto; padding-right: 4px; }
+.push-tuto-title-modal { margin: 4px 0 12px; font-size: 22px; text-align: center; }
+.push-tuto-steps { padding-left: 22px; margin: 0 0 16px; line-height: 1.55; }
+.push-tuto-steps li { margin-bottom: 10px; }
+.push-tuto-conclusion { font-weight: 700; color: #34d399; text-align: center; margin: 0; }
+.push-tuto-ios-warning { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 8px; margin-bottom: 12px; text-align: center; }
+[data-theme="dark"] .push-tuto-ios-warning { background: #3b1f24; color: #ffd1d1; }
 @media (max-width: 900px) {
   .forgot-notification-row { flex-direction: column; }
 }
