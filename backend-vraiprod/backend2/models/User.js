@@ -34,6 +34,8 @@ const userSchema = new mongoose.Schema({
   completedTasks: { type: Number, default: 0 }, // Nombre de tâches complétées
   validations: { type: Number, default: 0 }, // Nombre de validations
   lastSpinDate: { type: Date, default: null }, // Date du dernier spin
+  lastWheelRewardName: { type: String, default: null },
+  lastWheelRewardYmd: { type: String, default: null },
   lossStreak: { type: Number, default: 0 }, // Pertes consécutives (protection roue)
   wheelNotifyLastYmd: { type: String, default: null },
 

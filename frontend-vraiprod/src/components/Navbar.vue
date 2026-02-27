@@ -2833,61 +2833,53 @@ async function handleSpinRequest() {
 async function handleWheelResult(segment) {
   console.log('🎉 Résultat de la roue (animation):', segment)
 
+  const result = lastSpinResult.value
+  const hasResult = !!(result && result.success)
+
   // Mettre à jour le solde maintenant que l'animation est terminée
-  if (lastSpinResult.value && lastSpinResult.value.success) {
-    // Mise à jour optimiste immédiate
-    if (typeof lastSpinResult.value.newCoins === 'number') {
-      coinsStore.balance = lastSpinResult.value.newCoins
-    } else if (typeof lastSpinResult.value.coinsWon === 'number') {
-      coinsStore.balance = (coinsStore.balance || 0) + lastSpinResult.value.coinsWon
+  if (hasResult) {
+    if (typeof result.newCoins === 'number') {
+      coinsStore.balance = result.newCoins
+    } else if (typeof result.coinsWon === 'number') {
+      coinsStore.balance = (coinsStore.balance || 0) + result.coinsWon
     }
 
-    // Déclencher un refresh du leaderboard si un gain positif a été obtenu
     try {
-      const won = (typeof lastSpinResult.value.coinsWon === 'number') ? lastSpinResult.value.coinsWon : 0
+      const won = (typeof result.coinsWon === 'number') ? result.coinsWon : 0
       if (won > 0) {
         coinsStore.leaderboardNeedsRefresh = true
       }
     } catch {}
 
-    // Synchronisation avec le backend
     await coinsStore.loadBalance()
-    lastSpinResult.value = null
   }
 
-  // Gérer le cas Perdu et les récompenses positives
-  if (segment.label === 'Perdu') {
-    // Met à jour la série de pertes et l'état de protection
+  const coinsWon = (hasResult && typeof result.coinsWon === 'number') ? result.coinsWon : null
+  const isGalaxy = hasResult ? (result.rewardItemId === 25) : (segment.type === 'galaxy')
+  const isLost = hasResult ? (!result.rewardItemId && !(coinsWon && coinsWon > 0)) : (segment.label === 'Perdu')
+
+  if (isLost) {
     coinsStore.lossStreak = Math.min(2, (coinsStore.lossStreak || 0) + 1)
-    // Activation immédiate du 3ᵉ bouclier doré dès 2 défaites
     coinsStore.protectionReady = coinsStore.lossStreak >= 2
     spinMessage.value = `😔 Dommage, vous n'avez rien gagné cette fois-ci !`
-  } else if (segment.type === 'galaxy' || (lastSpinResult.value && lastSpinResult.value.rewardItemId === 25)) {
-    // Récompense item Galaxie
+  } else if (isGalaxy) {
     coinsStore.lossStreak = 0
     coinsStore.protectionReady = false
-    // uiProtectionHold reste true jusqu’à fermeture de la pop-up
     spinMessage.value = `Félicitations ! Vous avez obtenu l'item Galaxie !`
-    // Recharger l'inventaire immédiatement pour afficher l'item débloqué dans la Collection
     try {
       await coinsStore.loadInventory()
     } catch (e) {}
   } else {
-    // Victoire ou récompense item
-    const used = !!(lastSpinResult.value && lastSpinResult.value.protectionUsed)
+    const used = hasResult ? !!result.protectionUsed : false
     if (used) {
-      // Protection consommée: reset des boucliers
       coinsStore.lossStreak = 0
       coinsStore.protectionReady = false
     } else {
-      // Ne pas reset sur une victoire normale si la protection n’est pas utilisée
       coinsStore.lossStreak = coinsStore.lossStreak || 0
       coinsStore.protectionReady = coinsStore.lossStreak >= 2
     }
-    // uiProtectionHold reste true jusqu’à fermeture de la pop-up
-    // Afficher exactement la valeur indiquée par le segment affiché
-    const won = (lastSpinResult.value && typeof lastSpinResult.value.coinsWon === 'number')
-      ? lastSpinResult.value.coinsWon
+    const won = hasResult && coinsWon !== null
+      ? coinsWon
       : parseInt(segment.label.match(/\d+/)?.[0] || '0')
     spinMessage.value = isWeekend.value
       ? `🎉 WEEKEND BONUS x1.5 ! Félicitations ! Vous avez gagné ${won} coins !`

@@ -533,8 +533,17 @@ router.post('/spin-wheel', verifyToken, async (req, res) => {
       ? rewards.map(r => ({ ...r, probability: (Number(r.probability) || 0) / totalProb }))
       : rewards.map(r => ({ ...r, probability: 1 / rewards.length }));
 
-    // Tirage pondéré via générateur cryptographique
-    const reward = pickWeightedCrypto(normalized) || normalized[normalized.length - 1];
+    const lastRewardName = user.lastWheelRewardName || null;
+    const lastRewardYmd = user.lastWheelRewardYmd || null;
+    const avoidRepeat = !!(lastRewardName && lastRewardYmd && lastRewardYmd !== todayParis);
+
+    let reward = pickWeightedCrypto(normalized) || normalized[normalized.length - 1];
+    if (avoidRepeat && reward && String(reward.name || '') === String(lastRewardName) && normalized.length > 1) {
+      const filtered = normalized.filter(r => String(r.name || '') !== String(lastRewardName));
+      if (filtered.length > 0) {
+        reward = pickWeightedCrypto(filtered) || filtered[filtered.length - 1];
+      }
+    }
 
     // Les weekends: on n'applique PAS de *2 supplémentaire, les montants sont déjà fixés
     const baseCoins = (typeof reward.coins === 'number') ? reward.coins : 0;
@@ -584,6 +593,8 @@ router.post('/spin-wheel', verifyToken, async (req, res) => {
       user.lossStreak = Math.min(2, (user.lossStreak || 0) + 1); // incrémenter sur défaite
     }
 
+    user.lastWheelRewardName = rewardName;
+    user.lastWheelRewardYmd = todayParis;
     user.lastSpinDate = now;
     user.repeatable = user.repeatable || {};
     function incAndAward(key, threshold, amount) {
