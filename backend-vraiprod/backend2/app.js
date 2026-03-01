@@ -9,6 +9,7 @@ const rateLimit = require('express-rate-limit');
 const path = require('path'); // Added for serving static files
 const jwt = require('jsonwebtoken');
 const User = require('./models/User');
+const Faction = require('./models/Faction');
 
 let webpush; try { webpush = require('web-push'); } catch {}
 const VAPID_PUBLIC_KEY = process.env.PUBLIC_KEY || process.env.VAPID_PUBLIC_KEY || '';
@@ -362,6 +363,38 @@ function getParisYMD(date = new Date()) {
   return fmt.format(date);
 }
 
+function getParisParts(date = new Date()) {
+  const fmt = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Paris',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
+  const parts = fmt.formatToParts(date);
+  const map = {};
+  for (const p of parts) {
+    if (p.type !== 'literal') map[p.type] = p.value;
+  }
+  return {
+    year: Number(map.year),
+    month: Number(map.month),
+    day: Number(map.day),
+    hour: Number(map.hour),
+    minute: Number(map.minute),
+    second: Number(map.second)
+  };
+}
+
+async function ensureFactions() {
+  for (const name of ['Bagnat','Fermier']) {
+    await Faction.updateOne({ name }, { $setOnInsert: { name } }, { upsert: true, setDefaultsOnInsert: true });
+  }
+}
+
 async function sendWheelDailyPush() {
   try {
     if (!webpush || !VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) return;
@@ -407,6 +440,43 @@ function scheduleWheelPush() {
   setTimeout(async () => {
     await sendWheelDailyPush();
     scheduleWheelPush();
+scheduleMonthlyPlanifyCoinsReset();
+  }, waitMs);
+}
+
+async function runMonthlyPlanifyCoinsResetIfNeeded() {
+  try {
+    if (mongoose.connection?.readyState !== 1) return;
+    await ensureFactions();
+    const parts = getParisParts();
+    if (parts.day !== 1) return;
+    const monthKey = `${parts.year}-${String(parts.month).padStart(2, '0')}`;
+    const ref = await Faction.findOne({ name: 'Bagnat' }).select('lastMonthlyLeaderboardResetMonth').lean();
+    if (ref && ref.lastMonthlyLeaderboardResetMonth === monthKey) return;
+
+    await User.updateMany({ role: { $ne: 'admin' } }, { $set: { leaderboardCoins: 0 } });
+    await Faction.updateMany(
+      { name: { $in: ['Bagnat','Fermier'] } },
+      { $set: { lastMonthlyLeaderboardResetMonth: monthKey } }
+    );
+  } catch {}
+}
+
+function scheduleMonthlyPlanifyCoinsReset() {
+  runMonthlyPlanifyCoinsResetIfNeeded();
+  const nowParis = getParisNow();
+  const next = new Date(nowParis);
+  next.setDate(1);
+  next.setHours(0, 0, 0, 0);
+  if (next.getTime() <= nowParis.getTime()) {
+    next.setMonth(next.getMonth() + 1);
+    next.setDate(1);
+    next.setHours(0, 0, 0, 0);
+  }
+  const waitMs = Math.max(1000, next.getTime() - nowParis.getTime());
+  setTimeout(async () => {
+    await runMonthlyPlanifyCoinsResetIfNeeded();
+    scheduleMonthlyPlanifyCoinsReset();
   }, waitMs);
 }
 

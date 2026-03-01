@@ -976,13 +976,12 @@ router.get('/', verifyToken, async (req, res) => {
         u.purchasedItems.push({ itemId: 0, itemName: 'Bordure Classique', purchaseDate: new Date(), equipped: false })
         try { await u.save() } catch (e) { /* ignore */ }
       }
-      // Backfill robuste: si leaderboardCoins n'est pas strictement positif,
+      // Backfill robuste: si leaderboardCoins n'existe pas,
       // et qu'on trouve un solde positif (legacy ou wallet), on initialise leaderboardCoins une fois.
       const legacyCoins = Number(legacyCoinsMap.get(String(u._id))) || 0;
       const wallet = Number(u.coins) || 0;
-      const lb = Number(u.leaderboardCoins);
-      const hasPositiveLb = Number.isFinite(lb) && lb > 0;
-      if (!hasPositiveLb && (legacyCoins > 0 || wallet > 0)) {
+      const hasLb = !(u.leaderboardCoins === undefined || u.leaderboardCoins === null);
+      if (!hasLb && (legacyCoins > 0 || wallet > 0)) {
         u.leaderboardCoins = Math.max(legacyCoins, wallet);
         try { await u.save() } catch (e) { /* ignore */ }
       }
@@ -1061,9 +1060,8 @@ router.get('/leaderboard', verifyToken, async (req, res) => {
       }
       const legacyCoins = Number(legacyCoinsMap.get(String(u._id))) || 0;
       const wallet = Number(u.coins) || 0;
-      const lb = Number(u.leaderboardCoins);
-      const hasPositiveLb = Number.isFinite(lb) && lb > 0;
-      if (!hasPositiveLb && (legacyCoins > 0 || wallet > 0)) {
+      const hasLb = !(u.leaderboardCoins === undefined || u.leaderboardCoins === null);
+      if (!hasLb && (legacyCoins > 0 || wallet > 0)) {
         u.leaderboardCoins = Math.max(legacyCoins, wallet);
         try { await u.save(); } catch (e) { /* ignore */ }
       }

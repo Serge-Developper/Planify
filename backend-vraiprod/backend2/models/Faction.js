@@ -7,7 +7,9 @@ const factionSchema = new mongoose.Schema({
   leaderboardCoinPrice: { type: Number, default: 1 },
   winnerMessage: { type: String, default: 'Votre faction a gagné 🎉' },
   loserMessage: { type: String, default: 'Votre faction fera mieux la prochaine fois 💪' },
-  lastMonthlyRewardsMonth: { type: String, default: null }
+  lastMonthlyRewardsMonth: { type: String, default: null },
+  lastMonthlyFactionResetMonth: { type: String, default: null },
+  lastMonthlyLeaderboardResetMonth: { type: String, default: null }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Faction', factionSchema);

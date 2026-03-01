@@ -50,7 +50,7 @@
             <option value="creation">Création numérique</option>
             <option value="strategie">Stratégie de communication</option>
           </select>
-          
+
           <select v-model="eventForm.year" required>
             <option value="">Toutes années</option>
             <option value="BUT1">1ère année</option>
@@ -613,6 +613,30 @@
               </span>
             </div>
 
+            <div class="row" style="margin-top:16px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+              <h4 style="margin:0; color:#000;">Reset leaderboard PlanifyCoins</h4>
+              <button class="delete-btn" @click="resetLeaderboardCoins" :disabled="resetLeaderboardCoinsLoading">
+                {{ resetLeaderboardCoinsLoading ? 'Reset…' : 'Réinitialiser le leaderboard' }}
+              </button>
+              <span style="color:#6b7280;">
+                Remet à zéro uniquement les PlanifyCoins du leaderboard (pas le wallet).
+              </span>
+            </div>
+
+            <div class="row" style="margin-top:16px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+              <h4 style="margin:0; color:#000;">Switcher les factions (leaderboard)</h4>
+              <button class="btn-mini" @click="switchFactionUsers" :disabled="switchFactionLoading">
+                {{ switchFactionLoading ? 'Switch…' : 'Lancer le switch' }}
+              </button>
+            </div>
+            <div class="row" style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+              <label style="display:flex; gap:6px; align-items:center;">
+                <input type="checkbox" v-model="switchFactionRandom" />
+                Aléatoire (50/50)
+              </label>
+              <span style="color:#6b7280;">Si aléatoire désactivé, tous les membres changent de faction.</span>
+            </div>
+
             <!-- Bloc d’attribution par faction -->
             <div class="row" style="margin-top:16px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
               <h4 style="margin:0; color:#000;">Attribution de coins de faction</h4>
@@ -717,7 +741,7 @@
         <div class="user-management-modal">
            <button class="modal-close-top" @click="showUserManagement = false" aria-label="Fermer">×</button>
           <h3 style="color: #000000; margin-bottom: 20px;">Gérer les utilisateurs</h3>
-          
+
           <!-- Actions multi (ouvre la pop-up unifiée) -->
           <div v-if="!editingUser" style="display:flex;gap:10px;align-items:center;margin:8px 0 14px;">
             <button type="button" class="give-item-btn" @click="openBulkGive">
@@ -767,7 +791,7 @@
               </div>
             </div>
           </div>
-          
+
           <!-- Bouton fermer en bas -->
           <div class="modal-footer" v-if="!editingUser">
             <button @click="showUserManagement = false" class="close-btn">Fermer</button>
@@ -779,10 +803,10 @@
             <form @submit.prevent="updateUser">
               <label class="field-label" for="edit-username">Nom d'utilisateur</label>
               <input id="edit-username" v-model="editForm.username" placeholder="Nom d'utilisateur" required />
-              
+
               <label class="field-label" for="edit-password">Nouveau mot de passe</label>
               <input id="edit-password" v-model="editForm.password" type="password" placeholder="Nouveau mot de passe (laisser vide pour ne pas changer)" />
-              
+
               <label class="field-label" for="edit-coins">Planify Coins</label>
               <input id="edit-coins" v-model.number="editForm.coins" type="number" placeholder="PlanifyCoins" min="0" />
               <label class="field-label">Pop-up lors du changement de coins</label>
@@ -796,13 +820,13 @@
                   style="flex:1; min-width:240px;"
                 />
               </div>
-              
+
               <label class="field-label" for="edit-leaderboard-coins">Leaderboard Coins</label>
               <input id="edit-leaderboard-coins" v-model.number="editForm.leaderboardCoins" type="number" placeholder="Leaderboard Coins" min="0" />
-              
+
               <label class="field-label" for="edit-faction-coins">Coins de faction</label>
               <input id="edit-faction-coins" v-model.number="editForm.factionCoins" type="number" placeholder="Faction Coins" min="0" />
-              
+
               <label class="field-label" for="edit-role">Rôle</label>
               <select id="edit-role" v-model="editForm.role" @change="handleEditRoleChange" required>
                 <option value="eleve">Étudiant</option>
@@ -810,7 +834,7 @@
                 <option value="prof">Professeur</option>
                 <option value="admin">Admin</option>
               </select>
-              
+
               <label class="field-label" for="edit-groupe">Groupe</label>
               <select id="edit-groupe" v-model="editForm.groupe" :disabled="editForm.role === 'prof'" :class="{ 'disabled-field': editForm.role === 'prof' }">
                 <option value="">Aucun groupe</option>
@@ -824,7 +848,7 @@
                 <!-- Option de debug pour voir la valeur actuelle -->
                 <option v-if="editForm.groupe && !['', 'Promo', 'A', 'A\'', 'A&quot;', 'B', 'B\'', 'B&quot;'].includes(editForm.groupe)" :value="editForm.groupe">{{ editForm.groupe }} (VALEUR ACTUELLE)</option>
               </select>
-              
+
               <label class="field-label" for="edit-year">Année</label>
               <select id="edit-year" v-model="editForm.year" :disabled="editForm.role === 'prof'" :class="{ 'disabled-field': editForm.role === 'prof' }">
                 <option value="">Aucune année</option>
@@ -832,7 +856,7 @@
                 <option value="BUT2">2ème année</option>
                 <option value="BUT3">3ème année</option>
               </select>
-              
+
               <label class="field-label" for="edit-specialite">Spécialité</label>
               <select id="edit-specialite" v-model="editForm.specialite" :disabled="editForm.role === 'prof'" :class="{ 'disabled-field': editForm.role === 'prof' }">
                 <option value="">Aucune spécialité</option>
@@ -850,7 +874,7 @@
                 <option value="INFOCOM">INFOCOM</option>
                 <option value="GEA">GEA</option>
               </select>
-              
+
               <div v-if="editForm.role === 'prof'" style="font-size: 0.9em; color: #6b7280; font-style: italic;">
                 ⓘ Les professeurs travaillent avec toute la promo (toutes les années)
               </div>
@@ -1001,7 +1025,7 @@
 <div v-if="showUserItems" class="modal items-overlay" @click.self="closeUserItems">
          <div class="user-items-modal">
            <h3 style="color: #000000; margin-bottom: 20px;">Items de {{ viewingUserItems?.username }}</h3>
-           
+
                        <div v-if="viewingUserItems?.purchasedItems && viewingUserItems.purchasedItems.length > 0" class="items-list">
               <div v-for="item in viewingUserItems.purchasedItems" :key="item.itemId" class="item-card">
                 <div class="item-info">
@@ -1018,11 +1042,11 @@
                 </div>
               </div>
             </div>
-           
+
                        <div v-else class="no-items">
               <p>Aucun item acheté</p>
             </div>
-            
+
           <!-- Actions globales sur l'inventaire de l'utilisateur -->
           <div class="global-actions">
             <button class="remove-all-btn" @click="removeAllItemsAndBorderColor(viewingUserItems._id)">Retirer tous les items et réinitialiser la bordure</button>
@@ -1078,15 +1102,15 @@
                     <span>{{ it?.name || ('Item ' + ((it && it.id) ?? idx)) }}</span>
                   </label>
                 </div>
-                
+
                 <!-- Champ de message optionnel -->
                 <div class="admin-message-section">
                   <label for="admin-message" class="message-label">
                     Message optionnel pour l'utilisateur :
                   </label>
-                  <textarea 
+                  <textarea
                     id="admin-message"
-                    v-model="adminMessage" 
+                    v-model="adminMessage"
                     placeholder="Ex: Merci d'avoir contribué au site ! 🎉"
                     rows="3"
                     maxlength="200"
@@ -1094,7 +1118,7 @@
                   ></textarea>
                   <div class="message-counter">{{ adminMessage.length }}/200</div>
                 </div>
-                
+
                 <div class="checkbox-actions">
                   <button type="button" class="toggle-all-btn" @click="toggleSelectAll">
                     {{ selectedItemsToGive.length === itemsCatalog.length ? 'Tout désélectionner' : 'Tout sélectionner' }}
@@ -1137,13 +1161,13 @@
                 </div>
               </div>
             </div>
-           
+
            <div class="modal-footer">
              <button @click="closeUserItems" class="close-btn">Fermer</button>
            </div>
          </div>
        </div>
-      
+
       <!-- Modal pour gérer les questions secrètes d'un utilisateur -->
       <div v-if="showUserSecrets" class="modal secrets-overlay" @click.self="closeUserSecrets">
         <div class="user-secrets-modal" @click.stop>
@@ -1160,11 +1184,11 @@
                 <option disabled value="">Sélectionner une question</option>
                 <option v-for="opt in getAvailableQuestions(i)" :key="opt" :value="opt">{{ opt }}</option>
               </select>
-              <input 
+              <input
                 class="secret-input"
-                v-model="q.answer" 
-                type="text" 
-                :placeholder="`Réponse #${i+1}`" 
+                v-model="q.answer"
+                type="text"
+                :placeholder="`Réponse #${i+1}`"
                 required
               />
             </div>
@@ -1395,7 +1419,7 @@ const groupOptions = ['Promo', 'A', "A'", 'A"', 'B', "B'", 'B"']
 // ------------------------
 // Système de codes (admin)
 // ------------------------
- 
+
  const rcType = ref('item')
  const rcSelectedItemIds = ref([])
  const rcSelectedColorIds = ref([])
@@ -1405,11 +1429,11 @@ const groupOptions = ['Promo', 'A', "A'", 'A"', 'B', "B'", 'B"']
  const rcMaxUses = ref(1)
  const rcExpiresAt = ref('')
  const lastGeneratedCode = ref('')
- 
+
  const redeemCodesList = ref([])
  const redeemCodesLoading = ref(false)
  const deletingCodeId = ref(null)
- 
+
  // Helper: détermine si une entrée du catalogue "items" ressemble à une couleur de bordure
  function isColorLikeItem(x) {
    if (!x) return false
@@ -1450,7 +1474,7 @@ const groupOptions = ['Promo', 'A', "A'", 'A"', 'B', "B'", 'B"']
    }
    return Array.from(byId.values()).sort((a, b) => a.id - b.id)
  })
- 
+
  const filteredBorderColors = computed(() => {
    const q = rcColorFilter.value.trim().toLowerCase()
    const list = borderColors.value || []
@@ -1459,7 +1483,7 @@ const groupOptions = ['Promo', 'A', "A'", 'A"', 'B', "B'", 'B"']
      .filter(c => String(c.id).toLowerCase().includes(q) || String(c.name || '').toLowerCase().includes(q))
      .map(c => ({ id: String(c.id), name: c.name || `Couleur ${c.id}` }))
  })
- 
+
  // Quand on change de type de récompense, réinitialiser la sélection correspondante
 watch(rcType, async (t) => {
   if (t === 'item') {
@@ -1469,7 +1493,7 @@ watch(rcType, async (t) => {
     await loadBorderColorsIfNeeded()
   }
 })
- 
+
  function onToggleSelectItem(it, e) {
    const target = e && e.target
    const id = Number(it && it.id)
@@ -1490,13 +1514,13 @@ watch(rcType, async (t) => {
      rcSelectedColorIds.value = rcSelectedColorIds.value.filter(x => String(x) !== id)
    }
  }
- 
+
  // Trouver un item par id (statique + dynamique) pour récupérer le nom
  function findItemNameById(id) {
    const it = (itemsCatalog.value || []).find(x => Number(x.id) === Number(id)) || (dynamicItemsCatalog.value || []).find(x => Number(x.id) === Number(id))
    return it && it.name ? String(it.name) : `Item ${id}`
  }
- 
+
  async function generateRedeemCode() {
    try {
      let token = auth.token || auth.user?.token
@@ -1505,14 +1529,14 @@ watch(rcType, async (t) => {
        if (userFromStorage) token = JSON.parse(userFromStorage).token
      }
      const headers = { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'Authorization': `Bearer ${token}` }
- 
+
      const body = {
        rewardType: rcType.value,
        length: rcLength.value,
        maxUses: rcMaxUses.value,
      }
      if (rcExpiresAt.value) body.expiresAt = rcExpiresAt.value
- 
+
      if (rcType.value === 'item') {
        const ids = (rcSelectedItemIds.value || []).slice()
        if (!ids.length) { alert('Choisissez au moins un item'); return }
@@ -1532,20 +1556,20 @@ watch(rcType, async (t) => {
          body.colors = ids.map(id => String(id))
        }
      }
- 
+
      const resp = await fetch(`${API_URL}/redeem-codes/generate`, {
        method: 'POST', headers, credentials: 'include', body: JSON.stringify(body)
      })
      const data = await resp.json().catch(() => ({}))
      if (!resp.ok || !data?.success) throw new Error(data?.message || 'Erreur API')
- 
+
      lastGeneratedCode.value = data.code
      await fetchRedeemCodesList()
    } catch (e) {
      alert('Erreur génération: ' + (e?.message || e))
    }
  }
- 
+
  async function fetchRedeemCodesList() {
    redeemCodesLoading.value = true
    try {
@@ -1563,7 +1587,7 @@ watch(rcType, async (t) => {
      redeemCodesList.value = []
    } finally { redeemCodesLoading.value = false }
  }
- 
+
  async function deleteRedeemCode(id) {
    if (!id) return
    deletingCodeId.value = id
@@ -1582,7 +1606,7 @@ watch(rcType, async (t) => {
      alert('Suppression impossible: ' + (e?.message || e))
    } finally { deletingCodeId.value = null }
  }
- 
+
  function describeReward(rc) {
    if (!rc) return ''
    if (rc.rewardType === 'item') {
@@ -1622,7 +1646,7 @@ watch(rcType, async (t) => {
    try { await navigator.clipboard.writeText(lastGeneratedCode.value); alert('Code copié !') }
    catch { alert('Impossible de copier automatiquement') }
  }
- 
+
  onMounted(async () => {
   if (auth.user && auth.user.role === 'admin') {
     await fetchRedeemCodesList()
@@ -1798,8 +1822,63 @@ async function notifyFactionResult() {
     notifyFactionLoading.value = false
   }
 }
- 
+
+const switchFactionLoading = ref(false)
+const switchFactionRandom = ref(true)
+const resetLeaderboardCoinsLoading = ref(false)
 const resetFactionCoinsLoading = ref(false)
+
+async function switchFactionUsers() {
+  const mode = switchFactionRandom.value ? 'random' : 'swap-all'
+  const modeText = switchFactionRandom.value
+    ? 'Répartition aléatoire 50/50.'
+    : 'Tous les membres vont changer de faction.'
+  if (!confirm(`Confirmer le switch des factions ?\n${modeText}`)) return
+  switchFactionLoading.value = true
+  try {
+    const payload = { mode }
+    const res = await secureApiCall('/factions/switch-users', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      cache: 'no-store'
+    })
+    if (res && res.success) {
+      await loadFactionTotals(true)
+      try { await fetchUsers() } catch {}
+      const moved = `Bagnat: +${res?.switchedToBagnat ?? 0}, Fermier: +${res?.switchedToFermier ?? 0}`
+      alert(`Switch terminé. ${moved}`)
+    } else {
+      alert(res?.message || 'Erreur switch factions')
+    }
+  } catch (e) {
+    alert(e?.message || 'Erreur switch factions')
+  } finally {
+    switchFactionLoading.value = false
+  }
+}
+
+async function resetLeaderboardCoins() {
+  if (!confirm('Voulez-vous vraiment remettre à zéro les PlanifyCoins du leaderboard ?')) return
+  resetLeaderboardCoinsLoading.value = true
+  try {
+    const res = await secureApiCall('/users-admin/leaderboard-reset', {
+      method: 'POST',
+      cache: 'no-store'
+    })
+    if (res && res.success) {
+      try { localStorage.removeItem('planify_leaderboard_cache_v1') } catch {}
+      coinsStore.leaderboardNeedsRefresh = true
+      try { await fetchUsers() } catch {}
+      alert(`Reset leaderboard terminé. Utilisateurs mis à jour: ${res?.updated ?? 0}`)
+    } else {
+      alert(res?.message || 'Erreur reset leaderboard')
+    }
+  } catch (e) {
+    alert(e?.message || 'Erreur reset leaderboard')
+  } finally {
+    resetLeaderboardCoinsLoading.value = false
+  }
+}
 
 async function resetFactionCoins() {
   if (!confirm('Voulez-vous vraiment remettre à zéro les Planify Coins des factions et des membres ?')) return;
@@ -2890,8 +2969,8 @@ function getAvailableQuestions(index) {
         const raw = Array.isArray(res.items) ? res.items : []
         const extra = raw
           .filter(it => it && (typeof it.legacyId === 'number' || typeof it.id === 'number'))
-          .map(it => ({ 
-            id: (typeof it.legacyId === 'number' ? it.legacyId : it.id), 
+          .map(it => ({
+            id: (typeof it.legacyId === 'number' ? it.legacyId : it.id),
             name: it.name || `Item ${(it && (it.legacyId ?? it.id)) || ''}`,
             isSuggested: !!it.isSuggested,
             active: it.active
@@ -2935,9 +3014,9 @@ const selectableItemsOptions = computed(() => {
   const allowedBaseIds = new Set([1,2,3,4,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]);
   const merged = [...base.filter(it => allowedBaseIds.has(Number(it.id))), ...dyn]
     .filter(Boolean)
-    .map(it => ({ 
-      id: Number(it.id), 
-      name: (it.isSuggested ? '[Suggéré] ' : '') + (it.name || `Item ${it.id}`) 
+    .map(it => ({
+      id: Number(it.id),
+      name: (it.isSuggested ? '[Suggéré] ' : '') + (it.name || `Item ${it.id}`)
     }))
     .sort((a,b)=>a.id-b.id);
   return merged;
@@ -3449,7 +3528,7 @@ async function fetchUsers() {
   try {
     // Récupérer le token d'authentification
     let token = auth.token || auth.user?.token
-    
+
     if (!token) {
       const userFromLocal = localStorage.getItem('user')
       const userFromSession = sessionStorage.getItem('user')
@@ -3459,32 +3538,32 @@ async function fetchUsers() {
         token = userData.token
       }
     }
-    
+
     if (!token) {
       console.warn('Aucun token d\'authentification trouvé')
       return
     }
-    
+
     const headers = {
       'Content-Type': 'application/json',
       'X-Requested-With': 'XMLHttpRequest',
       'Authorization': `Bearer ${token}`
     }
-    
+
          const response = await fetch(`${API_URL}/users/admin`, {
       method: 'GET',
       headers: headers,
       credentials: 'include'
     })
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error('❌ Erreur API:', response.status, errorText);
       throw new Error(`HTTP error! status: ${response.status} - ${errorText}`)
     }
-    
+
     const data = await response.json()
-    
+
     if (data && data.success && Array.isArray(data.users)) {
       users.value = data.users
       console.log(`✅ ${data.users.length} utilisateurs chargés pour l'admin dashboard`)
@@ -3506,7 +3585,7 @@ async function addUser() {
     userForm.value.username = String(userForm.value.username || '').replace(/\s+/g, ' ').trim();
     // Récupérer le token d'authentification
     let token = auth.token || auth.user?.token
-    
+
     if (!token) {
       const userFromStorage = localStorage.getItem('user')
       if (userFromStorage) {
@@ -3514,25 +3593,25 @@ async function addUser() {
         token = userData.token
       }
     }
-    
+
     const headers = {
       'Content-Type': 'application/json',
       'X-Requested-With': 'XMLHttpRequest',
       'Authorization': `Bearer ${token}`
     }
-    
+
     const response = await fetch(`${API_URL}/users/register`, {
       method: 'POST',
       headers: headers,
       credentials: 'include',
       body: JSON.stringify(userForm.value)
     })
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`HTTP error! status: ${response.status} - ${errorText}`)
     }
-    
+
     userFormMessage.value = 'Utilisateur ajouté avec succès !';
     userForm.value = { username: '', password: '', role: 'eleve', groupe: 'A', year: 'BUT1', specialite: '', department: 'MMI' };
     showUserForm.value = false;
@@ -3548,7 +3627,7 @@ async function addUser() {
 function editUser(user) {
   console.log('=== DÉBUT FONCTION EDITUSER ===');
   console.log('Utilisateur reçu:', user);
-  
+
   // S'assurer que l'utilisateur a toutes les propriétés nécessaires
   const userData = {
     _id: user._id,
@@ -3562,12 +3641,12 @@ function editUser(user) {
     leaderboardCoins: user.leaderboardCoins || 0,
     factionCoins: user.factionCoins || 0
   };
-  
+
   console.log('Données utilisateur normalisées:', userData);
-  
+
   // Mettre à jour editingUser
   editingUser.value = userData;
-  
+
   // Créer un nouvel objet pour editForm pour forcer la réactivité
   const newEditForm = {
     username: userData.username,
@@ -3581,18 +3660,18 @@ function editUser(user) {
     leaderboardCoins: userData.leaderboardCoins || 0,
     factionCoins: userData.factionCoins || 0
   };
-  
+
   console.log('Nouveau formulaire d\'édition:', newEditForm);
-  
+
   // Assigner le nouveau formulaire
   editForm.value = newEditForm;
-  
+
   // Forcer la mise à jour de Vue
   nextTick(() => {
     console.log('=== APRÈS NEXTTICK ===');
     console.log('editingUser.value:', editingUser.value);
     console.log('editForm.value:', editForm.value);
-    
+
     // Vérifier que les valeurs sont bien assignées
     console.log('Vérification des valeurs:');
     console.log('- Username:', editForm.value.username);
@@ -3757,11 +3836,11 @@ async function deleteUser(userId) {
   if (!confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
     return;
   }
-  
+
   try {
     // Récupérer le token d'authentification
     let token = auth.token || auth.user?.token
-    
+
     if (!token) {
       const userFromStorage = localStorage.getItem('user')
       if (userFromStorage) {
@@ -3769,24 +3848,24 @@ async function deleteUser(userId) {
         token = userData.token
       }
     }
-    
+
     const headers = {
       'Content-Type': 'application/json',
       'X-Requested-With': 'XMLHttpRequest',
       'Authorization': `Bearer ${token}`
     }
-    
+
     const response = await fetch(`${API_URL}/users/${userId}`, {
       method: 'DELETE',
       headers: headers,
       credentials: 'include'
     })
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`HTTP error! status: ${response.status} - ${errorText}`)
     }
-    
+
     await fetchUsers(); // Rafraîchir la liste
   } catch (error) {
     alert('Erreur lors de la suppression: ' + error.message);
@@ -3938,12 +4017,12 @@ async function saveUserSecrets() {
 // Fonction pour donner un item à un utilisateur
 async function giveItemToUser() {
   if (!itemToGive.value || !viewingUserItems.value) return;
-  
+
   itemsLoading.value = true;
   try {
     // Récupérer le token d'authentification
     let token = auth.token || auth.user?.token
-    
+
     if (!token) {
       const userFromStorage = localStorage.getItem('user')
       if (userFromStorage) {
@@ -3951,16 +4030,16 @@ async function giveItemToUser() {
         token = userData.token
       }
     }
-    
+
     const headers = {
       'Content-Type': 'application/json',
       'X-Requested-With': 'XMLHttpRequest',
       'Authorization': `Bearer ${token}`
     }
-    
+
     // Récupérer le nom de l'item depuis le catalogue (inclut dynamiques)
     const nameById = Object.fromEntries(itemsCatalog.value.map(i => [i.id, i.name]))
-    
+
     const response = await fetch(`${API_URL}/users/${viewingUserItems.value._id}/give-item`, {
       method: 'POST',
       headers: headers,
@@ -3971,12 +4050,12 @@ async function giveItemToUser() {
         adminMessage: (adminMessage.value || '').trim() || null
       })
     })
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`HTTP error! status: ${response.status} - ${errorText}`)
     }
-    
+
     // Rafraîchir les données de l'utilisateur
     await fetchUsers();
     // Mettre à jour l'utilisateur affiché
@@ -3984,7 +4063,7 @@ async function giveItemToUser() {
     if (updatedUser) {
       viewingUserItems.value = updatedUser;
     }
-    
+
     itemToGive.value = '';
     alert('Item donné avec succès !');
     adminMessage.value = ''
@@ -4244,8 +4323,8 @@ async function giveSelectedItemsToUser() {
           method: 'POST',
           headers,
           credentials: 'include',
-          body: JSON.stringify({ 
-            itemId: id, 
+          body: JSON.stringify({
+            itemId: id,
             itemName: nameById[id],
             adminMessage: adminMessage.value.trim() || null
           })
@@ -4314,13 +4393,13 @@ async function giveSelectedItemsToUser() {
 
     // Feedback synthétique
     const parts = []
-    if (givenCount) parts.push(`${givenCount} item(s)`) 
-    if (alreadyOwnedCount) parts.push(`${alreadyOwnedCount} déjà possédé(s)`) 
-    if (failedCount) parts.push(`${failedCount} échec(s)`) 
+    if (givenCount) parts.push(`${givenCount} item(s)`)
+    if (alreadyOwnedCount) parts.push(`${alreadyOwnedCount} déjà possédé(s)`)
+    if (failedCount) parts.push(`${failedCount} échec(s)`)
     if (dynGiven) parts.push(`${dynGiven} item(s) dynamiques`)
     if (colorsGiven) parts.push(`${colorsGiven} couleur(s) de bordure`)
     alert(parts.length ? `Traitement terminé: ${parts.join(', ')}` : 'Rien à traiter')
-    
+
     // Réinitialiser
     adminMessage.value = ''
     selectedBorderToGiveList.value = []
@@ -4370,12 +4449,12 @@ async function removeItemFromUser(userId, itemId) {
   if (!confirm('Êtes-vous sûr de vouloir retirer cet item ?')) {
     return;
   }
-  
+
   itemsLoading.value = true;
   try {
     // Récupérer le token d'authentification
     let token = auth.token || auth.user?.token
-    
+
     if (!token) {
       const userFromStorage = localStorage.getItem('user')
       if (userFromStorage) {
@@ -4383,25 +4462,25 @@ async function removeItemFromUser(userId, itemId) {
         token = userData.token
       }
     }
-    
+
     const headers = {
       'Content-Type': 'application/json',
       'X-Requested-With': 'XMLHttpRequest',
       'Authorization': `Bearer ${token}`
     }
-    
+
     const response = await fetch(`${API_URL}/users/${userId}/remove-item`, {
       method: 'POST',
       headers: headers,
       credentials: 'include',
       body: JSON.stringify({ itemId: itemId })
     })
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`HTTP error! status: ${response.status} - ${errorText}`)
     }
-    
+
     // Rafraîchir les données de l'utilisateur
     await fetchUsers();
     // Mettre à jour l'utilisateur affiché
@@ -4409,7 +4488,7 @@ async function removeItemFromUser(userId, itemId) {
     if (updatedUser) {
       viewingUserItems.value = updatedUser;
     }
-    
+
     alert('Item retiré avec succès !');
   } catch (error) {
     console.error('Erreur lors du retrait d\'item:', error);

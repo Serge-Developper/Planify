@@ -27,6 +27,16 @@ router.get('/', requireAdminOrProf, async (req, res) => {
   }
 })
 
+router.post('/leaderboard-reset', verifyToken, requireRole(['admin']), async (req, res) => {
+  try {
+    const result = await User.updateMany({ role: { $ne: 'admin' } }, { $set: { leaderboardCoins: 0 } });
+    const updated = Number(result?.modifiedCount ?? result?.nModified ?? result?.n ?? 0);
+    return res.json({ success: true, updated });
+  } catch (e) {
+    return res.status(500).json({ success: false, message: 'Erreur reset leaderboard' });
+  }
+});
+
 // POST /api/users-admin → actions admin sur un utilisateur
 // body: { action, userId, ... }
 router.post('/', requireAdminOrProf, async (req, res) => {

@@ -290,6 +290,109 @@ router.post('/total-coins', verifyToken, requireRole(['admin']), async (req, res
   }
 });
 
+router.post('/switch-users', verifyToken, requireRole(['admin']), async (req, res) => {
+  try {
+    await ensureFactions();
+    const mode = String(req.body?.mode || 'random').trim();
+    if (!['random', 'swap-all'].includes(mode)) {
+      return res.status(400).json({ success: false, message: 'Mode invalide' });
+    }
+    const baseFilter = {
+      role: { $ne: 'admin' },
+      $or: [
+        { role: { $ne: 'prof' } },
+        { role: 'prof', leaderboardEnabled: true }
+      ]
+    };
+
+    const users = await User.find({ ...baseFilter, faction: { $in: ['Bagnat','Fermier'] } })
+      .select('_id faction')
+      .lean();
+
+    const toBagnat = [];
+    const toFermier = [];
+
+    if (mode === 'swap-all') {
+      for (const u of users) {
+        const faction = String(u?.faction || '');
+        if (faction === 'Bagnat') toFermier.push(u._id);
+        else if (faction === 'Fermier') toBagnat.push(u._id);
+      }
+    } else {
+      const shuffled = users.slice();
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const tmp = shuffled[i];
+        shuffled[i] = shuffled[j];
+        shuffled[j] = tmp;
+      }
+      const total = shuffled.length;
+      const targetBagnat = Math.floor(total / 2);
+      for (let i = 0; i < shuffled.length; i++) {
+        const u = shuffled[i];
+        const desired = i < targetBagnat ? 'Bagnat' : 'Fermier';
+        if (String(u?.faction || '') !== desired) {
+          if (desired === 'Bagnat') toBagnat.push(u._id);
+          else toFermier.push(u._id);
+        }
+      }
+    }
+
+    if (toBagnat.length) {
+      await User.updateMany(
+        { _id: { $in: toBagnat } },
+        { $set: { faction: 'Bagnat', factionCoins: 0 } }
+      );
+    }
+    if (toFermier.length) {
+      await User.updateMany(
+        { _id: { $in: toFermier } },
+        { $set: { faction: 'Fermier', factionCoins: 0 } }
+      );
+    }
+
+    const bInitial = users.filter(u => String(u?.faction || '') === 'Bagnat').length;
+    const fInitial = users.length - bInitial;
+    const bCount = bInitial - toFermier.length + toBagnat.length;
+    const fCount = fInitial - toBagnat.length + toFermier.length;
+
+    const [bAgg, fAgg] = await Promise.all([
+      User.aggregate([
+        { $match: { ...baseFilter, faction: 'Bagnat' } },
+        { $group: { _id: null, total: { $sum: '$factionCoins' } } }
+      ]),
+      User.aggregate([
+        { $match: { ...baseFilter, faction: 'Fermier' } },
+        { $group: { _id: null, total: { $sum: '$factionCoins' } } }
+      ])
+    ]);
+    const totalB = Number(bAgg?.[0]?.total || 0);
+    const totalF = Number(fAgg?.[0]?.total || 0);
+
+    await Faction.updateOne(
+      { name: 'Bagnat' },
+      { $set: { membersCount: bCount, totalCoins: totalB } },
+      { upsert: true }
+    );
+    await Faction.updateOne(
+      { name: 'Fermier' },
+      { $set: { membersCount: fCount, totalCoins: totalF } },
+      { upsert: true }
+    );
+
+    res.json({
+      success: true,
+      mode,
+      switchedToBagnat: toBagnat.length,
+      switchedToFermier: toFermier.length,
+      totals: { Bagnat: totalB, Fermier: totalF },
+      members: { Bagnat: bCount, Fermier: fCount }
+    });
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Erreur switch factions' });
+  }
+});
+
 // Supprime la route dupliquée /leaderboard qui était après l’export
 
 router.get('/messages', verifyToken, requireRole(['admin']), async (req, res) => {
@@ -332,8 +435,9 @@ router.post('/monthly-rewards', verifyToken, async (req, res) => {
     }
 
     const factions = await Faction.find({ name: { $in: ['Bagnat','Fermier'] } }).lean();
-    const already = factions.some(f => String(f.lastMonthlyRewardsMonth || '') === monthKey);
-    if (already) {
+    const alreadyRewards = factions.some(f => String(f.lastMonthlyRewardsMonth || '') === monthKey);
+    const alreadyReset = factions.some(f => String(f.lastMonthlyFactionResetMonth || '') === monthKey);
+    if (alreadyRewards && alreadyReset) {
       return res.json({ success: true, message: 'Récompenses déjà attribuées', month: monthKey });
     }
 
@@ -350,55 +454,119 @@ router.post('/monthly-rewards', verifyToken, async (req, res) => {
       ]
     };
 
-    if (totalB === totalF) {
-      const tieHtml = `<div style="font-size:1.1rem;line-height:1.6;">⚖️ Égalité ! Les deux factions sont ex aequo.</div>`;
-      const [bUsers, fUsers] = await Promise.all([
-        User.find({ ...baseFilter, faction: 'Bagnat' }).select('_id').lean(),
-        User.find({ ...baseFilter, faction: 'Fermier' }).select('_id').lean()
-      ]);
-      const bIds = bUsers.map(u => u._id);
-      const fIds = fUsers.map(u => u._id);
-      if (popupsRouter && typeof popupsRouter.sendPopupToUsers === 'function') {
-        popupsRouter.sendPopupToUsers(bIds, tieHtml);
-        popupsRouter.sendPopupToUsers(fIds, tieHtml);
+    let tie = false;
+    let winning = null;
+    let winners = 0;
+    let losers = 0;
+
+    if (!alreadyRewards) {
+      if (totalB === totalF) {
+        tie = true;
+        const tieHtml = `<div style="font-size:1.1rem;line-height:1.6;">⚖️ Égalité ! Les deux factions sont ex aequo.</div>`;
+        const [bUsers, fUsers] = await Promise.all([
+          User.find({ ...baseFilter, faction: 'Bagnat' }).select('_id').lean(),
+          User.find({ ...baseFilter, faction: 'Fermier' }).select('_id').lean()
+        ]);
+        const bIds = bUsers.map(u => u._id);
+        const fIds = fUsers.map(u => u._id);
+        if (popupsRouter && typeof popupsRouter.sendPopupToUsers === 'function') {
+          popupsRouter.sendPopupToUsers(bIds, tieHtml);
+          popupsRouter.sendPopupToUsers(fIds, tieHtml);
+        }
+        await Faction.updateMany({ name: { $in: ['Bagnat','Fermier'] } }, { $set: { lastMonthlyRewardsMonth: monthKey } });
+      } else {
+        winning = totalB > totalF ? 'Bagnat' : 'Fermier';
+        const losing = winning === 'Bagnat' ? 'Fermier' : 'Bagnat';
+        const winnerMessage = String((winning === 'Bagnat' ? fB : fF).winnerMessage || DEFAULT_WINNER_MESSAGE);
+        const loserMessage = String((losing === 'Bagnat' ? fB : fF).loserMessage || DEFAULT_LOSER_MESSAGE);
+        const WINNER_REWARD = 200;
+        const LOSER_REWARD = 80;
+
+        const [winUsers, loseUsers] = await Promise.all([
+          User.find({ ...baseFilter, faction: winning }).select('_id').lean(),
+          User.find({ ...baseFilter, faction: losing }).select('_id').lean()
+        ]);
+        const winIds = winUsers.map(u => u._id);
+        const loseIds = loseUsers.map(u => u._id);
+
+        if (winIds.length) {
+          await User.updateMany(
+            { _id: { $in: winIds } },
+            { $inc: { coins: WINNER_REWARD }, $addToSet: { achievementsCompleted: 'faction-join' } }
+          );
+        }
+        if (loseIds.length) {
+          await User.updateMany({ _id: { $in: loseIds } }, { $inc: { coins: LOSER_REWARD } });
+        }
+
+        const winHtml = `<div style="font-size:1.1rem;line-height:1.6;">${winnerMessage}<br/>Vous recevez +${WINNER_REWARD} Planify Coins dans votre wallet.</div>`;
+        const loseHtml = `<div style="font-size:1.1rem;line-height:1.6;">${loserMessage}<br/>Vous recevez +${LOSER_REWARD} Planify Coins dans votre wallet.</div>`;
+        if (popupsRouter && typeof popupsRouter.sendPopupToUsers === 'function') {
+          popupsRouter.sendPopupToUsers(winIds, winHtml);
+          popupsRouter.sendPopupToUsers(loseIds, loseHtml);
+        }
+
+        await Faction.updateMany({ name: { $in: ['Bagnat','Fermier'] } }, { $set: { lastMonthlyRewardsMonth: monthKey } });
+        winners = winIds.length;
+        losers = loseIds.length;
       }
-      await Faction.updateMany({ name: { $in: ['Bagnat','Fermier'] } }, { $set: { lastMonthlyRewardsMonth: monthKey } });
-      return res.json({ success: true, tie: true, month: monthKey });
     }
 
-    const winning = totalB > totalF ? 'Bagnat' : 'Fermier';
-    const losing = winning === 'Bagnat' ? 'Fermier' : 'Bagnat';
-    const winnerMessage = String((winning === 'Bagnat' ? fB : fF).winnerMessage || DEFAULT_WINNER_MESSAGE);
-    const loserMessage = String((losing === 'Bagnat' ? fB : fF).loserMessage || DEFAULT_LOSER_MESSAGE);
-    const WINNER_REWARD = 200;
-    const LOSER_REWARD = 80;
+    if (!alreadyReset) {
+      const users = await User.find({ ...baseFilter, faction: { $in: ['Bagnat','Fermier'] } }).select('_id faction').lean();
+      const shuffled = users.slice();
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const tmp = shuffled[i];
+        shuffled[i] = shuffled[j];
+        shuffled[j] = tmp;
+      }
+      const total = shuffled.length;
+      const targetBagnat = Math.floor(total / 2);
+      const toBagnat = [];
+      const toFermier = [];
+      for (let i = 0; i < shuffled.length; i++) {
+        const u = shuffled[i];
+        const desired = i < targetBagnat ? 'Bagnat' : 'Fermier';
+        if (String(u?.faction || '') !== desired) {
+          if (desired === 'Bagnat') toBagnat.push(u._id);
+          else toFermier.push(u._id);
+        }
+      }
 
-    const [winUsers, loseUsers] = await Promise.all([
-      User.find({ ...baseFilter, faction: winning }).select('_id').lean(),
-      User.find({ ...baseFilter, faction: losing }).select('_id').lean()
-    ]);
-    const winIds = winUsers.map(u => u._id);
-    const loseIds = loseUsers.map(u => u._id);
+      await User.updateMany({ ...baseFilter, faction: { $in: ['Bagnat','Fermier'] } }, { $set: { factionCoins: 0 } });
+      if (toBagnat.length) {
+        await User.updateMany({ _id: { $in: toBagnat } }, { $set: { faction: 'Bagnat' } });
+      }
+      if (toFermier.length) {
+        await User.updateMany({ _id: { $in: toFermier } }, { $set: { faction: 'Fermier' } });
+      }
 
-    if (winIds.length) {
-      await User.updateMany(
-        { _id: { $in: winIds } },
-        { $inc: { coins: WINNER_REWARD }, $addToSet: { achievementsCompleted: 'faction-join' } }
+      const bCount = targetBagnat;
+      const fCount = total - targetBagnat;
+
+      await Faction.updateOne(
+        { name: 'Bagnat' },
+        { $set: { totalCoins: 0, membersCount: bCount, lastMonthlyFactionResetMonth: monthKey } },
+        { upsert: true }
+      );
+      await Faction.updateOne(
+        { name: 'Fermier' },
+        { $set: { totalCoins: 0, membersCount: fCount, lastMonthlyFactionResetMonth: monthKey } },
+        { upsert: true }
       );
     }
-    if (loseIds.length) {
-      await User.updateMany({ _id: { $in: loseIds } }, { $inc: { coins: LOSER_REWARD } });
-    }
 
-    const winHtml = `<div style="font-size:1.1rem;line-height:1.6;">${winnerMessage}<br/>Vous recevez +${WINNER_REWARD} Planify Coins dans votre wallet.</div>`;
-    const loseHtml = `<div style="font-size:1.1rem;line-height:1.6;">${loserMessage}<br/>Vous recevez +${LOSER_REWARD} Planify Coins dans votre wallet.</div>`;
-    if (popupsRouter && typeof popupsRouter.sendPopupToUsers === 'function') {
-      popupsRouter.sendPopupToUsers(winIds, winHtml);
-      popupsRouter.sendPopupToUsers(loseIds, loseHtml);
-    }
-
-    await Faction.updateMany({ name: { $in: ['Bagnat','Fermier'] } }, { $set: { lastMonthlyRewardsMonth: monthKey } });
-    return res.json({ success: true, winner: winning, month: monthKey, winners: winIds.length, losers: loseIds.length });
+    return res.json({
+      success: true,
+      month: monthKey,
+      tie,
+      winner: winning,
+      winners,
+      losers,
+      resetDone: !alreadyReset,
+      message: alreadyRewards ? 'Récompenses déjà attribuées' : undefined
+    });
   } catch (e) {
     res.status(500).json({ success: false, message: 'Erreur récompenses mensuelles' });
   }
