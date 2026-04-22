@@ -22,12 +22,9 @@ L’objectif du projet est de centraliser la planification dans une interface in
 
 ## 🛠️ Stack technique
 
-> (À compléter selon ton projet réel)
-
-* Frontend : React / Vue / autre
-* Backend : Node.js / Express / autre
-* Base de données : Firebase / MongoDB / autre
-* Authentification : (optionnel)
+* Frontend : Vue / Tailwind CSS
+* Backend : Node.js / Express
+* Base de données : MongoDB
 
 ---
 
