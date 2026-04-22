@@ -55,7 +55,7 @@ Une fois l’application lancée :
 
 ## 🎥 Démo
 
-Une vidéo de présentation du projet est disponible (https://youtu.be/Zc1R2jEQKAA?si=PKZgj-1RseEhIZoI).
+Une vidéo de présentation du projet est disponible https://youtu.be/Zc1R2jEQKAA?si=PKZgj-1RseEhIZoI
 
 ---
 
