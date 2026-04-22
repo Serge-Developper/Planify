@@ -1,5 +1,0 @@
-node_modules/
-.env
-debug.log
-uploads/avatars/*
-!uploads/avatars/.gitkeep 
