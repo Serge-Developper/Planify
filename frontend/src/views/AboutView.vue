@@ -425,7 +425,7 @@ function closeModal() {
 
 [data-theme="light"] .about-main { color: #111; background: #fff; }
 [data-theme="light"] .about-hero-content h1,
-[data-theme="light"] .about-title { color: #111 !important; text-shadow: none !important; }
+[data-theme="light"] .about-title { color: #ffffff !important; text-shadow: none !important; }
 [data-theme="light"] .about-intro p,
 [data-theme="light"] .about-intro ul,
 [data-theme="light"] .about-intro li,
