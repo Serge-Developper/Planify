@@ -552,20 +552,9 @@
             
                         <!-- Avatar et infos utilisateur -->
             <div class="user-info">
-              <!-- Overlays ciblant user-avatar-container avec placement "above" (rendu hors du conteneur) -->
-              <template v-if="getUserEquippedItemData(user)">
-                <img
-                  v-for="(a, ai) in getEquippedAssetsForLeaderboard(user)"
-                  v-if="isAssetTargetingContainer(getUserEquippedItemData(user), a) && (!a || !a.meta || a.meta.leaderboardPlacement === 'above' || (!a.meta.leaderboardPlacement))"
-                  :key="'container-above-overlay-' + ai + '-' + dynamicVariantsState"
-                  :src="resolveAssetSrc(a.src)"
-                  :style="getDynLeaderboardContainerOverlayStyle(a)"
-                  class="dynamic-container-overlay"
-                />
-              </template>
 
               <div class="user-avatar-container" @click="openLeaderboardProfile(user)">
-                <!-- Items dynamiques ciblant user-avatar-container avec placement "below" (derrière tout) -->
+                <!-- Items dynamiques ciblant le conteneur : BELOW (derrière tout) -->
                 <template v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).isDynamic">
                   <img
                     v-for="(a, ai) in (Array.isArray(getUserEquippedItemData(user).variants) && getUserEquippedItemData(user).variants.length > 0
@@ -575,6 +564,7 @@
                     :key="'dyn-container-below-' + ai + '-' + dynamicVariantsState"
                     :src="resolveAssetSrc(a.src)"
                     :style="getDynLeaderboardAssetStyle(a)"
+                    :class="getDynLeaderboardAssetClass(a)"
                   />
                 </template>
 
@@ -842,7 +832,7 @@
                   </template>
                 </div>
 
-                <!-- Items dynamiques ciblant user-avatar-container avec placement "inside" (techniquement équivalent à above car on est déjà dans le container) -->
+                <!-- Items dynamiques ciblant le conteneur : INSIDE -->
                 <template v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).isDynamic">
                   <img
                     v-for="(a, ai) in (Array.isArray(getUserEquippedItemData(user).variants) && getUserEquippedItemData(user).variants.length > 0
@@ -852,6 +842,20 @@
                     :key="'dyn-container-inside-' + ai + '-' + dynamicVariantsState"
                     :src="resolveAssetSrc(a.src)"
                     :style="getDynLeaderboardAssetStyle(a)"
+                    :class="getDynLeaderboardAssetClass(a)"
+                  />
+                </template>
+                <!-- Items dynamiques ciblant le conteneur : ABOVE -->
+                <template v-if="getUserEquippedItemData(user) && getUserEquippedItemData(user).isDynamic">
+                  <img
+                    v-for="(a, ai) in (Array.isArray(getUserEquippedItemData(user).variants) && getUserEquippedItemData(user).variants.length > 0
+                      ? getDynVariantAssetsForLeaderboard(getUserEquippedItemData(user))
+                      : getUserEquippedItemData(user).assets)"
+                    v-if="isAssetTargetingContainer(getUserEquippedItemData(user), a) && (!a || !a.meta || a.meta.leaderboardPlacement === 'above' || (!a.meta.leaderboardPlacement))"
+                    :key="'dyn-container-above-' + ai + '-' + dynamicVariantsState"
+                    :src="resolveAssetSrc(a.src)"
+                    :style="getDynLeaderboardAssetStyle(a)"
+                    :class="getDynLeaderboardAssetClass(a)"
                   />
                 </template>
                 
@@ -1470,6 +1474,16 @@ function getDynLeaderboardAssetStyle(asset) {
   return style
 }
 
+// Classe CSS pour mimer l'effet "Discord/Galaxie" depuis un item dynamique ciblant le conteneur
+function getDynLeaderboardAssetClass(asset) {
+  try {
+    const base = String(asset && asset.meta && asset.meta.dynamicClass || '').trim()
+    if (base) return base
+  } catch {}
+  // Par défaut, ne pas appliquer de classe afin de respecter les styles définis via l'éditeur
+  return ''
+}
+
 // Style spécial pour les items dynamiques qui ciblent user-avatar-container avec placement "above"
 // Ces items sont placés en dehors du conteneur pour éviter les contraintes d'overflow
 function getDynLeaderboardContainerOverlayStyle(asset) {
@@ -1496,9 +1510,20 @@ function getDynLeaderboardContainerOverlayStyle(asset) {
 // Déterminer la cible effective (avatar vs container) pour un asset dynamique
 function getEffectiveLeaderboardTarget(item, asset) {
   try {
-    const assetTarget = asset && asset.meta && asset.meta.leaderboardTarget
+    // Dyn: si meta.leaderboardTarget est défini, on l'applique. Sinon, fallback conteneur
+    if (item && item.isDynamic) {
+      // 1) Priorité: valeur explicite fixée par l'éditeur au niveau asset
+      const explicit = asset && asset.meta && asset.meta.leaderboardTarget
+      if (explicit) return String(explicit)
+      // 2) Compat: ancien champ meta.container
+      const legacy = asset && asset.meta && asset.meta.container === 'user-avatar-container'
+      if (legacy) return 'user-avatar-container'
+      // 3) Par défaut: avatar (les boutons définissent explicitement la cible si besoin)
+      return 'user-avatar'
+    }
+    const assetTarget = asset && asset.meta && (asset.meta.leaderboardTarget || (asset.meta.container === 'user-avatar-container' ? 'user-avatar-container' : null))
     if (assetTarget) return String(assetTarget)
-    const itemTarget = item && item.meta && item.meta.leaderboardTarget
+    const itemTarget = item && item.meta && (item.meta.leaderboardTarget || (item.meta.container === 'user-avatar-container' ? 'user-avatar-container' : null))
     if (itemTarget) return String(itemTarget)
   } catch {}
   return 'user-avatar'

@@ -237,6 +237,10 @@
           <button class="btn tiny" @click="setLeaderboardPlacement('below')">Derrière</button>
           <button class="btn tiny" @click="setLeaderboardPlacement('inside')">Dans l'avatar</button>
           <button class="btn tiny" @click="setLeaderboardPlacement('above')">Au-dessus</button>
+          <!-- Cible du rendu: avatar vs conteneur -->
+          <span style="margin-left:12px;">Cible :</span>
+          <button class="btn tiny" :class="{ active: getActiveAssetLeaderboardTarget() === 'user-avatar-container' }" @click="setLeaderboardTarget('user-avatar-container')">Dans le conteneur</button>
+          <button class="btn tiny" :class="{ active: getActiveAssetLeaderboardTarget() === 'user-avatar' }" @click="setLeaderboardTarget('user-avatar')">(Ancien) Dans l'avatar</button>
         </div>
         <!-- Contrôle de position pour la Navbar -->
         <div v-if="activeCanvas==='navbar' && selectedIndex !== null" class="layer-controls">
@@ -276,6 +280,8 @@ const fileInput = ref(null)
 const activeCanvas = ref('collection') // collection | leaderboard | avatar | navbar
 const activeDevice = ref('desktop') // desktop | mobile
 const selectedIndex = ref(null)
+// Mémorise le dernier choix explicite de cible pour le leaderboard
+const lastLeaderboardTarget = ref(null) // 'user-avatar-container' | 'user-avatar' | null
 const DEFAULT_STYLE = { top: 0, left: 0, width: 100, rotate: 0, objectFit: 'contain', zIndex: 1 }
 function getApiOrigin() {
   const api = API_URL || ''
@@ -690,6 +696,12 @@ function sanitizeAsset(a) {
       ...(a.meta || {}),
       leaderboardPlacement: (a.meta && a.meta.leaderboardPlacement) || 'below',
       navbarPlacement: (a.meta && a.meta.navbarPlacement) || 'below',
+      // Normaliser la cible du leaderboard: utiliser leaderboardTarget, avec fallback depuis l'ancien champ "container"
+      leaderboardTarget: (a.meta && a.meta.leaderboardTarget)
+        ? a.meta.leaderboardTarget
+        : ((a.meta && a.meta.container === 'user-avatar-container') ? 'user-avatar-container' : 'user-avatar'),
+      // Classe dynamique optionnelle pour calquer un gabarit leaderboard (par défaut on utilisera equipped-galaxie)
+      dynamicClass: (a.meta && a.meta.dynamicClass) || '',
       container: (a.meta && a.meta.container) || ''
     }
   }
@@ -697,6 +709,8 @@ function sanitizeAsset(a) {
 
 function sanitizeItem(it) {
   const clone = JSON.parse(JSON.stringify(it || {}))
+  // Préserver le meta item-level (pour lecture côté ShopPopup si asset-level absent)
+  if (!clone.meta || typeof clone.meta !== 'object') clone.meta = {}
   if (!Array.isArray(clone.assets)) clone.assets = []
   clone.assets = clone.assets.map(sanitizeAsset)
   if (!clone.backgrounds) clone.backgrounds = { collection: null, leaderboard: null, avatar: null, navbar: null, 'popup-style': null }
@@ -741,6 +755,14 @@ function sanitizeItem(it) {
           if (!asset.navbarStyle) asset.navbarStyle = { top: 0, left: 0, width: 100, rotate: 0, objectFit: 'contain', zIndex: 1 }
           if (!asset.navbarStyleMobile) asset.navbarStyleMobile = { top: 0, left: 0, width: 100, rotate: 0, objectFit: 'contain', zIndex: 1 }
           if (!asset.popupStyleStyle) asset.popupStyleStyle = { top: 0, left: 0, width: 100, rotate: 0, objectFit: 'contain', zIndex: 1 }
+          // Normaliser meta pour l'affichage du leaderboard (compat avec ancien champ "container")
+          if (!asset.meta) asset.meta = {}
+          if (asset.meta.leaderboardPlacement !== 'above' && asset.meta.leaderboardPlacement !== 'inside' && asset.meta.leaderboardPlacement !== 'below') {
+            asset.meta.leaderboardPlacement = 'below'
+          }
+          if (!asset.meta.leaderboardTarget) {
+            asset.meta.leaderboardTarget = (asset.meta.container === 'user-avatar-container') ? 'user-avatar-container' : 'user-avatar'
+          }
           return asset
         })
       }
@@ -900,6 +922,50 @@ function setNavbarPlacement(placement) {
   asset.meta.navbarPlacement = placement
 }
 
+function getActiveAssetLeaderboardTarget() {
+  try {
+    if (selectedIndex.value === null) return 'user-avatar'
+    const assets = activeAssets()
+    const asset = Array.isArray(assets) ? assets[selectedIndex.value] : null
+    if (!asset) return 'user-avatar'
+    const t = asset.meta && (asset.meta.leaderboardTarget || (asset.meta.container === 'user-avatar-container' ? 'user-avatar-container' : null))
+    return t || 'user-avatar'
+  } catch { return 'user-avatar' }
+}
+
+function setLeaderboardTarget(target) {
+  const t = (target === 'user-avatar-container') ? 'user-avatar-container' : 'user-avatar'
+  lastLeaderboardTarget.value = t
+  // Écrire au niveau item pour fallback de lecture
+  try {
+    if (!form.value.meta || typeof form.value.meta !== 'object') form.value.meta = {}
+    form.value.meta.leaderboardTarget = t
+  } catch {}
+  // 1) Base assets
+  try {
+    if (Array.isArray(form.value.assets)) {
+      for (const a of form.value.assets) {
+        if (!a) continue
+        a.meta = a.meta || {}
+        a.meta.leaderboardTarget = t
+      }
+    }
+  } catch {}
+  // 2) Variants assets
+  try {
+    if (Array.isArray(form.value.variants)) {
+      for (const v of form.value.variants) {
+        if (!v || !Array.isArray(v.assets)) continue
+        for (const a of v.assets) {
+          if (!a) continue
+          a.meta = a.meta || {}
+          a.meta.leaderboardTarget = t
+        }
+      }
+    }
+  } catch {}
+}
+
 async function handleFiles(e) {}
 
 async function uploadAssets() {
@@ -915,7 +981,7 @@ async function uploadAssets() {
   const data = await res.json()
   if (data.success) {
     const target = editingVariantIndex.value === -1 ? form.value.assets : ((form.value.variants[editingVariantIndex.value].assets ||= []))
-    for (const file of data.files) target.push(sanitizeAsset({ src: file.url, style: { top: 0, left: 0, width: 100, height: 100 }, meta: { leaderboardPlacement: 'below', navbarPlacement: 'below', container: '' } }))
+    for (const file of data.files) target.push(sanitizeAsset({ src: file.url, style: { top: 0, left: 0, width: 100, height: 100 }, meta: { leaderboardPlacement: 'below', navbarPlacement: 'below', leaderboardTarget: 'user-avatar-container', container: '' } }))
   } else {
     alert('Upload échoué')
   }
@@ -925,13 +991,15 @@ function addAssetFromUrl() {
   const url = prompt('URL de l\'image (déjà sur le serveur)')
   if (!url) return
   const target = editingVariantIndex.value === -1 ? form.value.assets : ((form.value.variants[editingVariantIndex.value].assets ||= []))
-  target.push(sanitizeAsset({ src: url, style: { top: 0, left: 0, width: 100 }, meta: { leaderboardPlacement: 'below', navbarPlacement: 'below', container: '' } }))
+  target.push(sanitizeAsset({ src: url, style: { top: 0, left: 0, width: 100 }, meta: { leaderboardPlacement: 'below', navbarPlacement: 'below', leaderboardTarget: 'user-avatar-container', container: '' } }))
 }
 
 async function saveItem() {
   // Synchroniser les modifications avec les assets de la variante avant la sauvegarde
   syncVariantAssets()
   const payload = sanitizeItem(form.value)
+  // Respecter le choix de cible fait via les boutons (conteneur vs avatar)
+  // Aucun forçage global: chaque asset conserve son meta.leaderboardTarget défini par l'utilisateur.
   // Rien à faire de spécial ici: les propriétés *StyleMobile sont déjà dans form.assets via ensureStyle
   const res = await secureApiCall('/items', {
     method: 'POST',
@@ -1004,6 +1072,13 @@ async function updateItem() {
   // Synchroniser les modifications avec les assets de la variante avant la sauvegarde
   syncVariantAssets()
   const payload = sanitizeItem(form.value)
+  // Si l'utilisateur a cliqué un bouton de cible, garantir que la cible est posée partout avant PUT
+  try {
+    if (lastLeaderboardTarget.value) {
+      if (Array.isArray(payload.assets)) payload.assets.forEach(a => { a.meta = a.meta || {}; a.meta.leaderboardTarget = lastLeaderboardTarget.value })
+      if (Array.isArray(payload.variants)) payload.variants.forEach(v => { if (Array.isArray(v.assets)) v.assets.forEach(a => { a.meta = a.meta || {}; a.meta.leaderboardTarget = lastLeaderboardTarget.value }) })
+    }
+  } catch {}
   const res = await secureApiCall(`/items/${editingId.value}`, {
     method: 'PUT',
     body: JSON.stringify(payload)
@@ -1140,6 +1215,9 @@ function clearForm() {
 .inspector .row { display: flex; gap: 6px; margin-top: 8px; }
 .nudge-row { justify-content: flex-start; }
 .layer-controls { display:flex; gap:8px; align-items:center; margin-top:8px; flex-wrap: wrap; }
+.layer-controls .btn.tiny { transition: background-color .15s ease, color .15s ease, border-color .15s ease; }
+.layer-controls .btn.tiny:hover { background:#f3f4f6; }
+.layer-controls .btn.tiny.active { background:#10b981; color:#fff; border-color:#10b981; }
 /* Ligne du picker de background */
 .bg-picker-row { display: flex; gap: 16px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
 /* cercle + bordure verte en mode collection */
